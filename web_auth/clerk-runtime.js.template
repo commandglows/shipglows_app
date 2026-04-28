@@ -1,0 +1,334 @@
+(function () {
+  const config = {
+    publishableKey: '__CLERK_PUBLISHABLE_KEY__',
+    configuredAppWebUrl: '__APP_WEB_URL__',
+    buildCommitSha: '__BUILD_COMMIT_SHA__',
+    buildEnvironment: '__BUILD_ENVIRONMENT__',
+    buildTimestamp: '__BUILD_TIMESTAMP__',
+  };
+
+  const state = {
+    loadPromise: null,
+    scriptPromise: null,
+  };
+  const CLERK_UI_SCRIPT_ID = 'contentflow-clerk-ui';
+  const CLERK_JS_SCRIPT_ID = 'contentflow-clerk-js';
+
+  function deriveClerkDomain(publishableKey) {
+    try {
+      return atob(publishableKey.split('_')[2]).slice(0, -1);
+    } catch (error) {
+      console.error('[ContentFlow] Failed to derive Clerk Frontend API.', error);
+      return '';
+    }
+  }
+
+  function defaultRedirectComplete() {
+    return new URL('/#/entry', window.location.origin).toString();
+  }
+
+  function buildOAuthCallbackUrl(redirectComplete) {
+    const callbackUrl = new URL('/sso-callback', window.location.origin);
+    callbackUrl.searchParams.set('redirect_url', redirectComplete);
+    return callbackUrl.toString();
+  }
+
+  function resolveRedirectComplete(candidate) {
+    if (!candidate) {
+      return defaultRedirectComplete();
+    }
+
+    if (candidate.startsWith('/#/') || candidate.startsWith('/?')) {
+      return new URL(candidate, window.location.origin).toString();
+    }
+
+    try {
+      const url = new URL(candidate, window.location.origin);
+      if (url.origin !== window.location.origin) {
+        return defaultRedirectComplete();
+      }
+      return url.toString();
+    } catch (_) {
+      return defaultRedirectComplete();
+    }
+  }
+
+  function readRedirectCompleteFromLocation() {
+    const params = new URLSearchParams(window.location.search);
+    const redirectUrl = params.get('redirect_url');
+    return resolveRedirectComplete(redirectUrl);
+  }
+
+  function configuredAppHost() {
+    try {
+      return new URL(config.configuredAppWebUrl).host;
+    } catch (_) {
+      return 'invalid';
+    }
+  }
+
+  function currentOriginMatchesConfiguredApp() {
+    const host = configuredAppHost();
+    if (host === 'invalid') {
+      return 'invalid';
+    }
+    return window.location.host === host ? 'yes' : `no (expected ${host})`;
+  }
+
+  function loadScript() {
+    if (state.scriptPromise) {
+      return state.scriptPromise;
+    }
+
+    state.scriptPromise = new Promise((resolve, reject) => {
+      if (window.Clerk) {
+        resolve(window.Clerk);
+        return;
+      }
+
+      const frontendApi = deriveClerkDomain(config.publishableKey);
+      if (!frontendApi) {
+        reject(new Error('Unable to derive Clerk Frontend API from publishable key.'));
+        return;
+      }
+
+      const loadSingleScript = (src, options) =>
+        new Promise((resolveScript, rejectScript) => {
+          const existing =
+            (options.id ? document.getElementById(options.id) : null) ||
+            document.querySelector(`script[src="${src}"]`);
+          if (existing) {
+            if (existing.dataset.loaded === 'true') {
+              resolveScript();
+              return;
+            }
+            existing.addEventListener('load', () => resolveScript(), { once: true });
+            existing.addEventListener(
+              'error',
+              () => rejectScript(new Error(`Failed to load ${src}`)),
+              { once: true },
+            );
+            return;
+          }
+
+          const script = document.createElement('script');
+          if (options.id) {
+            script.id = options.id;
+          }
+          script.defer = true;
+          script.crossOrigin = 'anonymous';
+          script.type = 'text/javascript';
+          if (options.attributes) {
+            Object.entries(options.attributes).forEach(([key, value]) => {
+              if (value) {
+                script.setAttribute(key, value);
+              }
+            });
+          }
+          script.src = src;
+          script.onload = () => {
+            script.dataset.loaded = 'true';
+            resolveScript();
+          };
+          script.onerror = () => rejectScript(new Error(`Failed to load ${src}`));
+          document.head.appendChild(script);
+        });
+
+      const uiSrc = `https://${frontendApi}/npm/@clerk/ui@1/dist/ui.browser.js`;
+      const clerkSrc = `https://${frontendApi}/npm/@clerk/clerk-js@6/dist/clerk.browser.js`;
+
+      window.__clerk_publishable_key = config.publishableKey;
+
+      Promise.resolve()
+        .then(() => loadSingleScript(uiSrc, { id: CLERK_UI_SCRIPT_ID }))
+        .then(() =>
+          loadSingleScript(clerkSrc, {
+            id: CLERK_JS_SCRIPT_ID,
+            attributes: {
+              'data-clerk-publishable-key': config.publishableKey,
+            },
+          }),
+        )
+        .then(() => resolve(window.Clerk))
+        .catch(reject);
+    });
+
+    return state.scriptPromise;
+  }
+
+  async function load() {
+    if (state.loadPromise) {
+      return state.loadPromise;
+    }
+
+    state.loadPromise = (async () => {
+      if (!config.publishableKey) {
+        throw new Error('Missing CLERK_PUBLISHABLE_KEY.');
+      }
+
+      const clerk = await loadScript();
+      await clerk.load({
+        ui: window.__internal_ClerkUICtor
+          ? { ClerkUI: window.__internal_ClerkUICtor }
+          : undefined,
+        signInUrl: '/sign-in',
+        signUpUrl: '/sign-up',
+        afterSignOutUrl: '/#/entry',
+      });
+      return clerk;
+    })();
+
+    return state.loadPromise;
+  }
+
+  async function isSignedIn() {
+    const clerk = await load();
+    return Boolean(clerk.session && clerk.user);
+  }
+
+  async function getToken(options) {
+    const clerk = await load();
+    if (!clerk.session) {
+      return null;
+    }
+
+    return clerk.session.getToken({
+      skipCache: Boolean(options && options.skipCache),
+    });
+  }
+
+  async function getUser() {
+    const clerk = await load();
+    const user = clerk.user;
+    if (!user) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      primaryEmailAddress: user.primaryEmailAddress
+        ? user.primaryEmailAddress.emailAddress
+        : null,
+    };
+  }
+
+  async function signOut() {
+    const clerk = await load();
+    if (!clerk.session) {
+      return true;
+    }
+
+    await clerk.signOut();
+    return true;
+  }
+
+  async function mountSignIn(node, options) {
+    const clerk = await load();
+    const redirectUrlComplete = resolveRedirectComplete(
+      (options && options.redirectUrlComplete) || readRedirectCompleteFromLocation(),
+    );
+    const redirectUrl = buildOAuthCallbackUrl(redirectUrlComplete);
+
+    clerk.mountSignIn(node, {
+      path: '/sign-in',
+      routing: 'path',
+      oauthFlow: 'redirect',
+      redirectUrl,
+      forceRedirectUrl: redirectUrlComplete,
+      fallbackRedirectUrl: redirectUrlComplete,
+      signUpForceRedirectUrl: redirectUrlComplete,
+      signUpFallbackRedirectUrl: redirectUrlComplete,
+      signUpUrl: '/sign-up',
+    });
+
+    return true;
+  }
+
+  async function mountSignUp(node, options) {
+    const clerk = await load();
+    const redirectUrlComplete = resolveRedirectComplete(
+      (options && options.redirectUrlComplete) || readRedirectCompleteFromLocation(),
+    );
+    const redirectUrl = buildOAuthCallbackUrl(redirectUrlComplete);
+
+    clerk.mountSignUp(node, {
+      path: '/sign-up',
+      routing: 'path',
+      oauthFlow: 'redirect',
+      redirectUrl,
+      forceRedirectUrl: redirectUrlComplete,
+      fallbackRedirectUrl: redirectUrlComplete,
+      signInForceRedirectUrl: redirectUrlComplete,
+      signInFallbackRedirectUrl: redirectUrlComplete,
+      signInUrl: '/sign-in',
+    });
+
+    return true;
+  }
+
+  async function startGoogleSignIn(options) {
+    const clerk = await load();
+    const redirectUrlComplete = resolveRedirectComplete(
+      (options && options.redirectUrlComplete) || readRedirectCompleteFromLocation(),
+    );
+    const redirectUrl = buildOAuthCallbackUrl(redirectUrlComplete);
+
+    await clerk.redirectToSignIn({
+      redirectUrl,
+      signInForceRedirectUrl: redirectUrlComplete,
+      signInFallbackRedirectUrl: redirectUrlComplete,
+      signUpForceRedirectUrl: redirectUrlComplete,
+      signUpFallbackRedirectUrl: redirectUrlComplete,
+    });
+  }
+
+  async function handleRedirectCallback(options) {
+    const clerk = await load();
+    const fallbackUrl = resolveRedirectComplete(
+      (options && options.redirectUrlComplete) || readRedirectCompleteFromLocation(),
+    );
+
+    await clerk.handleRedirectCallback({
+      signInFallbackRedirectUrl: fallbackUrl,
+      signUpFallbackRedirectUrl: fallbackUrl,
+    });
+
+    return true;
+  }
+
+  function getDiagnostics() {
+    return {
+      buildCommitSha: config.buildCommitSha,
+      buildEnvironment: config.buildEnvironment,
+      buildTimestamp: config.buildTimestamp,
+      configuredAppWebUrl: config.configuredAppWebUrl,
+      configuredAppHost: configuredAppHost(),
+      currentOrigin: window.location.origin,
+      currentHost: window.location.host,
+      currentPath: window.location.pathname,
+      currentUrl: window.location.href,
+      currentOriginMatchesConfiguredApp: currentOriginMatchesConfiguredApp(),
+      oauthCallbackUrl: buildOAuthCallbackUrl(readRedirectCompleteFromLocation()),
+      redirectUrlComplete: readRedirectCompleteFromLocation(),
+      clerkFrontendApi: deriveClerkDomain(config.publishableKey),
+      keyPreview: config.publishableKey
+        ? `${config.publishableKey.slice(0, 10)}...${config.publishableKey.slice(-5)}`
+        : 'missing',
+    };
+  }
+
+  window.contentflowClerkBridge = {
+    load,
+    isSignedIn,
+    getToken,
+    getUser,
+    signOut,
+    mountSignIn,
+    mountSignUp,
+    startGoogleSignIn,
+    handleRedirectCallback,
+    getDiagnostics,
+  };
+})();

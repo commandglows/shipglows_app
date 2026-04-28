@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ContentFlow OAuth Callback</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="stylesheet" href="/clerk-auth.css" />
+    <script src="/clerk-runtime.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <div class="eyebrow">OAuth Callback</div>
+        <h1>Finalizing sign-in</h1>
+        <p>
+          Clerk is completing the Google OAuth callback and will return you to
+          ContentFlow as soon as the session is ready.
+        </p>
+        <div class="stack">
+          <div class="row">
+            <div class="spinner" aria-hidden="true"></div>
+            <div id="status" class="status">Processing callback…</div>
+          </div>
+          <button id="copy-button" class="button button-secondary" type="button">
+            Copy diagnostics
+          </button>
+          <button id="retry-button" class="button button-secondary" type="button">
+            Back to sign-in
+          </button>
+        </div>
+        <div id="meta" class="meta"></div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const bridge = window.contentflowClerkBridge;
+        const copyButton = document.getElementById('copy-button');
+        const statusEl = document.getElementById('status');
+        const retryButton = document.getElementById('retry-button');
+        const metaEl = document.getElementById('meta');
+        let lastError = '';
+
+        function setStatus(message, isError) {
+          statusEl.textContent = message;
+          statusEl.classList.toggle('error', Boolean(isError));
+          if (isError) {
+            lastError = message;
+          }
+        }
+
+        function buildDiagnostics() {
+          const diagnostics = bridge.getDiagnostics();
+          return [
+            'ContentFlow OAuth callback diagnostics',
+            `Build commit: ${diagnostics.buildCommitSha}`,
+            `Build environment: ${diagnostics.buildEnvironment}`,
+            `Build timestamp: ${diagnostics.buildTimestamp}`,
+            `Configured app URL: ${diagnostics.configuredAppWebUrl}`,
+            `Configured app host: ${diagnostics.configuredAppHost}`,
+            `Current URL: ${diagnostics.currentUrl}`,
+            `Current origin: ${diagnostics.currentOrigin}`,
+            `Current host: ${diagnostics.currentHost}`,
+            `Current path: ${diagnostics.currentPath}`,
+            `Current origin matches configured app: ${diagnostics.currentOriginMatchesConfiguredApp}`,
+            `OAuth callback URL: ${diagnostics.oauthCallbackUrl}`,
+            `Redirect complete URL: ${diagnostics.redirectUrlComplete}`,
+            `Clerk frontend API: ${diagnostics.clerkFrontendApi}`,
+            `Status: ${statusEl.textContent || 'unknown'}`,
+            `Last error: ${lastError || 'none'}`,
+          ].join('\n');
+        }
+
+        async function copyDiagnostics() {
+          const text = buildDiagnostics();
+          try {
+            await navigator.clipboard.writeText(text);
+            copyButton.textContent = 'Copied';
+            window.setTimeout(() => {
+              copyButton.textContent = 'Copy diagnostics';
+            }, 1500);
+          } catch (_) {
+            copyButton.textContent = 'Copy failed';
+          }
+        }
+
+        function renderMeta() {
+          const diagnostics = bridge.getDiagnostics();
+          metaEl.innerHTML = [
+            `Build commit: ${diagnostics.buildCommitSha}`,
+            `Build environment: ${diagnostics.buildEnvironment}`,
+            `Build timestamp: ${diagnostics.buildTimestamp}`,
+            `Current URL: ${diagnostics.currentUrl}`,
+            `Origin matches configured app: ${diagnostics.currentOriginMatchesConfiguredApp}`,
+            `OAuth callback URL: ${diagnostics.oauthCallbackUrl}`,
+            `Redirect complete URL: ${diagnostics.redirectUrlComplete}`,
+          ]
+            .map((line) => `<div>${line}</div>`)
+            .join('');
+        }
+
+        async function bootstrap() {
+          try {
+            renderMeta();
+            await bridge.handleRedirectCallback();
+            setStatus('Callback completed. Redirecting…');
+            window.location.replace('/#/entry');
+          } catch (error) {
+            console.error('[ContentFlow] Clerk callback failed.', error);
+            setStatus(String(error), true);
+          }
+        }
+
+        copyButton.addEventListener('click', copyDiagnostics);
+
+        retryButton.addEventListener('click', () => {
+          window.location.assign('/sign-in');
+        });
+
+        bootstrap();
+      })();
+    </script>
+  </body>
+</html>
