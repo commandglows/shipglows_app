@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [2026-04-29]
+
+### Fixed
+- Fixed logout so local auth state clears immediately while Clerk browser sign-out completes, and stale Clerk restore results can no longer re-authenticate after sign-out.
+
 ## [2026-04-27]
 
 ### Changed

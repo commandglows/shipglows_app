@@ -472,8 +472,10 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
   }
 
   final Ref ref;
+  int _sessionRevision = 0;
 
   Future<void> _restoreSession() async {
+    final restoreRevision = _sessionRevision;
     final diagnostics = ref.read(appDiagnosticsProvider);
     diagnostics.info(
       scope: 'auth.restore',
@@ -521,6 +523,13 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
 
     try {
       final restored = await service.restoreSession();
+      if (restoreRevision != _sessionRevision) {
+        diagnostics.info(
+          scope: 'auth.restore',
+          message: 'Ignoring stale Clerk session restore result.',
+        );
+        return;
+      }
       if (restored == null) {
         _clearLegacyAuthPrefs();
         state = const AuthSession(status: AuthStatus.signedOut);
@@ -544,6 +553,13 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
       );
       _invalidateAuthenticatedState();
     } catch (error, stackTrace) {
+      if (restoreRevision != _sessionRevision) {
+        diagnostics.info(
+          scope: 'auth.restore',
+          message: 'Ignoring stale Clerk session restore failure.',
+        );
+        return;
+      }
       _clearLegacyAuthPrefs();
       state = const AuthSession(status: AuthStatus.signedOut);
       diagnostics.error(
@@ -556,6 +572,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
   }
 
   void signInDemo() {
+    _sessionRevision++;
     final prefs = ref.read(sharedPrefsProvider);
     prefs.setBool(_demoModeKey, true);
     prefs.setBool(_demoOnboardingKey, false);
@@ -571,6 +588,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
   }
 
   void setAuthenticatedSession(String token, {String? email}) {
+    _sessionRevision++;
     final prefs = ref.read(sharedPrefsProvider);
     prefs.remove(_demoModeKey);
     prefs.remove(_demoOnboardingKey);
@@ -719,18 +737,34 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
   }
 
   Future<void> clearLocalSession() async {
-    final diagnostics = ref.read(appDiagnosticsProvider);
     final service = ref.read(clerkAuthServiceProvider);
-    try {
-      await service?.signOut();
-    } catch (error, stackTrace) {
-      diagnostics.warning(
+    await _clearSignedOutState(
+      scope: 'auth.clear_session',
+      message: 'Local auth session cleared.',
+      context: const {'remote': true},
+    );
+
+    unawaited(
+      _tryRemoteSignOut(
+        service: service,
         scope: 'auth.clear_session',
-        message: 'Remote sign-out failed while clearing local session.',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
+        warningMessage:
+            'Remote sign-out failed while clearing local session.',
+      ),
+    );
+  }
+
+  Future<void> _clearSignedOutState({
+    required String scope,
+    required String message,
+    Map<String, Object?>? context,
+  }) async {
+    _sessionRevision++;
+    state = const AuthSession(status: AuthStatus.signedOut);
+    ref
+        .read(appDiagnosticsProvider)
+        .info(scope: scope, message: message, context: context);
+    _invalidateAuthenticatedState();
 
     final prefs = ref.read(sharedPrefsProvider);
     await prefs.remove(_demoModeKey);
@@ -746,12 +780,6 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
     }
 
     _clearLegacyAuthPrefs();
-    state = const AuthSession(status: AuthStatus.signedOut);
-    diagnostics.info(
-      scope: 'auth.clear_session',
-      message: 'Local auth session cleared.',
-    );
-    _invalidateAuthenticatedState();
   }
 
   void signOut() {
@@ -775,36 +803,40 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
   }
 
   Future<void> _signOut({required bool remote}) async {
+    final service = remote ? ref.read(clerkAuthServiceProvider) : null;
+    await _clearSignedOutState(
+      scope: 'auth.sign_out',
+      message: 'Session signed out locally.',
+      context: {'remote': remote},
+    );
+
     if (remote) {
-      final service = ref.read(clerkAuthServiceProvider);
-      try {
-        await service?.signOut();
-      } catch (error, stackTrace) {
-        ref
-            .read(appDiagnosticsProvider)
-            .warning(
-              scope: 'auth.sign_out',
-              message: 'Remote sign-out failed. Clearing local session anyway.',
-              error: error,
-              stackTrace: stackTrace,
-            );
-      }
+      await _tryRemoteSignOut(
+        service: service,
+        scope: 'auth.sign_out',
+        warningMessage:
+            'Remote sign-out failed. Local session was already cleared.',
+      );
     }
+  }
 
-    final prefs = ref.read(sharedPrefsProvider);
-    await prefs.remove(_demoModeKey);
-    await prefs.remove(_demoOnboardingKey);
-    _clearLegacyAuthPrefs();
-
-    state = const AuthSession(status: AuthStatus.signedOut);
-    ref
-        .read(appDiagnosticsProvider)
-        .info(
-          scope: 'auth.sign_out',
-          message: 'Session signed out locally.',
-          context: {'remote': remote},
-        );
-    _invalidateAuthenticatedState();
+  Future<void> _tryRemoteSignOut({
+    required ClerkAuthService? service,
+    required String scope,
+    required String warningMessage,
+  }) async {
+    try {
+      await service?.signOut();
+    } catch (error, stackTrace) {
+      ref
+          .read(appDiagnosticsProvider)
+          .warning(
+            scope: scope,
+            message: warningMessage,
+            error: error,
+            stackTrace: stackTrace,
+          );
+    }
   }
 
   void _invalidateAuthenticatedState() {
