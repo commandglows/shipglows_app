@@ -12,8 +12,8 @@ class DependencyPostureChip extends StatelessWidget {
     final (label, color) = _mapping(posture);
     return Chip(
       label: Text(label),
-      backgroundColor: color.withValues(alpha: 0.16),
-      side: BorderSide(color: color.withValues(alpha: 0.4)),
+      backgroundColor: color.withValues(alpha: 0.12),
+      side: BorderSide(color: color.withValues(alpha: 0.28)),
       labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
         color: color,
         fontWeight: FontWeight.w600,
@@ -24,17 +24,17 @@ class DependencyPostureChip extends StatelessWidget {
   (String, Color) _mapping(DependencyPosture posture) {
     switch (posture) {
       case DependencyPosture.neverChecked:
-        return ('never_checked', Colors.blueGrey);
+        return ('never_checked', const Color(0xFF94A3B8));
       case DependencyPosture.stale:
-        return ('stale', Colors.orange);
+        return ('stale', const Color(0xFFF59E0B));
       case DependencyPosture.riskOpen:
-        return ('risk_open', Colors.deepOrange);
+        return ('risk_open', const Color(0xFFF97316));
       case DependencyPosture.migrationRequired:
-        return ('migration_required', Colors.red);
+        return ('migration_required', const Color(0xFFEF4444));
       case DependencyPosture.healthy:
-        return ('healthy', Colors.green);
+        return ('healthy', const Color(0xFF10B981));
       case DependencyPosture.sourceGap:
-        return ('source_gap', Colors.purple);
+        return ('source_gap', const Color(0xFF0070F3));
     }
   }
 }

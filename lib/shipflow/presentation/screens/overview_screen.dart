@@ -41,30 +41,110 @@ class OverviewScreen extends ConsumerWidget {
           final generatedAt = DateFormat(
             'yyyy-MM-dd HH:mm:ss',
           ).format(data.generatedAt.toLocal());
+          final openTasks = data.projects.fold<int>(
+            0,
+            (sum, project) => sum + project.openTasks,
+          );
+          final activeTasks = data.projects.fold<int>(
+            0,
+            (sum, project) => sum + project.inProgressTasks,
+          );
 
           return RefreshIndicator(
             onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: data.projects.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Card(
-                    child: ListTile(
-                      title: const Text('Latest refresh'),
-                      subtitle: Text(
-                        '$generatedAt local time\n'
-                        'Diagnostics: ${data.diagnostics.length}',
-                      ),
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _OverviewMetric(
+                      label: 'Projects',
+                      value: '${data.projects.length}',
+                      detail: '${data.allowlistedRoots.length} roots indexed',
                     ),
-                  );
-                }
-                final project = data.projects[index - 1];
-                return _ProjectCard(project: project);
-              },
+                    _OverviewMetric(
+                      label: 'Open Tasks',
+                      value: '$openTasks',
+                      detail: '$activeTasks active now',
+                    ),
+                    _OverviewMetric(
+                      label: 'Diagnostics',
+                      value: '${data.diagnostics.length}',
+                      detail: 'Last refresh $generatedAt',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Project estate',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Current dependency posture, task pressure, and next operator action.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                for (final project in data.projects) ...[
+                  _ProjectCard(project: project),
+                  const SizedBox(height: 12),
+                ],
+              ],
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _OverviewMetric extends StatelessWidget {
+  const _OverviewMetric({
+    required this.label,
+    required this.value,
+    required this.detail,
+  });
+
+  final String label;
+  final String value;
+  final String detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 260,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                detail,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -77,14 +157,14 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
-      margin: const EdgeInsets.only(top: 12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         onTap: () =>
             context.go('/project/${Uri.encodeComponent(project.project)}'),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -103,7 +183,8 @@ class _ProjectCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           project.stack,
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -111,18 +192,60 @@ class _ProjectCard extends StatelessWidget {
                   DependencyPostureChip(posture: project.dependencyPosture),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(project.dependencyMessage),
               const SizedBox(height: 12),
+              Text(
+                project.path,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(project.dependencyMessage),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 12,
-                runSpacing: 6,
+                runSpacing: 8,
                 children: [
-                  _smallStat('todo', '${project.openTasks}'),
-                  _smallStat('in_progress', '${project.inProgressTasks}'),
-                  _smallStat('active_chantiers', '${project.activeChantiers}'),
-                  _smallStat('next', project.nextCommand),
+                  _smallStat(context, 'todo', '${project.openTasks}'),
+                  _smallStat(
+                    context,
+                    'in_progress',
+                    '${project.inProgressTasks}',
+                  ),
+                  _smallStat(
+                    context,
+                    'active_chantiers',
+                    '${project.activeChantiers}',
+                  ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: colorScheme.outline),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Recommended next command',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      project.nextCommand,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -131,18 +254,18 @@ class _ProjectCard extends StatelessWidget {
     );
   }
 
-  Widget _smallStat(String label, String value) {
-    return Builder(
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(100),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        ),
-        child: Text(
-          '$label: $value',
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
+  Widget _smallStat(BuildContext context, String label, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: colorScheme.surfaceContainerHighest,
+        border: Border.all(color: colorScheme.outline),
+      ),
+      child: Text(
+        '$label: $value',
+        style: Theme.of(context).textTheme.labelMedium,
       ),
     );
   }

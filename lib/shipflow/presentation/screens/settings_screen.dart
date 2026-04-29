@@ -10,25 +10,36 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final policy = ref.watch(sourcePathPolicyProvider);
+    final colorScheme = Theme.of(context).colorScheme;
     return ShipFlowScaffold(
       title: 'Settings',
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         children: [
           Card(
-            child: ListTile(
-              title: const Text('Runtime target'),
-              subtitle: Text(
-                policy.isDesktopSupported
-                    ? 'Desktop mode supported (local files enabled).'
-                    : 'Unsupported target for direct local file reads.',
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Runtime target',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    policy.isDesktopSupported
+                        ? 'Desktop mode supported. Local file reads are enabled.'
+                        : 'Unsupported target for direct local file reads.',
+                  ),
+                ],
               ),
             ),
           ),
           const SizedBox(height: 12),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -37,7 +48,21 @@ class SettingsScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  ...policy.allowedRoots.map((root) => SelectableText(root)),
+                  ...policy.allowedRoots.map(
+                    (root) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: colorScheme.outline),
+                        ),
+                        child: SelectableText(root),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Text('Max file size: ${policy.maxFileBytes} bytes'),
                   Text('Max refresh size: ${policy.maxTotalBytes} bytes'),

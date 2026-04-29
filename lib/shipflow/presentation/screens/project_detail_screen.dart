@@ -48,13 +48,14 @@ class _ProjectDetailBody extends StatelessWidget {
     final auditDate = project.latestAuditDate == null
         ? 'unknown'
         : DateFormat('yyyy-MM-dd').format(project.latestAuditDate!);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       children: [
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -69,23 +70,52 @@ class _ProjectDetailBody extends StatelessWidget {
                     DependencyPostureChip(posture: project.dependencyPosture),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(project.path),
+                const SizedBox(height: 10),
+                Text(
+                  project.path,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Text(project.stack),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _DetailStat(label: 'Latest audit', value: auditDate),
+                    _DetailStat(
+                      label: 'Open tasks',
+                      value: '${project.openTasks}',
+                    ),
+                    _DetailStat(
+                      label: 'In progress',
+                      value: '${project.inProgressTasks}',
+                    ),
+                    _DetailStat(
+                      label: 'Active chantiers',
+                      value: '${project.activeChantiers}',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
                 Text('Dependency posture: ${project.dependencyMessage}'),
-                const SizedBox(height: 4),
-                Text('Latest audit date: $auditDate'),
-                const SizedBox(height: 4),
-                Text('Open tasks: ${project.openTasks}'),
-                const SizedBox(height: 4),
-                Text('In progress tasks: ${project.inProgressTasks}'),
-                const SizedBox(height: 4),
-                Text('Active chantiers: ${project.activeChantiers}'),
-                const SizedBox(height: 12),
-                SelectableText(
-                  'Recommended next command: ${project.nextCommand}',
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colorScheme.outline),
+                  ),
+                  child: SelectableText(
+                    'Recommended next command: ${project.nextCommand}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -94,7 +124,7 @@ class _ProjectDetailBody extends StatelessWidget {
         const SizedBox(height: 12),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -113,11 +143,16 @@ class _ProjectDetailBody extends StatelessWidget {
                       children: [
                         Text(
                           '${event.eventType} · ${event.status} · ${event.riskLevel}',
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
+                        const SizedBox(height: 4),
                         Text(event.summary),
+                        const SizedBox(height: 4),
                         Text(
                           'Event: ${event.eventId} · Next: ${event.nextStep}',
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -130,7 +165,7 @@ class _ProjectDetailBody extends StatelessWidget {
         const SizedBox(height: 12),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -142,12 +177,43 @@ class _ProjectDetailBody extends StatelessWidget {
                 if (project.diagnostics.isEmpty)
                   const Text('No diagnostics linked to this project.'),
                 ...project.diagnostics.map(
-                  (diag) => ListTile(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.warning_amber_outlined, size: 18),
-                    title: Text(diag.message),
-                    subtitle: Text(diag.source),
+                  (diag) => Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: colorScheme.surfaceContainerHighest,
+                      border: Border.all(color: colorScheme.outline),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            Icons.warning_amber_outlined,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(diag.message),
+                              const SizedBox(height: 4),
+                              Text(
+                                diag.source,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -155,6 +221,39 @@ class _ProjectDetailBody extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DetailStat extends StatelessWidget {
+  const _DetailStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(value, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
     );
   }
 }
