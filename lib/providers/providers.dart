@@ -1961,6 +1961,33 @@ class UserSettingsNotifier extends AsyncNotifier<AppSettings?> {
     });
   }
 
+  Future<void> updateGithubRepositoryDiscoveryMode(String mode) async {
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+
+    final normalizedMode = normalizeGithubRepositoryDiscoveryMode(mode);
+    final nextRobotSettings = <String, dynamic>{
+      ...?current.robotSettings,
+      'githubRepositoryDiscoveryMode': normalizedMode,
+    };
+
+    if (ref.read(authSessionProvider).isDemo) {
+      state = AsyncData(current.copyWith(robotSettings: nextRobotSettings));
+      return;
+    }
+
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final api = ref.read(apiServiceProvider);
+      return api.updateSettings({'robotSettings': nextRobotSettings});
+    });
+    if (state.hasError) {
+      throw state.error!;
+    }
+  }
+
   Future<void> updateLanguage(String language) async {
     final normalizedLanguage = normalizeAppLanguagePreference(language);
     await ref

@@ -1,4 +1,5 @@
 import '../source_models.dart';
+import '../source_diagnostic_helpers.dart';
 import 'parsed_models.dart';
 
 class AuditLogParser {
@@ -12,7 +13,8 @@ class AuditLogParser {
     final lines = markdown.split('\n');
     var inTable = false;
     List<String> headers = const [];
-    for (final line in lines) {
+    for (var index = 0; index < lines.length; index += 1) {
+      final line = lines[index];
       final trimmed = line.trim();
       if (trimmed.startsWith('| Date') && trimmed.contains('| Project')) {
         inTable = true;
@@ -37,6 +39,14 @@ class AuditLogParser {
             severity: DiagnosticSeverity.warning,
             message: 'Invalid audit log row.',
             source: source,
+            line: index + 1,
+            excerpt: diagnosticExcerptForLine(markdown, index + 1),
+            details: diagnosticDetails({
+              'expectedColumns': headers.length,
+              'actualColumns': cells.length,
+              'headers': headers.join(', '),
+            }),
+            suggestedCommand: '/sf-verify ShipFlow audit log',
           ),
         );
         continue;
@@ -62,6 +72,12 @@ class AuditLogParser {
           severity: DiagnosticSeverity.error,
           message: 'Audit log table not found.',
           source: source,
+          line: 1,
+          excerpt: diagnosticExcerptForLine(markdown, 1),
+          details: diagnosticDetails({
+            'expectedHeader': '| Date | ... | Project | ... |',
+          }),
+          suggestedCommand: '/sf-verify ShipFlow audit log',
         ),
       );
     }

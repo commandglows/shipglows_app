@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/project_onboarding_validation.dart';
 import '../../../data/demo/demo_seed.dart';
+import '../../../data/models/app_settings.dart';
 import '../../../data/models/project.dart';
 import '../../../data/services/api_service.dart';
 import '../../../l10n/app_localizations.dart';
@@ -24,8 +25,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
   bool _isFinishing = false;
   bool _didLoadProject = false;
+  bool _didLoadGithubRepositoryDiscoveryMode = false;
   bool _isRepoPickerLoading = false;
   String? _lastAutoProjectName;
+  String _githubRepositoryDiscoveryMode = githubRepositoryDiscoveryModeManual;
 
   // Page 1: Project source
   final _repoUrlController = TextEditingController();
@@ -138,6 +141,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final projectsAsync = ref.watch(projectsProvider);
+    final userSettings = ref.watch(currentUserSettingsProvider).value;
+    if (!_didLoadGithubRepositoryDiscoveryMode && userSettings != null) {
+      _didLoadGithubRepositoryDiscoveryMode = true;
+      _githubRepositoryDiscoveryMode =
+          userSettings.githubRepositoryDiscoveryMode;
+    }
     final projectToEdit = _isProjectEditMode
         ? projectsAsync.value
               ?.where((project) => project.id == _projectId)
@@ -308,6 +317,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             label: Text(context.tr('Connecter GitHub')),
           ),
         ],
+        if (!_isDemoMode) ...[
+          const SizedBox(height: 24),
+          _buildGithubRepositoryDiscoveryQuestion(
+            githubConnected: githubStatus?.connected == true,
+          ),
+        ],
         const SizedBox(height: 32),
         FilledButton(
           onPressed: _hasValidProjectStep ? _nextPage : null,
@@ -319,6 +334,79 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             context.tr(_isDemoMode ? 'Review Demo Setup' : 'Continue'),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildGithubRepositoryDiscoveryQuestion({
+    required bool githubConnected,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final autoSelected =
+        _githubRepositoryDiscoveryMode == githubRepositoryDiscoveryModeAll;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr('How should ShipFlow discover your GitHub repositories?'),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          context.tr(
+            'Choose whether ShipFlow should scan every repository now, or only the repositories you select manually.',
+          ),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        RadioListTile<String>(
+          value: githubRepositoryDiscoveryModeAll,
+          groupValue: _githubRepositoryDiscoveryMode,
+          contentPadding: EdgeInsets.zero,
+          title: Text(context.tr('Import all repositories automatically')),
+          subtitle: Text(
+            context.tr(
+              'ShipFlow will fetch every accessible GitHub repository and read available ShipFlow metadata automatically.',
+            ),
+          ),
+          onChanged: (value) => setState(
+            () => _githubRepositoryDiscoveryMode =
+                normalizeGithubRepositoryDiscoveryMode(value),
+          ),
+        ),
+        RadioListTile<String>(
+          value: githubRepositoryDiscoveryModeManual,
+          groupValue: _githubRepositoryDiscoveryMode,
+          contentPadding: EdgeInsets.zero,
+          title: Text(context.tr('I will choose repositories manually')),
+          subtitle: Text(
+            context.tr(
+              'ShipFlow will only connect repositories you explicitly pick.',
+            ),
+          ),
+          onChanged: (value) => setState(
+            () => _githubRepositoryDiscoveryMode =
+                normalizeGithubRepositoryDiscoveryMode(value),
+          ),
+        ),
+        if (autoSelected && !githubConnected) ...[
+          const SizedBox(height: 4),
+          Text(
+            context.tr(
+              'Connect GitHub before continuing so ShipFlow can access the repository list.',
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppTheme.warningColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -413,7 +501,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     setState(() => _isRepoPickerLoading = true);
     try {
-      final repos = await api.fetchGithubRepos();
+      final repos = await api.fetchAllGithubRepos();
       if (!mounted) return;
 
       final selected = await showDialog<Map<String, dynamic>?>(
@@ -839,6 +927,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
+  Future<void> _saveGithubRepositoryDiscoveryPreference() async {
+    final current = ref.read(currentUserSettingsProvider).value;
+    if (current?.githubRepositoryDiscoveryMode ==
+        _githubRepositoryDiscoveryMode) {
+      return;
+    }
+
+    try {
+      await ref
+          .read(currentUserSettingsProvider.notifier)
+          .updateGithubRepositoryDiscoveryMode(_githubRepositoryDiscoveryMode);
+    } catch (error, stackTrace) {
+      ref
+          .read(appDiagnosticsProvider)
+          .warning(
+            scope: 'onboarding.github_repository_discovery.save',
+            message:
+                'Could not persist GitHub repository discovery preference.',
+            error: error,
+            stackTrace: stackTrace,
+            context: {'mode': _githubRepositoryDiscoveryMode},
+          );
+    }
+  }
+
   Future<void> _finish() async {
     if (_isDemoMode) {
       ref.read(authSessionProvider.notifier).markOnboardingComplete();
@@ -872,8 +985,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           content: Text(
             context.tr(
               _isProjectEditMode
-                  ? 'Sign in with Google before editing a project.'
-                  : 'Sign in with Google before creating a workspace.',
+                  ? 'Sign in before editing a project.'
+                  : 'Sign in before creating a workspace.',
             ),
           ),
         ),
@@ -901,6 +1014,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           contentTypes: _contentTypes,
         );
       }
+      await _saveGithubRepositoryDiscoveryPreference();
       ref.invalidate(projectsProvider);
       ref.invalidate(appBootstrapProvider);
       ref.invalidate(projectsStateProvider);

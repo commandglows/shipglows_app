@@ -72,6 +72,35 @@ The `/sign-in`, `/sign-up`, and `/sso-callback` routes are still generated in
 open access builds, but they remain disabled until a Clerk publishable key is
 configured.
 
+## GitHub Auth and Repository Access
+
+Flutter does not store a GitHub OAuth client secret. GitHub credentials must
+stay in Clerk and the FastAPI backend.
+
+There are two separate GitHub surfaces:
+
+- App sign-in: the web auth pages use Clerk's prebuilt sign-in/sign-up
+  components. Enabling GitHub as a Clerk social connection is enough for the
+  app sign-in UI to expose it.
+- Repository access: the app already calls the backend endpoints
+  `/api/integrations/github/status`, `/api/integrations/github/connect`,
+  `/api/integrations/github/repos`, `/api/integrations/github/repo-tree`, and
+  `/api/integrations/github/disconnect`.
+
+To let users pick all repositories, configure the backend GitHub OAuth app with
+repo access scopes. Use `repo` for private and public repositories, plus
+`read:user` and `user:email` for account display metadata. If GitHub Actions
+workflow dispatch is required, the backend token also needs the appropriate
+workflow permission.
+
+The Flutter settings UI stores the user's repository discovery choice in
+`robotSettings.githubRepositoryDiscoveryMode`:
+
+- `manual`: default. ShipFlow only connects repositories explicitly picked by
+  the user.
+- `all`: ShipFlow may import every accessible GitHub repository and read
+  available ShipFlow metadata automatically.
+
 ## Validation
 
 ```bash

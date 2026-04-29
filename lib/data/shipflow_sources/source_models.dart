@@ -24,6 +24,9 @@ class SourceDiagnostic {
     this.suggestedCommand,
     this.eventId,
     this.line,
+    this.cause,
+    this.excerpt,
+    this.details = const <String, String>{},
   });
 
   final DiagnosticCode code;
@@ -33,6 +36,9 @@ class SourceDiagnostic {
   final String? suggestedCommand;
   final String? eventId;
   final int? line;
+  final String? cause;
+  final String? excerpt;
+  final Map<String, String> details;
 }
 
 class SourceDocument {

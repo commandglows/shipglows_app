@@ -127,7 +127,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         const SizedBox(height: 12),
         Text(
           context.tr(
-            'The Clerk Flutter beta SDK has been removed from the production path. For now, sign in through the dedicated web Google flow instead of the old embedded Flutter flow.',
+            'The Clerk Flutter beta SDK has been removed from the production path. For now, sign in through the dedicated ClerkJS web flow instead of the old embedded Flutter flow.',
           ),
           style: TextStyle(
             color: theme.colorScheme.onSurfaceVariant,
@@ -148,7 +148,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           width: double.infinity,
           child: FilledButton(
             onPressed: _isSubmitting ? null : _openAppWebSignIn,
-            child: Text(context.tr('Continue with Google')),
+            child: Text(context.tr('Open secure sign-in')),
           ),
         ),
         const SizedBox(height: 12),
@@ -189,7 +189,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          context.tr('Sign in with Google'),
+          context.tr('Sign in to ContentFlow'),
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontSize: 28,
@@ -199,7 +199,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         const SizedBox(height: 12),
         Text(
           context.tr(
-            'ContentFlow web authentication now uses the official Clerk JavaScript SDK directly on the app domain. The old site handoff and the Flutter beta SDK are no longer the primary path.',
+            'ContentFlow web authentication now uses the official Clerk JavaScript SDK directly on the app domain. Any enabled Clerk provider can be used here, including GitHub after it is configured.',
           ),
           style: TextStyle(
             color: theme.colorScheme.onSurfaceVariant,
@@ -212,7 +212,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           width: double.infinity,
           child: FilledButton(
             onPressed: _openAppWebSignIn,
-            child: Text(context.tr('Continue with Google')),
+            child: Text(context.tr('Open secure sign-in')),
           ),
         ),
         const SizedBox(height: 12),

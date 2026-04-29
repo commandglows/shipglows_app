@@ -47,6 +47,40 @@ next_step: "/sf-verify"
         ),
         isTrue,
       );
+      final duplicate = output.diagnostics.singleWhere(
+        (diag) => diag.code == DiagnosticCode.duplicateEvent,
+      );
+      expect(duplicate.eventId, 'evt_1');
+      expect(duplicate.line, isNotNull);
+      expect(duplicate.excerpt, contains('event_id: "evt_1"'));
+      expect(duplicate.details['eventType'], 'dependency_fix');
+      expect(duplicate.suggestedCommand, isNotNull);
+    });
+
+    test('reports invalid YAML with line, cause and excerpt', () {
+      const markdown = '''
+<!-- shipflow:event start -->
+```yaml
+schema_version: "1.0.0"
+event_id: "evt_bad"
+event_type: [
+```
+<!-- shipflow:event end -->
+''';
+
+      final parser = LedgerEventParser();
+      final output = parser.parse(
+        markdown: markdown,
+        source: 'DEPENDENCY_LOG.md',
+      );
+
+      final diagnostic = output.diagnostics.singleWhere(
+        (diag) => diag.code == DiagnosticCode.parseError,
+      );
+      expect(diagnostic.line, 4);
+      expect(diagnostic.cause, isNotEmpty);
+      expect(diagnostic.excerpt, contains('event_type: ['));
+      expect(diagnostic.details['yamlLength'], isNotNull);
     });
   });
 }

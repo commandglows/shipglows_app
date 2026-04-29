@@ -1,4 +1,5 @@
 import '../source_models.dart';
+import '../source_diagnostic_helpers.dart';
 import 'parsed_models.dart';
 
 class TasksParser {
@@ -59,6 +60,13 @@ class TasksParser {
           severity: DiagnosticSeverity.error,
           message: 'No project section found in TASKS.md.',
           source: source,
+          line: 1,
+          excerpt: diagnosticExcerptForLine(markdown, 1),
+          details: diagnosticDetails({
+            'expectedHeading': '## <project name>',
+            'lineCount': lines.length,
+          }),
+          suggestedCommand: '/sf-verify ShipFlow tasks',
         ),
       );
     }

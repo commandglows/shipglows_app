@@ -1,13 +1,26 @@
 const projectSelectionModeAuto = 'auto';
 const projectSelectionModeSelected = 'selected';
 const projectSelectionModeNone = 'none';
+const githubRepositoryDiscoveryModeManual = 'manual';
+const githubRepositoryDiscoveryModeAll = 'all';
 
 String normalizeProjectSelectionMode(String? raw) {
   final value = (raw ?? projectSelectionModeAuto).trim().toLowerCase();
-  if (value == projectSelectionModeSelected || value == projectSelectionModeNone) {
+  if (value == projectSelectionModeSelected ||
+      value == projectSelectionModeNone) {
     return value;
   }
   return projectSelectionModeAuto;
+}
+
+String normalizeGithubRepositoryDiscoveryMode(String? raw) {
+  final value = (raw ?? githubRepositoryDiscoveryModeManual)
+      .trim()
+      .toLowerCase();
+  if (value == githubRepositoryDiscoveryModeAll) {
+    return githubRepositoryDiscoveryModeAll;
+  }
+  return githubRepositoryDiscoveryModeManual;
 }
 
 class AppSettings {
@@ -54,6 +67,11 @@ class AppSettings {
       return 'platform';
     }
     return 'byok';
+  }
+
+  String get githubRepositoryDiscoveryMode {
+    final raw = robotSettings?['githubRepositoryDiscoveryMode']?.toString();
+    return normalizeGithubRepositoryDiscoveryMode(raw);
   }
 
   AppSettings copyWith({

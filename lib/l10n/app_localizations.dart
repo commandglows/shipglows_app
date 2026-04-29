@@ -135,6 +135,24 @@ class AppLocalizations {
     'Connect your project source': 'Connectez la source de votre projet',
     'GitHub connection is optional. Connect it only if you want to pick a repository automatically.':
         'La connexion GitHub est optionnelle. Connecte-la seulement si tu veux sélectionner un dépôt automatiquement.',
+    'How should ShipFlow discover your GitHub repositories?':
+        'Comment ShipFlow doit-il découvrir vos dépôts GitHub ?',
+    'Choose whether ShipFlow should scan every repository now, or only the repositories you select manually.':
+        'Choisissez si ShipFlow doit scanner tous les dépôts maintenant, ou seulement les dépôts que vous sélectionnez manuellement.',
+    'Import all repositories automatically':
+        'Importer tous les dépôts automatiquement',
+    'ShipFlow will fetch every accessible GitHub repository and read available ShipFlow metadata automatically.':
+        'ShipFlow récupérera chaque dépôt GitHub accessible et lira automatiquement les métadonnées ShipFlow disponibles.',
+    'I will choose repositories manually':
+        'Je choisirai les dépôts manuellement',
+    'ShipFlow will only connect repositories you explicitly pick.':
+        'ShipFlow connectera uniquement les dépôts que vous choisissez explicitement.',
+    'Connect GitHub before continuing so ShipFlow can access the repository list.':
+        'Connectez GitHub avant de continuer pour que ShipFlow puisse accéder à la liste des dépôts.',
+    'GitHub repository preference saved.':
+        'Préférence des dépôts GitHub enregistrée.',
+    'Failed to save GitHub repository preference.':
+        'Impossible d’enregistrer la préférence des dépôts GitHub.',
     'Connected': 'Connecté',
     'Connecting {channelName}': 'Connexion à {channelName}',
     'Content': 'Contenu',
@@ -361,6 +379,8 @@ class AppLocalizations {
     'Archive this project?': 'Archiver ce projet ?',
     'Delete this project from the active workspace list?':
         'Supprimer ce projet de la liste active du workspace ?',
+    'Sign in before editing a project.':
+        'Connectez-vous avant de modifier un projet.',
     'Sign in with Google before editing a project.':
         'Connectez-vous avec Google avant de modifier un projet.',
     'Project name': 'Nom du projet',
@@ -475,6 +495,9 @@ class AppLocalizations {
         'Connectez-vous pour configurer la fréquence de contenu',
     'Sign in to sync notification preferences':
         'Connectez-vous pour synchroniser les préférences de notification',
+    'Sign in before creating a workspace.':
+        'Connectez-vous avant de créer un workspace.',
+    'Sign in to ContentFlow': 'Se connecter à ContentFlow',
     'Sign in with Google': 'Se connecter avec Google',
     'Sign in with Google before creating a workspace.':
         'Connectez-vous avec Google avant de créer un workspace.',
@@ -1026,6 +1049,7 @@ class AppLocalizations {
     'Please enter a persona name': 'Veuillez entrer un nom de persona',
     'Positioning Shift': 'Changement de positionnement',
     'Preview': 'Apercu',
+    'Open secure sign-in': 'Ouvrir la connexion sécurisée',
     'Recommendation': 'Recommandation',
     'Recommendations': 'Recommandations',
     'Reels': 'Reels',
@@ -1043,12 +1067,14 @@ class AppLocalizations {
     'Session: {state}': 'Session : {state}',
     'Set `CLERK_PUBLISHABLE_KEY` with `--dart-define` to enable the production ClerkJS sign-in flow on the app domain.':
         'Definissez `CLERK_PUBLISHABLE_KEY` avec `--dart-define` pour activer le flux de connexion ClerkJS de production sur le domaine de l app.',
+    'ContentFlow web authentication now uses the official Clerk JavaScript SDK directly on the app domain. Any enabled Clerk provider can be used here, including GitHub after it is configured.':
+        'L authentification web ContentFlow utilise maintenant le SDK JavaScript officiel de Clerk directement sur le domaine de l app. Tout fournisseur Clerk active peut etre utilise ici, y compris GitHub une fois configure.',
     'Stage: {stage}': 'Etape : {stage}',
     'Status': 'Statut',
     'Struggle': 'Difficulte',
     'Synthesize Narrative': 'Synthese narrative',
-    'The Clerk Flutter beta SDK has been removed from the production path. For now, sign in through the dedicated web Google flow instead of the old embedded Flutter flow.':
-        'Le SDK Flutter beta de Clerk a ete retire du chemin de production. Pour l instant, connectez-vous via le flux web Google dedie au lieu de l ancien flux Flutter embarque.',
+    'The Clerk Flutter beta SDK has been removed from the production path. For now, sign in through the dedicated ClerkJS web flow instead of the old embedded Flutter flow.':
+        'Le SDK Flutter beta de Clerk a ete retire du chemin de production. Pour l instant, connectez-vous via le flux web ClerkJS dedie au lieu de l ancien flux Flutter embarque.',
     'This will approve and publish {count} content item(s).':
         'Cela va approuver et publier {count} contenu(s).',
     'This will remove the connection to {displayName}.':
@@ -1056,6 +1082,8 @@ class AppLocalizations {
     'TikTok': 'TikTok',
     'Try refreshing or complete your weekly ritual':
         'Essayez de rafraichir ou completez votre rituel hebdomadaire',
+    'You are not signed in yet. Open the dedicated app-domain Clerk page to use any configured sign-in provider. Workspace creation and onboarding are only available after authentication.':
+        'Vous n etes pas encore connecte. Ouvrez la page Clerk dediee au domaine de l app pour utiliser n importe quel fournisseur de connexion configure. La creation du workspace et l onboarding ne sont disponibles qu apres authentification.',
     'URL *': 'URL *',
     'Untitled': 'Sans titre',
     'Update': 'Mettre a jour',

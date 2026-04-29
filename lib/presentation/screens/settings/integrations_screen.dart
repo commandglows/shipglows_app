@@ -34,6 +34,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
   bool _isSavingOpenRouterKey = false;
   bool _isValidatingOpenRouterKey = false;
   bool _isDeletingOpenRouterKey = false;
+  bool _isSavingGithubRepositoryDiscoveryMode = false;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     final appAccess = ref.watch(appAccessStateProvider).value;
     final authSession = ref.watch(authSessionProvider);
     final backendStatus = ref.watch(backendStatusProvider);
+    final userSettings = ref.watch(currentUserSettingsProvider);
     final githubIntegration = ref.watch(githubIntegrationStatusProvider);
     final aiRuntimeSettings = ref.watch(aiRuntimeSettingsProvider);
     final openRouterCredential = ref.watch(openRouterCredentialStatusProvider);
@@ -120,7 +122,9 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
               title: 'GitHub',
               gap: 0,
               children: [
-                SettingsBlock(child: _buildGithubBody(githubIntegration)),
+                SettingsBlock(
+                  child: _buildGithubBody(githubIntegration, userSettings),
+                ),
               ],
             ),
             SizedBox(height: groupGap),
@@ -854,7 +858,10 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
 
   // ----- GitHub ----------------------------------------------------------
 
-  Widget _buildGithubBody(AsyncValue<GithubIntegrationState> state) {
+  Widget _buildGithubBody(
+    AsyncValue<GithubIntegrationState> state,
+    AsyncValue<AppSettings?> userSettings,
+  ) {
     final theme = Theme.of(context);
 
     return state.when(
@@ -884,6 +891,8 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
                 ),
               ),
             ],
+            const SizedBox(height: 16),
+            _buildGithubRepositoryDiscoveryModeControl(userSettings),
             const SizedBox(height: 14),
             connected
                 ? OutlinedButton.icon(
@@ -946,6 +955,117 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildGithubRepositoryDiscoveryModeControl(
+    AsyncValue<AppSettings?> userSettings,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final settings = userSettings.value;
+    final mode =
+        settings?.githubRepositoryDiscoveryMode ??
+        githubRepositoryDiscoveryModeManual;
+    final disabled =
+        settings == null ||
+        userSettings.isLoading ||
+        _isSavingGithubRepositoryDiscoveryMode;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr('How should ShipFlow discover your GitHub repositories?'),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          context.tr(
+            'Choose whether ShipFlow should scan every repository now, or only the repositories you select manually.',
+          ),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        RadioListTile<String>(
+          value: githubRepositoryDiscoveryModeAll,
+          groupValue: mode,
+          contentPadding: EdgeInsets.zero,
+          title: Text(context.tr('Import all repositories automatically')),
+          subtitle: Text(
+            context.tr(
+              'ShipFlow will fetch every accessible GitHub repository and read available ShipFlow metadata automatically.',
+            ),
+          ),
+          onChanged: disabled ? null : _setGithubRepositoryDiscoveryMode,
+        ),
+        RadioListTile<String>(
+          value: githubRepositoryDiscoveryModeManual,
+          groupValue: mode,
+          contentPadding: EdgeInsets.zero,
+          title: Text(context.tr('I will choose repositories manually')),
+          subtitle: Text(
+            context.tr(
+              'ShipFlow will only connect repositories you explicitly pick.',
+            ),
+          ),
+          onChanged: disabled ? null : _setGithubRepositoryDiscoveryMode,
+        ),
+        if (_isSavingGithubRepositoryDiscoveryMode) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                context.tr('Saving...'),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _setGithubRepositoryDiscoveryMode(String? mode) async {
+    final normalizedMode = normalizeGithubRepositoryDiscoveryMode(mode);
+    setState(() => _isSavingGithubRepositoryDiscoveryMode = true);
+    try {
+      await ref
+          .read(currentUserSettingsProvider.notifier)
+          .updateGithubRepositoryDiscoveryMode(normalizedMode);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.tr('GitHub repository preference saved.')),
+        ),
+      );
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      showCopyableDiagnosticSnackBar(
+        context,
+        ref,
+        message: context.tr('Failed to save GitHub repository preference.'),
+        scope: 'settings.github.repository_discovery_mode',
+        error: error,
+        stackTrace: stackTrace,
+        backgroundColor: AppTheme.rejectColor.withAlpha(200),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingGithubRepositoryDiscoveryMode = false);
+      }
+    }
   }
 
   Future<void> _connectGithub() async {

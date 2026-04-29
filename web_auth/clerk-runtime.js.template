@@ -270,7 +270,7 @@
     return true;
   }
 
-  async function startGoogleSignIn(options) {
+  async function startSocialSignIn(options) {
     const clerk = await load();
     const redirectUrlComplete = resolveRedirectComplete(
       (options && options.redirectUrlComplete) || readRedirectCompleteFromLocation(),
@@ -284,6 +284,10 @@
       signUpForceRedirectUrl: redirectUrlComplete,
       signUpFallbackRedirectUrl: redirectUrlComplete,
     });
+  }
+
+  async function startGoogleSignIn(options) {
+    return startSocialSignIn(options);
   }
 
   async function handleRedirectCallback(options) {
@@ -331,6 +335,7 @@
     signOut,
     mountSignIn,
     mountSignUp,
+    startSocialSignIn,
     startGoogleSignIn,
     handleRedirectCallback,
     getDiagnostics,

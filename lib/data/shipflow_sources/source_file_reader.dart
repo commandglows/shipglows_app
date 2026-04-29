@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'source_diagnostic_helpers.dart';
 import 'source_models.dart';
 import 'source_path_policy.dart';
 
@@ -30,13 +31,16 @@ class SourceFileReader {
 
     if (!pathPolicy.isDesktopSupported) {
       diagnostics.add(
-        const SourceDiagnostic(
+        SourceDiagnostic(
           code: DiagnosticCode.unsupportedSource,
           severity: DiagnosticSeverity.error,
           message:
               'Local filesystem reading is supported only on desktop targets.',
           source: 'platform',
           suggestedCommand: 'flutter run -d linux',
+          details: diagnosticDetails({
+            'supportedTargets': 'linux, macos, windows',
+          }),
         ),
       );
       return SourceSnapshot(
@@ -96,6 +100,11 @@ class SourceFileReader {
             message:
                 'Total refresh size exceeds limit (${pathPolicy.maxTotalBytes} bytes).',
             source: source,
+            details: diagnosticDetails({
+              'currentTotalBytes': totalBytes,
+              'maxTotalBytes': pathPolicy.maxTotalBytes,
+            }),
+            suggestedCommand: '/sf-verify ShipFlow source inventory',
           ),
         );
         break;
@@ -141,6 +150,11 @@ class SourceFileReader {
           severity: DiagnosticSeverity.warning,
           message: 'Source file is missing.',
           source: check.redactedPath,
+          details: diagnosticDetails({
+            'resolvedPath': check.redactedPath,
+            'allowedRoots': pathPolicy.allowedRoots.join(', '),
+          }),
+          suggestedCommand: '/sf-verify ShipFlow source inventory',
         ),
       );
       return null;
@@ -156,6 +170,11 @@ class SourceFileReader {
             message:
                 'Source file exceeds limit (${pathPolicy.maxFileBytes} bytes).',
             source: check.redactedPath,
+            details: diagnosticDetails({
+              'fileSizeBytes': stat.size,
+              'maxFileBytes': pathPolicy.maxFileBytes,
+            }),
+            suggestedCommand: '/sf-verify ShipFlow source inventory',
           ),
         );
         return null;
@@ -168,6 +187,12 @@ class SourceFileReader {
             message:
                 'Skipping file because total refresh would exceed limit (${pathPolicy.maxTotalBytes} bytes).',
             source: check.redactedPath,
+            details: diagnosticDetails({
+              'fileSizeBytes': stat.size,
+              'currentTotalBytes': currentTotalBytes,
+              'maxTotalBytes': pathPolicy.maxTotalBytes,
+            }),
+            suggestedCommand: '/sf-verify ShipFlow source inventory',
           ),
         );
         return null;
@@ -179,13 +204,20 @@ class SourceFileReader {
         redactedPath: check.redactedPath,
         content: content,
       );
-    } on FileSystemException {
+    } on FileSystemException catch (error) {
       diagnostics.add(
         SourceDiagnostic(
           code: DiagnosticCode.permissionDenied,
           severity: DiagnosticSeverity.error,
-          message: 'Permission denied while reading source.',
+          message: 'Filesystem error while reading source.',
           source: check.redactedPath,
+          cause: diagnosticCause(error),
+          details: diagnosticDetails({
+            'osError': error.osError?.message,
+            'osErrorCode': error.osError?.errorCode,
+            'path': check.redactedPath,
+          }),
+          suggestedCommand: '/sf-verify ShipFlow source inventory',
         ),
       );
       return null;

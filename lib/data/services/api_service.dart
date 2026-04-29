@@ -2393,6 +2393,36 @@ class ApiService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchAllGithubRepos({
+    String? query,
+    int perPage = 100,
+    int maxPages = 50,
+  }) async {
+    final repos = <Map<String, dynamic>>[];
+    final seen = <String>{};
+
+    for (var page = 1; page <= maxPages; page += 1) {
+      final batch = await fetchGithubRepos(
+        query: query,
+        perPage: perPage,
+        page: page,
+      );
+
+      for (final repo in batch) {
+        final key = repo['full_name']?.toString();
+        if (key == null || key.isEmpty || seen.add(key)) {
+          repos.add(repo);
+        }
+      }
+
+      if (batch.length < perPage) {
+        break;
+      }
+    }
+
+    return repos;
+  }
+
   Future<Map<String, dynamic>> fetchGithubRepoTree({
     required String owner,
     required String repo,

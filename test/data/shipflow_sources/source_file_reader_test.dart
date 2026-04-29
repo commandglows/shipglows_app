@@ -78,6 +78,11 @@ void main() {
               .isNotEmpty,
           isTrue,
         );
+        final missingSource = snapshot.diagnostics.firstWhere(
+          (diag) => diag.code == DiagnosticCode.sourceGap,
+        );
+        expect(missingSource.details['resolvedPath'], isNotEmpty);
+        expect(missingSource.suggestedCommand, isNotNull);
       },
     );
   });

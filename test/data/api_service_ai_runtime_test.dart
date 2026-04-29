@@ -86,5 +86,26 @@ void main() {
 
       expect(settings.aiRuntimeMode, 'platform');
     });
+
+    test('reads GitHub repository discovery preference', () {
+      final fallback = AppSettings.fromJson({
+        'id': 's1',
+        'userId': 'u1',
+      });
+      final auto = AppSettings.fromJson({
+        'id': 's1',
+        'userId': 'u1',
+        'robotSettings': {'githubRepositoryDiscoveryMode': 'all'},
+      });
+
+      expect(
+        fallback.githubRepositoryDiscoveryMode,
+        githubRepositoryDiscoveryModeManual,
+      );
+      expect(
+        auto.githubRepositoryDiscoveryMode,
+        githubRepositoryDiscoveryModeAll,
+      );
+    });
   });
 }

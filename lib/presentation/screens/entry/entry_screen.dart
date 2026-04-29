@@ -196,7 +196,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                   ),
                   icon: const Icon(Icons.lock_open_rounded),
                   label: Text(
-                    context.tr(kIsWeb ? 'Continue with Google' : 'Sign In'),
+                    context.tr(kIsWeb ? 'Open secure sign-in' : 'Sign In'),
                   ),
                 ),
                 TextButton.icon(
@@ -574,7 +574,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                   ),
                 ),
                 child: Text(
-                  context.tr(kIsWeb ? 'Continue with Google' : 'Sign In'),
+                  context.tr(kIsWeb ? 'Open secure sign-in' : 'Sign In'),
                 ),
               ),
               TextButton(
@@ -661,7 +661,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
         icon: Icons.warning_amber_rounded,
         accent: AppTheme.warningColor,
         primaryLabel: isUnauthorized
-            ? (kIsWeb ? 'Continue with Google' : 'Sign In Again')
+            ? (kIsWeb ? 'Open secure sign-in' : 'Sign In Again')
             : 'Open System Status',
         onPrimary: () {
           if (isUnauthorized) {
@@ -740,11 +740,11 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
       eyebrow: 'Logged out',
       title: 'Sign in to access your workspace',
       description: kIsWeb
-          ? 'You are not signed in yet. Continue with Google on the dedicated app-domain Clerk page. Workspace creation and onboarding are only available after authentication.'
+          ? 'You are not signed in yet. Open the dedicated app-domain Clerk page to use any configured sign-in provider. Workspace creation and onboarding are only available after authentication.'
           : 'You are not signed in yet. The Flutter beta auth path has been archived, so use the dedicated web sign-in flow instead.',
       icon: Icons.lock_outline_rounded,
       accent: AppTheme.warningColor,
-      primaryLabel: kIsWeb ? 'Continue with Google' : 'Sign In',
+      primaryLabel: kIsWeb ? 'Open secure sign-in' : 'Sign In',
       onPrimary: kIsWeb ? _openWebsiteSignIn : () => context.go('/auth'),
       secondaryLabel: kIsWeb ? 'Open App Entry' : 'Open Demo Workspace',
       onSecondary: kIsWeb

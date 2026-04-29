@@ -161,7 +161,7 @@ class _SeoScreenState extends ConsumerState<SeoScreen> {
 
     setState(() => _isRepoPickerLoading = true);
     try {
-      final repos = await api.fetchGithubRepos();
+      final repos = await api.fetchAllGithubRepos();
       if (!mounted) {
         return;
       }

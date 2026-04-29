@@ -1114,7 +1114,7 @@ class _DripWizardSheetState extends ConsumerState<DripWizardSheet> {
     setState(() => _isGithubRepoPickerLoading = true);
 
     try {
-      final repos = await api.fetchGithubRepos();
+      final repos = await api.fetchAllGithubRepos();
       if (!mounted) {
         return;
       }

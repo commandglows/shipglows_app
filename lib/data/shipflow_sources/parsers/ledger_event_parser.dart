@@ -1,6 +1,7 @@
 import 'package:yaml/yaml.dart';
 
 import '../source_models.dart';
+import '../source_diagnostic_helpers.dart';
 import 'parsed_models.dart';
 
 class LedgerEventParser {
@@ -36,6 +37,13 @@ class LedgerEventParser {
           severity: DiagnosticSeverity.error,
           message: 'Event sentinel mismatch (start=$starts end=$ends).',
           source: source,
+          details: diagnosticDetails({
+            'startSentinels': starts,
+            'endSentinels': ends,
+            'expectedBlockFormat':
+                '<!-- shipflow:event start --> + fenced yaml + <!-- shipflow:event end -->',
+          }),
+          suggestedCommand: '/sf-verify ShipFlow event log',
         ),
       );
     }
@@ -48,21 +56,33 @@ class LedgerEventParser {
     final ids = <String>{};
     for (final block in blocks) {
       final yamlText = block.group(1) ?? '';
+      final blockText = block.group(0) ?? '';
+      final yamlOffsetInBlock = blockText.indexOf(yamlText);
+      final yamlOffset = yamlOffsetInBlock < 0
+          ? block.start
+          : block.start + yamlOffsetInBlock;
+      final line = diagnosticLineForOffset(markdown, yamlOffset);
       final parsed = _parseYamlMap(yamlText);
-      if (parsed == null) {
+      if (parsed.map == null) {
         diagnostics.add(
           SourceDiagnostic(
             code: DiagnosticCode.parseError,
             severity: DiagnosticSeverity.error,
             message: 'Invalid YAML event block.',
             source: source,
+            line: line,
+            cause: parsed.error,
+            excerpt: diagnosticExcerptForLine(markdown, line, radius: 8),
+            details: diagnosticDetails({'yamlLength': yamlText.length}),
+            suggestedCommand: '/sf-verify ShipFlow event log',
           ),
         );
         continue;
       }
+      final yaml = parsed.map!;
 
       final missing = _requiredFields
-          .where((key) => !parsed.containsKey(key))
+          .where((key) => !yaml.containsKey(key))
           .toList();
       if (missing.isNotEmpty) {
         diagnostics.add(
@@ -71,12 +91,20 @@ class LedgerEventParser {
             severity: DiagnosticSeverity.error,
             message: 'Event is missing required fields: ${missing.join(', ')}',
             source: source,
+            line: line,
+            eventId: yaml['event_id']?.toString(),
+            excerpt: diagnosticExcerptForLine(markdown, line, radius: 8),
+            details: diagnosticDetails({
+              'missingFields': missing.join(', '),
+              'presentFields': yaml.keys.join(', '),
+            }),
+            suggestedCommand: '/sf-verify ShipFlow event log',
           ),
         );
         continue;
       }
 
-      final eventId = '${parsed['event_id']}';
+      final eventId = '${yaml['event_id']}';
       if (ids.contains(eventId)) {
         diagnostics.add(
           SourceDiagnostic(
@@ -85,6 +113,14 @@ class LedgerEventParser {
             message: 'Duplicate event_id found: $eventId',
             source: source,
             eventId: eventId,
+            line: line,
+            excerpt: diagnosticExcerptForLine(markdown, line, radius: 8),
+            details: diagnosticDetails({
+              'eventType': yaml['event_type'],
+              'project': yaml['project'],
+              'status': yaml['status'],
+            }),
+            suggestedCommand: '/sf-verify ShipFlow event log',
           ),
         );
         continue;
@@ -94,14 +130,14 @@ class LedgerEventParser {
       events.add(
         LedgerEvent(
           eventId: eventId,
-          eventType: '${parsed['event_type']}',
-          project: '${parsed['project']}',
-          status: '${parsed['status']}',
-          riskLevel: '${parsed['risk_level']}',
-          finishedAt: _parseUtcDate('${parsed['finished_at']}'),
-          summary: '${parsed['summary']}',
+          eventType: '${yaml['event_type']}',
+          project: '${yaml['project']}',
+          status: '${yaml['status']}',
+          riskLevel: '${yaml['risk_level']}',
+          finishedAt: _parseUtcDate('${yaml['finished_at']}'),
+          summary: '${yaml['summary']}',
           source: source,
-          nextStep: '${parsed['next_step']}',
+          nextStep: '${yaml['next_step']}',
         ),
       );
     }
@@ -109,16 +145,16 @@ class LedgerEventParser {
     return ParserOutput(records: events, diagnostics: diagnostics);
   }
 
-  Map<String, dynamic>? _parseYamlMap(String text) {
+  _YamlParseResult _parseYamlMap(String text) {
     try {
       final yaml = loadYaml(text);
       if (yaml is YamlMap) {
-        return Map<String, dynamic>.from(yaml);
+        return _YamlParseResult(map: Map<String, dynamic>.from(yaml));
       }
-    } catch (_) {
-      return null;
+      return const _YamlParseResult(error: 'YAML event block is not a map.');
+    } catch (error) {
+      return _YamlParseResult(error: diagnosticCause(error));
     }
-    return null;
   }
 
   DateTime? _parseUtcDate(String value) {
@@ -131,4 +167,11 @@ class LedgerEventParser {
       return null;
     }
   }
+}
+
+class _YamlParseResult {
+  const _YamlParseResult({this.map, this.error});
+
+  final Map<String, dynamic>? map;
+  final String? error;
 }

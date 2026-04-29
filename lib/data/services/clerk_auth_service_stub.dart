@@ -27,7 +27,7 @@ class ClerkAuthService {
   }) async {
     throw StateError(
       'Clerk Flutter beta auth has been removed from production. '
-      'Use the web Google flow or the legacy branch if you need the old SDK.',
+      'Use the ClerkJS web flow or the legacy branch if you need the old SDK.',
     );
   }
 
@@ -39,7 +39,7 @@ class ClerkAuthService {
   }) async {
     throw StateError(
       'Clerk Flutter beta auth has been removed from production. '
-      'Use the web Google flow or the legacy branch if you need the old SDK.',
+      'Use the ClerkJS web flow or the legacy branch if you need the old SDK.',
     );
   }
 

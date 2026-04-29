@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'settings_panel.dart';
+
 class _ShipFlowNavItem {
   const _ShipFlowNavItem({
     required this.label,
@@ -259,6 +261,7 @@ class _NavButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final opensInlineSettings = item.path == '/settings';
     return Material(
       color: selected
           ? colorScheme.surfaceContainerHighest
@@ -266,7 +269,13 @@ class _NavButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: () => context.go(item.path),
+        onTap: () {
+          if (opensInlineSettings) {
+            _openSettingsPanel(context);
+            return;
+          }
+          context.go(item.path);
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
@@ -297,6 +306,61 @@ class _NavButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSettingsPanel(BuildContext context) async {
+    final isDesktop = MediaQuery.sizeOf(context).width >= 980;
+    if (isDesktop) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 32,
+            vertical: 24,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760, maxHeight: 720),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 12, 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Settings',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                const Expanded(child: ShipFlowSettingsPanel(compact: true)),
+              ],
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.8,
+          child: const ShipFlowSettingsPanel(compact: true),
         ),
       ),
     );
