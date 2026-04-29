@@ -163,7 +163,9 @@
 
     state.loadPromise = (async () => {
       if (!config.publishableKey) {
-        throw new Error('Missing CLERK_PUBLISHABLE_KEY.');
+        throw new Error(
+          'Clerk is disabled for this build because CLERK_PUBLISHABLE_KEY is not configured.',
+        );
       }
 
       const clerk = await loadScript();
@@ -312,7 +314,9 @@
       currentOriginMatchesConfiguredApp: currentOriginMatchesConfiguredApp(),
       oauthCallbackUrl: buildOAuthCallbackUrl(readRedirectCompleteFromLocation()),
       redirectUrlComplete: readRedirectCompleteFromLocation(),
-      clerkFrontendApi: deriveClerkDomain(config.publishableKey),
+      clerkFrontendApi: config.publishableKey
+        ? deriveClerkDomain(config.publishableKey)
+        : 'disabled',
       keyPreview: config.publishableKey
         ? `${config.publishableKey.slice(0, 10)}...${config.publishableKey.slice(-5)}`
         : 'missing',

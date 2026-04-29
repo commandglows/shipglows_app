@@ -18,8 +18,7 @@ if [[ ! -d "$BUILD_DIR" ]]; then
 fi
 
 if [[ -z "$CLERK_PUBLISHABLE_KEY_VALUE" ]]; then
-  echo "ERROR: CLERK_PUBLISHABLE_KEY is required to generate ClerkJS auth routes." >&2
-  exit 1
+  echo "WARNING: CLERK_PUBLISHABLE_KEY not set - generating disabled ClerkJS auth routes." >&2
 fi
 
 escape_replacement() {

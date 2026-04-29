@@ -496,6 +496,20 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
 
     final service = ref.read(clerkAuthServiceProvider);
     if (service == null) {
+      if (AppConfig.openAccessEnabled) {
+        _clearLegacyAuthPrefs();
+        state = const AuthSession(
+          status: AuthStatus.demo,
+          onboardingComplete: true,
+        );
+        diagnostics.info(
+          scope: 'auth.restore',
+          message: 'Clerk is not configured. Starting in open access mode.',
+        );
+        ref.invalidate(appBootstrapProvider);
+        return;
+      }
+
       _clearLegacyAuthPrefs();
       state = const AuthSession(status: AuthStatus.signedOut);
       diagnostics.warning(

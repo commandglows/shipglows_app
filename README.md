@@ -46,6 +46,32 @@ flutter pub get
 flutter run -d linux
 ```
 
+## Vercel Deployment
+
+The web build can run in open access mode without Clerk. In Vercel, set these
+project environment variables before redeploying:
+
+```bash
+API_BASE_URL=https://api.winflowz.com
+APP_SITE_URL=https://contentflow.winflowz.com
+APP_WEB_URL=https://app.contentflow.winflowz.com
+OPEN_ACCESS=true
+```
+
+`OPEN_ACCESS=true` lets the app start without auth. If `OPEN_ACCESS` is omitted,
+the Vercel build also enables open access automatically when
+`CLERK_PUBLISHABLE_KEY` is missing.
+
+To re-enable Clerk auth flows, add:
+
+```bash
+CLERK_PUBLISHABLE_KEY=pk_live_xxx
+```
+
+The `/sign-in`, `/sign-up`, and `/sso-callback` routes are still generated in
+open access builds, but they remain disabled until a Clerk publishable key is
+configured.
+
 ## Validation
 
 ```bash

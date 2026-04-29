@@ -11,6 +11,11 @@ class AppConfig {
     defaultValue: '',
   );
 
+  static const _openAccessOverride = String.fromEnvironment(
+    'OPEN_ACCESS',
+    defaultValue: '',
+  );
+
   static const siteUrl = String.fromEnvironment(
     'APP_SITE_URL',
     defaultValue: canonicalSiteUrl,
@@ -35,6 +40,17 @@ class AppConfig {
     'BUILD_TIMESTAMP',
     defaultValue: 'unknown',
   );
+
+  static bool get openAccessEnabled {
+    final normalized = _openAccessOverride.trim().toLowerCase();
+    if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+      return true;
+    }
+    if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+      return false;
+    }
+    return clerkPublishableKey.isEmpty;
+  }
 
   static bool get siteUrlPointsToAppHost {
     final configured = Uri.tryParse(siteUrl);
