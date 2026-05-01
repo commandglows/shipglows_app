@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/app_diagnostics.dart';
 import '../../../core/project_onboarding_validation.dart';
 import '../../../data/demo/demo_seed.dart';
 import '../../../data/models/app_settings.dart';

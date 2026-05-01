@@ -748,8 +748,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
       _tryRemoteSignOut(
         service: service,
         scope: 'auth.clear_session',
-        warningMessage:
-            'Remote sign-out failed while clearing local session.',
+        warningMessage: 'Remote sign-out failed while clearing local session.',
       ),
     );
   }
@@ -763,7 +762,11 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
     state = const AuthSession(status: AuthStatus.signedOut);
     ref
         .read(appDiagnosticsProvider)
-        .info(scope: scope, message: message, context: context);
+        .info(
+          scope: scope,
+          message: message,
+          context: context ?? const <String, Object?>{},
+        );
     _invalidateAuthenticatedState();
 
     final prefs = ref.read(sharedPrefsProvider);
