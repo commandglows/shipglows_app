@@ -18,7 +18,7 @@ dependencies:
   riverpod_annotation: ^4.0.2
 
   # Routing
-  go_router: ^17.2.2
+  go_router: ^17.2.3
 
   # Swipeable cards
   flutter_card_swiper: ^7.2.0
