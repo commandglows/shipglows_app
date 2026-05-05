@@ -1,10 +1,10 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.1.0"
 project: contentflow_app
 created: "2026-04-26"
-updated: "2026-04-26"
+updated: "2026-05-04"
 status: reviewed
 source_skill: sf-docs
 scope: technical
@@ -45,6 +45,10 @@ Backend and auth dependencies:
 - `./build.sh --serve` (local build + serve)
 - `./pm2-web.sh` (build + run production-style web server)
 - `./scripts/validate-clerk-runtime.sh` (auth runtime smoke check)
+
+## ARM64 Android Release Guardrail
+
+On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: no `flutter build apk --release`, `flutter build appbundle --release`, `./gradlew assembleRelease`, or `./gradlew bundleRelease`. Route APK/AAB release builds to Blacksmith or another Linux x64 CI runner. Local Flutter work is limited to `flutter analyze`, `flutter test`, and `flutter build web --release`.
 
 ## App Structure
 

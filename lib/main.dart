@@ -13,7 +13,7 @@ import 'shipflow/app.dart' as shipflow;
 
 const _appTarget = String.fromEnvironment(
   'APP_TARGET',
-  defaultValue: 'contentflow',
+  defaultValue: 'shipflow',
 );
 
 Future<void> main() async {
@@ -33,9 +33,11 @@ Widget buildRootApp({
   required AppDiagnostics diagnostics,
   String appTarget = _appTarget,
 }) {
-  final app = appTarget == 'shipflow'
-      ? const shipflow.ShipFlowApp()
-      : const ContentFlowApp();
+  final normalizedTarget = appTarget.trim().toLowerCase();
+  final app = switch (normalizedTarget) {
+    'legacy' || 'contentflow' => const LegacyShipFlowApp(),
+    _ => const shipflow.ShipFlowApp(),
+  };
 
   return ProviderScope(
     overrides: [
@@ -46,8 +48,8 @@ Widget buildRootApp({
   );
 }
 
-class ContentFlowApp extends ConsumerWidget {
-  const ContentFlowApp({super.key});
+class LegacyShipFlowApp extends ConsumerWidget {
+  const LegacyShipFlowApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,7 +58,7 @@ class ContentFlowApp extends ConsumerWidget {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'ContentFlow',
+      title: 'ShipFlow Legacy',
       routerConfig: router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

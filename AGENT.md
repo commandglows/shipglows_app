@@ -1,11 +1,11 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.1.0"
 draft: false
 project: contentflow_app
 created: "2026-04-26"
-updated: "2026-04-27"
+updated: "2026-05-04"
 status: reviewed
 source_skill: sf-docs
 scope: technical
@@ -42,6 +42,7 @@ next_step: "/sf-docs update AGENT.md"
 - All durable product data for authenticated features must come from the FastAPI backend behind `API_BASE_URL`.
 - Clerk is the only source of session identity for web auth flow.
 - Native Flutter auth flows using password SDK entrypoints are intentionally removed from production usage.
+- On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: no `flutter build apk --release`, `flutter build appbundle --release`, `./gradlew assembleRelease`, or `./gradlew bundleRelease`. Route APK/AAB release builds to Blacksmith or another Linux x64 CI runner. Local Flutter work is limited to `flutter analyze`, `flutter test`, and `flutter build web --release`.
 
 ## Authoritative stack (inferred)
 - Flutter SDK 3.11+.

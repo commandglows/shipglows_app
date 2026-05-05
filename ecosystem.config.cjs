@@ -1,13 +1,11 @@
-const path = require("path");
-
 module.exports = {
   apps: [{
-    name: "contentflow-app",
-    cwd: path.resolve(__dirname),
+    name: "shipflow_app",
+    cwd: "/home/ubuntu/shipflow_app",
     script: "bash",
-    args: ["-lc", "export PORT=3050 && flox activate -- doppler run -- ./pm2-web.sh"],
+    args: ["-lc", "export PORT=3002 && flox activate -- doppler run -- bash -lc 'env PORT=3002 ./pm2-web.sh'"],
     env: {
-      PORT: 3050
+      PORT: 3002
     },
     autorestart: true,
     watch: false

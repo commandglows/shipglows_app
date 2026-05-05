@@ -1,6 +1,6 @@
 {
-    "name": "contentflow_app",
-    "short_name": "contentflow_app",
+    "name": "shipflow_app",
+    "short_name": "shipflow_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
