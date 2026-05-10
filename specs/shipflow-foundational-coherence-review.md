@@ -6,7 +6,7 @@ project: "shipflow_app"
 created: "2026-05-10"
 created_at: "2026-05-10 16:03:25 UTC"
 updated: "2026-05-10"
-updated_at: "2026-05-10 16:31:18 UTC"
+updated_at: "2026-05-10 16:38:48 UTC"
 status: ready
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
@@ -71,7 +71,7 @@ evidence:
   - "docs/technical/foundational-specs-handoff.md references /sf-ready ShipFlow Foundational Coherence Review as required gate before implementation."
   - "Foundational specs are present but mostly still draft and explicitly deferred for cross-spec coherence pass."
   - "Current state mixes shared contracts across multiple files, increasing ambiguity for a fresh implementation context."
-next_step: "/sf-end ShipFlow Foundational Coherence Review"
+next_step: "None"
 ---
 
 # Title
@@ -369,6 +369,7 @@ None.
 | 2026-05-10 16:03:25 UTC | sf-spec | GPT-5 Codex | Created canonical foundational coherence spec from existing foundational architecture and handoff intent. | draft saved | /sf-ready ShipFlow Foundational Coherence Review |
 | 2026-05-10 16:17:31 UTC | sf-build | GPT-5 Codex | Added coherence matrix, state vocabulary, security controls, failure gates, docs links, and validation checks. | implemented | /sf-end ShipFlow Foundational Coherence Review |
 | 2026-05-10 16:31:18 UTC | sf-ship | GPT-5 Codex | Quick ship for foundational coherence documentation scope. | shipped | /sf-end ShipFlow Foundational Coherence Review |
+| 2026-05-10 16:38:48 UTC | sf-end | GPT-5 Codex | Closed documentation-only foundational coherence chantier after quick ship and bookkeeping updates. | closed | None |
 
 # Current Chantier Flow
 
@@ -378,5 +379,5 @@ None.
 | sf-ready | satisfied in sf-build | Structure, metadata, security, docs coherence, and freshness evidence checked after corrections. |
 | sf-start | implemented | Coherence contract and docs navigation updates applied; no runtime code changed. |
 | sf-verify | passed | Required sections, coherence anchors, docs cross-links, and implementation task completion validated with scoped checks. |
-| sf-end | next | Close the documentation-only chantier and prepare bounded ship scope. |
+| sf-end | closed | Documentation-only coherence chantier closed after quick ship and bookkeeping updates. |
 | sf-ship | shipped | Quick ship completed for the documentation-only coherence scope; formal closure remains pending. |

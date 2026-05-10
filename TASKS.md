@@ -7,6 +7,7 @@ Current active chantier:
 | 🔴 | Stabiliser la frontiere ShipFlow actif / ContentFlow legacy | 🔄 in progress |
 | 🔴 | Garder `origin/main` comme base saine et conserver le WIP Supabase local en archive | ✅ done |
 | 🔴 | Documenter Markdown/repo comme source de verite et DB future comme projection | ✅ done |
+| 🔴 | Creer le gate canonique de coherence fondation ShipFlow avant implementation Firebase/GitHub/Firestore | ✅ done |
 | 🔴 | Classer les briques ContentFlow avant suppression | 🔄 in progress |
 | 🟠 | Decider plus tard Firebase/Firestore/Auth/FastAPI/BYOK/feedback avec specs dediees | 💤 deferred |
 | 🟠 | Nettoyer les mentions ContentFlow actives dans les docs racine | 🔄 in progress |

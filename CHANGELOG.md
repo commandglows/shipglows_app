@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [2026-05-10]
+
+### Added
+- Added a canonical foundational coherence gate for ShipFlow Firebase/GitHub/Firestore/runner/dashboard specs, including cross-spec state vocabulary, security controls, failure gates, and docs navigation.
+
 ## [2026-04-29]
 
 ### Fixed
