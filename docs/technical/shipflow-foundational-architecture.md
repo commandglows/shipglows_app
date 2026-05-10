@@ -27,7 +27,7 @@ supersedes: []
 evidence:
   - "User architecture answers on 2026-05-09."
 next_review: "2026-06-09"
-next_step: "/sf-ready ShipFlow Foundational Coherence Review"
+next_step: "/sf-ready specs/shipflow-foundational-coherence-review.md"
 ---
 
 # ShipFlow Foundational Architecture
@@ -40,6 +40,7 @@ This document records the architecture decisions that must guide project onboard
 
 - `docs/technical/shipflow-foundational-architecture.md`
 - `docs/technical/foundational-specs-handoff.md`
+- `specs/shipflow-foundational-coherence-review.md`
 - `specs/firebase-firestore-projection-migration.md`
 - `specs/shipflow-project-source-onboarding.md`
 - `specs/shipflow-github-managed-clone-indexer.md`
@@ -155,6 +156,7 @@ rg -n "project.*GitHub|managed clone|Firestore|source of truth|GitHub wins" docs
 
 ## Reader Checklist
 
+- Has `specs/shipflow-foundational-coherence-review.md` passed `/sf-ready` before foundational implementation starts?
 - Does the design avoid exposing clone paths as user-managed settings?
 - Does the design keep V1 read-only?
 - Does any Firestore write try to become canonical Markdown content?
@@ -163,4 +165,4 @@ rg -n "project.*GitHub|managed clone|Firestore|source of truth|GitHub wins" docs
 
 ## Maintenance Rule
 
-Any spec that touches project onboarding, indexing, Firestore, GitHub auth, clone management, or write-back must cite this document.
+Any spec that touches project onboarding, indexing, Firestore, GitHub auth, clone management, or write-back must cite this document and pass through `specs/shipflow-foundational-coherence-review.md` before implementation.

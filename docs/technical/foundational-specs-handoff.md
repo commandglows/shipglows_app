@@ -22,6 +22,7 @@ linked_systems:
   - "ShipFlow dashboard"
 depends_on:
   - "docs/technical/shipflow-foundational-architecture.md@0.1.0"
+  - "specs/shipflow-foundational-coherence-review.md@0.1.0"
   - "specs/shipflow-firestore-data-model.md@0.1.0"
   - "specs/shipflow-auth-github-access.md@0.1.0"
   - "specs/shipflow-github-managed-clone-indexer.md@0.1.0"
@@ -32,14 +33,14 @@ supersedes: []
 evidence:
   - "Foundational architecture/spec conversation through 2026-05-10."
 next_review: "2026-05-11"
-next_step: "/sf-ready ShipFlow Foundational Coherence Review"
+next_step: "/sf-ready specs/shipflow-foundational-coherence-review.md"
 ---
 
 # Foundational Specs Handoff
 
 ## Purpose
 
-This handoff lets a fresh context resume with the correct architecture reality before running the foundational coherence review.
+This handoff lets a fresh context resume with the correct architecture reality before running the canonical foundational coherence review in `specs/shipflow-foundational-coherence-review.md`.
 
 ## Current Decision Set
 
@@ -59,6 +60,7 @@ This handoff lets a fresh context resume with the correct architecture reality b
 
 | Spec | Role | Status for next context |
 | --- | --- | --- |
+| `specs/shipflow-foundational-coherence-review.md` | Canonical cross-spec coherence gate for auth, onboarding, indexer, Markdown governance, Firestore projection, dashboard, security, and docs alignment | Run `/sf-ready` on this spec before implementation |
 | `specs/shipflow-firestore-data-model.md` | Firestore documents, shared projects, memberships, projections, diagnostics, feed refs | Review for naming/status consistency |
 | `specs/shipflow-auth-github-access.md` | Firebase Auth vs GitHub App, backend-only tokens, access loss | Review for security-rule implications |
 | `specs/shipflow-github-managed-clone-indexer.md` | Trusted runner, managed clone, index runs, Firestore projection writes | Review against `shipflow_data/` governance policy |
@@ -80,10 +82,10 @@ This handoff lets a fresh context resume with the correct architecture reality b
 
 ## Recommended Next Step
 
-Run a dedicated foundational coherence review before any implementation:
+Run the canonical foundational coherence review before any implementation:
 
 ```bash
-/sf-ready ShipFlow Foundational Coherence Review
+/sf-ready specs/shipflow-foundational-coherence-review.md
 ```
 
 The review should either promote the foundational set toward ready status or create targeted correction specs if contradictions remain.

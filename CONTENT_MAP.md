@@ -75,6 +75,7 @@ next_step: "/sf-docs update"
 - `docs/technical/shipflow-foundational-architecture.md`: canonical architecture decisions for GitHub projects, managed clones, Firestore projection, and read-only V1.
 - `docs/technical/firestore-data-model.md`: Firestore schema contract for user/project records, memberships, indexed file projection, index runs, diagnostics, and user-scoped views.
 - `docs/technical/foundational-specs-handoff.md`: close-context handoff for the foundational specs and the next coherence review.
+- `specs/shipflow-foundational-coherence-review.md`: canonical cross-spec readiness gate for foundational auth, onboarding, indexer, Markdown governance, Firestore projection, dashboard, security controls, and state vocabulary.
 - `docs/explorations/2026-05-08-legacy-contentflow-shipflow-inventory.md`: source exploration report.
 - `specs/shipflow-legacy-contentflow-fusion.md`: active migration/fusion chantier spec.
 - `specs/firebase-firestore-projection-migration.md`: active Firebase/Firestore translation spec for recovered Supabase WIP.
