@@ -6,7 +6,7 @@ project: "shipflow_app"
 created: "2026-05-09"
 created_at: "2026-05-09 18:19:39 UTC"
 updated: "2026-05-10"
-updated_at: "2026-05-10 10:14:49 UTC"
+updated_at: "2026-05-10 15:58:12 UTC"
 status: ready
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
@@ -300,6 +300,8 @@ None for this spec. Advanced organizations, billing, write-back, search backend,
 |----------|-------|-------|--------|--------|-----------|
 | 2026-05-09 18:19:39 UTC | sf-spec | GPT-5 Codex | Created foundational Firestore data model spec from user decisions. | Draft spec created. | /sf-ready ShipFlow Firestore Data Model |
 | 2026-05-10 10:14:49 UTC | sf-ready | GPT-5 Codex | Readiness gate after foundational coherence corrections. | ready | /sf-start ShipFlow Firestore Data Model |
+| 2026-05-10 15:42:22 UTC | sf-build | GPT-5 Codex | Implemented Firestore data model docs, Dart contracts, path builders, validators, and tests. | implemented | Decide closure/ship scope for this chantier. |
+| 2026-05-10 15:58:12 UTC | sf-build | GPT-5 Codex | Completed closure and ship orchestration for Firestore data model chantier. | implemented | none |
 
 # Current Chantier Flow
 
@@ -307,7 +309,7 @@ None for this spec. Advanced organizations, billing, write-back, search backend,
 |------|--------|-------|
 | sf-spec | done | Data model spec created from user answers and foundational architecture. |
 | sf-ready | done | Passed readiness gate after task targets, validations, execution notes, and stop conditions were made explicit. |
-| sf-start | next | Implement the Firestore data model slice only; do not initialize real Firebase or production Firestore writes in this chantier. |
-| sf-verify | pending | Verify after future implementation only. |
-| sf-end | pending | Close after implementation and verification. |
-| sf-ship | pending | Commit/push only after explicit ship flow. |
+| sf-start | done | Implemented docs/technical/firestore-data-model.md and `lib/data/firestore_projection/*` with pure Dart contracts, path builders, and validators. |
+| sf-verify | done | `flutter test test/data/firestore_projection` passed on 2026-05-10. |
+| sf-end | done | Closeout completed for bounded Firestore data model scope. |
+| sf-ship | done | Commit and push executed on `main` for bounded chantier files. |

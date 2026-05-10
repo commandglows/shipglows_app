@@ -44,6 +44,7 @@ This document records the architecture decisions that must guide project onboard
 - `specs/shipflow-project-source-onboarding.md`
 - `specs/shipflow-github-managed-clone-indexer.md`
 - `specs/shipflow-firestore-data-model.md`
+- `docs/technical/firestore-data-model.md`
 - `specs/shipflow-auth-github-access.md`
 - `specs/shipflow-project-onboarding-flow.md`
 - `specs/shipflow-markdown-artifact-governance.md`

@@ -73,12 +73,13 @@ next_step: "/sf-docs update"
 - `docs/technical/recovered-branch-reality.md`: durable memory of branch reality and Supabase WIP to Firebase/Firestore translation.
 - `docs/technical/supabase-to-firebase-contract-map.md`: contract map for translating Supabase WIP into Firebase/Firestore architecture.
 - `docs/technical/shipflow-foundational-architecture.md`: canonical architecture decisions for GitHub projects, managed clones, Firestore projection, and read-only V1.
+- `docs/technical/firestore-data-model.md`: Firestore schema contract for user/project records, memberships, indexed file projection, index runs, diagnostics, and user-scoped views.
 - `docs/technical/foundational-specs-handoff.md`: close-context handoff for the foundational specs and the next coherence review.
 - `docs/explorations/2026-05-08-legacy-contentflow-shipflow-inventory.md`: source exploration report.
 - `specs/shipflow-legacy-contentflow-fusion.md`: active migration/fusion chantier spec.
 - `specs/firebase-firestore-projection-migration.md`: active Firebase/Firestore translation spec for recovered Supabase WIP.
 - `specs/shipflow-github-managed-clone-indexer.md`: runner/indexer spec for GitHub access, managed clone materialization, Markdown indexing, and Firestore projection.
-- `specs/shipflow-firestore-data-model.md`: foundational Firestore schema spec for users, shared GitHub projects, memberships, Markdown projections, index runs, diagnostics, and cross-project views.
+- `specs/shipflow-firestore-data-model.md`: foundational Firestore schema chantier spec that owns model decisions and implementation tasks.
 - `specs/shipflow-auth-github-access.md`: foundational auth/access spec separating Firebase Auth identity from GitHub App repository authorization.
 - `specs/shipflow-project-onboarding-flow.md`: foundational user flow for Firebase sign-in, GitHub App connection, repository selection, project create-or-join, and indexing progress.
 - `specs/shipflow-markdown-artifact-governance.md`: foundational corpus spec for `shipflow_data/`, artifact families, tracker parsing, frontmatter extraction, and safe Markdown indexing.
