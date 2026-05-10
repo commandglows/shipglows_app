@@ -1,10 +1,19 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipflow_app/data/shipflow_sources/source_models.dart';
 import 'package:shipflow_app/data/shipflow_sources/source_path_policy.dart';
 
 void main() {
+  setUp(() {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+  });
+
+  tearDown(() {
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   group('SourcePathPolicy', () {
     test('allows paths inside allowlisted root', () async {
       final root = await Directory.systemTemp.createTemp(

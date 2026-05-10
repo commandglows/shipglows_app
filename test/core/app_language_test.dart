@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:contentflow_app/core/app_language.dart';
+import 'package:shipflow_app/core/app_language.dart';
 
 void main() {
   group('normalizeAppLanguagePreference', () {

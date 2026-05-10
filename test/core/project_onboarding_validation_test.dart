@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:contentflow_app/core/project_onboarding_validation.dart';
+import 'package:shipflow_app/core/project_onboarding_validation.dart';
 
 void main() {
   group('normalizeOptionalText', () {

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:contentflow_app/data/models/app_access_state.dart';
-import 'package:contentflow_app/data/models/app_bootstrap.dart';
-import 'package:contentflow_app/router.dart';
+import 'package:shipflow_app/data/models/app_access_state.dart';
+import 'package:shipflow_app/data/models/app_bootstrap.dart';
+import 'package:shipflow_app/router.dart';
 
 void main() {
   group('resolveAppRedirect (resume no jump)', () {

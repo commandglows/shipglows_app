@@ -1,10 +1,11 @@
-import 'package:contentflow_app/core/app_diagnostics.dart';
-import 'package:contentflow_app/core/shared_preferences_provider.dart';
-import 'package:contentflow_app/data/models/app_settings.dart';
-import 'package:contentflow_app/data/models/project.dart';
-import 'package:contentflow_app/l10n/app_localizations.dart';
-import 'package:contentflow_app/presentation/screens/projects/projects_screen.dart';
-import 'package:contentflow_app/providers/providers.dart';
+import 'package:shipflow_app/core/app_diagnostics.dart';
+import 'package:shipflow_app/core/shared_preferences_provider.dart';
+import 'package:shipflow_app/data/models/app_settings.dart';
+import 'package:shipflow_app/data/models/auth_session.dart';
+import 'package:shipflow_app/data/models/project.dart';
+import 'package:shipflow_app/l10n/app_localizations.dart';
+import 'package:shipflow_app/presentation/screens/projects/projects_screen.dart';
+import 'package:shipflow_app/providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,7 +28,10 @@ void main() {
     expect(find.text('Active project'), findsAtLeastNWidgets(1));
     expect(find.text('Alpha Project'), findsAtLeastNWidgets(2));
     expect(find.text('Beta Project'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Archive project'), findsNWidgets(2));
+    expect(
+      find.widgetWithText(TextButton, 'Archive project'),
+      findsNWidgets(2),
+    );
   });
 
   testWidgets('shows archived section when archived projects exist', (
@@ -48,7 +52,10 @@ void main() {
 
     expect(find.text('Archived projects'), findsOneWidget);
     expect(find.text('Archived Project'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'Unarchive project'), findsOneWidget);
+    expect(
+      find.widgetWithText(OutlinedButton, 'Unarchive project'),
+      findsOneWidget,
+    );
   });
 }
 
@@ -79,6 +86,16 @@ Future<void> _pumpProjectsScreen(
       overrides: [
         appDiagnosticsProvider.overrideWithValue(AppDiagnostics()),
         sharedPrefsProvider.overrideWithValue(sharedPreferences),
+        authSessionProvider.overrideWith(
+          (ref) => _TestAuthSessionNotifier(
+            ref,
+            const AuthSession(
+              status: AuthStatus.authenticated,
+              bearerToken: 'token-test',
+              email: 'test@example.com',
+            ),
+          ),
+        ),
         projectsStateProvider.overrideWith(
           (ref) async => ProjectsState(items: projects),
         ),
@@ -131,6 +148,12 @@ class _TestUserSettingsNotifier extends UserSettingsNotifier {
 
   @override
   Future<AppSettings?> build() async => _settings;
+}
+
+class _TestAuthSessionNotifier extends AuthSessionNotifier {
+  _TestAuthSessionNotifier(super.ref, AuthSession session) : super() {
+    state = session;
+  }
 }
 
 class _IdleProjectMutationController extends ProjectMutationController {

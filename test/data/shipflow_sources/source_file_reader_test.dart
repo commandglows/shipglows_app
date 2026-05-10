@@ -1,11 +1,20 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipflow_app/data/shipflow_sources/source_file_reader.dart';
 import 'package:shipflow_app/data/shipflow_sources/source_models.dart';
 import 'package:shipflow_app/data/shipflow_sources/source_path_policy.dart';
 
 void main() {
+  setUp(() {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+  });
+
+  tearDown(() {
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   group('SourceFileReader', () {
     test(
       'loads core sources and project-local docs from PROJECTS.md',

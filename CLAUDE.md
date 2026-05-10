@@ -1,92 +1,133 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.1.0"
-project: contentflow_app
+artifact_version: "0.2.0"
+project: shipflow_app
 created: "2026-04-26"
-updated: "2026-05-04"
-status: reviewed
+updated: "2026-05-08"
+status: draft
 source_skill: sf-docs
 scope: technical
 owner: "Diane"
 confidence: medium
-risk_level: medium
-security_impact: none
+risk_level: high
+security_impact: yes
 docs_impact: yes
-evidence: []
-depends_on: []
-supersedes: none
-linked_systems: []
-next_review: "2026-07-26"
-next_step: /sf-ready claude-instructions
+evidence:
+  - "README.md"
+  - "lib/main.dart"
+  - "docs/technical/runtime-boundary.md"
+  - "docs/technical/markdown-source-of-truth.md"
+  - "docs/technical/legacy-contentflow-inventory.md"
+depends_on:
+  - "specs/shipflow-legacy-contentflow-fusion.md@0.1.0"
+  - "docs/technical/code-docs-map.md@0.1.0"
+supersedes:
+  - "CLAUDE.md@1.1.0 contentflow_app guidance"
+linked_systems:
+  - "Flutter"
+  - "Riverpod"
+  - "GoRouter"
+  - "Markdown source readers"
+next_review: "2026-06-08"
+next_step: "/sf-docs update"
 ---
 
 # CLAUDE.md
 
 ## Project Overview
 
-`contentflow_app` is the Flutter product application for ContentFlow, handling authenticated user onboarding, content operations, workspace management, review flows, scheduling, and diagnostics.
+`shipflow_app` is the Flutter application for ShipFlow operational visibility. The active runtime is a local-first ShipFlow dashboard that reads Markdown and ledger files from ShipFlow repositories and registries.
 
-Backend and auth dependencies:
+The repository still contains a legacy ContentFlow runtime. Treat it as migration/reference material unless a ready ShipFlow spec explicitly adapts it.
 
-- **FastAPI** service (`API_BASE_URL`) for workspace/content/projects data
-- **Clerk** for authentication/session validation (`CLERK_PUBLISHABLE_KEY`)
-- **Site handoff** URLs from `contentflow_site` and mobile/web launcher (`APP_SITE_URL`, `APP_WEB_URL`)
+## Current Product Contract
+
+- Active product: ShipFlow.
+- Active default runtime: `APP_TARGET=shipflow`.
+- Temporary legacy runtimes: `APP_TARGET=legacy` and `APP_TARGET=contentflow`.
+- Current V1 mode: local-first, read-oriented, Linux desktop target.
+- Source of truth: Markdown and repository files.
+- Future database role: projection, index, cache, or sync layer unless a later reviewed spec supersedes this.
 
 ## Tech Stack
 
-- Flutter (Dart 3.11+)
-- Riverpod + GoRouter
-- Dio (`shared_preferences` + offline storage for degraded mode)
-- Clerk web runtime for auth handoff
+- Flutter / Dart
+- Riverpod
+- GoRouter
+- Shared preferences for local settings
+- Markdown/source parsers under `lib/data/shipflow_sources/`
+
+Do not infer that FastAPI, Clerk, Supabase, Firebase, Firestore, or OpenRouter are active product dependencies just because legacy files mention them.
 
 ## Common Commands
 
-- `./build.sh --serve` (local build + serve)
-- `./pm2-web.sh` (build + run production-style web server)
-- `./scripts/validate-clerk-runtime.sh` (auth runtime smoke check)
+```bash
+flutter pub get
+flutter run -d linux
+flutter test
+flutter analyze
+```
+
+Focused checks:
+
+```bash
+flutter test test/data/shipflow_sources
+flutter test test/domain/project_health
+rg -n "APP_TARGET|LegacyShipFlowApp|ShipFlowApp" lib test
+```
 
 ## ARM64 Android Release Guardrail
 
-On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: no `flutter build apk --release`, `flutter build appbundle --release`, `./gradlew assembleRelease`, or `./gradlew bundleRelease`. Route APK/AAB release builds to Blacksmith or another Linux x64 CI runner. Local Flutter work is limited to `flutter analyze`, `flutter test`, and `flutter build web --release`.
+On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: no `flutter build apk --release`, `flutter build appbundle --release`, `./gradlew assembleRelease`, or `./gradlew bundleRelease`. Route APK/AAB release builds to a Linux x64 CI runner. Local Flutter work is limited to `flutter analyze`, `flutter test`, desktop runs, and web builds when explicitly needed.
 
-## App Structure
+## Active App Structure
 
-- `lib/main.dart`: app bootstrap + offline sync bridge
-- `lib/router.dart`: route definitions and access-guarded redirects
-- `lib/data/services/`: API client, offline storage, queue, auth adapters
-- `lib/presentation/`: app shell and screen hierarchy
-- `lib/core/`: diagnostics, preferences, localization helpers
-- `lib/providers/`: Riverpod providers/notifiers
-- `specs/`: implementation and migration specs
-- `web_auth/`: Clerk auth assets injected into web builds
+- `lib/main.dart`: root app target switch.
+- `lib/shipflow/`: active ShipFlow UI runtime.
+- `lib/data/shipflow_sources/`: active source readers and parsers.
+- `lib/domain/project_health/`: active project posture model.
+- `docs/technical/`: technical governance for active and legacy boundaries.
+- `specs/shipflow-legacy-contentflow-fusion.md`: active migration/fusion chantier.
 
-## State and Error Handling
+## Legacy Structure
 
-- Do not hard-fail access to the app when FastAPI is unavailable.
-- Keep authenticated users in app/degraded mode with cached reads where possible.
-- Queue supported writes locally and replay when backend is reachable.
-- Replay should stop for invalid auth states and resume on re-auth.
+These areas are retained for classification, not as active product direction:
 
-## Local-First Conventions
+- `lib/router.dart`
+- `lib/providers/providers.dart`
+- `lib/presentation/**`
+- `lib/data/services/**`
+- `lib/data/models/**`
+- `lib/core/**` when tied to ContentFlow assumptions
+- `web_auth/**`
+- legacy `specs/*.md`
 
-- Respect the offline storage schema in queue/cache docs and specs.
-- Preserve `tempId` reconciliation patterns for writes that need real backend IDs.
-- Keep dependency ordering in replay logic explicit (upstream create before dependent updates).
-- Expose clear sync status for supported flows in UI.
+Use `docs/technical/legacy-contentflow-inventory.md` before moving or deleting any of them.
 
-## Integration Notes
+## Data Rules
 
-- Related repos:
-  - `contentflow_site` (landing, auth handoff entrypoint, public docs)
-  - `contentflow_lab` (AI agents and backend services)
-- Prefer consistency with project-wide terminology:
-  - **feed**, **onboarding**, **drip**, **workspace**, **angle**, **idea**
+- Markdown/repo files are canonical.
+- A database may be introduced later only as a projection/sync/index unless a future spec changes the contract.
+- If the app changes data that belongs in a user's project, the intended write path is to update the relevant Markdown/repo file.
+- Do not place privileged service-role keys, API secrets, BYOK provider keys, or terminal capabilities in Flutter client code.
 
-## Backend Data Changes (Turso / libSQL)
+## Future Features Requiring Dedicated Specs
 
-- Production backend data lives in Turso at `libsql://contentflow-prod2-dianedef.aws-eu-west-1.turso.io`.
-- If an app change touches backend API contracts, onboarding, workspace/project data, feedback, jobs, status, offline replay, or any Turso-backed persistence path, always verify whether a SQL migration is required or not.
-- Use the **Turso CLI** for schema checks against the real database; do not decide from code reading alone. Example: `turso db shell contentflow-prod2 ".schema"` or targeted `PRAGMA table_info(...)` queries.
-- State the migration conclusion explicitly in task notes or the final response, even when no migration is needed.
-- **Mandatory before every commit/push**: explicitly decide and state whether a Turso migration is required (`yes/no`), with a short reason.
+- Firebase/Firestore or any database projection.
+- Firebase Auth, Clerk, or another auth provider.
+- BYOK/OpenRouter.
+- Text feedback.
+- Terminal access from web UI.
+- Agent runner/orchestration from the interface.
+- FastAPI/local service runner.
+
+## Documentation Rule
+
+Before broad implementation work, keep these in sync:
+
+- `CONTENT_MAP.md`
+- `docs/technical/code-docs-map.md`
+- `docs/technical/runtime-boundary.md`
+- `docs/technical/markdown-source-of-truth.md`
+- `docs/technical/legacy-contentflow-inventory.md`

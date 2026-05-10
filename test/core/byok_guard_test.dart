@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:contentflow_app/core/openrouter_guard.dart';
-import 'package:contentflow_app/data/services/api_service.dart';
+import 'package:shipflow_app/core/openrouter_guard.dart';
+import 'package:shipflow_app/data/services/api_service.dart';
 
 void main() {
   group('requiresOpenRouterCredential', () {

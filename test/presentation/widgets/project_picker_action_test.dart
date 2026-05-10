@@ -1,10 +1,10 @@
-import 'package:contentflow_app/core/app_diagnostics.dart';
-import 'package:contentflow_app/core/shared_preferences_provider.dart';
-import 'package:contentflow_app/data/models/app_settings.dart';
-import 'package:contentflow_app/data/models/project.dart';
-import 'package:contentflow_app/l10n/app_localizations.dart';
-import 'package:contentflow_app/presentation/widgets/project_picker_action.dart';
-import 'package:contentflow_app/providers/providers.dart';
+import 'package:shipflow_app/core/app_diagnostics.dart';
+import 'package:shipflow_app/core/shared_preferences_provider.dart';
+import 'package:shipflow_app/data/models/app_settings.dart';
+import 'package:shipflow_app/data/models/project.dart';
+import 'package:shipflow_app/l10n/app_localizations.dart';
+import 'package:shipflow_app/presentation/widgets/project_picker_action.dart';
+import 'package:shipflow_app/providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

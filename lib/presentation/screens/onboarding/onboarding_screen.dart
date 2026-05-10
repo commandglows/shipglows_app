@@ -366,34 +366,37 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        RadioListTile<String>(
-          value: githubRepositoryDiscoveryModeAll,
+        RadioGroup<String>(
           groupValue: _githubRepositoryDiscoveryMode,
-          contentPadding: EdgeInsets.zero,
-          title: Text(context.tr('Import all repositories automatically')),
-          subtitle: Text(
-            context.tr(
-              'ShipFlow will fetch every accessible GitHub repository and read available ShipFlow metadata automatically.',
-            ),
-          ),
           onChanged: (value) => setState(
             () => _githubRepositoryDiscoveryMode =
                 normalizeGithubRepositoryDiscoveryMode(value),
           ),
-        ),
-        RadioListTile<String>(
-          value: githubRepositoryDiscoveryModeManual,
-          groupValue: _githubRepositoryDiscoveryMode,
-          contentPadding: EdgeInsets.zero,
-          title: Text(context.tr('I will choose repositories manually')),
-          subtitle: Text(
-            context.tr(
-              'ShipFlow will only connect repositories you explicitly pick.',
-            ),
-          ),
-          onChanged: (value) => setState(
-            () => _githubRepositoryDiscoveryMode =
-                normalizeGithubRepositoryDiscoveryMode(value),
+          child: Column(
+            children: [
+              RadioListTile<String>(
+                value: githubRepositoryDiscoveryModeAll,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  context.tr('Import all repositories automatically'),
+                ),
+                subtitle: Text(
+                  context.tr(
+                    'ShipFlow will fetch every accessible GitHub repository and read available ShipFlow metadata automatically.',
+                  ),
+                ),
+              ),
+              RadioListTile<String>(
+                value: githubRepositoryDiscoveryModeManual,
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.tr('I will choose repositories manually')),
+                subtitle: Text(
+                  context.tr(
+                    'ShipFlow will only connect repositories you explicitly pick.',
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         if (autoSelected && !githubConnected) ...[

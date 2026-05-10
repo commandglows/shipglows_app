@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:contentflow_app/data/models/app_access_state.dart';
-import 'package:contentflow_app/data/models/app_bootstrap.dart';
-import 'package:contentflow_app/data/models/offline_sync.dart';
-import 'package:contentflow_app/data/services/offline_storage_service.dart';
-import 'package:contentflow_app/providers/providers.dart';
+import 'package:shipflow_app/data/models/app_access_state.dart';
+import 'package:shipflow_app/data/models/app_bootstrap.dart';
+import 'package:shipflow_app/data/models/offline_sync.dart';
+import 'package:shipflow_app/data/services/offline_storage_service.dart';
+import 'package:shipflow_app/providers/providers.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

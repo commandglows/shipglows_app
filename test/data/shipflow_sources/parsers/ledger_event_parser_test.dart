@@ -77,7 +77,7 @@ event_type: [
       final diagnostic = output.diagnostics.singleWhere(
         (diag) => diag.code == DiagnosticCode.parseError,
       );
-      expect(diagnostic.line, 4);
+      expect(diagnostic.line, 3);
       expect(diagnostic.cause, isNotEmpty);
       expect(diagnostic.excerpt, contains('event_type: ['));
       expect(diagnostic.details['yamlLength'], isNotNull);

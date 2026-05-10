@@ -1,137 +1,130 @@
 ---
 artifact: content_map
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
-project: "contentflow_app"
+artifact_version: "0.1.0"
+project: "shipflow_app"
 created: "2026-04-26"
-updated: "2026-04-27"
-status: "reviewed"
+updated: "2026-05-10"
+status: "draft"
 source_skill: sf-docs
 scope: content_map
 owner: "Diane"
 confidence: "medium"
-risk_level: "low"
+risk_level: "high"
 docs_impact: "yes"
-security_impact: "none"
+security_impact: "yes"
 evidence:
-  - "lib/router.dart"
-  - "web/index.html"
-  - "web_auth/sign-in.html"
-  - "web_auth/sign-up.html"
-  - "web_auth/sso-callback.html"
   - "README.md"
-  - "CLAUDE.md"
-  - "specs/*.md"
-  - "CHANGELOG.md"
-  - "TASKS.md"
+  - "lib/main.dart"
+  - "lib/shipflow/"
+  - "lib/data/shipflow_sources/"
+  - "docs/technical/code-docs-map.md"
+  - "docs/technical/legacy-contentflow-inventory.md"
+  - "docs/technical/legacy-file-migration-tracker.md"
 depends_on:
-  - "BUSINESS.md@1.0.0"
-  - "BRANDING.md@1.0.0"
-  - "GUIDELINES.md@1.0.0"
-supersedes: []
+  - "specs/shipflow-legacy-contentflow-fusion.md@0.1.0"
+  - "docs/technical/code-docs-map.md@0.1.0"
+supersedes:
+  - "CONTENT_MAP.md@1.0.0 contentflow_app map"
 content_surfaces:
-  - web runtime shell (Flutter app)
-  - web auth handoff pages (`/sign-in`, `/sign-up`, `/sso-callback`)
-  - app navigation and workflow screens
-  - operational docs and changelog references
-  - specs and design/verification notes
-next_review: "2026-07-26"
-next_step: "/sf-docs audit CONTENT_MAP.md"
+  - "ShipFlow Flutter dashboard runtime"
+  - "ShipFlow Markdown/source readers"
+  - "Project technical governance docs"
+  - "Specs and exploration reports"
+  - "Legacy ContentFlow runtime retained for classification"
+next_review: "2026-06-08"
+next_step: "/sf-docs update"
 ---
 
-# Content Map — contentflow_app
+# Content Map - shipflow_app
 
-## Purpose of this map
-`contentflow_app` is a Flutter application repository with a production web shell plus Clerk web auth assets. It has limited in-repo marketing/content pages; most public-facing acquisition copy lives outside this repo.
+## Purpose Of This Map
 
-## 1) Public-facing runtime entrypoints (repo-owned)
+`shipflow_app` is the Flutter app repository for ShipFlow operational visibility. ShipFlow is the active product. Legacy ContentFlow code and docs remain in the repository as migration/reference material until each area is classified.
 
-### App shell (Flutter web)
-- `web/index.html`: Flutter bootstrap page used by the web bundle.
-- `web/manifest.json`, `web/icons/*`: installability and app icons.
-- `lib/main.dart`: app bootstrapping entry for runtime.
-- `lib/router.dart`: canonical route graph and auth/state-aware redirects.
+## Active Runtime Surfaces
 
-### Auth web assets
-- `web_auth/sign-in.html`
-- `web_auth/sign-up.html`
-- `web_auth/sso-callback.html`
+### ShipFlow App
 
-These are explicitly injected/copied into web builds and referenced by deployment scripts.
+- `lib/main.dart`: root app selection. Defaults to `APP_TARGET=shipflow`.
+- `lib/shipflow/app.dart`: active ShipFlow app shell.
+- `lib/shipflow/router.dart`: active ShipFlow routes.
+- `lib/shipflow/presentation/**`: active ShipFlow dashboard screens and widgets.
+- `lib/shipflow/providers/dashboard_provider.dart`: active dashboard state boundary.
 
-## 2) Route surface (app navigation)
+### ShipFlow Source And Domain Surfaces
 
-Primary shell routes:
-- `/entry`
-- `/auth`
-- `/onboarding`
-- `/feed`
-- `/calendar`
-- `/history`
-- `/activity`
-- `/affiliations`
-- `/runs`
-- `/templates`
-- `/newsletter`
-- `/research`
-- `/reels`
-- `/seo`
-- `/drip`
-- `/content-tools`
-- `/analytics`
-- `/idea-pool`
-- `/work-domains`
-- `/performance`
-- `/uptime`
-- `/settings`
-- `/projects`
-- `/feedback`
-- `/feedback-admin`
-- `/editor/:id`
-- `/ritual`
-- `/personas`
-- `/personas/new`
-- `/personas/:id`
-- `/angles`
-- `/settings/integrations`
+- `lib/data/shipflow_sources/**`: Markdown and ledger source readers/parsers.
+- `lib/domain/project_health/**`: project posture and health model.
+- `test/data/shipflow_sources/**`: source reader/parser tests.
+- `test/domain/project_health/**`: project health tests.
 
-## 3) Operational documentation surfaces
+## Governance Surfaces
 
-### Decision and context documents
-- `README.md`
-- `CLAUDE.md`
-- `BUSINESS.md`
-- `BRANDING.md`
-- `GUIDELINES.md`
-- `CHANGELOG.md`
-- `AUDIT_LOG.md`
+- `README.md`: public-ish local setup and current product scope.
+- `CONTENT_MAP.md`: this map.
+- `docs/technical/README.md`: technical documentation entrypoint.
+- `docs/technical/code-docs-map.md`: code area to documentation map.
+- `docs/technical/runtime-boundary.md`: active versus legacy runtime rule.
+- `docs/technical/markdown-source-of-truth.md`: Markdown canonical data contract.
+- `docs/technical/legacy-contentflow-inventory.md`: classification table for retained legacy areas.
+- `docs/technical/legacy-file-migration-tracker.md`: operational tracker for legacy file keep/adapt/move/archive/delete status.
+- `docs/technical/shipflow-legacy-reuse-roadmap.md`: decision aid for reusing legacy ideas safely.
+- `docs/technical/recovered-branch-reality.md`: durable memory of branch reality and Supabase WIP to Firebase/Firestore translation.
+- `docs/technical/supabase-to-firebase-contract-map.md`: contract map for translating Supabase WIP into Firebase/Firestore architecture.
+- `docs/technical/shipflow-foundational-architecture.md`: canonical architecture decisions for GitHub projects, managed clones, Firestore projection, and read-only V1.
+- `docs/technical/foundational-specs-handoff.md`: close-context handoff for the foundational specs and the next coherence review.
+- `docs/explorations/2026-05-08-legacy-contentflow-shipflow-inventory.md`: source exploration report.
+- `specs/shipflow-legacy-contentflow-fusion.md`: active migration/fusion chantier spec.
+- `specs/firebase-firestore-projection-migration.md`: active Firebase/Firestore translation spec for recovered Supabase WIP.
+- `specs/shipflow-github-managed-clone-indexer.md`: runner/indexer spec for GitHub access, managed clone materialization, Markdown indexing, and Firestore projection.
+- `specs/shipflow-firestore-data-model.md`: foundational Firestore schema spec for users, shared GitHub projects, memberships, Markdown projections, index runs, diagnostics, and cross-project views.
+- `specs/shipflow-auth-github-access.md`: foundational auth/access spec separating Firebase Auth identity from GitHub App repository authorization.
+- `specs/shipflow-project-onboarding-flow.md`: foundational user flow for Firebase sign-in, GitHub App connection, repository selection, project create-or-join, and indexing progress.
+- `specs/shipflow-markdown-artifact-governance.md`: foundational corpus spec for `shipflow_data/`, artifact families, tracker parsing, frontmatter extraction, and safe Markdown indexing.
+- `specs/shipflow-dashboard-readonly-projection.md`: foundational dashboard read model for consuming Firestore project refs, artifact projection, freshness, access warnings, diagnostics, and index status without making Firestore canonical.
 
-### Execution and technical specs
-- `specs/*.md` (active spec set for current and next implementation phase).
+## Legacy And Reference Surfaces
 
-### Task and verification surface
-- `TASKS.md`
+These surfaces are not active ShipFlow product contracts. They are retained for review and possible reuse.
 
-## 4) Scripts and runtime tool surface
+- `lib/router.dart`: legacy ContentFlow route graph, only selected by `APP_TARGET=legacy` or `APP_TARGET=contentflow`.
+- `lib/providers/providers.dart`: legacy provider graph.
+- `lib/presentation/**`: legacy ContentFlow UI plus some reusable primitives.
+- `lib/data/services/**`: legacy service layer including API, auth, feedback, offline/cache, notifications.
+- `lib/data/models/**`: mixed legacy and reusable model shapes.
+- `lib/core/**`: mixed shared utilities and legacy guards.
+- `web_auth/**`: legacy Clerk web auth pages.
+- `specs/*.md`: mixed legacy specs; active status must be classified before implementation.
+- `docs/auth-sync-v2.md`: legacy/future auth-sync note, not an active implementation contract.
 
-- `build.sh`, `pm2-web.sh`, `scripts/vercel-*.sh`, `scripts/validate-clerk-runtime.sh`, `scripts/install-web-auth.sh`
-- `.env.example`
+The canonical classification source is `docs/technical/legacy-contentflow-inventory.md`. The operational move/archive/delete tracker is `docs/technical/legacy-file-migration-tracker.md`.
 
-## 5) Cross-repo links / navigation assumptions
+## Source Inputs
 
-- `contentflow_site` (external) is the primary acquisition/landing ecosystem surface and not documented in detail here.
-- `contentflow_lab` (external API/service owner) is the backend + AI/automation context referenced by code and specs.
-- Internal routing/docs should treat those repos as separate canonical sources for their own surfaces.
+ShipFlow currently reads local Markdown and ledger sources, including:
 
-## 6) Documentation mapping by user intent
+- `/home/claude/shipflow_data/PROJECTS.md`
+- `/home/claude/shipflow_data/AUDIT_LOG.md`
+- `/home/claude/shipflow_data/TASKS.md`
+- `/home/claude/shipflow_data/OPERATIONS_LOG.md`
+- `/home/claude/shipflow_data/DEPENDENCY_LOG.md`
+- `/home/claude/shipflow/specs/*.md`
+- Project-local docs when listed in ShipFlow project registries.
 
-- **Get started / run locally**: `README.md` → scripts + env sample.
-- **Onboard as operator**: `/entry`, `/onboarding`, then authenticated dashboard routes.
-- **Recover during incidents**: `/uptime`, `/performance`, and changelog/spec evidence.
-- **Support requests**: `Feedback` route + admin route and feedback API contract specs.
+Markdown and repository files are the source of truth. Future database work is a projection/index/sync layer unless a later reviewed spec supersedes that contract.
 
-## 7) Gaps (explicit)
+## Public And Editorial Surfaces
 
-- No in-repo Astro/marketing landing markdown pages.
-- No dedicated help center or FAQ page in this repository.
-- Publish integration is represented in code/spec state, but not yet fully closed end-to-end.
+This repository currently has no separate marketing site, blog, pricing page, or public content collection. `README.md` is the main public-facing documentation surface. If public pages are added, run `/sf-docs editorial`.
+
+## Security-Sensitive Surfaces
+
+- Path allowlists and diagnostics in `lib/data/shipflow_sources/**`.
+- Future auth surfaces in legacy `web_auth/**` and `lib/data/services/clerk_auth_service*`.
+- Future BYOK/OpenRouter surfaces in `lib/core/openrouter_guard.dart`, `lib/data/models/openrouter_credential.dart`, and `lib/data/models/ai_runtime.dart`.
+- Future terminal and agent-runner surfaces are not implemented and require a separate high-risk spec.
+
+## Maintenance Rule
+
+Update this file when a route, docs surface, source input, public surface, or active/legacy ownership boundary changes.

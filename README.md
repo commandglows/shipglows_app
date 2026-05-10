@@ -8,6 +8,7 @@ Local-first Flutter desktop app for ShipFlow operational visibility.
 - Linux desktop target (`flutter run -d linux`).
 - No write-back into ShipFlow trackers or ledgers.
 - No auth, no cloud sync, no backend service.
+- Legacy ContentFlow code remains in the repo only as migration/reference material.
 
 ## Source Inputs
 
@@ -46,60 +47,37 @@ flutter pub get
 flutter run -d linux
 ```
 
-## Vercel Deployment
+## Runtime Targets
 
-The web build can run in open access mode without Clerk. In Vercel, set these
-project environment variables before redeploying:
-
-```bash
-API_BASE_URL=https://api.winflowz.com
-APP_SITE_URL=https://contentflow.winflowz.com
-APP_WEB_URL=https://app.contentflow.winflowz.com
-OPEN_ACCESS=true
-```
-
-`OPEN_ACCESS=true` lets the app start without auth. If `OPEN_ACCESS` is omitted,
-the Vercel build also enables open access automatically when
-`CLERK_PUBLISHABLE_KEY` is missing.
-
-To re-enable Clerk auth flows, add:
+The default runtime is ShipFlow:
 
 ```bash
-CLERK_PUBLISHABLE_KEY=pk_live_xxx
+flutter run -d linux
 ```
 
-The `/sign-in`, `/sign-up`, and `/sso-callback` routes are still generated in
-open access builds, but they remain disabled until a Clerk publishable key is
-configured.
+The repository still exposes the old ContentFlow runtime for migration audit:
 
-## GitHub Auth and Repository Access
+```bash
+flutter run -d linux --dart-define=APP_TARGET=legacy
+flutter run -d linux --dart-define=APP_TARGET=contentflow
+```
 
-Flutter does not store a GitHub OAuth client secret. GitHub credentials must
-stay in Clerk and the FastAPI backend.
+Do not use the legacy target as the product direction. Its modules are classified
+in `docs/technical/legacy-contentflow-inventory.md`.
 
-There are two separate GitHub surfaces:
+## Future Auth, Sync, And Backend Work
 
-- App sign-in: the web auth pages use Clerk's prebuilt sign-in/sign-up
-  components. Enabling GitHub as a Clerk social connection is enough for the
-  app sign-in UI to expose it.
-- Repository access: the app already calls the backend endpoints
-  `/api/integrations/github/status`, `/api/integrations/github/connect`,
-  `/api/integrations/github/repos`, `/api/integrations/github/repo-tree`, and
-  `/api/integrations/github/disconnect`.
+ShipFlow will likely need multi-user auth, feedback, BYOK/OpenRouter, and a
+projection database later. Those are future specs, not active V1 behavior.
 
-To let users pick all repositories, configure the backend GitHub OAuth app with
-repo access scopes. Use `repo` for private and public repositories, plus
-`read:user` and `user:email` for account display metadata. If GitHub Actions
-workflow dispatch is required, the backend token also needs the appropriate
-workflow permission.
+Current data rule:
 
-The Flutter settings UI stores the user's repository discovery choice in
-`robotSettings.githubRepositoryDiscoveryMode`:
-
-- `manual`: default. ShipFlow only connects repositories explicitly picked by
-  the user.
-- `all`: ShipFlow may import every accessible GitHub repository and read
-  available ShipFlow metadata automatically.
+- Markdown and repository files are the source of truth.
+- A future database is a projection/index/sync layer unless a later reviewed
+  spec supersedes this.
+- If the app changes project state, the intended write path is to update the
+  relevant Markdown/repository file.
+- No privileged service-role keys or BYOK secrets belong in Flutter client code.
 
 ## Validation
 
@@ -111,6 +89,9 @@ flutter analyze
 
 ## V2 Note
 
-Future auth/sync work must preserve local ledger inputs and enforce explicit user/project ownership with RLS. Never place Supabase service-role keys in Flutter/client code.
+Future auth/sync work must preserve local ledger inputs and enforce explicit
+user/project ownership. The provider is not final; Firebase/Firestore and
+Firebase Auth are candidates, while FastAPI may still be useful for local
+runner/terminal/agent orchestration.
 
 See `docs/auth-sync-v2.md`.

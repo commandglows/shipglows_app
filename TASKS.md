@@ -1,4 +1,30 @@
-# Tasks — ContentFlow (Flutter)
+# Tasks - ShipFlow Migration/Fusion
+
+Current active chantier:
+
+| Pri | Task | Status |
+| --- | --- | --- |
+| 🔴 | Stabiliser la frontiere ShipFlow actif / ContentFlow legacy | 🔄 in progress |
+| 🔴 | Garder `origin/main` comme base saine et conserver le WIP Supabase local en archive | ✅ done |
+| 🔴 | Documenter Markdown/repo comme source de verite et DB future comme projection | ✅ done |
+| 🔴 | Classer les briques ContentFlow avant suppression | 🔄 in progress |
+| 🟠 | Decider plus tard Firebase/Firestore/Auth/FastAPI/BYOK/feedback avec specs dediees | 💤 deferred |
+| 🟠 | Nettoyer les mentions ContentFlow actives dans les docs racine | 🔄 in progress |
+| 🟡 | Corriger les imports/tests obsoletes apres classification | 📋 todo |
+
+Primary references:
+
+- `specs/shipflow-legacy-contentflow-fusion.md`
+- `docs/technical/legacy-contentflow-inventory.md`
+- `docs/technical/runtime-boundary.md`
+- `docs/technical/markdown-source-of-truth.md`
+- `CONTENT_MAP.md`
+
+The historical ContentFlow tracker below is retained as legacy reference while the migration/fusion is in progress. It is not the active ShipFlow backlog.
+
+---
+
+# Legacy Tasks — ContentFlow (Flutter)
 
 > **Priority:** 🔴 P0 blocker · 🟠 P1 high · 🟡 P2 normal · 🟢 P3 low · ⚪ deferred
 > **Status:** 📋 todo · 🔄 in progress · ✅ done · ⛔ blocked · 💤 deferred

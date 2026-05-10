@@ -990,29 +990,37 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        RadioListTile<String>(
-          value: githubRepositoryDiscoveryModeAll,
+        RadioGroup<String>(
           groupValue: mode,
-          contentPadding: EdgeInsets.zero,
-          title: Text(context.tr('Import all repositories automatically')),
-          subtitle: Text(
-            context.tr(
-              'ShipFlow will fetch every accessible GitHub repository and read available ShipFlow metadata automatically.',
-            ),
+          onChanged: disabled ? (_) {} : _setGithubRepositoryDiscoveryMode,
+          child: Column(
+            children: [
+              RadioListTile<String>(
+                value: githubRepositoryDiscoveryModeAll,
+                enabled: !disabled,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  context.tr('Import all repositories automatically'),
+                ),
+                subtitle: Text(
+                  context.tr(
+                    'ShipFlow will fetch every accessible GitHub repository and read available ShipFlow metadata automatically.',
+                  ),
+                ),
+              ),
+              RadioListTile<String>(
+                value: githubRepositoryDiscoveryModeManual,
+                enabled: !disabled,
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.tr('I will choose repositories manually')),
+                subtitle: Text(
+                  context.tr(
+                    'ShipFlow will only connect repositories you explicitly pick.',
+                  ),
+                ),
+              ),
+            ],
           ),
-          onChanged: disabled ? null : _setGithubRepositoryDiscoveryMode,
-        ),
-        RadioListTile<String>(
-          value: githubRepositoryDiscoveryModeManual,
-          groupValue: mode,
-          contentPadding: EdgeInsets.zero,
-          title: Text(context.tr('I will choose repositories manually')),
-          subtitle: Text(
-            context.tr(
-              'ShipFlow will only connect repositories you explicitly pick.',
-            ),
-          ),
-          onChanged: disabled ? null : _setGithubRepositoryDiscoveryMode,
         ),
         if (_isSavingGithubRepositoryDiscoveryMode) ...[
           const SizedBox(height: 4),

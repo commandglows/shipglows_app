@@ -1,6 +1,6 @@
-import 'package:contentflow_app/data/models/ai_runtime.dart';
-import 'package:contentflow_app/l10n/app_localizations.dart';
-import 'package:contentflow_app/presentation/screens/settings/integrations_screen.dart';
+import 'package:shipflow_app/data/models/ai_runtime.dart';
+import 'package:shipflow_app/l10n/app_localizations.dart';
+import 'package:shipflow_app/presentation/screens/settings/integrations_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

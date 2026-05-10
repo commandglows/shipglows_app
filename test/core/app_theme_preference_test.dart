@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:contentflow_app/core/app_theme_preference.dart';
-import 'package:contentflow_app/core/shared_preferences_provider.dart';
-import 'package:contentflow_app/providers/providers.dart';
+import 'package:shipflow_app/core/app_theme_preference.dart';
+import 'package:shipflow_app/core/shared_preferences_provider.dart';
+import 'package:shipflow_app/providers/providers.dart';
 
 void main() {
   group('normalizeAppThemePreference', () {
