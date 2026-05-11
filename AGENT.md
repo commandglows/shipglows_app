@@ -16,12 +16,12 @@ security_impact: yes
 docs_impact: yes
 evidence:
   - "CLAUDE.md"
-  - "CONTENT_MAP.md"
-  - "docs/technical/code-docs-map.md"
-  - "docs/technical/legacy-contentflow-inventory.md"
+  - "shipflow_data/editorial/content-map.md"
+  - "shipflow_data/technical/code-docs-map.md"
+  - "shipflow_data/technical/legacy-contentflow-inventory.md"
 depends_on:
   - "CLAUDE.md@0.2.0"
-  - "specs/shipflow-legacy-contentflow-fusion.md@0.1.0"
+  - "shipflow_data/workflow/specs/shipflow-legacy-contentflow-fusion.md@0.1.0"
 supersedes:
   - "AGENT.md@1.1.0 contentflow_app guidance"
 linked_systems:
@@ -54,7 +54,7 @@ Keep this repository aligned with ShipFlow as the active product while preservin
    - `lib/domain/project_health/**`
 
 2. Legacy reuse requires classification:
-   - Check `docs/technical/legacy-contentflow-inventory.md`.
+   - Check `shipflow_data/technical/legacy-contentflow-inventory.md`.
    - Move only the smallest useful concept.
    - Preserve security boundaries for auth, secrets, feedback, terminal, and agent execution.
 
@@ -73,18 +73,18 @@ Keep this repository aligned with ShipFlow as the active product while preservin
 flutter test
 flutter analyze
 rg -n "APP_TARGET|LegacyShipFlowApp|ShipFlowApp" lib test
-rg -n "ContentFlow|contentflow|contentflow_app" README.md CLAUDE.md AGENT.md TASKS.md CONTENT_MAP.md docs specs lib test
+rg -n "ContentFlow|contentflow|contentflow_app" README.md CLAUDE.md AGENT.md shipflow_data/workflow/TASKS.md shipflow_data/editorial/content-map.md shipflow_data/technical shipflow_data/workflow/specs lib test
 ```
 
 ## Canonical Sources
 
 - `CLAUDE.md`: contributor guidance.
-- `CONTENT_MAP.md`: content and documentation surface map.
-- `docs/technical/code-docs-map.md`: code area documentation map.
-- `docs/technical/runtime-boundary.md`: active versus legacy runtime.
-- `docs/technical/markdown-source-of-truth.md`: data authority contract.
-- `docs/technical/legacy-contentflow-inventory.md`: legacy classification.
-- `specs/shipflow-legacy-contentflow-fusion.md`: active chantier.
+- `shipflow_data/editorial/content-map.md`: content and documentation surface map.
+- `shipflow_data/technical/code-docs-map.md`: code area documentation map.
+- `shipflow_data/technical/runtime-boundary.md`: active versus legacy runtime.
+- `shipflow_data/technical/markdown-source-of-truth.md`: data authority contract.
+- `shipflow_data/technical/legacy-contentflow-inventory.md`: legacy classification.
+- `shipflow_data/workflow/specs/shipflow-legacy-contentflow-fusion.md`: active chantier.
 
 ## Collaboration Guidance
 

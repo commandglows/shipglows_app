@@ -28,10 +28,14 @@ void main() {
           ..createSync(recursive: true);
         final shipflow = Directory('${root.path}/shipflow')
           ..createSync(recursive: true);
-        final specsDir = Directory('${shipflow.path}/specs')
-          ..createSync(recursive: true);
+        final specsDir = Directory(
+          '${shipflow.path}/shipflow_data/workflow/specs',
+        )..createSync(recursive: true);
         final projectDir = Directory('${root.path}/projects/demo app')
           ..createSync(recursive: true);
+        final projectWorkflowDir = Directory(
+          '${projectDir.path}/shipflow_data/workflow',
+        )..createSync(recursive: true);
 
         File('${shipflowData.path}/PROJECTS.md').writeAsStringSync('''
 # Projects Registry
@@ -51,7 +55,7 @@ void main() {
         ).writeAsStringSync('# Deps\n');
         File('${specsDir.path}/demo.md').writeAsStringSync('# Spec: Demo\n');
         File(
-          '${projectDir.path}/TASKS.md',
+          '${projectWorkflowDir.path}/TASKS.md',
         ).writeAsStringSync('# Local Tasks\n');
 
         final policy = SourcePathPolicy(
@@ -77,7 +81,8 @@ void main() {
         );
         expect(
           snapshot.documents.keys.any(
-            (path) => path.endsWith('/demo app/TASKS.md'),
+            (path) =>
+                path.endsWith('/demo app/shipflow_data/workflow/TASKS.md'),
           ),
           isTrue,
         );

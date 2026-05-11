@@ -46,7 +46,7 @@ void main() {
       expect(
         IndexedFileRecord(
           fileId: 'f1',
-          path: 'specs/demo.md',
+          path: 'shipflow_data/workflow/specs/demo.md',
           artifactType: 'spec',
           sourceCommit: 'abc123',
           contentHash: 'hash1',

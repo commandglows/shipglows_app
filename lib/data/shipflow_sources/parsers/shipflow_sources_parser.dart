@@ -112,7 +112,7 @@ class ShipFlowSourcesParser {
 
     final specDocs = <String, String>{};
     for (final doc in documents.where(
-      (doc) => doc.path.contains('/shipflow/specs/'),
+      (doc) => doc.path.contains('/shipflow_data/workflow/specs/'),
     )) {
       specDocs[doc.redactedPath] = doc.content;
     }

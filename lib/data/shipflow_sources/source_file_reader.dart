@@ -16,13 +16,13 @@ class SourceFileReader {
   final String shipflowRoot;
 
   static const _projectLocalSourceFiles = [
-    'AUDIT_LOG.md',
-    'TASKS.md',
+    'shipflow_data/workflow/AUDIT_LOG.md',
+    'shipflow_data/workflow/TASKS.md',
     'CHANGELOG.md',
-    'BUSINESS.md',
-    'PRODUCT.md',
-    'GUIDELINES.md',
-    'ARCHITECTURE.md',
+    'shipflow_data/business/business.md',
+    'shipflow_data/business/product.md',
+    'shipflow_data/technical/guidelines.md',
+    'shipflow_data/technical/architecture.md',
   ];
 
   Future<SourceSnapshot> load() async {
@@ -77,7 +77,9 @@ class SourceFileReader {
       }
     }
 
-    final specsDirectory = Directory('$shipflowRoot/specs');
+    final specsDirectory = Directory(
+      '$shipflowRoot/shipflow_data/workflow/specs',
+    );
     final specFiles = specsDirectory.existsSync()
         ? specsDirectory
               .listSync(recursive: false, followLinks: false)

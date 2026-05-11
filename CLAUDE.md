@@ -16,12 +16,12 @@ docs_impact: yes
 evidence:
   - "README.md"
   - "lib/main.dart"
-  - "docs/technical/runtime-boundary.md"
-  - "docs/technical/markdown-source-of-truth.md"
-  - "docs/technical/legacy-contentflow-inventory.md"
+  - "shipflow_data/technical/runtime-boundary.md"
+  - "shipflow_data/technical/markdown-source-of-truth.md"
+  - "shipflow_data/technical/legacy-contentflow-inventory.md"
 depends_on:
-  - "specs/shipflow-legacy-contentflow-fusion.md@0.1.0"
-  - "docs/technical/code-docs-map.md@0.1.0"
+  - "shipflow_data/workflow/specs/shipflow-legacy-contentflow-fusion.md@0.1.0"
+  - "shipflow_data/technical/code-docs-map.md@0.1.0"
 supersedes:
   - "CLAUDE.md@1.1.0 contentflow_app guidance"
 linked_systems:
@@ -87,8 +87,8 @@ On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: n
 - `lib/shipflow/`: active ShipFlow UI runtime.
 - `lib/data/shipflow_sources/`: active source readers and parsers.
 - `lib/domain/project_health/`: active project posture model.
-- `docs/technical/`: technical governance for active and legacy boundaries.
-- `specs/shipflow-legacy-contentflow-fusion.md`: active migration/fusion chantier.
+- `shipflow_data/technical/`: technical governance for active and legacy boundaries.
+- `shipflow_data/workflow/specs/shipflow-legacy-contentflow-fusion.md`: active migration/fusion chantier.
 
 ## Legacy Structure
 
@@ -101,9 +101,9 @@ These areas are retained for classification, not as active product direction:
 - `lib/data/models/**`
 - `lib/core/**` when tied to ContentFlow assumptions
 - `web_auth/**`
-- legacy `specs/*.md`
+- legacy `shipflow_data/workflow/specs/*.md`
 
-Use `docs/technical/legacy-contentflow-inventory.md` before moving or deleting any of them.
+Use `shipflow_data/technical/legacy-contentflow-inventory.md` before moving or deleting any of them.
 
 ## Data Rules
 
@@ -126,8 +126,8 @@ Use `docs/technical/legacy-contentflow-inventory.md` before moving or deleting a
 
 Before broad implementation work, keep these in sync:
 
-- `CONTENT_MAP.md`
-- `docs/technical/code-docs-map.md`
-- `docs/technical/runtime-boundary.md`
-- `docs/technical/markdown-source-of-truth.md`
-- `docs/technical/legacy-contentflow-inventory.md`
+- `shipflow_data/editorial/content-map.md`
+- `shipflow_data/technical/code-docs-map.md`
+- `shipflow_data/technical/runtime-boundary.md`
+- `shipflow_data/technical/markdown-source-of-truth.md`
+- `shipflow_data/technical/legacy-contentflow-inventory.md`

@@ -19,8 +19,8 @@ The app reads:
 - `/home/claude/shipflow_data/TASKS.md`
 - `/home/claude/shipflow_data/OPERATIONS_LOG.md`
 - `/home/claude/shipflow_data/DEPENDENCY_LOG.md`
-- `/home/claude/shipflow/specs/*.md`
-- Project-local docs (`AUDIT_LOG.md`, `TASKS.md`, `CHANGELOG.md`, `BUSINESS.md`, `PRODUCT.md`, `GUIDELINES.md`, `ARCHITECTURE.md`) when listed in `PROJECTS.md`
+- `/home/claude/shipflow/shipflow_data/workflow/specs/*.md`
+- Project-local governance docs (`shipflow_data/workflow/AUDIT_LOG.md`, `shipflow_data/workflow/TASKS.md`, `CHANGELOG.md`, `shipflow_data/business/business.md`, `shipflow_data/business/product.md`, `shipflow_data/technical/guidelines.md`, `shipflow_data/technical/architecture.md`) when listed in `PROJECTS.md`
 
 ## Security and File Access
 
@@ -35,7 +35,7 @@ Web builds are unsupported for direct local file reads. The app surfaces an expl
 
 ## Tracker vs Ledger Model
 
-- `TASKS.md` and `AUDIT_LOG.md` remain human trackers.
+- `shipflow_data/workflow/TASKS.md` and `shipflow_data/workflow/AUDIT_LOG.md` remain human trackers.
 - `OPERATIONS_LOG.md` and `DEPENDENCY_LOG.md` are machine-readable append-only ledgers.
 - Event writes must go through `/home/claude/shipflow/tools/append_shipflow_event.py`.
 
@@ -63,12 +63,12 @@ flutter run -d linux --dart-define=APP_TARGET=contentflow
 ```
 
 Do not use the legacy target as the product direction. Its modules are classified
-in `docs/technical/legacy-contentflow-inventory.md`.
+in `shipflow_data/technical/legacy-contentflow-inventory.md`.
 
 ## Future Auth, Sync, And Backend Work
 
 ShipFlow will likely need multi-user auth, feedback, BYOK/OpenRouter, and a
-projection database later. Those are future specs, not active V1 behavior.
+projection database later. Those are future specs under `shipflow_data/workflow/specs/`, not active V1 behavior.
 
 Current data rule:
 
@@ -94,4 +94,4 @@ user/project ownership. The provider is not final; Firebase/Firestore and
 Firebase Auth are candidates, while FastAPI may still be useful for local
 runner/terminal/agent orchestration.
 
-See `docs/auth-sync-v2.md`.
+See `shipflow_data/technical/auth-sync-v2.md`.
