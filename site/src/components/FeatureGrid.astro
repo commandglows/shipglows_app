@@ -1,0 +1,46 @@
+---
+const features = [
+  {
+    title: "Steady workspace context",
+    body:
+      "Authentication, project selection, and workspace state are explicit so users can continue from where they were, even after refresh or restart."
+  },
+  {
+    title: "Human-led content execution",
+    body:
+      "Each screen keeps review, status, and workflow transitions explicit so teams stay in control instead of surrendering decisions."
+  },
+  {
+    title: "Resilient API behavior",
+    body:
+      "Degraded mode keeps browsing the app useful when services are unavailable, with clear queues for supported actions."
+  },
+  {
+    title: "Operational visibility",
+    body:
+      "Uptime, performance, diagnostics, and activity surfaces show what is healthy and what is waiting."
+  }
+];
+---
+
+<section class="section">
+  <div class="section-heading">
+    <p class="eyebrow">Why ContentFlow App Exists</p>
+    <h2>Most teams fail at continuity before they fail at ideas.</h2>
+    <p>
+      ContentFlow App exists to keep operators from losing momentum when tools,
+      APIs, or context boundaries shift mid-workflow.
+    </p>
+  </div>
+
+  <div class="card-grid">
+    {
+      features.map((feature) => (
+        <article class="card">
+          <h3>{feature.title}</h3>
+          <p>{feature.body}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>

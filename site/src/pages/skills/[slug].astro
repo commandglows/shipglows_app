@@ -1,0 +1,117 @@
+---
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import SkillCard from "../../components/SkillCard.astro";
+import SkillSection from "../../components/SkillSection.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import type { Workflow } from "../../data/workflows";
+import { workflowCatalog } from "../../data/workflows";
+
+export function getStaticPaths() {
+  return workflowCatalog.map(({ slug }) => ({
+    params: { slug },
+    props: { slug }
+  }));
+}
+
+const slug = Astro.params.slug!;
+const workflow = workflowCatalog.find((item) => item.slug === slug);
+
+if (!workflow) {
+  throw new Error(`Unknown workflow: ${slug}`);
+}
+const data = workflow as Workflow;
+---
+
+<BaseLayout
+  title={`${data.title} | ContentFlow Workflows`}
+  description={data.summary}
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="skill-hero">
+        <div class="skill-hero-copy">
+          <div class="skill-card-head">
+            <span class="skill-chip">{data.category}</span>
+          </div>
+          <p class="eyebrow">Workflow Detail</p>
+          <h1 class="page-title">{data.title}</h1>
+          <p class="skill-tagline skill-tagline-large">{data.tagline}</p>
+          <p class="hero-text">{data.summary}</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="/skills">Back to workflows</a>
+            <a class="button button-secondary" href="/docs">Read docs</a>
+          </div>
+        </div>
+
+        <aside class="skill-side-panel">
+          <p class="eyebrow">Who this is for</p>
+          <ul class="skill-list">
+            {data.related.map((item: string) => <li>{item}</li>)}
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="split-grid">
+        <article class="panel">
+          <p class="eyebrow">Problem</p>
+          <h2>What this solves</h2>
+          <p>{data.problem}</p>
+        </article>
+        <article class="panel accent-card">
+          <p class="eyebrow">Outcome</p>
+          <h2>What changes when it works</h2>
+          <p>{data.outcome}</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Why it matters</p>
+        <h2>Operational value</h2>
+        <p>{data.founder_angle}</p>
+      </div>
+    </section>
+
+    <section class="section skill-detail-grid">
+      <SkillSection title="When to use it" items={data.when_to_use} />
+      <SkillSection title="What you give it" items={data.what_you_give} />
+      <SkillSection title="What you get back" items={data.what_you_get} />
+      <SkillSection title="Typical examples" items={data.examples} />
+      <SkillSection title="Limits" items={data.limits} />
+    </section>
+
+    {
+      data.related.length > 0 && (
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">Related workstreams</p>
+            <h2>See adjacent workflows.</h2>
+          </div>
+        <div class="skill-grid">
+            {data.related.map((relatedSlug) => {
+  const related = workflowCatalog.find((item) => item.slug === relatedSlug);
+            if (!related) return null;
+              return (
+                <SkillCard
+                  href={`/skills/${relatedSlug}`}
+                  title={related.title}
+                  category={related.category}
+                  tagline={related.tagline}
+                  summary={related.summary}
+                  relatedSkills={related.related}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )
+    }
+  </main>
+  <Footer />
+</BaseLayout>

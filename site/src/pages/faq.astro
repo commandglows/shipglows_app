@@ -1,0 +1,78 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+
+const items = [
+  {
+    q: "What is ContentFlow App’s core outcome?",
+    a: "A reliable, human-led workflow for planning, drafting support, review, and scheduling with continuity during unstable backends."
+  },
+  {
+    q: "Do I need external AI infrastructure to use the app?",
+    a: "No. The app is an operator shell for workflow and content orchestration. AI-assisted flow can exist upstream; this surface focuses on execution consistency."
+  },
+  {
+    q: "Why degraded mode exists?",
+    a: "Some API paths are not always available. Degraded mode keeps read paths and queueable actions available so work can continue safely."
+  },
+  {
+    q: "Can the app replace a full CMS?",
+    a: "No. It is positioned as an execution surface for content teams, not a complete channel-management or CMS replacement."
+  },
+  {
+    q: "Where is the product promise documented?",
+    a: "Use the docs page for business, product, branding, GTM, architecture, and workflow contracts."
+  }
+];
+---
+
+<BaseLayout
+  title="ContentFlow App FAQ | Workflow and reliability"
+  description="Answers about ContentFlow App capabilities, scope, and reliability behavior."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h1 class="page-title">Common questions without fluff.</h1>
+        <p>
+          This page focuses on practical fit, scope, and operational constraints for
+          using the app day to day.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="faq-list">
+        {
+          items.map((item) => (
+            <details class="faq-item">
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Want the workflow map?</h3>
+          <p>Open the workflow overview to see how operations are structured.</p>
+          <a class="doc-action" href="/skill-modes">Read workflow overview</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Want all contracts?</h3>
+          <p>See docs for business/product scope and technical governance.</p>
+          <a class="doc-action" href="/docs">Open docs</a>
+        </article>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

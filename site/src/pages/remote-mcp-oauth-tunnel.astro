@@ -1,0 +1,79 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+---
+
+<BaseLayout
+  title="Reliability Guide | ContentFlow App"
+  description="Practical notes on auth and resilience behavior in ContentFlow App."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Resilience Notes</p>
+        <h1 class="page-title">Reliable authentication and degraded workflows.</h1>
+        <p>
+          This site keeps a practical model for operational behavior: auth entrypoints,
+          session continuity, and offline continuity paths are documented separately
+          from full external publishing channels.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">Auth entrypoints</p>
+          <h2>Web auth is the active production path</h2>
+          <p>
+            The app uses Clerk-based sign-in/sign-up and SSO callback paths for
+            session bootstrap, with explicit startup checks before entering the
+            main shell.
+          </p>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">Operational expectation</p>
+          <h2>Do not collapse auth and publish flow</h2>
+          <p>
+            The shell handles onboarding and workflow orchestration; external channel
+            publish coverage is intentionally marked as explicitly partial where
+            not yet fully closed.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Queue behavior</h3>
+          <p>
+            Supported write actions are queued when sync is not available and replayed
+            when the connection is restored.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Recovery visibility</h3>
+          <p>
+            Recovery states are not hidden. Operators can see what is pending and when
+            it is being reconciled.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Non-goals</h3>
+          <p>
+            Some publish-adjacent loops remain in-progress and are tracked in specs
+            rather than hidden as completed.
+          </p>
+        </article>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

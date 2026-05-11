@@ -1,0 +1,47 @@
+---
+const items = [
+  {
+    q: "What is ContentFlow App?",
+    a: "It is the authenticated operator app for content planning, review, and scheduling, built to remain usable during API instability."
+  },
+  {
+    q: "Is publishing fully automatic?",
+    a: "No. ContentFlow App stays human-led. It helps prepare and organize publish-ready content, with explicit review and status transitions."
+  },
+  {
+    q: "Why is offline behavior important?",
+    a: "The app keeps supported operations visible and recoverable when services are degraded by queueing actions, preserving workspace continuity."
+  },
+  {
+    q: "What core workflows are available?",
+    a: "Feed, ideas, angles, personas, editor, scheduling/drip, feedback, integrations, projects, and diagnostics are part of the app’s daily workflow surface."
+  },
+  {
+    q: "How do I evaluate reliability?",
+    a: "Use the built-in diagnostics screens for uptime, performance, sync status, and activity; they show when the system is live versus queued."
+  }
+];
+---
+
+<section class="section" id="faq">
+  <div class="section-heading">
+    <p class="eyebrow">FAQ</p>
+    <h2>The main operational questions, answered directly.</h2>
+    <p>
+      If you want the full flow map, open
+      <a href="/skill-modes">the product workflow overview</a>. If you want the
+      broader list, open the <a href="/faq">full FAQ page</a>.
+    </p>
+  </div>
+
+  <div class="faq-list">
+    {
+      items.map((item) => (
+        <details class="faq-item">
+          <summary>{item.q}</summary>
+          <p>{item.a}</p>
+        </details>
+      ))
+    }
+  </div>
+</section>

@@ -1,15 +1,42 @@
 ---
-artifact: veille_concurrents_inspirations
-project: app
+artifact: competitive_intelligence
+metadata_schema_version: "1.0"
+artifact_version: "1.0.0"
+project: "shipflow_app"
 created: "2026-05-11"
 updated: "2026-05-11"
 status: reviewed
 source_skill: sf-veille
-scope: "inspirations pour ShipFlow App"
+scope: "project-competitors-and-inspirations"
+owner: "Diane"
 confidence: medium
+risk_level: medium
+security_impact: none
+docs_impact: yes
+evidence:
+  - "Initial competitor and inspiration triage captured in legacy root concurrent.md."
+  - "ShipFlow App is a local dashboard surface for ShipFlow project data and action state."
+depends_on:
+  - artifact: "shipflow_data/business/product.md"
+    artifact_version: "1.0.0"
+    required_status: reviewed
+  - artifact: "shipflow_data/business/gtm.md"
+    artifact_version: "1.0.0"
+    required_status: reviewed
+supersedes:
+  - "concurrent.md"
+next_review: "2026-06-11"
+next_step: "/sf-market-study shipflow_app"
+target_projects:
+  - shipflow_app
+reference_categories:
+  - indirect_competitor
+  - product_inspiration
+  - workflow_inspiration
+source_policy: "Track public sources only; do not copy private positioning, paid assets, credentials, or non-public customer data."
 ---
 
-# Concurrents et inspirations — app / ShipFlow App
+# Concurrents et inspirations — ShipFlow App
 
 ## Lecture projet
 

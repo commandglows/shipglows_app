@@ -1,0 +1,82 @@
+---
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import SkillCard from "../../components/SkillCard.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { workflowCatalog } from "../../data/workflows";
+
+const workflows = workflowCatalog.map((item) => ({
+  slug: item.slug,
+  title: item.title,
+  category: item.category,
+  tagline: item.tagline,
+  summary: item.summary,
+  related: item.related,
+}));
+---
+
+<BaseLayout
+  title="ContentFlow Workflows | Public feature catalog"
+  description="Explore ContentFlow App operational workflows: onboarding, planning, review, scheduling, and resilience."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Workflow Catalog</p>
+        <h1 class="page-title">Feature pages for the operator surface.</h1>
+        <p>
+          These workflows are practical surfaces, not generic prompts. Each page
+          explains what is shipped, what matters for users, and what remains out
+          of scope.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Start with Entry</h3>
+          <p>
+            New session flow first: authentication, project selection, and
+            workspace continuity define every other action in the app.
+          </p>
+          <a class="doc-action" href="/skills/entry">Open entry workflow</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Keep review in the loop</h3>
+          <p>
+            Planning and scheduling are useful only when status transitions are
+            explicit and auditable.
+          </p>
+          <a class="doc-action" href="/skill-modes">See workflow map</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Available Workflows</p>
+        <h2>Each card maps to one core operating surface.</h2>
+      </div>
+      <div class="skill-grid">
+        {
+          workflows.map((workflow) => (
+            <SkillCard
+              href={`/skills/${workflow.slug}`}
+              title={workflow.title}
+              category={workflow.category}
+              tagline={workflow.tagline}
+              summary={workflow.summary}
+              relatedSkills={workflow.related}
+              featured={workflow.slug === "planning"}
+            />
+          ))
+        }
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

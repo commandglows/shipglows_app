@@ -12,6 +12,7 @@ Current active chantier:
 | 🟠 | Decider plus tard Firebase/Firestore/Auth/FastAPI/BYOK/feedback avec shipflow_data/workflow/specs dediees | 💤 deferred |
 | 🟠 | Nettoyer les mentions ContentFlow actives dans les shipflow_data racine | 🔄 in progress |
 | 🟡 | Corriger les imports/tests obsoletes apres classification | 📋 todo |
+| 🟢 | Deplacer le contenu actif vers `app/` et réarmer la façade `site/` avec le contenu ShipFlow App en gardant le design | ✅ done |
 
 Primary references:
 

@@ -1,0 +1,74 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+---
+
+<BaseLayout
+  title="ContentFlow App Pricing"
+  description="Current pricing assumptions and commercial direction for ContentFlow App."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Pricing Hypothesis</p>
+        <h1 class="page-title">Commercial model is not finalized in this repository.</h1>
+        <p>
+          The project currently documents behavior and operational promises before
+          locking a final offer. Reliability and continuity are the first packaging
+          criteria.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">Current Focus</p>
+          <h2>Proof over monetization</h2>
+          <p>
+            The immediate goal is a coherent operator experience for creators and
+            small teams: onboarding, review workflows, scheduling, and degraded-mode
+            behavior.
+          </p>
+          <ul class="check-list">
+            <li>single authenticated surface</li>
+            <li>clear continuity between sessions</li>
+            <li>human review gates before publication</li>
+          </ul>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">What matters to users first</p>
+          <h2>Consistency and trust</h2>
+          <p>
+            The first buying motion should be clear because the value is operational:
+            less drift, better queue behavior, and fewer blind spots.
+          </p>
+          <ul class="check-list">
+            <li>explicit status + retry states</li>
+            <li>resilient action model</li>
+            <li>fast workflow orientation</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">How to evaluate now</p>
+        <h2>Use the docs + workflows as the decision source.</h2>
+        <p>
+          Until commercial terms are announced, the best evaluation is operational.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/docs">Read the docs</a>
+          <a class="button button-secondary" href="/contact">Ask about access</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

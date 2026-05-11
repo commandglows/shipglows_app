@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [2026-05-11]
+
+### Changed
+- Moved the repository app runtime assets under `app/` and introduced a sibling `site/` folder from the existing TubeFlow-like site scaffold.
+- Replaced public-site content to ship a ShipFlow App landing/docs/FAQ/pricing/workflow narrative while preserving the prior design system.
+
 ## [2026-05-10]
 
 ### Added

@@ -1,0 +1,39 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  category: string;
+  tagline: string;
+  summary: string;
+  relatedSkills?: string[];
+  featured?: boolean;
+}
+
+const {
+  href,
+  title,
+  category,
+  tagline,
+  summary,
+  relatedSkills = [],
+  featured = false
+} = Astro.props;
+---
+
+<article class:list={["skill-card", featured && "skill-card-featured"]}>
+  <div class="skill-card-head">
+    <span class="skill-chip">{category}</span>
+    {featured && <span class="skill-chip skill-chip-accent">Featured</span>}
+  </div>
+  <h3><a href={href}>{title}</a></h3>
+  <p class="skill-tagline">{tagline}</p>
+  <p>{summary}</p>
+  {
+    relatedSkills.length > 0 && (
+      <p class="skill-related">
+        Works well with {relatedSkills.join(", ")}.
+      </p>
+    )
+  }
+  <a class="doc-action" href={href}>Open skill page</a>
+</article>

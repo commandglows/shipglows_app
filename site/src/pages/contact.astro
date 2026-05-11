@@ -1,0 +1,62 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+---
+
+<BaseLayout
+  title="Contact ContentFlow App"
+  description="How to reach the team about ContentFlow App."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Contact</p>
+        <h1 class="page-title">If this workflow matches your needs, contact the project owner.</h1>
+        <p>
+          Contact is best used for access, scope questions, or custom setup
+          discussions. Share the concrete workflow challenge first: onboarding,
+          review loops, or reliability continuity.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="contact-grid">
+        <article class="doc-card">
+          <h3>Best first message</h3>
+          <p>
+            Mention the current bottleneck: broken continuity, weak queue state,
+            missing diagnostics, or review handoff friction.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>What to review first</h3>
+          <p>
+            Read business and product docs before opening the first request so the
+            conversation stays precise.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Primary Entry Points</p>
+        <h2>Start with the repository and docs for technical context.</h2>
+        <p>
+          The website is kept intentionally lightweight. The source of truth for
+          decisions is in the repository docs.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="https://github.com/dianedef/contentflow_app">Open repository</a>
+          <a class="button button-secondary" href="/docs">Read the docs</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

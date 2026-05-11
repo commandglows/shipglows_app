@@ -1,0 +1,54 @@
+---
+import CallToAction from "../components/CallToAction.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import DocsCta from "../components/DocsCta.astro";
+import FaqSection from "../components/FaqSection.astro";
+import FeatureGrid from "../components/FeatureGrid.astro";
+import Footer from "../components/Footer.astro";
+import Hero from "../components/Hero.astro";
+import NavBar from "../components/NavBar.astro";
+import PricingHypothesis from "../components/PricingHypothesis.astro";
+import ProductSurface from "../components/ProductSurface.astro";
+import ProofStrip from "../components/ProofStrip.astro";
+import RoleMap from "../components/RoleMap.astro";
+---
+
+<BaseLayout
+  title="ContentFlow App | Human-led content operations"
+  description="ContentFlow App turns idea, review, and scheduling workflows into a resilient operator experience with offline continuity."
+>
+  <main class="page-shell">
+    <NavBar />
+    <Hero />
+    <FeatureGrid />
+    <ProductSurface />
+    <RoleMap />
+    <ProofStrip />
+    <PricingHypothesis />
+    <FaqSection />
+    <DocsCta />
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Understand how the app stays useful when sync is degraded</h3>
+          <p>
+            The app keeps workspace state, queue status, and retry paths explicit so
+            operators can continue even when backend services are degraded.
+          </p>
+          <a class="doc-action" href="/skill-modes">Read the workflow overview</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Start with the direct questions</h3>
+          <p>
+            If you want quick answers, the FAQ covers what the app does,
+            how continuity works, and what is out of scope for this release.
+          </p>
+          <a class="doc-action" href="/faq">Open the FAQ</a>
+        </article>
+      </div>
+    </section>
+    <CallToAction />
+  </main>
+  <Footer />
+</BaseLayout>

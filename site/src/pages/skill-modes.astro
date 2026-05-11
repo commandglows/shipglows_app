@@ -1,0 +1,119 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+
+const workflows = [
+  {
+    command: "entry",
+    when: "Start with authentication, workspace selection, and onboarding checks.",
+    modes: "Used when a user opens the app and expects consistent workspace context."
+  },
+  {
+    command: "planning",
+    when: "Move through ideas, personas, and content angles.",
+    modes: "Use this lane for feed structuring and campaign preparation."
+  },
+  {
+    command: "editor",
+    when: "Create, refine, and review draft states.",
+    modes: "Status transitions keep editorial decisions explicit and reversible."
+  },
+  {
+    command: "scheduling",
+    when: "Prepare drip plans and calendar-based release timing.",
+    modes: "Queue and reconcile publication prep events so operators keep timing control."
+  },
+  {
+    command: "sync",
+    when: "Handle degraded mode behavior and reconnect states.",
+    modes: "Track offline reads, queued writes, retries, and reconciliation status."
+  },
+  {
+    command: "diagnostics",
+    when: "Check uptime, performance, and activity before changing flow.",
+    modes: "Use for decision confidence, not just visual confirmation."
+  }
+];
+---
+
+<BaseLayout
+  title="ContentFlow Workflow | Operating map"
+  description="How ContentFlow App workflows are organized and when to use each surface."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Workflow Cheatsheet</p>
+        <h1 class="page-title">ContentFlow workflow map.</h1>
+        <p>
+          The app is organized into operational surfaces, each optimized for one
+          job. Use this as a quick map when explaining the product or training
+          new operators.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">Short version</p>
+          <h2>Start with Entry, then Planning, then Review.</h2>
+          <p>
+            If you need a single orientation sequence, this covers the most common
+            path before going into scheduling and diagnostics.
+          </p>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">Execution rule</p>
+          <h2>If no mode fits, keep humans in control.</h2>
+          <p>
+            Workflows are designed for explicit transitions, not hidden automation.
+            Ambiguous actions should remain visible and reversible.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Primary Workflows</p>
+        <h2>Choose by outcome, not by feature name.</h2>
+      </div>
+      <div class="role-list">
+        {
+          workflows.map((item) => (
+            <div class="role-row">
+              <code>{item.command}</code>
+              <span>
+                <strong>{item.when}</strong>
+                <br />
+                {item.modes}
+              </span>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Where to go next</p>
+        <h2>Read one workflow page for each route.</h2>
+        <p>
+          Open any route below for a concise breakdown of user expectations and
+          current scope.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/skills">Open workflows hub</a>
+          <a class="button button-secondary" href="/faq">Read FAQ</a>
+          <a class="button button-secondary" href="/docs">Read docs</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

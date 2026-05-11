@@ -1,0 +1,84 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+---
+
+<BaseLayout
+  title="Why not just prompts? | ContentFlow App"
+  description="Why an operator app is more reliable than prompting alone."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Why not only prompts?</p>
+        <h1 class="page-title">Prompts help ask questions. Workflow keeps momentum.</h1>
+        <p>
+          Better prompts can improve one interaction. They do not replace the need
+          for resilient states, queued action paths, and review gates.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">What prompts do well</p>
+          <h2>Increase immediate output quality</h2>
+          <p>
+            They help generate better first drafts, clearer ideas, and sharper
+            suggestions per interaction.
+          </p>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">What prompts do not solve</p>
+          <h2>Operational continuity under load</h2>
+          <p>
+            They do not preserve workspace context, queue states, or explicit
+            recovery paths when upstream services temporarily fail.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Human-in-the-loop is non-negotiable</h3>
+          <p>
+            ContentFlow App keeps publish-ready preparation explicit: review,
+            status transitions, scheduling, and final validation remain operator-driven.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Resilience is part of the product</h3>
+          <p>
+            Degraded mode is built into the workflow because backend availability
+            is not guaranteed, and continuity is how teams actually win over time.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Short Version</p>
+        <h2>Prompts are a tool. Workflow is the operating model.</h2>
+        <p>
+          ContentFlow App adds the operator surface your team needs after prompts:
+          clear state, recovery, and reliable action execution.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/about">Read why it exists</a>
+          <a class="button button-secondary" href="/skills">See workflows</a>
+          <a class="button button-secondary" href="/faq">Open the FAQ</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

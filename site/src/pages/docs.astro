@@ -1,0 +1,121 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+
+const docsMap = [
+  ["AGENT.md", "entrypoint and operator context."],
+  ["shipflow_data/business/business.md", "for whom the product is built."],
+  ["shipflow_data/business/product.md", "scope, workflows, and non-goals."],
+  ["shipflow_data/business/branding.md", "tone, terms, and positioning."],
+  ["shipflow_data/business/gtm.md", "public framing and objection handling."],
+  ["shipflow_data/editorial/content-map.md", "how content should be categorized and reused."],
+  ["shipflow_data/technical/context.md", "technical context map."],
+  ["shipflow_data/technical/context-function-tree.md", "function-tree and structural dependencies."],
+  ["shipflow_data/technical/architecture.md", "architecture and boundaries."],
+  ["shipflow_data/technical/guidelines.md", "engineering conventions and safeguards."],
+  ["shipflow_data/workflow/TASKS.md", "operational task tracker."],
+  ["shipflow_data/workflow/AUDIT_LOG.md", "history and audit trail."],
+  ["shipflow_data/workflow/specs/SPEC-offline-sync-v2.md", "degraded mode guarantees."],
+  ["shipflow_data/workflow/specs/PRD-lifetime-deal-early-bird-payg.md", "pricing context and open assumptions."]
+];
+
+const featureDocs = [
+  "entry and authentication flow under Clerk web auth",
+  "workspace selection and project continuity",
+  "degraded mode and queued operations",
+  "review/status transitions, scheduling, and diagnostics",
+  "feedback capture and admin moderation path"
+];
+---
+
+<BaseLayout
+  title="ContentFlow App Docs | Navigation and contracts"
+  description="Navigation for ContentFlow App governance docs and workflow contracts."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section" id="artifact-corpus">
+      <div class="section-heading">
+        <p class="eyebrow">Docs Overview</p>
+        <h1 class="page-title">A practical contract map for operators and contributors.</h1>
+        <p>
+          The documentation is organized around two goals: clarity for users and
+          stable execution behavior for operators.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Core Promise</p>
+        <h2>Focus on shipping consistency before feature breadth.</h2>
+        <p>
+          ContentFlow App is the authenticated execution layer for content work. The
+          documentation keeps product promises aligned with reality and visible to
+          users.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/skills">Browse workflows</a>
+          <a class="button button-secondary" href="/faq">Read operational FAQ</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Primary feature surfaces</h3>
+          <ul class="check-list">
+            {
+              featureDocs.map((feature) => <li>{feature}</li>)
+            }
+          </ul>
+        </article>
+
+        <article class="doc-card">
+          <h3>What this docs set is for</h3>
+          <p>
+            These files define what the app says, what it should not say, and which
+            workflows are considered in-scope for this stage.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Artifact Corpus</p>
+        <h2>Corporate memory with explicit responsibilities.</h2>
+      </div>
+      <div class="doc-grid">
+        {
+          docsMap.map(([name, body]) => (
+            <article class="doc-card">
+              <h3>{name}</h3>
+              <p>{body}</p>
+              <a class="doc-action" href="#artifact-corpus">Read this contract</a>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Decision Rule</p>
+        <h2>Reliability and review clarity come first.</h2>
+        <p>
+          Prefer shipping workflows that improve continuity and operator visibility
+          over adding automation where decisions become opaque.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/pricing">Check pricing direction</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/contentflow_app">Open repository</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

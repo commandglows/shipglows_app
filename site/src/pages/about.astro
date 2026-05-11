@@ -1,0 +1,99 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+---
+
+<BaseLayout
+  title="About ContentFlow App | Why it exists"
+  description="Why ContentFlow App exists and which workflows it is built to make reliable."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">About ContentFlow App</p>
+        <h1 class="page-title">Built to keep content execution reliable, not brittle.</h1>
+        <p>
+          ContentFlow App is the authenticated operations surface for creators and
+          lean teams that want to move from ideas to publish-ready planning with
+          continuity.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">Who It Is For</p>
+          <h2>Creators, solo builders, and small content teams</h2>
+          <p>
+            The app is for people running multiple content surfaces who need one
+            coherent place to coordinate ideas, status, schedules, and review
+            state.
+          </p>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">Primary Problem</p>
+          <h2>Broken continuity</h2>
+          <p>
+            The main friction is not feature count. It is losing momentum when APIs
+            are unstable, work is fragmented, or action states are unclear.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">What It Is Not</p>
+        <h2>No replacement for editorial judgment.</h2>
+        <p>
+          ContentFlow App is explicitly human-led. It supports operators with
+          reliable state, queue visibility, and actionable diagnostics while people
+          keep the final decision.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Positioning from repo</h3>
+          <p>
+            The product context defines ContentFlow as an execution layer in a larger
+            ecosystem, not a standalone AI factory.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Core constraints</h3>
+          <p>
+            In-app reliability is prioritized over feature shortcuts. Offline reads,
+            queue replay, and clear state transitions are part of the baseline
+            behavior.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Next Step</p>
+        <h2>Read the operational docs, then inspect the workflow map.</h2>
+        <p>
+          Start with core docs and the capabilities page for a practical sense of
+          what is shipped and what is explicitly out of scope.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/docs">Open documentation</a>
+          <a class="button button-secondary" href="/skills">Browse workflows</a>
+          <a class="button button-secondary" href="/faq">Read FAQ</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
