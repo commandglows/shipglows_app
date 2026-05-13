@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:shipflow_app/core/app_theme_preference.dart';
 import 'package:shipflow_app/core/shared_preferences_provider.dart';
-import 'package:shipflow_app/providers/providers.dart';
+import '../legacy_contract.dart';
 
 void main() {
   group('normalizeAppThemePreference', () {

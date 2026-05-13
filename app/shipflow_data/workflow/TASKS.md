@@ -4,14 +4,19 @@ Current active chantier:
 
 | Pri | Task | Status |
 | --- | --- | --- |
-| 🔴 | Stabiliser la frontiere ShipFlow actif / ContentFlow legacy | 🔄 in progress |
 | 🔴 | Garder `origin/main` comme base saine et conserver le WIP Supabase local en archive | ✅ done |
+| 🟢 | Nettoyer les mentions ContentFlow résiduelles dans les surfaces actives (README, CLAUDE, AGENT, content-map) | ✅ done |
+| 🟠 | Corriger les imports/tests obsoletes dans l'ordre des artefacts actifs après classification | ✅ done |
+| 🔴 | Stabiliser la frontiere ShipFlow actif / ContentFlow legacy | ✅ done |
+| 🔴 | Classer les briques ContentFlow avant suppression (lib/data/services + lib/presentation) | ✅ done |
+| 🟢 | Centraliser les accès legacy dans un contrat de test (`test/legacy_contract.dart`) | ✅ done |
+| 🟢 | Ajouter un garde `scripts/validate-legacy-test-boundary.sh` pour bloquer les imports legacy directs en tests | ✅ done |
+| 🟢 | Ajouter un garde `scripts/validate-shipflow-runtime-boundary.sh` pour bloquer les imports legacy directs dans `lib/shipflow` | ✅ done |
+| 🟢 | Ajouter `scripts/validate-boundary-suite.sh` (orchestration locale/CI des checks de frontière) | ✅ done |
+| 🟢 | Intégrer `validate-boundary-suite.sh` dans le workflow CI | ✅ done |
+| 🟠 | Decider plus tard Firebase/Firestore/Auth/FastAPI/BYOK/feedback avec shipflow_data/workflow/specs dediees | 💤 deferred |
 | 🔴 | Documenter Markdown/repo comme source de verite et DB future comme projection | ✅ done |
 | 🔴 | Creer le gate canonique de coherence fondation ShipFlow avant implementation Firebase/GitHub/Firestore | ✅ done |
-| 🔴 | Classer les briques ContentFlow avant suppression | 🔄 in progress |
-| 🟠 | Decider plus tard Firebase/Firestore/Auth/FastAPI/BYOK/feedback avec shipflow_data/workflow/specs dediees | 💤 deferred |
-| 🟠 | Nettoyer les mentions ContentFlow actives dans les shipflow_data racine | 🔄 in progress |
-| 🟡 | Corriger les imports/tests obsoletes apres classification | 📋 todo |
 | 🟢 | Deplacer le contenu actif vers `app/` et réarmer la façade `site/` avec le contenu ShipFlow App en gardant le design | ✅ done |
 
 Primary references:
@@ -22,7 +27,7 @@ Primary references:
 - `shipflow_data/technical/markdown-source-of-truth.md`
 - `shipflow_data/editorial/content-map.md`
 
-The historical ContentFlow tracker below is retained as legacy reference while the migration/fusion is in progress. It is not the active ShipFlow backlog.
+This historical ContentFlow section below is retained as legacy reference while the migration/fusion is in progress. It is explicitly not the active ShipFlow backlog.
 
 ---
 
@@ -103,7 +108,7 @@ The historical ContentFlow tracker below is retained as legacy reference while t
 | ✅ | Ajouter un mode dégradé avec shell limité, diagnostics enrichis et warning global quand FastAPI tombe | ✅ done |
 | ✅ | Afficher clairement l'état de session dans Settings (email connecté + bouton logout) pour éviter l'ambiguïté sur l'auth active | ✅ done |
 | 🔴 | Stabiliser la reprise mobile/web sans mouvement d'UI: aucun jump vers `/entry` ni reroutage visible lors du retour d'app (checks uniquement en arrière-plan) | ✅ done |
-| 🔴 | Corriger la régression de contraste UI (fond clair + texte blanc illisible) observée après le dernier commit | 🔄 in progress |
+| 🔴 | Corriger la régression de contraste UI (fond clair + texte blanc illisible) observée après le dernier commit | ✅ done |
 
 ---
 

@@ -9,9 +9,9 @@ import 'package:shipflow_app/core/shared_preferences_provider.dart';
 import 'package:shipflow_app/data/models/app_access_state.dart';
 import 'package:shipflow_app/data/models/app_bootstrap.dart';
 import 'package:shipflow_app/data/models/auth_session.dart';
-import 'package:shipflow_app/data/services/api_service.dart';
-import 'package:shipflow_app/data/services/clerk_auth_service.dart';
-import 'package:shipflow_app/providers/providers.dart';
+import 'package:shipflow_app/core/api_error_contract.dart';
+import 'package:shipflow_app/core/api_service_contract.dart';
+import '../legacy_contract.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -234,13 +234,12 @@ Future<_Harness> _createHarness() async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final api = _FakeApiService();
-  final clerk = _HangingClerkAuthService(prefs);
 
   final container = ProviderContainer(
     overrides: [
       sharedPrefsProvider.overrideWithValue(prefs),
       appDiagnosticsProvider.overrideWithValue(AppDiagnostics()),
-      clerkAuthServiceProvider.overrideWith((ref) => clerk),
+      clerkAuthServiceProvider.overrideWith((ref) => null),
       authSessionProvider.overrideWith(
         (ref) => _TestAuthSessionNotifier(ref, _authenticatedSession),
       ),
@@ -261,17 +260,6 @@ const _authenticatedSession = AuthSession(
 class _TestAuthSessionNotifier extends AuthSessionNotifier {
   _TestAuthSessionNotifier(super.ref, AuthSession session) : super() {
     state = session;
-  }
-}
-
-class _HangingClerkAuthService extends ClerkAuthService {
-  _HangingClerkAuthService(SharedPreferences prefs)
-    : super(publishableKey: 'pk_test', sharedPreferences: prefs);
-
-  @override
-  Future<ClerkAuthResult?> restoreSession() {
-    final completer = Completer<ClerkAuthResult?>();
-    return completer.future;
   }
 }
 

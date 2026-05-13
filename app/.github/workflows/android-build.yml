@@ -32,6 +32,9 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
+      - name: Validate migration boundary contracts
+        run: ./scripts/validate-boundary-suite.sh
+
       - name: Static analysis
         run: flutter analyze
 

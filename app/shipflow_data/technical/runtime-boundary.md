@@ -55,6 +55,8 @@ This document defines which runtime is active and which runtime is legacy while 
 - The legacy runtime is a migration reference, not the product direction.
 - The legacy runtime remains temporarily available until its modules are classified.
 - New product work should target `lib/shipflow/` unless a ready spec explicitly adapts legacy code.
+- Active runtime code in `lib/shipflow/` must not import legacy runtime modules (`lib/router.dart`, `lib/providers/providers.dart`, `lib/data/services/**`, `lib/presentation/**`, `web_auth/**`) without an explicit migration or compatibility spec.
+- Legacy tests should import those legacy modules only through `test/legacy_contract.dart` unless a migration spec explicitly allows direct imports in place.
 - Auth, feedback, BYOK, pipeline, terminal, and agent runner features cannot be activated by runtime naming alone.
 
 ## Runtime Selection
@@ -69,13 +71,18 @@ The legacy target can be removed only after:
 
 - Every legacy code area in `shipflow_data/technical/legacy-contentflow-inventory.md` is classified.
 - Reusable concepts are either moved into ShipFlow-specific modules or tracked in future specs.
-- The active ShipFlow runtime has no tests, docs, or provider dependencies on the legacy graph.
+- The active ShipFlow runtime has no direct dependencies on the legacy graph in `lib/` code; legacy-only test dependencies must go through `test/legacy_contract.dart`.
 - The user explicitly accepts the removal scope.
 
 ## Validation
 
 ```bash
-rg -n "APP_TARGET|LegacyShipFlowApp|ShipFlowApp" lib test
+rg -n "APP_TARGET|LegacyShipFlowApp|ShipFlowApp" lib/main.dart lib/shipflow app test
+rg -n "package:shipflow_app/(providers/providers\\.dart|data/services/|router\\.dart|presentation/)" lib/shipflow
+rg -n "package:shipflow_app/(providers/providers\\.dart|data/services/|router\\.dart|presentation/)" test --glob '!test/legacy_contract.dart'
+./scripts/validate-boundary-suite.sh
+./scripts/validate-shipflow-runtime-boundary.sh
+./scripts/validate-legacy-test-boundary.sh
 flutter test test/widget_test.dart
 ```
 

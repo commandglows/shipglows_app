@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/api_error_contract.dart';
 import '../../../core/openrouter_guard.dart';
 import '../../../data/models/persona.dart';
 import '../../../data/models/ritual.dart';
-import '../../../data/services/api_service.dart';
 import '../../../providers/providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';

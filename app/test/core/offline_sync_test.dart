@@ -6,8 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shipflow_app/data/models/app_access_state.dart';
 import 'package:shipflow_app/data/models/app_bootstrap.dart';
 import 'package:shipflow_app/data/models/offline_sync.dart';
-import 'package:shipflow_app/data/services/offline_storage_service.dart';
-import 'package:shipflow_app/providers/providers.dart';
+import 'package:shipflow_app/core/offline_storage_contract.dart';
+import '../legacy_contract.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

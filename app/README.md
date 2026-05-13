@@ -91,7 +91,7 @@ flutter analyze
 
 Future auth/sync work must preserve local ledger inputs and enforce explicit
 user/project ownership. The provider is not final; Firebase/Firestore and
-Firebase Auth are candidates, while FastAPI may still be useful for local
-runner/terminal/agent orchestration.
+Firebase Auth are candidates to be reviewed per dedicated spec. FastAPI is kept
+as legacy context and is not active in V1.
 
 See `shipflow_data/technical/auth-sync-v2.md`.

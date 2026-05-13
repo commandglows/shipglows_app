@@ -7,7 +7,7 @@ import '../../../data/models/app_settings.dart';
 import '../../../data/models/auth_session.dart';
 import '../../../data/models/content_item.dart';
 import '../../../data/models/openrouter_credential.dart';
-import '../../../data/services/api_service.dart';
+import '../../../core/api_error_contract.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../providers/providers.dart';
 import '../../theme/app_theme.dart';

@@ -1,6 +1,6 @@
 import 'package:shipflow_app/data/models/ai_runtime.dart';
 import 'package:shipflow_app/data/models/app_settings.dart';
-import 'package:shipflow_app/data/services/api_service.dart';
+import 'package:shipflow_app/core/api_service_contract.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

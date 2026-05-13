@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 import '../../core/app_diagnostics.dart';
+import '../../core/api_error_contract.dart';
 import '../../core/project_onboarding_validation.dart';
 import '../demo/demo_seed.dart';
 import '../models/affiliate_link.dart';
@@ -23,34 +24,6 @@ import '../models/persona.dart';
 import '../models/project.dart';
 import '../models/ritual.dart';
 import 'offline_storage_service.dart';
-
-enum ApiErrorType { unauthorized, offline, server, invalidResponse, unknown }
-
-class ApiException implements Exception {
-  const ApiException(
-    this.type,
-    this.message, {
-    this.statusCode,
-    this.responseBody,
-    this.responseHeaders = const <String, String>{},
-    this.method,
-    this.path,
-  });
-
-  final ApiErrorType type;
-  final String message;
-  final int? statusCode;
-  final String? responseBody;
-  final Map<String, String> responseHeaders;
-  final String? method;
-  final String? path;
-
-  bool get isUnauthorized => type == ApiErrorType.unauthorized;
-  bool get isOffline => type == ApiErrorType.offline;
-
-  @override
-  String toString() => message;
-}
 
 class ApiService {
   ApiService({

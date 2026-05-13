@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:shipflow_app/data/models/app_access_state.dart';
 import 'package:shipflow_app/data/models/app_bootstrap.dart';
-import 'package:shipflow_app/router.dart';
+import 'package:shipflow_app/presentation/navigation/app_redirect_rules.dart';
 
 void main() {
   group('resolveAppRedirect (resume no jump)', () {

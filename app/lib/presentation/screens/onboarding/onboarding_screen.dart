@@ -8,7 +8,7 @@ import '../../../core/project_onboarding_validation.dart';
 import '../../../data/demo/demo_seed.dart';
 import '../../../data/models/app_settings.dart';
 import '../../../data/models/project.dart';
-import '../../../data/services/api_service.dart';
+import '../../../core/api_error_contract.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../providers/providers.dart';
 import '../../theme/app_theme.dart';

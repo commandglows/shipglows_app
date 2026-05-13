@@ -100,7 +100,7 @@ class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: scheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: scheme.onPrimary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -133,7 +133,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          foregroundColor: Colors.white,
+          foregroundColor: scheme.onPrimary,
           backgroundColor: scheme.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

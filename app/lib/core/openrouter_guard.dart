@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../data/services/api_service.dart';
+import 'api_error_contract.dart';
 
 Map<String, dynamic>? _extractErrorEnvelope(Object error) {
   if (error is! ApiException) {

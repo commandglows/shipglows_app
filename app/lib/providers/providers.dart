@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart';
 
 import '../core/app_config.dart';
 import '../core/app_diagnostics.dart';
+import '../core/api_error_contract.dart';
 import '../core/app_language.dart';
 import '../core/app_theme_preference.dart';
 import '../core/shared_preferences_provider.dart';
