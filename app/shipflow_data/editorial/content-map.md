@@ -74,6 +74,7 @@ next_step: "/sf-docs update"
 - `shipflow_data/technical/supabase-to-firebase-contract-map.md`: contract map for translating Supabase WIP into Firebase/Firestore architecture.
 - `shipflow_data/technical/shipflow-foundational-architecture.md`: canonical architecture decisions for GitHub projects, managed clones, Firestore projection, and read-only V1.
 - `shipflow_data/technical/firestore-data-model.md`: Firestore schema contract for user/project records, memberships, indexed file projection, index runs, diagnostics, and user-scoped views.
+- `shipflow_data/technical/github-managed-clone-indexer.md`: trusted runner contract for GitHub App access, managed clone indexing, local fake runner behavior, diagnostics, and production security requirements.
 - `shipflow_data/technical/foundational-specs-handoff.md`: close-context handoff for the foundational specs and the next coherence review.
 - `shipflow_data/workflow/specs/shipflow-foundational-coherence-review.md`: canonical cross-spec readiness gate for foundational auth, onboarding, indexer, Markdown governance, Firestore projection, dashboard, security controls, and state vocabulary.
 - `shipflow_data/workflow/research/explorations/2026-05-08-legacy-contentflow-shipflow-inventory.md`: source exploration report.

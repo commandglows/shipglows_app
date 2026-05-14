@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [Unreleased]
+
+### Added
+- Added pure Dart GitHub managed clone/indexer contracts, local fake runner, allowlisted ShipFlow Markdown artifact indexing policy, repository interface, documentation, and tests.
+
+### Changed
+- Updated task tracking to reflect the active Firebase/GitHub/Firestore projection foundation instead of the retired Supabase migration path.
+
 ## [2026-05-11]
 
 ### Changed

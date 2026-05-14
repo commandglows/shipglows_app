@@ -91,6 +91,8 @@ Minimal role vocabulary:
 - `github.owner`, `github.repo`, `github.fullName`
 - `github.defaultBranch`, `github.headCommit`
 - `projectionStatus` (`fresh`, `stale`, `indexing`, `partial`, `access_lost`, `error`)
+- `accessStatus` (`not_connected`, `needs_github_app`, `connected`, `access_cached`, `github_access_lost`, `installation_suspended`, `access_check_failed`)
+- `activeIndexRun` (`runId`, `requestId`, `status`, `startedAt`) when a runner-owned request is queued or running
 - `createdAt`, `updatedAt`
 
 `projects/{projectId}/indexedFiles/{fileId}`
@@ -99,6 +101,8 @@ Minimal role vocabulary:
 - `sourceCommit` (required)
 - `contentHash`
 - `projectionStatus`
+- `parseStatus` (`parsed`, `parse_failed`, `skipped`, `deleted`)
+- `frontmatter` (defensively parsed metadata map)
 - `deleted` (boolean tombstone)
 - `indexedAt`
 - `markdownBody` (optional full projection content)
@@ -106,8 +110,9 @@ Minimal role vocabulary:
 `projects/{projectId}/indexRuns/{runId}`
 
 - `runId`
+- `requestId` (runner idempotency key scoped by `projectId`)
 - `sourceCommit`
-- `status` (`running`, `success`, `partial`, `failed`, `canceled`)
+- `status` (`queued`, `running`, `already_running`, `success`, `partial`, `failed`, `canceled`)
 - `startedAt`, `finishedAt`
 - `filesIndexed`, `filesDeleted`
 

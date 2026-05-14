@@ -19,19 +19,30 @@ void main() {
         'u1',
       );
 
+      final project = ShipFlowProjectRecord(
+        projectId: 'proj1',
+        githubOwner: 'octocat',
+        githubRepo: 'hello-world',
+        githubFullName: 'octocat/hello-world',
+        githubDefaultBranch: 'main',
+        githubHeadCommit: 'abc123',
+        projectionStatus: ProjectionStatus.accessLost,
+        accessStatus: GitHubAccessStatus.needsGithubApp,
+        activeIndexRun: ActiveIndexRunRecord(
+          runId: 'r-active',
+          requestId: 'req-active1',
+          status: IndexRunStatus.alreadyRunning,
+          startedAt: now,
+        ),
+        createdAt: now,
+        updatedAt: now,
+      ).toMap();
+      expect(project['projectId'], 'proj1');
+      expect(project['projectionStatus'], 'access_lost');
+      expect(project['accessStatus'], 'needs_github_app');
       expect(
-        ShipFlowProjectRecord(
-          projectId: 'proj1',
-          githubOwner: 'octocat',
-          githubRepo: 'hello-world',
-          githubFullName: 'octocat/hello-world',
-          githubDefaultBranch: 'main',
-          githubHeadCommit: 'abc123',
-          projectionStatus: ProjectionStatus.fresh,
-          createdAt: now,
-          updatedAt: now,
-        ).toMap()['projectId'],
-        'proj1',
+        (project['activeIndexRun']! as Map<String, Object?>)['status'],
+        'already_running',
       );
 
       expect(
@@ -43,33 +54,46 @@ void main() {
         'owner',
       );
 
-      expect(
-        IndexedFileRecord(
-          fileId: 'f1',
-          path: 'shipflow_data/workflow/specs/demo.md',
-          artifactType: 'spec',
-          sourceCommit: 'abc123',
-          contentHash: 'hash1',
-          projectionStatus: ProjectionStatus.fresh,
-          deleted: false,
-          indexedAt: now,
-          markdownBody: '# Demo',
-        ).toMap()['sourceCommit'],
-        'abc123',
-      );
+      final indexedFile = IndexedFileRecord(
+        fileId: 'f1',
+        path: 'shipflow_data/workflow/specs/demo.md',
+        artifactType: 'spec',
+        sourceCommit: 'abc123',
+        contentHash: 'hash1',
+        projectionStatus: ProjectionStatus.partial,
+        parseStatus: IndexedFileParseStatus.parseFailed,
+        deleted: false,
+        indexedAt: now,
+        markdownBody: '# Demo',
+      ).toMap();
+      expect(indexedFile['sourceCommit'], 'abc123');
+      expect(indexedFile['projectionStatus'], 'partial');
+      expect(indexedFile['parseStatus'], 'parse_failed');
 
-      expect(
-        IndexRunRecord(
-          runId: 'r1',
-          sourceCommit: 'abc123',
-          status: IndexRunStatus.success,
-          startedAt: now,
-          finishedAt: now,
-          filesIndexed: 5,
-          filesDeleted: 1,
-        ).toMap()['runId'],
-        'r1',
-      );
+      final indexRun = IndexRunRecord(
+        runId: 'r1',
+        requestId: 'req-123456',
+        sourceCommit: 'abc123',
+        status: IndexRunStatus.alreadyRunning,
+        startedAt: now,
+        finishedAt: now,
+        filesIndexed: 5,
+        filesDeleted: 1,
+      ).toMap();
+      expect(indexRun['runId'], 'r1');
+      expect(indexRun['status'], 'already_running');
+
+      final indexRequest = IndexRequestRecord(
+        projectId: 'proj1',
+        requestId: 'req-123456',
+        githubOwner: 'octocat',
+        githubRepo: 'hello-world',
+        githubFullName: 'octocat/hello-world',
+        status: IndexRequestStatus.alreadyRunning,
+        requestedAt: now,
+      ).toMap();
+      expect(indexRequest['requestId'], 'req-123456');
+      expect(indexRequest['status'], 'already_running');
 
       expect(
         DiagnosticRecord(

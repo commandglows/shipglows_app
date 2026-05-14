@@ -1,27 +1,59 @@
-# Tasks - ShipFlow Migration/Fusion
+# Tasks - ShipFlow App
 
-Current active chantier:
+> **Priority:** 🔴 P0 blocker · 🟠 P1 high · 🟡 P2 normal · 🟢 P3 low · ⚪ deferred
+> **Status:** 📋 todo · 🔄 in progress · ✅ done · ⛔ blocked · 💤 deferred
+
+**Stack**: Flutter, Riverpod, Vercel, Firebase/Firestore projection specs, GitHub App target
+**Phase**: Read-only ShipFlow projection foundation
+
+**Top priority**: Run `/sf-verify` on `shipflow-github-managed-clone-indexer.md`, then close the bounded pure-Dart managed clone/indexer slice before any production Firebase/GitHub wiring.
+
+## Current Active Backlog
 
 | Pri | Task | Status |
 | --- | --- | --- |
-| 🔴 | Garder `origin/main` comme base saine et conserver le WIP Supabase local en archive | ✅ done |
-| 🟢 | Nettoyer les mentions ContentFlow résiduelles dans les surfaces actives (README, CLAUDE, AGENT, content-map) | ✅ done |
-| 🟠 | Corriger les imports/tests obsoletes dans l'ordre des artefacts actifs après classification | ✅ done |
-| 🔴 | Stabiliser la frontiere ShipFlow actif / ContentFlow legacy | ✅ done |
-| 🔴 | Classer les briques ContentFlow avant suppression (lib/data/services + lib/presentation) | ✅ done |
-| 🟢 | Centraliser les accès legacy dans un contrat de test (`test/legacy_contract.dart`) | ✅ done |
-| 🟢 | Ajouter un garde `scripts/validate-legacy-test-boundary.sh` pour bloquer les imports legacy directs en tests | ✅ done |
-| 🟢 | Ajouter un garde `scripts/validate-shipflow-runtime-boundary.sh` pour bloquer les imports legacy directs dans `lib/shipflow` | ✅ done |
-| 🟢 | Ajouter `scripts/validate-boundary-suite.sh` (orchestration locale/CI des checks de frontière) | ✅ done |
-| 🟢 | Intégrer `validate-boundary-suite.sh` dans le workflow CI | ✅ done |
-| 🟠 | Decider plus tard Firebase/Firestore/Auth/FastAPI/BYOK/feedback avec shipflow_data/workflow/specs dediees | 💤 deferred |
-| 🔴 | Documenter Markdown/repo comme source de verite et DB future comme projection | ✅ done |
-| 🔴 | Creer le gate canonique de coherence fondation ShipFlow avant implementation Firebase/GitHub/Firestore | ✅ done |
-| 🟢 | Deplacer le contenu actif vers `app/` et réarmer la façade `site/` avec le contenu ShipFlow App en gardant le design | ✅ done |
+| 🔴 | Run `/sf-ready` for `shipflow-github-managed-clone-indexer.md` so the managed clone/indexer boundary can move from draft to implementation-ready | ✅ done |
+| 🔴 | Implement the GitHub managed clone/indexer slice after readiness: server-side access-check contract, local/fake runner, projection DTOs, stale/deleted/parse-failed tests | ✅ done |
+| 🔴 | Run `/sf-verify` for `shipflow-github-managed-clone-indexer.md` before closing or shipping the implementation | 📋 todo |
+| 🟠 | Ready the deferred foundational specs for auth/GitHub access, project onboarding, dashboard read-only projection, and Markdown artifact governance | 📋 todo |
+| 🟠 | Implement the dashboard read-only projection contract after readiness, keeping Firestore projection non-canonical and dashboard reads user-scoped | 📋 todo |
+| 🟡 | Verify and close `shipflow-legacy-file-migration-tracker.md`, then decide whether to close the parent legacy fusion chantier | 📋 todo |
+| 🟢 | Keep the `site/` facade aligned with app positioning when product copy changes | 📋 todo |
+
+## Historical Completed Work
+
+| Pri | Task | Status |
+| --- | --- | --- |
+| ✅ | Garder `origin/main` comme base saine et conserver le WIP Supabase local en archive | ✅ done |
+| ✅ | Nettoyer les mentions ContentFlow résiduelles dans les surfaces actives (README, CLAUDE, AGENT, content-map) | ✅ done |
+| ✅ | Corriger les imports/tests obsoletes dans l'ordre des artefacts actifs après classification | ✅ done |
+| ✅ | Stabiliser la frontiere ShipFlow actif / ContentFlow legacy | ✅ done |
+| ✅ | Classer les briques ContentFlow avant suppression (lib/data/services + lib/presentation) | ✅ done |
+| ✅ | Centraliser les accès legacy dans un contrat de test (`test/legacy_contract.dart`) | ✅ done |
+| ✅ | Ajouter un garde `scripts/validate-legacy-test-boundary.sh` pour bloquer les imports legacy directs en tests | ✅ done |
+| ✅ | Ajouter un garde `scripts/validate-shipflow-runtime-boundary.sh` pour bloquer les imports legacy directs dans `lib/shipflow` | ✅ done |
+| ✅ | Ajouter `scripts/validate-boundary-suite.sh` (orchestration locale/CI des checks de frontière) | ✅ done |
+| ✅ | Intégrer `validate-boundary-suite.sh` dans le workflow CI | ✅ done |
+| ✅ | Documenter Markdown/repo comme source de verite et DB future comme projection | ✅ done |
+| ✅ | Creer le gate canonique de coherence fondation ShipFlow avant implementation Firebase/GitHub/Firestore | ✅ done |
+| ✅ | Implementer le modele Firestore documentaire et les contrats Dart purs (`lib/data/firestore_projection/*`) avec tests cibles | ✅ done |
+| ✅ | Deplacer le contenu actif vers `app/` et réarmer la façade `site/` avec le contenu ShipFlow App en gardant le design | ✅ done |
+
+## Backlog
+
+| Pri | Task | Status |
+| --- | --- | --- |
+| 🟠 | Implementer Firebase Auth, GitHub App access, Firestore rules, and Cloud Functions only after the ready specs and fresh official-doc checks pass | 💤 deferred |
+| 🟠 | Spec future write-back, agent runner, terminal, BYOK, and feedback separately; keep them out of the V1 read-only implementation | 💤 deferred |
 
 Primary references:
 
 - `shipflow_data/workflow/specs/shipflow-legacy-contentflow-fusion.md`
+- `shipflow_data/workflow/specs/shipflow-github-managed-clone-indexer.md`
+- `shipflow_data/workflow/specs/shipflow-firestore-data-model.md`
+- `shipflow_data/workflow/specs/shipflow-dashboard-readonly-projection.md`
+- `shipflow_data/workflow/specs/shipflow-auth-github-access.md`
+- `shipflow_data/workflow/specs/shipflow-project-onboarding-flow.md`
 - `shipflow_data/technical/legacy-contentflow-inventory.md`
 - `shipflow_data/technical/runtime-boundary.md`
 - `shipflow_data/technical/markdown-source-of-truth.md`
