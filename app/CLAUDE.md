@@ -4,7 +4,7 @@ metadata_schema_version: "1.0"
 artifact_version: "0.2.0"
 project: shipflow_app
 created: "2026-04-26"
-updated: "2026-05-08"
+updated: "2026-05-14"
 status: draft
 source_skill: sf-docs
 scope: technical
@@ -29,6 +29,7 @@ linked_systems:
   - "Riverpod"
   - "GoRouter"
   - "Markdown source readers"
+  - "Vercel Flutter web deployment"
 next_review: "2026-06-08"
 next_step: "/sf-docs update"
 ---
@@ -47,14 +48,28 @@ The repository still contains a legacy ContentFlow runtime. Treat it as migratio
 - Active default runtime: `APP_TARGET=shipflow`.
 - Temporary legacy runtimes: `APP_TARGET=legacy` and `APP_TARGET=contentflow`.
 - Current V1 mode: local-first, read-oriented, Linux desktop target.
+- Current validation loop: push to Git, let Vercel build the Flutter web app, then validate the served web version.
 - Source of truth: Markdown and repository files.
 - Future database role: projection, index, cache, or sync layer unless a later reviewed spec supersedes this.
+
+## ShipFlow Development Mode
+
+- development_mode: vercel-preview-push
+- validation_surface: vercel-preview
+- ship_before_preview_test: yes
+- post_ship_verification: sf-prod
+- deployment_provider: vercel
+- preview_source: Vercel deployment URL confirmed by `/sf-prod`
+- production_url: https://shipflowapp.vercel.app/
+- notes: Push first, wait for Vercel to build the Flutter web app, then validate the matching served web deployment. Local Flutter checks are useful, but browser/user-flow proof comes from the Vercel URL.
+- last_reviewed: 2026-05-14
 
 ## Tech Stack
 
 - Flutter / Dart
 - Riverpod
 - GoRouter
+- Vercel builds and serves the Flutter web output
 - Shared preferences for local settings
 - Markdown/source parsers under `lib/data/shipflow_sources/`
 
