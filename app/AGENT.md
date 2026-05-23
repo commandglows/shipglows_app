@@ -52,6 +52,7 @@ Keep this repository aligned with ShipFlow as the active product while preservin
    - `lib/shipflow/**`
    - `lib/data/shipflow_sources/**`
    - `lib/domain/project_health/**`
+   - terminal TUI work belongs in `/home/claude/shipflow/tui`, not this Flutter app repo
 
 2. Legacy reuse requires classification:
    - Check `shipflow_data/technical/legacy-contentflow-inventory.md`.
@@ -66,6 +67,8 @@ Keep this repository aligned with ShipFlow as the active product while preservin
    - Do not make a database canonical by accident.
    - Do not write user/project state only to a projection layer.
    - Do not store service-role keys or BYOK secrets in client-side code.
+   - Do not add terminal write-back, shell execution, auth, cloud, or secrets handling from this app repo.
+   - Terminal TUI file reads are governed by `/home/claude/shipflow/tui/src/sources/sourcePolicy.ts`.
 
 ## Validation References
 

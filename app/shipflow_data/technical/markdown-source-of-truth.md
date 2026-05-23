@@ -4,7 +4,7 @@ metadata_schema_version: "1.0"
 artifact_version: "0.1.0"
 project: "shipflow_app"
 created: "2026-05-08"
-updated: "2026-05-08"
+updated: "2026-05-22"
 status: draft
 source_skill: sf-docs
 scope: "markdown-source-of-truth"
@@ -59,6 +59,51 @@ This document records the data contract for ShipFlow while database and multi-us
 - If the app needs to change a value that belongs to the user's project, the write path must update the relevant Markdown or repository file.
 - Conflict handling should use repository/Git review semantics where possible.
 - Client code must not hold privileged service credentials.
+
+## Operational Record Contract
+
+Task, audit, and spec summary/index records use the shared ShipFlow traffic-first line format defined in `/home/claude/shipflow/skills/references/operational-record-format.md`.
+
+Canonical one-line shape:
+
+```text
+<traffic> [<project>] <kind>: <title> | <field>: <value> | <field>: <value>
+```
+
+Contract rules:
+
+- `traffic` is one of `🔴`, `🟠`, `🟡`, or `🟢`; legacy `✅` is read as green only during migration.
+- `[project]` is required immediately after the traffic marker and is preserved for display.
+- `kind` is one of `task`, `audit`, or `spec`.
+- Fields use exact ` | ` separators and `key: value` pairs.
+- Records are one physical Markdown line. Writers escape field text instead of emitting raw newlines.
+- Markdown links, inline code, commands, and field values are untrusted text; parsers and readers never execute them.
+
+Required fields:
+
+| Kind | Required fields | Compatibility note |
+| --- | --- | --- |
+| `task` | `status` | Legacy task tables or project sections may be read as fallback until migration closes. |
+| `audit` | `date`, `overall`, `issues` | Legacy audit tables may be read as fallback until migration closes. |
+| `spec` | `status`, `path`, `next` | Frontmatter remains authoritative; summary conflicts must produce diagnostics. |
+
+Example records:
+
+```text
+🔴 [shipflow_app] task: Run /sf-verify | status: todo | area: github-clone-indexer
+🟠 [shipflow_app] audit: dependencies | date: 2026-04-27 | overall: C | issues: 0/1/2
+🟢 [ShipFlow] spec: ShipFlow Terminal TUI V1 | status: ready | path: /home/claude/shipflow/shipflow_data/workflow/specs/shipflow-terminal-tui-v1.md | next: /sf-start ShipFlow Terminal TUI V1
+```
+
+## Legacy Compatibility Policy
+
+Readers must parse canonical operational records first and then use legacy table or section formats only as migration fallback. Canonical records win over legacy rows with the same dedupe key, and duplicate suppression must be visible through diagnostics instead of hidden count changes.
+
+New writer output must use the shared traffic-first format directly. Legacy compatibility is a read bridge, not an allowed source format for new task, audit, or spec operational records.
+
+Detailed specs, audit evidence, verification reports, and long technical documents remain normal structured Markdown. Only operational summary/index records require the one-line grammar.
+
+Diagnostics for malformed or duplicate operational records must include source file, line when available, a short redacted excerpt, and a repair hint. A bad record must not cause valid records in the same file to disappear.
 
 ## Projection Model
 

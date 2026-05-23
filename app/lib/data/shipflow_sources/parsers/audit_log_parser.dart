@@ -1,14 +1,99 @@
 import '../source_models.dart';
 import '../source_diagnostic_helpers.dart';
+import 'operational_record_parser.dart';
 import 'parsed_models.dart';
 
 class AuditLogParser {
+  AuditLogParser({OperationalRecordParser? operationalRecordParser})
+    : _operationalRecordParser =
+          operationalRecordParser ?? OperationalRecordParser();
+
+  final OperationalRecordParser _operationalRecordParser;
+
   ParserOutput<AuditLogEntry> parse({
     required String markdown,
     required String source,
   }) {
-    final diagnostics = <SourceDiagnostic>[];
+    final canonical = _operationalRecordParser.parse(
+      markdown: markdown,
+      source: source,
+    );
+    final diagnostics = <SourceDiagnostic>[...canonical.diagnostics];
+    final canonicalByKey = <String, AuditLogEntry>{};
+    for (final record in canonical.records.where((record) => record.kind == 'audit')) {
+      final dateRaw = (record.fields['date'] ?? '').trim();
+      final overall = (record.fields['overall'] ?? '').trim();
+      final issues = (record.fields['issues'] ?? '').trim();
+      if (dateRaw.isEmpty || overall.isEmpty || issues.isEmpty) {
+        diagnostics.add(
+          SourceDiagnostic(
+            code: DiagnosticCode.parseError,
+            severity: DiagnosticSeverity.warning,
+            message:
+                'Missing required field in canonical audit record (date/overall/issues).',
+            source: source,
+            line: record.line,
+            excerpt: diagnosticExcerptForLine(markdown, record.line),
+            suggestedCommand: '/sf-verify ShipFlow audit log',
+          ),
+        );
+        continue;
+      }
+      final parsedDate = _parseDate(dateRaw);
+      if (parsedDate == null) {
+        diagnostics.add(
+          SourceDiagnostic(
+            code: DiagnosticCode.parseError,
+            severity: DiagnosticSeverity.warning,
+            message: 'Invalid date in canonical audit record.',
+            source: source,
+            line: record.line,
+            excerpt: diagnosticExcerptForLine(markdown, record.line),
+            details: diagnosticDetails({'date': dateRaw}),
+            suggestedCommand: '/sf-verify ShipFlow audit log',
+          ),
+        );
+        continue;
+      }
+      final key = _dedupeKey(
+        project: record.project,
+        id: record.fields['id'],
+        date: dateRaw,
+        overall: overall,
+        scope: record.fields['scope'],
+        title: record.title,
+      );
+      if (canonicalByKey.containsKey(key)) {
+        diagnostics.add(
+          SourceDiagnostic(
+            code: DiagnosticCode.parseError,
+            severity: DiagnosticSeverity.warning,
+            message: 'Duplicate canonical audit record suppressed.',
+            source: source,
+            line: record.line,
+            excerpt: diagnosticExcerptForLine(markdown, record.line),
+            details: diagnosticDetails({'dedupeKey': key}),
+            suggestedCommand: '/sf-verify ShipFlow audit log',
+          ),
+        );
+        continue;
+      }
+      canonicalByKey[key] = AuditLogEntry(
+        date: parsedDate,
+        project: record.project,
+        scope: record.fields['scope']?.trim().isNotEmpty == true
+            ? record.fields['scope']!.trim()
+            : record.title,
+        deps: '—',
+        overall: overall,
+        issues: issues,
+      );
+    }
+
     final entries = <AuditLogEntry>[];
+    if (canonicalByKey.isNotEmpty) {
+      entries.addAll(canonicalByKey.values);
+    }
 
     final lines = markdown.split('\n');
     var inTable = false;
@@ -53,19 +138,32 @@ class AuditLogParser {
       }
 
       final row = Map<String, String>.fromIterables(headers, cells);
-      entries.add(
-        AuditLogEntry(
-          date: _parseDate(row['Date'] ?? ''),
-          project: row['Project'] ?? '',
-          scope: row['Scope'] ?? '',
-          deps: row['Deps'] ?? '',
-          overall: row['Overall'] ?? '',
-          issues: row['Issues'] ?? '',
-        ),
+      final legacyEntry = AuditLogEntry(
+        date: _parseDate(row['Date'] ?? ''),
+        project: row['Project'] ?? '',
+        scope: row['Scope'] ?? '',
+        deps: row['Deps'] ?? '',
+        overall: row['Overall'] ?? '',
+        issues: row['Issues'] ?? '',
       );
+      if (canonicalByKey.isNotEmpty) {
+        diagnostics.add(
+          SourceDiagnostic(
+            code: DiagnosticCode.parseError,
+            severity: DiagnosticSeverity.info,
+            message: 'Legacy audit row suppressed because canonical records exist.',
+            source: source,
+            line: index + 1,
+            excerpt: diagnosticExcerptForLine(markdown, index + 1),
+            suggestedCommand: '/sf-verify ShipFlow audit log',
+          ),
+        );
+        continue;
+      }
+      entries.add(legacyEntry);
     }
 
-    if (!inTable) {
+    if (entries.isEmpty && !inTable && canonicalByKey.isEmpty) {
       diagnostics.add(
         SourceDiagnostic(
           code: DiagnosticCode.parseError,
@@ -83,6 +181,27 @@ class AuditLogParser {
     }
 
     return ParserOutput(records: entries, diagnostics: diagnostics);
+  }
+
+  String _dedupeKey({
+    required String project,
+    required String? id,
+    required String? date,
+    required String overall,
+    required String? scope,
+    required String title,
+  }) {
+    final projectKey = project.trim().toLowerCase();
+    final idKey = (id ?? '').trim().toLowerCase();
+    if (idKey.isNotEmpty) {
+      return 'audit|$projectKey|id|$idKey';
+    }
+    final dateKey = (date ?? '').trim().toLowerCase();
+    final overallKey = overall.trim().toLowerCase();
+    final scopeOrTitle = ((scope ?? '').trim().isNotEmpty ? scope! : title)
+        .trim()
+        .toLowerCase();
+    return 'audit|$projectKey|date|$dateKey|overall|$overallKey|scope|$scopeOrTitle';
   }
 
   DateTime? _parseDate(String rawDate) {

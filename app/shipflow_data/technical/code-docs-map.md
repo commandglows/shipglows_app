@@ -4,7 +4,7 @@ metadata_schema_version: "1.0"
 artifact_version: "0.1.0"
 project: "shipflow_app"
 created: "2026-05-08"
-updated: "2026-05-10"
+updated: "2026-05-22"
 status: draft
 source_skill: sf-docs
 scope: "code-docs-map"
@@ -52,8 +52,14 @@ This map links code areas to their primary technical documentation, validation c
 | --- | --- | --- | --- | --- |
 | `lib/main.dart` | Runtime target switch | `shipflow_data/technical/runtime-boundary.md` | `rg -n "APP_TARGET|LegacyShipFlowApp|ShipFlowApp" lib test` | Any change to app boot, target names, or provider overrides |
 | `lib/shipflow/` | Active ShipFlow UI runtime | `shipflow_data/technical/runtime-boundary.md` | `flutter test test/widget_test.dart` | Any dashboard route, screen, or provider behavior change |
-| `lib/data/shipflow_sources/` | Active Markdown/source readers | `shipflow_data/technical/markdown-source-of-truth.md` | `flutter test test/data/shipflow_sources` | Any parser, allowlist, diagnostics, or source file rule change |
+| `lib/data/shipflow_sources/` | Active Markdown/source readers | `shipflow_data/technical/markdown-source-of-truth.md` | `flutter test test/data/shipflow_sources` | Any parser, allowlist, diagnostics, source file rule, or operational record grammar change |
 | `lib/domain/project_health/` | Active project health model | `shipflow_data/technical/markdown-source-of-truth.md` | `flutter test test/domain/project_health` | Any project posture, next-command, or health scoring change |
+| `/home/claude/shipflow/tui` | ShipFlow-owned terminal dashboard (Bun/OpenTUI), read-only V1 | `/home/claude/shipflow/shipflow_data/technical/terminal-tui.md` | `cd /home/claude/shipflow/tui && bun run typecheck && bun test` | Any source policy, reader/parser, operational record grammar, view-model, OpenTUI lifecycle, or keyboard navigation change |
+| Operational record grammar | Shared task/audit/spec source-line contract | `/home/claude/shipflow/skills/references/operational-record-format.md` and `shipflow_data/technical/markdown-source-of-truth.md` | `python3 /home/claude/shipflow/tools/shipflow_metadata_lint.py /home/claude/shipflow/skills/references/operational-record-format.md shipflow_data/technical/markdown-source-of-truth.md shipflow_data/technical/code-docs-map.md` | Any change to traffic markers, required fields, escaping, dedupe, diagnostics, legacy compatibility, or writer obligations |
+| Flutter operational record parsers | Canonical-first parsing for task, audit, and spec summary records | `shipflow_data/technical/markdown-source-of-truth.md` | `flutter test test/data/shipflow_sources` | Any change under `lib/data/shipflow_sources/parsers/` that parses traffic-first records, fallback legacy tables, diagnostics, source locations, or dedupe |
+| TUI operational record readers | Read-only terminal consumption of canonical records plus legacy fallback | `/home/claude/shipflow/shipflow_data/technical/terminal-tui.md` and `/home/claude/shipflow/skills/references/operational-record-format.md` | `cd /home/claude/shipflow/tui && bun test && bun run typecheck` | Any change under `/home/claude/shipflow/tui/src/sources/` that reads, filters, dedupes, displays, or normalizes task/audit/spec records |
+| Operational record migration tooling | Deterministic conversion of legacy trackers and active spec summaries | `shipflow_data/technical/markdown-source-of-truth.md` and `/home/claude/shipflow/skills/references/operational-record-format.md` | `python3 scripts/migrate_operational_records.py --dry-run` | Any migration script, checklist, dry-run report, record-count proof, duplicate handling, or live tracker migration |
+| ShipFlow writer-skill references | Shared writer instructions for task, audit, and spec operational records | `/home/claude/shipflow/skills/references/operational-record-format.md` | `rg -n "operational-record-format|task:|audit:|spec:" /home/claude/shipflow/skills` | Any skill or skill reference that creates or mutates `TASKS.md`, `AUDIT_LOG.md`, spec summaries, spec status, or chantier flow records |
 | `lib/core/` | Mixed shared and legacy utilities | `shipflow_data/technical/legacy-contentflow-inventory.md` | `flutter test test/core` | Any auth, BYOK, diagnostics, settings, or validation change |
 | `lib/data/models/` | Mixed shared and legacy models | `shipflow_data/technical/legacy-contentflow-inventory.md` | `flutter test test/data test/core` | Any model reused by active ShipFlow or future features |
 | `lib/data/services/` | Mostly legacy service layer | `shipflow_data/technical/legacy-contentflow-inventory.md` | `flutter test test/data` | Any API, auth, feedback, storage, offline, or notification change |

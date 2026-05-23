@@ -92,3 +92,25 @@ class ParserOutput<T> {
   final List<T> records;
   final List<SourceDiagnostic> diagnostics;
 }
+
+class OperationalRecord {
+  const OperationalRecord({
+    required this.traffic,
+    required this.project,
+    required this.kind,
+    required this.title,
+    required this.fields,
+    required this.source,
+    required this.line,
+    required this.rawLine,
+  });
+
+  final String traffic;
+  final String project;
+  final String kind;
+  final String title;
+  final Map<String, String> fields;
+  final String source;
+  final int line;
+  final String rawLine;
+}

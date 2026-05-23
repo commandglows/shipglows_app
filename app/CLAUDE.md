@@ -69,6 +69,7 @@ The repository still contains a legacy ContentFlow runtime. Treat it as migratio
 - Flutter / Dart
 - Riverpod
 - GoRouter
+- ShipFlow terminal TUI lives in `/home/claude/shipflow/tui`; this Flutter app does not own the Bun/OpenTUI package.
 - Vercel builds and serves the Flutter web output
 - Shared preferences for local settings
 - Markdown/source parsers under `lib/data/shipflow_sources/`
@@ -92,6 +93,14 @@ flutter test test/domain/project_health
 rg -n "APP_TARGET|LegacyShipFlowApp|ShipFlowApp" lib test
 ```
 
+Optional TUI checks:
+
+```bash
+cd tui
+bun run typecheck
+bun test
+```
+
 ## ARM64 Android Release Guardrail
 
 On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: no `flutter build apk --release`, `flutter build appbundle --release`, `./gradlew assembleRelease`, or `./gradlew bundleRelease`. Route APK/AAB release builds to a Linux x64 CI runner. Local Flutter work is limited to `flutter analyze`, `flutter test`, desktop runs, and web builds when explicitly needed.
@@ -102,6 +111,7 @@ On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: n
 - `lib/shipflow/`: active ShipFlow UI runtime.
 - `lib/data/shipflow_sources/`: active source readers and parsers.
 - `lib/domain/project_health/`: active project posture model.
+- `tui/`: optional ShipFlow terminal dashboard runtime (Bun/OpenTUI), read-only V1.
 - `shipflow_data/technical/`: technical governance for active and legacy boundaries.
 - `shipflow_data/workflow/specs/shipflow-legacy-contentflow-fusion.md`: active migration/fusion chantier.
 

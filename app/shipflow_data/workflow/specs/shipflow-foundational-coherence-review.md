@@ -72,7 +72,7 @@ evidence:
   - "shipflow_data/technical/foundational-specs-handoff.md references /sf-ready ShipFlow Foundational Coherence Review as required gate before implementation."
   - "Foundational specs are present but mostly still draft and explicitly deferred for cross-spec coherence pass."
   - "Current state mixes shared contracts across multiple files, increasing ambiguity for a fresh implementation context."
-next_step: "None"
+next_step: "/sf-verify ShipFlow Foundational Coherence Review"
 ---
 
 # Title

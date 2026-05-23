@@ -47,6 +47,27 @@ flutter pub get
 flutter run -d linux
 ```
 
+## Terminal TUI
+
+The ShipFlow terminal dashboard is maintained with the ShipFlow skills under `/home/claude/shipflow/tui`, not in this Flutter app repo.
+
+One-time command install:
+
+```bash
+/home/claude/shipflow/tui/scripts/install-shipflow-tui.sh
+sftui
+```
+
+```bash
+cd /home/claude/shipflow/tui
+bun install
+bun run dev
+```
+
+- Requires Bun (OpenTUI is Bun-only for this V1).
+- Isolated dependency boundary: no OpenTUI dependency is added to this Flutter root.
+- Scope is read-only inspection of ShipFlow sources; no write-back/actions.
+
 ## Runtime Targets
 
 The default runtime is ShipFlow:
