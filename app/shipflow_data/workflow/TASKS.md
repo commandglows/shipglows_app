@@ -13,6 +13,7 @@
 🔴 [shipflow_app] task: Run `/sf-verify` for `shipflow-github-managed-clone-indexer.md` before closing or shipping the implementation | status: done
 🟠 [shipflow_app] task: Ready the deferred foundational specs for auth/GitHub access, project onboarding, dashboard read-only projection, and Markdown artifact governance | status: done
 🟠 [shipflow_app] task: Implement the dashboard read-only projection contract after readiness, keeping Firestore projection non-canonical and dashboard reads user-scoped | status: done
+🔴 [shipflow_app] task: Implement and verify ShipFlow Product Entitlements Compliance local-contract-first gate | status: done
 🟡 [shipflow_app] task: Verify and close `shipflow-legacy-file-migration-tracker.md`, then decide whether to close the parent legacy fusion chantier | status: todo
 🟢 [shipflow_app] task: Close the traffic-first operational record live migration and web-reader contract after verified zero-legacy migration proof | status: done
 🟢 [shipflow_app] task: Keep the `site/` facade aligned with app positioning when product copy changes | status: todo

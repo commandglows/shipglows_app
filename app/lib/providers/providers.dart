@@ -15,6 +15,7 @@ import '../data/models/ai_runtime.dart';
 import '../data/models/drip_plan.dart';
 import '../data/models/app_access_state.dart';
 import '../data/models/app_bootstrap.dart';
+import '../data/models/app_entitlement.dart';
 import '../data/models/app_settings.dart';
 import '../data/models/auth_session.dart';
 import '../data/models/content_item.dart';
@@ -979,6 +980,96 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
         message: 'Loading workspace bootstrap.',
       );
       final bootstrap = await api.fetchBootstrap();
+      final entitlement = bootstrap.entitlement;
+      if (entitlement == null ||
+          entitlement.status == ProductEntitlementStatus.missing) {
+        return AppAccessState(
+          stage: AppAccessStage.noEntitlement,
+          backendHealth: health,
+          bootstrap: bootstrap,
+          message: entitlement == null
+              ? 'No ShipFlow entitlement snapshot was returned by the backend.'
+              : 'ShipFlow entitlement snapshot is missing for this user.',
+          checkedAt: DateTime.now(),
+        );
+      }
+
+      if (!_entitlementEnvironmentMatchesRuntime(entitlement)) {
+        return AppAccessState(
+          stage: AppAccessStage.entitlementUnavailable,
+          backendHealth: health,
+          bootstrap: bootstrap,
+          message:
+              'ShipFlow entitlement environment does not match this runtime.',
+          checkedAt: DateTime.now(),
+        );
+      }
+
+      if (entitlement.status == ProductEntitlementStatus.unavailable ||
+          entitlement.status == ProductEntitlementStatus.malformed ||
+          entitlement.status == ProductEntitlementStatus.unknown) {
+        return AppAccessState(
+          stage: AppAccessStage.entitlementUnavailable,
+          backendHealth: health,
+          bootstrap: bootstrap,
+          message:
+              entitlement.reason ??
+              'Unable to verify ShipFlow entitlement snapshot from backend.',
+          checkedAt: DateTime.now(),
+        );
+      }
+
+      if (entitlement.status == ProductEntitlementStatus.pendingReview) {
+        return AppAccessState(
+          stage: AppAccessStage.pendingReview,
+          backendHealth: health,
+          bootstrap: bootstrap,
+          message:
+              entitlement.reason ??
+              'ShipFlow entitlement is pending human review.',
+          checkedAt: DateTime.now(),
+        );
+      }
+
+      if (entitlement.status == ProductEntitlementStatus.inactive ||
+          entitlement.status == ProductEntitlementStatus.revoked ||
+          entitlement.status == ProductEntitlementStatus.refunded ||
+          entitlement.status == ProductEntitlementStatus.expired) {
+        return AppAccessState(
+          stage: AppAccessStage.entitlementInactive,
+          backendHealth: health,
+          bootstrap: bootstrap,
+          message:
+              entitlement.reason ??
+              'ShipFlow entitlement is not currently active.',
+          checkedAt: DateTime.now(),
+        );
+      }
+
+      if (entitlement.grantsAccess != true) {
+        return AppAccessState(
+          stage: AppAccessStage.noEntitlement,
+          backendHealth: health,
+          bootstrap: bootstrap,
+          message:
+              'Active ShipFlow entitlement could not be resolved from backend payload.',
+          checkedAt: DateTime.now(),
+        );
+      }
+
+      final granted =
+          entitlement.status == ProductEntitlementStatus.active ||
+          entitlement.status == ProductEntitlementStatus.trialing;
+      if (!granted) {
+        return AppAccessState(
+          stage: AppAccessStage.entitlementInactive,
+          backendHealth: health,
+          bootstrap: bootstrap,
+          message: 'ShipFlow entitlement is not active.',
+          checkedAt: DateTime.now(),
+        );
+      }
+
       diagnostics.info(
         scope: 'app_access.resolve',
         message: bootstrap.shouldOnboard
@@ -1034,6 +1125,27 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
       );
     }
   }
+}
+
+String _currentProductEntitlementEnvironment() {
+  final normalized = AppConfig.buildEnvironment.trim().toLowerCase();
+  return switch (normalized) {
+    'production' || 'prod' => 'production',
+    'preview' => 'preview',
+    'staging' => 'staging',
+    'local' || 'development' || 'dev' || 'test' || 'unknown' || '' => 'local',
+    _ => normalized,
+  };
+}
+
+bool _entitlementEnvironmentMatchesRuntime(
+  ProductEntitlementSnapshot entitlement,
+) {
+  final environment = entitlement.environment?.trim().toLowerCase();
+  if (environment == null || environment.isEmpty) {
+    return false;
+  }
+  return environment == _currentProductEntitlementEnvironment();
 }
 
 final appBootstrapProvider = Provider<AppBootstrap?>((ref) {

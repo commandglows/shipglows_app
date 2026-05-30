@@ -643,19 +643,49 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
 
     if (stage == AppAccessStage.apiUnavailable ||
         stage == AppAccessStage.bootstrapFailed ||
-        stage == AppAccessStage.bootstrapUnauthorized) {
+        stage == AppAccessStage.bootstrapUnauthorized ||
+        stage == AppAccessStage.noEntitlement ||
+        stage == AppAccessStage.entitlementUnavailable ||
+        stage == AppAccessStage.entitlementInactive ||
+        stage == AppAccessStage.pendingReview) {
       final isUnauthorized = stage == AppAccessStage.bootstrapUnauthorized;
+      final isNoEntitlement = stage == AppAccessStage.noEntitlement;
+      final isUnavailable =
+          stage == AppAccessStage.entitlementUnavailable ||
+          stage == AppAccessStage.apiUnavailable;
+      final isInactive = stage == AppAccessStage.entitlementInactive;
+      final isPending = stage == AppAccessStage.pendingReview;
       final title = isUnauthorized
           ? 'Reconnect your account'
+          : isNoEntitlement
+          ? 'Account recognized without ShipFlow entitlement'
+          : isPending
+          ? 'Access pending review'
+          : isUnavailable
+          ? 'FastAPI is unavailable'
+          : isInactive
+          ? 'ShipFlow access is inactive'
           : 'FastAPI is unavailable';
       final description = isUnauthorized
           ? 'Your Clerk session reached the app, but FastAPI rejected the bootstrap request. Sign in again to refresh the bearer token.'
-          : 'Your Clerk session is active, but ContentFlow cannot load product state from FastAPI right now. Use the degraded mode tools to inspect backend status, retry, or wait for the API to recover.';
+          : isNoEntitlement
+          ? 'Your Clerk session is active, but this account has no active ShipFlow entitlement for product_id shipflow_app. Open the support flow or request access to continue.'
+          : isPending
+          ? 'Your entitlement is waiting for review. This is recoverable, but protected data is not accessible yet.'
+          : isUnavailable
+          ? 'Your Clerk session is active, but ContentFlow cannot load product state from FastAPI right now. Use the degraded mode tools to inspect backend status, retry, or wait for the API to recover.'
+          : 'Your ShipFlow entitlement is inactive (revoked, expired, refunded, or inactive). Contact support to restore access.';
 
       return _card(
         eyebrow: stage == AppAccessStage.apiUnavailable
             ? 'API down'
-            : 'Session error',
+            : isNoEntitlement
+            ? 'No entitlement'
+            : isUnavailable
+            ? 'Access check failed'
+            : isPending
+            ? 'Review pending'
+            : 'Access inactive',
         title: title,
         description: description,
         icon: Icons.warning_amber_rounded,
@@ -673,9 +703,15 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
             }
             return;
           }
+          if (isNoEntitlement || isInactive || isPending || isUnavailable) {
+            context.go('/uptime');
+            return;
+          }
           context.go('/uptime');
         },
-        secondaryLabel: isUnauthorized ? 'Open Demo Workspace' : 'Retry API',
+        secondaryLabel: isUnauthorized
+            ? 'Open Demo Workspace'
+            : (isNoEntitlement ? 'Open Demo Workspace' : 'Retry API'),
         onSecondary: () {
           if (isUnauthorized) {
             ref.read(authSessionProvider.notifier).signInDemo();
@@ -684,6 +720,10 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                   ? '/feed'
                   : '/onboarding?intent=entry',
             );
+            return;
+          }
+          if (isNoEntitlement || isUnavailable || isInactive || isPending) {
+            ref.read(appAccessStateProvider.notifier).refresh();
             return;
           }
           ref.read(appAccessStateProvider.notifier).refresh();

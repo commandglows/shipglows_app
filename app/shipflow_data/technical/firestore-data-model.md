@@ -4,7 +4,7 @@ metadata_schema_version: "1.0"
 artifact_version: "0.1.0"
 project: "shipflow_app"
 created: "2026-05-10"
-updated: "2026-05-10"
+updated: "2026-05-30"
 status: draft
 source_skill: sf-build
 scope: "firestore-data-model"
@@ -18,11 +18,13 @@ linked_systems:
   - "Cloud Firestore"
   - "Cloud Functions"
   - "GitHub repositories"
+  - "WinFlowz suiteAccess mirror"
 depends_on:
   - "shipflow_data/workflow/specs/shipflow-firestore-data-model.md@0.1.0"
 supersedes: []
 evidence:
   - "shipflow_data/workflow/specs/shipflow-firestore-data-model.md"
+  - "shipflow_data/workflow/specs/shipflow-product-entitlements-compliance.md"
 next_review: "2026-06-10"
 next_step: "/sf-verify ShipFlow Firestore Data Model"
 ---
@@ -36,6 +38,7 @@ Define the Firestore schema contract for users, shared GitHub-backed projects, m
 ## Collection Paths
 
 - `users/{uid}`
+- `users/{uid}/suiteAccess/{productId}` or a server-owned equivalent mirror
 - `users/{uid}/projectRefs/{projectId}`
 - `users/{uid}/feedItems/{itemId}`
 - `projects/{projectId}`
@@ -57,11 +60,17 @@ Define the Firestore schema contract for users, shared GitHub-backed projects, m
   - `projects/{projectId}/indexRuns/*` read only for members
   - `projects/{projectId}/diagnostics/*` read only for members
 - Server-owned write surfaces:
+  - `suiteAccess` or product entitlement mirror records
   - project creation/dedupe mapping
   - `projectionStatus`, `sourceCommit`, `github.headCommit`
   - `indexRuns`, `diagnostics`
   - membership role updates
   - GitHub access status transitions
+- Product access rule:
+  - identity and membership are insufficient without server-owned product access for `product_id=shipflow_app`
+  - client writes to `suiteAccess` or entitlement mirror records are forbidden
+  - `active` and non-expired `trialing` can grant access; every other status denies
+  - environment mismatch denies access
 - Forbidden in client-readable payloads:
   - GitHub tokens
   - installation tokens
@@ -84,6 +93,18 @@ Minimal role vocabulary:
 - `githubConnectionStatus` (`connected`, `github_access_lost`, `access_check_failed`, `not_connected`)
 - `dashboardDefaultProjectId`
 - `createdAt`, `updatedAt`
+
+`users/{uid}/suiteAccess/{productId}` or equivalent server-owned mirror
+
+- `productId` (`shipflow_app`)
+- `environment` (`local`, `preview`, `staging`, `production`)
+- `status` (`active`, `trialing`, `inactive`, `expired`, `revoked`, `refunded`, `pending_review`)
+- `grantsAccess` (server-derived)
+- `reason`
+- `planId` (optional)
+- `checkedAt`
+- `expiresAt` (optional)
+- `source` (`suite_ledger`)
 
 `projects/{projectId}`
 
@@ -211,7 +232,7 @@ Server-owned lookup maps GitHub repository identity to one active opaque `projec
 ## Validation
 
 ```bash
-rg -n "users/\\{uid\\}|projects/\\{projectId\\}|indexedFiles|indexRuns|diagnostics|projectRefs|feedItems" shipflow_data/technical/firestore-data-model.md
+rg -n "users/\\{uid\\}|projects/\\{projectId\\}|indexedFiles|indexRuns|diagnostics|projectRefs|feedItems|suiteAccess|shipflow_app|grantsAccess" shipflow_data/technical/firestore-data-model.md
 flutter test test/data/firestore_projection
 rg -n "token|installation token|service credential|clone path|clone URL" shipflow_data/technical/firestore-data-model.md lib/data/firestore_projection test/data/firestore_projection
 ```

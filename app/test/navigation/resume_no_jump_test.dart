@@ -53,6 +53,24 @@ void main() {
       expect(redirect, '/entry');
     });
 
+    test('redirects no-entitlement terminal states to /entry', () {
+      final stages = [
+        AppAccessStage.noEntitlement,
+        AppAccessStage.entitlementUnavailable,
+        AppAccessStage.entitlementInactive,
+        AppAccessStage.pendingReview,
+      ];
+
+      for (final stage in stages) {
+        final redirect = resolveAppRedirect(
+          uri: Uri.parse('/feed'),
+          appAccessAsync: AsyncValue.data(AppAccessState(stage: stage)),
+        );
+
+        expect(redirect, '/entry');
+      }
+    });
+
     test('unauthorized redirects once to /entry then does not loop', () {
       final fromProtectedRoute = resolveAppRedirect(
         uri: Uri.parse('/settings'),

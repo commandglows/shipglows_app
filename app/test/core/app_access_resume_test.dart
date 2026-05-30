@@ -9,6 +9,7 @@ import 'package:shipflow_app/core/shared_preferences_provider.dart';
 import 'package:shipflow_app/data/models/app_access_state.dart';
 import 'package:shipflow_app/data/models/app_bootstrap.dart';
 import 'package:shipflow_app/data/models/auth_session.dart';
+import 'package:shipflow_app/data/models/app_entitlement.dart';
 import 'package:shipflow_app/core/api_error_contract.dart';
 import 'package:shipflow_app/core/api_service_contract.dart';
 import '../legacy_contract.dart';
@@ -182,6 +183,62 @@ void main() {
         );
       },
     );
+
+    test('maps bootstrap with no entitlement to noEntitlement stage', () async {
+      final harness = await _createHarness();
+      addTearDown(harness.dispose);
+
+      harness.api.onHealthCheck = () async => const {'status': 'healthy'};
+      harness.api.onFetchBootstrap = () async => _noEntitlementBootstrap();
+
+      await harness.container
+          .read(appAccessStateProvider.notifier)
+          .refresh(mode: AppAccessRefreshMode.interactive);
+
+      final stage = harness.container.read(appAccessStateProvider).value?.stage;
+      expect(stage, AppAccessStage.noEntitlement);
+    });
+
+    test(
+      'maps trialing entitlement with expired grace to entitlementInactive',
+      () async {
+        final harness = await _createHarness();
+        addTearDown(harness.dispose);
+
+        harness.api.onHealthCheck = () async => const {'status': 'healthy'};
+        harness.api.onFetchBootstrap = () async => _expiredTrialBootstrap();
+
+        await harness.container
+            .read(appAccessStateProvider.notifier)
+            .refresh(mode: AppAccessRefreshMode.interactive);
+
+        final state = harness.container.read(appAccessStateProvider).value;
+        expect(state?.stage, AppAccessStage.entitlementInactive);
+        expect(
+          state?.bootstrap?.entitlement?.status,
+          ProductEntitlementStatus.expired,
+        );
+      },
+    );
+
+    test('maps pending_review entitlement to pendingReview stage', () async {
+      final harness = await _createHarness();
+      addTearDown(harness.dispose);
+
+      harness.api.onHealthCheck = () async => const {'status': 'healthy'};
+      harness.api.onFetchBootstrap = () async => _pendingReviewBootstrap();
+
+      await harness.container
+          .read(appAccessStateProvider.notifier)
+          .refresh(mode: AppAccessRefreshMode.interactive);
+
+      final state = harness.container.read(appAccessStateProvider).value;
+      expect(state?.stage, AppAccessStage.pendingReview);
+      expect(
+        state?.bootstrap?.entitlement?.status,
+        ProductEntitlementStatus.pendingReview,
+      );
+    });
   });
 }
 
@@ -207,6 +264,26 @@ Future<void> _waitForStableReady(ProviderContainer container) async {
 }
 
 AppBootstrap _readyBootstrap() {
+  return AppBootstrap(
+    user: const AppBootstrapUser(
+      userId: 'user-1',
+      workspaceExists: true,
+      defaultProjectId: 'project-1',
+    ),
+    projectsCount: 1,
+    defaultProjectId: 'project-1',
+    workspaceStatus: 'ready',
+    entitlement: const ProductEntitlementSnapshot(
+      productId: productEntitlementProductId,
+      status: ProductEntitlementStatus.active,
+      grantsAccess: true,
+      origin: ProductEntitlementSnapshotOrigin.direct,
+      environment: 'local',
+    ),
+  );
+}
+
+AppBootstrap _noEntitlementBootstrap() {
   return const AppBootstrap(
     user: AppBootstrapUser(
       userId: 'user-1',
@@ -216,6 +293,54 @@ AppBootstrap _readyBootstrap() {
     projectsCount: 1,
     defaultProjectId: 'project-1',
     workspaceStatus: 'ready',
+    entitlement: ProductEntitlementSnapshot(
+      productId: productEntitlementProductId,
+      status: ProductEntitlementStatus.missing,
+      grantsAccess: false,
+      origin: ProductEntitlementSnapshotOrigin.malformed,
+      environment: 'local',
+    ),
+  );
+}
+
+AppBootstrap _expiredTrialBootstrap() {
+  return AppBootstrap(
+    user: const AppBootstrapUser(
+      userId: 'user-1',
+      workspaceExists: true,
+      defaultProjectId: 'project-1',
+    ),
+    projectsCount: 1,
+    defaultProjectId: 'project-1',
+    workspaceStatus: 'ready',
+    entitlement: ProductEntitlementSnapshot(
+      productId: productEntitlementProductId,
+      status: ProductEntitlementStatus.expired,
+      grantsAccess: false,
+      origin: ProductEntitlementSnapshotOrigin.direct,
+      environment: 'local',
+      expiresAt: DateTime.now().subtract(const Duration(minutes: 1)),
+    ),
+  );
+}
+
+AppBootstrap _pendingReviewBootstrap() {
+  return AppBootstrap(
+    user: const AppBootstrapUser(
+      userId: 'user-1',
+      workspaceExists: true,
+      defaultProjectId: 'project-1',
+    ),
+    projectsCount: 1,
+    defaultProjectId: 'project-1',
+    workspaceStatus: 'ready',
+    entitlement: const ProductEntitlementSnapshot(
+      productId: productEntitlementProductId,
+      status: ProductEntitlementStatus.pendingReview,
+      grantsAccess: false,
+      origin: ProductEntitlementSnapshotOrigin.direct,
+      environment: 'local',
+    ),
   );
 }
 

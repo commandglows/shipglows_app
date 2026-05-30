@@ -38,6 +38,10 @@ String? resolveAppRedirect({
       }
       return null;
     case AppAccessStage.signedOut:
+    case AppAccessStage.noEntitlement:
+    case AppAccessStage.entitlementUnavailable:
+    case AppAccessStage.entitlementInactive:
+    case AppAccessStage.pendingReview:
     case AppAccessStage.bootstrapUnauthorized:
       if (!isEntry && !isAuth && !isFeedback) {
         return '/entry';

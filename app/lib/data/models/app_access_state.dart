@@ -5,6 +5,10 @@ enum AppAccessStage {
   restoringSession,
   demo,
   checkingBackend,
+  noEntitlement,
+  entitlementUnavailable,
+  entitlementInactive,
+  pendingReview,
   apiUnavailable,
   checkingWorkspace,
   bootstrapFailed,
@@ -37,11 +41,7 @@ class AppAccessState {
   bool get requiresReauth => stage == AppAccessStage.bootstrapUnauthorized;
   bool get hasBootstrap => bootstrap != null;
   bool get canUseWorkspaceData =>
-      stage == AppAccessStage.ready ||
-      stage == AppAccessStage.needsOnboarding ||
-      ((stage == AppAccessStage.apiUnavailable ||
-              stage == AppAccessStage.bootstrapFailed) &&
-          bootstrap != null);
+      stage == AppAccessStage.ready || stage == AppAccessStage.needsOnboarding;
   bool get isChecking =>
       stage == AppAccessStage.restoringSession ||
       stage == AppAccessStage.checkingBackend ||
@@ -69,6 +69,10 @@ class AppAccessState {
       AppAccessStage.checkingWorkspace => 'loading',
       AppAccessStage.bootstrapUnauthorized => 'unauthorized',
       AppAccessStage.bootstrapFailed => 'failed',
+      AppAccessStage.noEntitlement => 'no_entitlement',
+      AppAccessStage.entitlementUnavailable => 'entitlement_unavailable',
+      AppAccessStage.entitlementInactive => 'entitlement_inactive',
+      AppAccessStage.pendingReview => 'pending_review',
       AppAccessStage.needsOnboarding => 'success',
       AppAccessStage.ready => 'success',
       _ => 'not_started',

@@ -4,7 +4,7 @@ metadata_schema_version: "1.0"
 artifact_version: "0.1.0"
 project: "shipflow_app"
 created: "2026-04-26"
-updated: "2026-05-10"
+updated: "2026-05-30"
 status: "draft"
 source_skill: sf-docs
 scope: content_map
@@ -21,6 +21,7 @@ evidence:
   - "shipflow_data/technical/code-docs-map.md"
   - "shipflow_data/technical/legacy-contentflow-inventory.md"
   - "shipflow_data/technical/legacy-file-migration-tracker.md"
+  - "shipflow_data/technical/product-entitlements.md"
 depends_on:
   - "shipflow_data/workflow/specs/shipflow-legacy-contentflow-fusion.md@0.1.0"
   - "shipflow_data/technical/code-docs-map.md@0.1.0"
@@ -76,6 +77,9 @@ next_step: "/sf-docs update"
 - `shipflow_data/technical/firestore-data-model.md`: Firestore schema contract for user/project records, memberships, indexed file projection, index runs, diagnostics, and user-scoped views.
 - `shipflow_data/technical/github-managed-clone-indexer.md`: trusted runner contract for GitHub App access, managed clone indexing, local fake runner behavior, diagnostics, and production security requirements.
 - `shipflow_data/technical/dashboard-readonly-projection.md`: dashboard read-model contract for user-scoped project refs, artifact summaries, diagnostics, index runs, filters, sorting, and no-write projection behavior.
+- `shipflow_data/technical/product-entitlements.md`: product access contract for `product_id=shipflow_app`, suite ledger adaptation, fail-closed cache/open-access rules, and support-safe diagnostics.
+- `shipflow_data/technical/product-entitlement-bridge-contract.md`: future trusted backend to WinFlowz suite entitlement snapshot contract.
+- `shipflow_data/technical/product-entitlements-support-runbook.md`: support flow for recognized users without active ShipFlow access, revoked/refunded/expired/pending states, wrong environment, and redaction.
 - `shipflow_data/technical/foundational-specs-handoff.md`: close-context handoff for the foundational specs and the next coherence review.
 - `shipflow_data/workflow/specs/shipflow-foundational-coherence-review.md`: canonical cross-spec readiness gate for foundational auth, onboarding, indexer, Markdown governance, Firestore projection, dashboard, security controls, and state vocabulary.
 - `shipflow_data/workflow/research/explorations/2026-05-08-legacy-contentflow-shipflow-inventory.md`: source exploration report.
@@ -126,6 +130,7 @@ This repository currently has no separate marketing site, blog, pricing page, or
 
 - Path allowlists and diagnostics in `lib/data/shipflow_sources/**`.
 - Future auth surfaces in legacy `web_auth/**` and `lib/data/services/clerk_auth_service*`.
+- Product entitlement surfaces in `AppAccessState`, bootstrap parsing, `OPEN_ACCESS`, Firestore `suiteAccess` mirror docs, and support diagnostics.
 - Future BYOK/OpenRouter surfaces in `lib/core/openrouter_guard.dart`, `lib/data/models/openrouter_credential.dart`, and `lib/data/models/ai_runtime.dart`.
 - Future terminal and agent-runner surfaces are not implemented and require a separate high-risk spec.
 

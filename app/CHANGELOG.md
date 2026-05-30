@@ -10,11 +10,15 @@ The format is based on Keep a Changelog.
 - Added pure Dart GitHub managed clone/indexer contracts, local fake runner, allowlisted ShipFlow Markdown artifact indexing policy, repository interface, documentation, and tests.
 - Added the traffic-first operational record web-reader contract and shared parser fixture for future Markdown-backed web projections.
 - Added the dashboard read-only projection contract, in-memory projection repository, and tests for user-scoped refs, access-lost visibility, filtering, sorting, account switching, and forbidden-field rejection.
+- Added the local-contract-first ShipFlow product entitlement gate with bootstrap snapshot parsing, access-state stages, route/entry states, support docs, verification checklist, and tests.
 
 ### Changed
 - Updated task tracking to reflect the active Firebase/GitHub/Firestore projection foundation instead of the retired Supabase migration path.
 - Migrated active operational tracker/spec summaries toward canonical traffic-first records, with zero-unmapped write gates and parser/TUI validation evidence.
 - Readied the foundational auth/GitHub access, project onboarding, Markdown artifact governance, and dashboard read-only projection specs for the next implementation slice.
+
+### Security
+- Separated product entitlement from identity, GitHub access, open access, and cached bootstrap state so protected workspace data fails closed without a trusted `shipflow_app` entitlement snapshot.
 
 ## [2026-05-11]
 

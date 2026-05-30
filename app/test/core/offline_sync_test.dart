@@ -233,28 +233,25 @@ void main() {
   });
 
   group('AppAccessState', () {
-    test(
-      'allows cached workspace data in degraded mode when bootstrap exists',
-      () {
-        const bootstrap = AppBootstrap(
-          user: AppBootstrapUser(
-            userId: 'user-1',
-            workspaceExists: true,
-            defaultProjectId: 'project-1',
-          ),
-          projectsCount: 1,
+    test('does not allow cached workspace data in degraded mode', () {
+      const bootstrap = AppBootstrap(
+        user: AppBootstrapUser(
+          userId: 'user-1',
+          workspaceExists: true,
           defaultProjectId: 'project-1',
-          workspaceStatus: 'ready',
-        );
+        ),
+        projectsCount: 1,
+        defaultProjectId: 'project-1',
+        workspaceStatus: 'ready',
+      );
 
-        const state = AppAccessState(
-          stage: AppAccessStage.apiUnavailable,
-          bootstrap: bootstrap,
-        );
+      const state = AppAccessState(
+        stage: AppAccessStage.apiUnavailable,
+        bootstrap: bootstrap,
+      );
 
-        expect(state.isDegraded, isTrue);
-        expect(state.canUseWorkspaceData, isTrue);
-      },
-    );
+      expect(state.isDegraded, isTrue);
+      expect(state.canUseWorkspaceData, isFalse);
+    });
   });
 }

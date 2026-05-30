@@ -1,3 +1,5 @@
+import 'app_entitlement.dart';
+
 class AppBootstrapUser {
   final String userId;
   final String? email;
@@ -35,12 +37,14 @@ class AppBootstrap {
   final int projectsCount;
   final String? defaultProjectId;
   final String workspaceStatus;
+  final ProductEntitlementSnapshot? entitlement;
 
   const AppBootstrap({
     required this.user,
     required this.projectsCount,
     required this.defaultProjectId,
     required this.workspaceStatus,
+    this.entitlement,
   });
 
   bool get shouldOnboard {
@@ -76,6 +80,7 @@ class AppBootstrap {
       projectsCount: json['projects_count'] as int? ?? 0,
       defaultProjectId: json['default_project_id'] as String?,
       workspaceStatus: json['workspace_status'] as String? ?? 'missing',
+      entitlement: ProductEntitlementSnapshot.extractFromBootstrapPayload(json),
     );
   }
 
@@ -88,6 +93,7 @@ class AppBootstrap {
       projectsCount: onboardingComplete ? 1 : 0,
       defaultProjectId: onboardingComplete ? 'demo-project' : null,
       workspaceStatus: onboardingComplete ? 'ready' : 'needs_onboarding',
+      entitlement: null,
     );
   }
 
@@ -97,6 +103,7 @@ class AppBootstrap {
       'projects_count': projectsCount,
       'default_project_id': defaultProjectId,
       'workspace_status': workspaceStatus,
+      'entitlement': entitlement?.toJson(),
     };
   }
 }
