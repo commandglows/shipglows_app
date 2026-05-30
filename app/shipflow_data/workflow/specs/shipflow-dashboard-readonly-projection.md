@@ -6,7 +6,7 @@ project: "shipflow_app"
 created: "2026-05-10"
 created_at: "2026-05-10 09:26:21 UTC"
 updated: "2026-05-30"
-updated_at: "2026-05-30 16:56:47 UTC"
+updated_at: "2026-05-30 17:07:27 UTC"
 status: ready
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
@@ -57,10 +57,10 @@ evidence:
   - "shipflow-project-onboarding-flow.md routes ready projects to the dashboard and requires indexing state to resume from Firestore."
   - "shipflow-markdown-artifact-governance.md requires dashboard grouping by governance family/type and missing corpus as a setup warning."
   - "markdown-source-of-truth.md states repository Markdown is canonical and remote storage is projection/index/sync."
-next_step: "/sf-start ShipFlow Dashboard Read-only Projection"
+next_step: "/sf-ship ShipFlow Dashboard Read-only Projection"
 ---
 # Spec: ShipFlow Dashboard Read-only Projection
-🟢 [shipflow_app] spec: ShipFlow Dashboard Read-only Projection | status: ready | path: shipflow_data/workflow/specs/shipflow-dashboard-readonly-projection.md | next: /sf-start ShipFlow Dashboard Read-only Projection
+🟢 [shipflow_app] spec: ShipFlow Dashboard Read-only Projection | status: ready | path: shipflow_data/workflow/specs/shipflow-dashboard-readonly-projection.md | next: /sf-ship ShipFlow Dashboard Read-only Projection
 
 # Title
 
@@ -208,63 +208,63 @@ Define the dashboard as a read-only Firestore projection consumer. It reads user
 
 # Implementation Tasks
 
-- [ ] Task 1: Create dashboard read-model documentation.
+- [x] Task 1: Create dashboard read-model documentation.
   - File: `shipflow_data/technical/dashboard-readonly-projection.md`
   - Action: Define list/detail/read models, status mapping, Firestore paths, redaction rules, and no-write guarantees.
   - User story link: Makes dashboard behavior implementable from projection without exposing infrastructure.
   - Depends on: This spec passing `/sf-ready`.
   - Validate with: `rg -n "projectRefs|indexedFiles|indexRuns|diagnostics|read-only|access-lost" shipflow_data/technical/dashboard-readonly-projection.md`
   - Notes: Documentation only; no code during spec phase.
-- [ ] Task 2: Define dashboard state taxonomy.
+- [x] Task 2: Define dashboard state taxonomy.
   - File: `shipflow_data/technical/dashboard-readonly-projection.md`
   - Action: Map onboarding/project/index/access states to visible dashboard states: empty, indexing, ready, stale, access_lost, corpus_missing, partial, failed, hidden, archived. Internal access statuses must stay traceable to `not_connected`, `needs_github_app`, `connected`, `access_cached`, `github_access_lost`, `installation_suspended`, and `access_check_failed`.
   - User story link: Lets users understand project state without backend jargon.
   - Depends on: Task 1.
   - Validate with: State table covers every terminal/recoverable state from onboarding, auth/access, and indexer shipflow_data/workflow/specs.
   - Notes: Use product-facing labels in future UI; keep internal enum names traceable.
-- [ ] Task 2b: Define multi-project overview widgets, filters, and sorting.
+- [x] Task 2b: Define multi-project overview widgets, filters, and sorting.
   - File: `shipflow_data/technical/dashboard-readonly-projection.md`
   - Action: Specify default overview widgets, project filter model, sort fields, empty states, and persistence as user-scoped view preferences.
   - User story link: Makes the dashboard useful as a multi-project cockpit before drilling into one repo.
   - Depends on: Tasks 1-2.
   - Validate with: Widget/state tests cover overview default, filter by project/status, sort by date/status, and reset filters.
   - Notes: Widgets must use projection summaries and avoid loading every full Markdown body.
-- [ ] Task 3: Define Firestore query boundaries.
+- [x] Task 3: Define Firestore query boundaries.
   - File: `shipflow_data/technical/dashboard-readonly-projection.md`
   - Action: Specify allowed read paths and forbidden broad reads/collection scans for project list, project detail, artifact list, artifact body, diagnostics, and index runs.
   - User story link: Protects cross-project privacy while enabling dashboard reads.
   - Depends on: Task 1.
   - Validate with: Query matrix names membership/user-scope proof for every read.
   - Notes: Actual rules and SDK code remain future implementation.
-- [ ] Task 4: Define dashboard DTO/domain contracts.
+- [x] Task 4: Define dashboard DTO/domain contracts.
   - File: `lib/shipflow/` and/or future data layer files chosen during implementation.
   - Action: Add read-only DTOs for project summary, artifact summary, artifact detail, diagnostic summary, index run summary, and dashboard feed item.
   - User story link: Gives the UI a projection-only shape that cannot accidentally carry secrets or write authority.
   - Depends on: Tasks 1-3.
   - Validate with: Unit tests for serialization, redaction, stale/access-lost mapping, and absence of forbidden fields.
   - Notes: No direct dependency on clone or GitHub token types.
-- [ ] Task 5: Define dashboard repository/provider contracts.
+- [x] Task 5: Define dashboard repository/provider contracts.
   - File: `lib/shipflow/` and/or future data layer files chosen during implementation.
   - Action: Add interfaces for reading project refs, project summaries, artifact groups, diagnostics, index runs, and optional backend action requests.
   - User story link: Keeps dashboard as reader/requester rather than projection writer.
   - Depends on: Task 4.
   - Validate with: Fake repository tests for no projects, ready project, stale project, access lost, partial parse, denied read, and user switch.
   - Notes: Backend action methods must return request/status results, not mutate client-owned projection state.
-- [ ] Task 6: Define dashboard UI behavior.
+- [x] Task 6: Define dashboard UI behavior.
   - File: `lib/shipflow/presentation/**`
   - Action: Implement list/detail/search-or-filter states using the read model, including warnings, disabled actions, empty corpus, deleted files, and redacted diagnostics.
   - User story link: Delivers the user-visible dashboard promise.
   - Depends on: Tasks 4-5.
   - Validate with: Widget tests for all state taxonomy entries and accessibility checks for warnings/disabled actions.
   - Notes: Do not show clone paths, installation IDs, token concepts, or backend file paths.
-- [ ] Task 7: Add security-focused tests.
+- [x] Task 7: Add security-focused tests.
   - File: `test/shipflow/` or existing test directories chosen during implementation.
   - Action: Test account switching, cache partitioning, denied reads, forbidden fields, and disabled backend actions under access loss.
   - User story link: Prevents private repo/project leakage.
   - Depends on: Tasks 4-6.
   - Validate with: `flutter test` plus future Firestore emulator tests before production data.
   - Notes: Emulator security tests are mandatory before enabling real Firestore reads.
-- [ ] Task 8: Update documentation maps after implementation.
+- [x] Task 8: Update documentation maps after implementation.
   - File: `shipflow_data/editorial/content-map.md`, `shipflow_data/technical/code-docs-map.md`, `shipflow_data/technical/shipflow-foundational-architecture.md`, and future README only if behavior exists.
   - Action: Link concrete dashboard shipflow_data and code ownership.
   - User story link: Keeps future agents on the projection-only contract.
@@ -274,20 +274,20 @@ Define the dashboard as a read-only Firestore projection consumer. It reads user
 
 # Acceptance Criteria
 
-- [ ] AC 1: Given a signed-in user with project refs, when the dashboard loads, then it lists only those projects and performs no global project scan.
-- [ ] AC 1b: Given the dashboard opens, when the user has multiple projects, then the default view is a multi-project widget overview with filter and sort controls.
-- [ ] AC 1c: Given filters or sorting are changed, when the dashboard updates, then only user-scoped view preferences change and shared project projection is untouched.
-- [ ] AC 2: Given a signed-out user, when the dashboard route opens, then no project Firestore reads occur and the user sees sign-in/unauthorized state.
-- [ ] AC 3: Given a ready project, when the user opens it, then project status, artifact families, freshness, last index status, and diagnostics summaries are visible from Firestore projection.
-- [ ] AC 4: Given a stale projection, when the dashboard renders it, then content remains readable with stale labeling and source commit metadata.
-- [ ] AC 5: Given GitHub access is lost, when the dashboard renders the project, then last projection remains visible/searchable, refresh/index actions are disabled, and the access warning is explicit.
-- [ ] AC 6: Given no known ShipFlow artifacts were indexed, when the dashboard opens the project, then the project shows an empty/setup state, not an unexplained failure.
-- [ ] AC 7: Given `shipflow_data/` is missing or duplicated, when dashboard reads diagnostics, then it shows the governance corpus warning without blocking all project visibility.
-- [ ] AC 8: Given a deleted projection record, when artifacts are listed, then the deleted file is not shown as active content.
-- [ ] AC 9: Given parse failures for some files, when dashboard renders artifacts, then valid files remain visible and failed files show redacted diagnostics.
-- [ ] AC 10: Given a user switches accounts, when dashboard reloads, then cached data from the previous user is not rendered.
-- [ ] AC 11: Given a forbidden field or backend-only document exists, when dashboard DTOs are built, then tokens, installation internals, clone paths, and raw backend paths are absent.
-- [ ] AC 12: Given an unknown future artifact type appears, when dashboard groups artifacts, then it remains safely viewable as unknown metadata or diagnostic, not executable content.
+- [x] AC 1: Given a signed-in user with project refs, when the dashboard loads, then it lists only those projects and performs no global project scan.
+- [x] AC 1b: Given the dashboard opens, when the user has multiple projects, then the default view is a multi-project widget overview with filter and sort controls.
+- [x] AC 1c: Given filters or sorting are changed, when the dashboard updates, then only user-scoped view preferences change and shared project projection is untouched.
+- [x] AC 2: Given a signed-out user, when the dashboard route opens, then no project Firestore reads occur and the user sees sign-in/unauthorized state.
+- [x] AC 3: Given a ready project, when the user opens it, then project status, artifact families, freshness, last index status, and diagnostics summaries are visible from Firestore projection.
+- [x] AC 4: Given a stale projection, when the dashboard renders it, then content remains readable with stale labeling and source commit metadata.
+- [x] AC 5: Given GitHub access is lost, when the dashboard renders the project, then last projection remains visible/searchable, refresh/index actions are disabled, and the access warning is explicit.
+- [x] AC 6: Given no known ShipFlow artifacts were indexed, when the dashboard opens the project, then the project shows an empty/setup state, not an unexplained failure.
+- [x] AC 7: Given `shipflow_data/` is missing or duplicated, when dashboard reads diagnostics, then it shows the governance corpus warning without blocking all project visibility.
+- [x] AC 8: Given a deleted projection record, when artifacts are listed, then the deleted file is not shown as active content.
+- [x] AC 9: Given parse failures for some files, when dashboard renders artifacts, then valid files remain visible and failed files show redacted diagnostics.
+- [x] AC 10: Given a user switches accounts, when dashboard reloads, then cached data from the previous user is not rendered.
+- [x] AC 11: Given a forbidden field or backend-only document exists, when dashboard DTOs are built, then tokens, installation internals, clone paths, and raw backend paths are absent.
+- [x] AC 12: Given an unknown future artifact type appears, when dashboard groups artifacts, then it remains safely viewable as unknown metadata or diagnostic, not executable content.
 
 # Test Contract
 
@@ -359,6 +359,9 @@ None. Remaining choices are implementation details unless they change visible da
 | 2026-05-30 16:50:20 UTC | sf-spec | GPT-5 Codex | Repaired readiness gaps after managed clone/indexer closeout: dependency versions, status, Test Contract, proof order, scenarios, and exceptions. | reviewed | /sf-ready ShipFlow Dashboard Read-only Projection |
 | 2026-05-30 16:51:17 UTC | sf-ready | GPT-5 Codex | Reviewed readiness after Test Contract repair. | not ready: blocking dependencies still draft (`shipflow-auth-github-access.md`, `shipflow-project-onboarding-flow.md`, `shipflow-markdown-artifact-governance.md`). | /sf-ready ShipFlow Auth GitHub Access |
 | 2026-05-30 16:56:47 UTC | sf-ready | GPT-5 Codex | Re-ran readiness after dependencies were repaired and marked ready; dashboard contract, proof path, state taxonomy, security boundaries, and docs coherence are actionable. | ready | /sf-start ShipFlow Dashboard Read-only Projection |
+| 2026-05-30 17:04:36 UTC | sf-start | GPT-5 Codex | Implemented read-only projection contract docs, in-memory repository/read models, UI projection panel, user-scope/access-lost/filter/sort/account-switch tests, and docs map alignment. | implemented | /sf-verify ShipFlow Dashboard Read-only Projection |
+| 2026-05-30 17:06:32 UTC | sf-verify | GPT-5 Codex | Verified local contract scope against scenario ids, checks, redaction scan, metadata lint, analyzer, and widget/repository tests. | verified | /sf-end ShipFlow Dashboard Read-only Projection |
+| 2026-05-30 17:07:27 UTC | sf-end | GPT-5 Codex | Closed the local dashboard read-only projection contract slice and prepared it for ship. | closed | /sf-ship ShipFlow Dashboard Read-only Projection |
 
 # Current Chantier Flow
 
@@ -366,7 +369,7 @@ None. Remaining choices are implementation details unless they change visible da
 |------|--------|-------|
 | sf-spec | done | Dashboard read-only projection spec created. |
 | sf-ready | ready | Passed after auth/GitHub access, project onboarding, and Markdown artifact governance dependencies were made ready. |
-| sf-start | pending | No implementation before foundational coherence review. |
-| sf-verify | pending | Verify after future implementation only. |
-| sf-end | pending | Close after implementation and verification. |
+| sf-start | done | Local contract, fake repository, widget-state proof, and documentation alignment implemented without real Firebase/GitHub wiring. |
+| sf-verify | verified | Local contract/fake repository/widget scope verified; hosted Firebase/GitHub/browser proof remains out of scope until real integration. |
+| sf-end | closed | Local contract slice closed; ship remains. |
 | sf-ship | pending | Commit/push only after explicit ship flow. |
