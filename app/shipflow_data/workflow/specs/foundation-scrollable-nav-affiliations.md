@@ -21,6 +21,7 @@ evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/foundation-scrollable-nav-affiliations.md"
 ---
 # Spec: Fondation — Navigation scrollable + Affiliations (domaine pilote)
+🟢 [contentflow_app] spec: Fondation — Navigation scrollable + Affiliations (domaine pilote) | status: ready | path: shipflow_data/workflow/specs/foundation-scrollable-nav-affiliations.md | next: /sf-docs audit shipflow_data/workflow/specs/foundation-scrollable-nav-affiliations.md
 
 Date: 2026-03-28
 

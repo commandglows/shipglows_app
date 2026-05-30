@@ -22,6 +22,8 @@ evidence:
   - "Baseline command output and dirty-worktree inventory recorded in this execution log."
 next_step: "/sf-start Migrate Flutter Core Majors: Riverpod, GoRouter, Google Fonts, Riverpod Codegen"
 ---
+# Spec: Migrate Flutter Core Majors Baseline
+🟡 [contentflow_app] spec: Migrate Flutter Core Majors Baseline | status: active | path: shipflow_data/workflow/specs/migrate-flutter-core-majors-baseline.md | next: /sf-start Migrate Flutter Core Majors: Riverpod, GoRouter, Google Fonts, Riverpod Codegen
 
 # Migrate Flutter Core Majors Baseline
 

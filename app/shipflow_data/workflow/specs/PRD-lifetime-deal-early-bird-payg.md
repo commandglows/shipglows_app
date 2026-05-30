@@ -20,6 +20,8 @@ supersedes: []
 evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/PRD-lifetime-deal-early-bird-payg.md"
 ---
+# Spec: Lifetime Deal Early Early Bird (BYOK / Pay-As-You-Go)
+🟡 [contentflow_app] spec: Lifetime Deal Early Early Bird (BYOK / Pay-As-You-Go) | status: draft | path: shipflow_data/workflow/specs/PRD-lifetime-deal-early-bird-payg.md | next: /sf-docs audit shipflow_data/workflow/specs/PRD-lifetime-deal-early-bird-payg.md
 # PRD — Lifetime Deal Early Early Bird (BYOK / Pay-As-You-Go)
 
 Date: 2026-04-23

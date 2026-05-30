@@ -100,6 +100,7 @@ class OperationalRecord {
     required this.kind,
     required this.title,
     required this.fields,
+    required this.dedupeKey,
     required this.source,
     required this.line,
     required this.rawLine,
@@ -110,6 +111,7 @@ class OperationalRecord {
   final String kind;
   final String title;
   final Map<String, String> fields;
+  final String dedupeKey;
   final String source;
   final int line;
   final String rawLine;

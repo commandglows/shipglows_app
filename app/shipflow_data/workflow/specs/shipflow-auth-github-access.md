@@ -77,6 +77,8 @@ evidence:
   - "User decision 2026-05-10: `githubInstallations/{installationId}` is global and backend-only."
 next_step: "/sf-ready ShipFlow Auth GitHub Access"
 ---
+# Spec: ShipFlow Auth And GitHub Access
+🟡 [shipflow_app] spec: ShipFlow Auth And GitHub Access | status: draft | path: shipflow_data/workflow/specs/shipflow-auth-github-access.md | next: /sf-ready ShipFlow Auth GitHub Access
 
 # Title
 

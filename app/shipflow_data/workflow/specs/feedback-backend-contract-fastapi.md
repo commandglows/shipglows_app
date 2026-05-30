@@ -20,6 +20,8 @@ supersedes: []
 evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/feedback-backend-contract-fastapi.md"
 ---
+# Spec: Feedback Backend Contract for ContentFlow
+🟢 [contentflow_app] spec: Feedback Backend Contract for ContentFlow | status: ready | path: shipflow_data/workflow/specs/feedback-backend-contract-fastapi.md | next: /sf-docs audit shipflow_data/workflow/specs/feedback-backend-contract-fastapi.md
 # Feedback Backend Contract for ContentFlow
 
 ## Scope

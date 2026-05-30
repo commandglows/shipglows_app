@@ -57,6 +57,8 @@ evidence:
   - "Repo evidence 2026-05-10: `/home/claude/shipflow_data/` contains current global/root tracking and project task files."
 next_step: "/sf-ready ShipFlow Markdown Artifact Governance"
 ---
+# Spec: ShipFlow Markdown Artifact Governance
+🟡 [shipflow_app] spec: ShipFlow Markdown Artifact Governance | status: draft | path: shipflow_data/workflow/specs/shipflow-markdown-artifact-governance.md | next: /sf-ready ShipFlow Markdown Artifact Governance
 
 # Title
 

@@ -74,6 +74,8 @@ evidence:
   - "Current state mixes shared contracts across multiple files, increasing ambiguity for a fresh implementation context."
 next_step: "/sf-verify ShipFlow Foundational Coherence Review"
 ---
+# Spec: ShipFlow Foundational Coherence Review
+🟢 [shipflow_app] spec: ShipFlow Foundational Coherence Review | status: ready | path: shipflow_data/workflow/specs/shipflow-foundational-coherence-review.md | next: /sf-verify ShipFlow Foundational Coherence Review
 
 # Title
 

@@ -20,6 +20,8 @@ supersedes: []
 evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/feedback-admin-v1-contentflow.md"
 ---
+# Spec: Feedback Admin v1 pour ContentFlow
+🟢 [contentflow_app] spec: Feedback Admin v1 pour ContentFlow | status: ready | path: shipflow_data/workflow/specs/feedback-admin-v1-contentflow.md | next: /sf-docs audit shipflow_data/workflow/specs/feedback-admin-v1-contentflow.md
 # Feedback Admin v1 pour ContentFlow
 
 ## Adaptation au projet actuel

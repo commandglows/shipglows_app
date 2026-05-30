@@ -8,9 +8,11 @@ The format is based on Keep a Changelog.
 
 ### Added
 - Added pure Dart GitHub managed clone/indexer contracts, local fake runner, allowlisted ShipFlow Markdown artifact indexing policy, repository interface, documentation, and tests.
+- Added the traffic-first operational record web-reader contract and shared parser fixture for future Markdown-backed web projections.
 
 ### Changed
 - Updated task tracking to reflect the active Firebase/GitHub/Firestore projection foundation instead of the retired Supabase migration path.
+- Migrated active operational tracker/spec summaries toward canonical traffic-first records, with zero-unmapped write gates and parser/TUI validation evidence.
 
 ## [2026-05-11]
 

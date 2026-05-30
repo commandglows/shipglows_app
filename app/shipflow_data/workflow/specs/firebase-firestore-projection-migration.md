@@ -64,6 +64,8 @@ evidence:
   - "Supabase is rejected as target because of inactivity policy concerns."
 next_step: "/sf-start Firebase Firestore projection migration"
 ---
+# Spec: Firebase Firestore Projection Migration
+🟢 [shipflow_app] spec: Firebase Firestore Projection Migration | status: ready | path: shipflow_data/workflow/specs/firebase-firestore-projection-migration.md | next: /sf-start Firebase Firestore projection migration
 
 # Title
 

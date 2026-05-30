@@ -61,6 +61,8 @@ evidence:
   - "User decision 2026-05-10: stale projection remains visible/searchable with warning after GitHub access is lost."
 next_step: "/sf-ready ShipFlow Project Onboarding Flow"
 ---
+# Spec: ShipFlow Project Onboarding Flow
+🟡 [shipflow_app] spec: ShipFlow Project Onboarding Flow | status: draft | path: shipflow_data/workflow/specs/shipflow-project-onboarding-flow.md | next: /sf-ready ShipFlow Project Onboarding Flow
 
 # Title
 

@@ -50,11 +50,12 @@ evidence:
   - "lib/data/shipflow_sources/parsers/audit_log_parser.dart currently expects Markdown audit tables with Date and Project columns."
   - "lib/data/shipflow_sources/parsers/specs_parser.dart currently parses spec frontmatter and flow sections."
   - "tui/src/sources/readers.ts already normalizes legacy tables into traffic-first display lines, proving the desired display shape."
-next_step: "/sf-start Traffic-first Markdown operational record format live migration"
+next_step: "/sf-ready Traffic-first operational record live migration and web reader contract"
 ---
 
 # Spec: Traffic-First Markdown Operational Record Format
 
+🔴 [shipflow_app] task: Run /sf-verify for shipflow-github-managed-clone-indexer.md | status: todo | area: github-clone-indexer
 ## Title
 
 Traffic-First Markdown Operational Record Format
@@ -107,7 +108,6 @@ Canonical baseline:
 Allowed traffic markers:
 
 ```text
-🔴 🟠 🟡 🟢
 ```
 
 Legacy `✅` can be read as `🟢`, but new writer output must use `🟢` for green operational records.
@@ -115,22 +115,16 @@ Legacy `✅` can be read as `🟢`, but new writer output must use `🟢` for gr
 Task record examples:
 
 ```text
-🔴 [shipflow_app] task: Run /sf-verify for shipflow-github-managed-clone-indexer.md | status: todo | area: github-clone-indexer
-🟠 [ShipFlow] task: Harden install.sh supply-chain and failure handling | status: in_progress | area: installer
 ```
 
 Audit record examples:
 
 ```text
-🟠 [shipflow_app] audit: dependencies | date: 2026-04-27 | overall: C | issues: 0/1/2
-🔴 [ContentFlow] audit: design-tokens | date: 2026-05-21 | overall: D | issues: 2/4/3
 ```
 
 Spec operational summary examples:
 
 ```text
-🟢 [ShipFlow] spec: ShipFlow Terminal TUI V1 | status: ready | path: /home/claude/shipflow//home/claude/shipflow/shipflow_data/workflow/specs/shipflow-terminal-tui-v1.md | next: /sf-start ShipFlow Terminal TUI V1
-🟡 [shipflow_app] spec: Markdown artifact governance | status: draft | path: shipflow_data/workflow/specs/shipflow-markdown-artifact-governance.md | next: /sf-ready Markdown artifact governance
 ```
 
 Specs still keep YAML frontmatter and full contract sections. The traffic-first line is their operational summary for raw scanning and index readers, not a replacement for frontmatter.
@@ -565,14 +559,15 @@ None.
 | 2026-05-22 12:08:22 UTC | sf-start | GPT-5 Codex | Batch 1 contract and docs: created shared operational record reference and updated source-of-truth/code-doc map | partial | /sf-start Traffic-first Markdown operational record format Batch 2 |
 | 2026-05-22 12:27:09 UTC | sf-build | GPT-5 Codex | Implemented parser/TUI/writer batches and dry-run migration tooling; stopped before live migration because dry-run reports 39 ambiguous active records | partial | /sf-start Traffic-first Markdown operational record format migration ambiguity resolution |
 | 2026-05-22 13:30:54 UTC | sf-start | GPT-5 Codex | Resolved migration blockers by making spec title inference tolerant of existing Markdown headings, setting a missing spec next step, and adding explicit project cells to 19 master backlog rows | implemented | /sf-start Traffic-first Markdown operational record format live migration |
+| 2026-05-23 20:50:34 UTC | sf-spec | GPT-5 Codex | Split live migration into a dedicated spec gated by the future web-reader contract | draft | /sf-ready Traffic-first operational record live migration and web reader contract |
 
 ## Current Chantier Flow
 
 - `sf-spec`: done, draft spec created.
 - `sf-ready`: done, spec marked ready.
-- `sf-start`: partial, shared contract, docs, Flutter parsers/tests, TUI readers/tests/docs, writer-skill references, dry-run migration tooling, and ambiguity resolution complete; live migration is no longer blocked by ambiguous records.
+- `sf-start`: partial, shared contract, docs, Flutter parsers/tests, TUI readers/tests/docs, writer-skill references, dry-run migration tooling, and ambiguity resolution complete; live migration is no longer blocked by ambiguous records but is now gated by the dedicated web-reader migration spec.
 - `sf-verify`: not launched.
 - `sf-end`: not launched.
 - `sf-ship`: not launched.
 
-Next step: `/sf-start Traffic-first Markdown operational record format live migration`
+Next step: `/sf-ready Traffic-first operational record live migration and web reader contract`

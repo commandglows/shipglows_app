@@ -52,6 +52,8 @@ evidence:
   - "Legacy ContentFlow project/onboarding code exists but is backend/workspace/content-pipeline oriented."
 next_step: "/sf-ready ShipFlow Project Source Onboarding"
 ---
+# Spec: ShipFlow Project Source Onboarding
+🟢 [shipflow_app] spec: ShipFlow Project Source Onboarding | status: ready | path: shipflow_data/workflow/specs/shipflow-project-source-onboarding.md | next: /sf-ready ShipFlow Project Source Onboarding
 
 # Title
 

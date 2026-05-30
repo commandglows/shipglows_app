@@ -58,6 +58,8 @@ evidence:
   - "test/presentation/widgets/project_picker_action_test.dart"
 next_step: "/sf-start Migrate Flutter Core Majors: Riverpod, GoRouter, Google Fonts, Riverpod Codegen"
 ---
+# Spec: Migrate Flutter Core Majors: Riverpod, GoRouter, Google Fonts, Riverpod Codegen
+🟢 [contentflow_app] spec: Migrate Flutter Core Majors: Riverpod, GoRouter, Google Fonts, Riverpod Codegen | status: ready | path: shipflow_data/workflow/specs/SPEC-migrate-flutter-core-majors.md | next: /sf-start Migrate Flutter Core Majors: Riverpod, GoRouter, Google Fonts, Riverpod Codegen
 
 # Title
 

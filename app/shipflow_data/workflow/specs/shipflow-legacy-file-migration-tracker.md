@@ -50,6 +50,8 @@ evidence:
   - "shipflow_data/editorial/content-map.md points to legacy-contentflow-inventory.md as canonical classification source."
 next_step: "/sf-start ShipFlow Legacy File Migration Tracker"
 ---
+# Spec: ShipFlow Legacy File Migration Tracker
+🟢 [shipflow_app] spec: ShipFlow Legacy File Migration Tracker | status: ready | path: shipflow_data/workflow/specs/shipflow-legacy-file-migration-tracker.md | next: /sf-start ShipFlow Legacy File Migration Tracker
 
 # Title
 

@@ -59,6 +59,8 @@ evidence:
   - "markdown-source-of-truth.md states repository Markdown is canonical and remote storage is projection/index/sync."
 next_step: "/sf-ready ShipFlow Dashboard Read-only Projection"
 ---
+# Spec: ShipFlow Dashboard Read-only Projection
+🟡 [shipflow_app] spec: ShipFlow Dashboard Read-only Projection | status: draft | path: shipflow_data/workflow/specs/shipflow-dashboard-readonly-projection.md | next: /sf-ready ShipFlow Dashboard Read-only Projection
 
 # Title
 

@@ -20,6 +20,8 @@ supersedes: []
 evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/spec-no-ui-jump-on-resume.md"
 ---
+# Spec: Stabiliser La Reprise Mobile/Web Sans Mouvement UI
+🟢 [contentflow_app] spec: Stabiliser La Reprise Mobile/Web Sans Mouvement UI | status: ready | path: shipflow_data/workflow/specs/spec-no-ui-jump-on-resume.md | next: /sf-docs audit shipflow_data/workflow/specs/spec-no-ui-jump-on-resume.md
 # Stabiliser La Reprise Mobile/Web Sans Mouvement UI
 
 Status: ready

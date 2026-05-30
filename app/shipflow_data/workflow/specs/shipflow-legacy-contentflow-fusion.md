@@ -51,6 +51,8 @@ evidence:
   - "User direction: do not delete legacy auth, BYOK, feedback, or pipeline ideas before classification"
 next_step: "/sf-ready ShipFlow Legacy ContentFlow Fusion"
 ---
+# Spec: ShipFlow Legacy ContentFlow Fusion
+🟡 [shipflow_app] spec: ShipFlow Legacy ContentFlow Fusion | status: active | path: shipflow_data/workflow/specs/shipflow-legacy-contentflow-fusion.md | next: /sf-ready ShipFlow Legacy ContentFlow Fusion
 
 # Title
 

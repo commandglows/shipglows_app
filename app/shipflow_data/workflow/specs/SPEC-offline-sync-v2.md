@@ -20,6 +20,8 @@ supersedes: []
 evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/SPEC-offline-sync-v2.md"
 ---
+# Spec: Offline Sync V2
+🟠 [contentflow_app] spec: Offline Sync V2 | status: reviewed | path: shipflow_data/workflow/specs/SPEC-offline-sync-v2.md | next: /sf-docs audit shipflow_data/workflow/specs/SPEC-offline-sync-v2.md
 # SPEC — Offline Sync V2
 
 ## Purpose

@@ -40,7 +40,9 @@ evidence:
   - "contentflow_lab/agents/seo/config/project_store.py:41 defines Project.url as NOT NULL and has no archive columns"
 next_step: "/sf-start Project flows selection onboarding archive"
 ---
+# Spec: Project Flows: Optional Source URL, Explicit No Selection, Active Project Editing, and Archive-First Deletion
 
+🟢 [contentflow_app] spec: Project Flows: Optional Source URL, Explicit No Selection, Active Project Editing, and Archive-First Deletion | status: ready | path: shipflow_data/workflow/specs/SPEC-project-flows-selection-onboarding-archive.md | next: /sf-start Project flows selection onboarding archive
 ## Title
 
 Project Flows: Optional Source URL, Explicit No Selection, Active Project Editing, and Archive-First Deletion

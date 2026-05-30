@@ -60,6 +60,8 @@ evidence:
   - "User decision 2026-05-09: keep 20 index runs per project."
 next_step: "/sf-start ShipFlow Firestore Data Model"
 ---
+# Spec: ShipFlow Firestore Data Model
+🟢 [shipflow_app] spec: ShipFlow Firestore Data Model | status: ready | path: shipflow_data/workflow/specs/shipflow-firestore-data-model.md | next: /sf-start ShipFlow Firestore Data Model
 
 # Title
 

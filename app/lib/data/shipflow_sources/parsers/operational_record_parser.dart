@@ -192,6 +192,13 @@ class OperationalRecordParser {
       fields[key] = value;
     }
 
+    final dedupeKey = _dedupeKey(
+      project: project,
+      title: title,
+      kind: kind,
+      fields: fields,
+    );
+
     return _ParseLineResult(
       record: OperationalRecord(
         traffic: normalizedTraffic,
@@ -199,6 +206,7 @@ class OperationalRecordParser {
         kind: kind,
         title: title,
         fields: fields,
+        dedupeKey: dedupeKey,
         source: source,
         line: lineNumber,
         rawLine: line,
@@ -256,6 +264,58 @@ class OperationalRecordParser {
     }
     parts.add(current.toString());
     return parts;
+  }
+
+  String _dedupeKey({
+    required String project,
+    required String title,
+    required String kind,
+    required Map<String, String> fields,
+  }) {
+    final projectKey = _normalize(project);
+    if (projectKey.isEmpty || _normalize(title).isEmpty) {
+      return '';
+    }
+
+    final id = _normalize(fields['id'] ?? '');
+    if (kind == 'task') {
+      if (id.isNotEmpty) {
+        return 'task|$projectKey|id|$id';
+      }
+      final area = _normalize(fields['area'] ?? '');
+      return 'task|$projectKey|title|${_normalize(title)}|area|$area';
+    }
+
+    if (kind == 'audit') {
+      final date = _normalize(fields['date'] ?? '');
+      final overall = _normalize(fields['overall'] ?? '');
+      final scope = _normalize(fields['scope'] ?? '');
+      if (id.isNotEmpty) {
+        return 'audit|$projectKey|id|$id';
+      }
+      if (date.isNotEmpty && overall.isNotEmpty && (scope.isNotEmpty || _normalize(title).isNotEmpty)) {
+        final dedupeScope = scope.isNotEmpty ? scope : _normalize(title);
+        return 'audit|$projectKey|date|$date|overall|$overall|scope|$dedupeScope';
+      }
+      return '';
+    }
+
+    if (kind == 'spec') {
+      final path = _normalize(fields['path'] ?? '');
+      if (id.isNotEmpty) {
+        return 'spec|$projectKey|id|$id';
+      }
+      if (path.isNotEmpty) {
+        return 'spec|$projectKey|path|$path';
+      }
+      return 'spec|$projectKey|title|${_normalize(title)}';
+    }
+
+    return '';
+  }
+
+  String _normalize(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 
   String _unescape(String value) {

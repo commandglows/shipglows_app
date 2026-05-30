@@ -21,6 +21,7 @@ evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/late-integration-finalization.md"
 ---
 # Spec: Finaliser l'integration LATE/Zernio
+🟢 [contentflow_app] spec: Finaliser l'integration LATE/Zernio | status: ready | path: shipflow_data/workflow/specs/late-integration-finalization.md | next: /sf-docs audit shipflow_data/workflow/specs/late-integration-finalization.md
 
 Date: 2026-03-23
 

@@ -1,7 +1,7 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "1.0.0"
 project: "shipflow_app"
 created: "2026-05-09"
 created_at: "2026-05-09 17:22:02 UTC"
@@ -74,6 +74,8 @@ evidence:
   - "User decision 2026-05-09: GitHub wins every conflict."
 next_step: "/sf-prod shipflow_app"
 ---
+# Spec: ShipFlow GitHub Managed Clone Indexer
+🟢 [shipflow_app] spec: ShipFlow GitHub Managed Clone Indexer | status: ready | path: shipflow_data/workflow/specs/shipflow-github-managed-clone-indexer.md | next: /sf-prod shipflow_app
 
 # Title
 

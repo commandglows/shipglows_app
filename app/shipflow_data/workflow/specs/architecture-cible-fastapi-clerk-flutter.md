@@ -21,6 +21,7 @@ evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/architecture-cible-fastapi-clerk-flutter.md"
 ---
 # Spec: Architecture cible propre — Astro + Flutter + FastAPI + Clerk
+🟢 [contentflow_app] spec: Architecture cible propre — Astro + Flutter + FastAPI + Clerk | status: ready | path: shipflow_data/workflow/specs/architecture-cible-fastapi-clerk-flutter.md | next: /sf-docs audit shipflow_data/workflow/specs/architecture-cible-fastapi-clerk-flutter.md
 
 Date: 2026-03-23
 

@@ -87,13 +87,29 @@ Required fields:
 | `audit` | `date`, `overall`, `issues` | Legacy audit tables may be read as fallback until migration closes. |
 | `spec` | `status`, `path`, `next` | Frontmatter remains authoritative; summary conflicts must produce diagnostics. |
 
+Operational migration state:
+
+- Canonical traffic-first records are now the active source format for live-migrated task, audit, and spec sources.
+- `scripts/migrate_operational_records.py` enforces zero active legacy requirement: live write is blocked when unmapped rows, malformed rows, duplicate-conflict without deterministic resolution, or missing required fields are detected.
+- Migrated sources must remain parseable for future web projections without hidden runtime normalization.
+
 Example records:
 
 ```text
 🔴 [shipflow_app] task: Run /sf-verify | status: todo | area: github-clone-indexer
 🟠 [shipflow_app] audit: dependencies | date: 2026-04-27 | overall: C | issues: 0/1/2
-🟢 [ShipFlow] spec: ShipFlow Terminal TUI V1 | status: ready | path: /home/claude/shipflow/shipflow_data/workflow/specs/shipflow-terminal-tui-v1.md | next: /sf-start ShipFlow Terminal TUI V1
+🟢 [ShipFlow] spec: ShipFlow Terminal TUI V1 | status: ready | path: shipflow_data/workflow/specs/shipflow-terminal-tui-v1.md | next: /sf-start ShipFlow Terminal TUI V1
 ```
+
+## Migration and Web Reader Documentation
+
+This contract now depends on:
+
+- `shipflow_data/technical/operational-record-web-reader-contract.md`
+- `/home/claude/shipflow/skills/references/operational-record-format.md`
+- `scripts/migrate_operational_records.py`
+
+These documents define source metadata, read-model fields, duplicate policy, diagnostics redaction, and deterministic write gates for the future ShipFlow web projection surface.
 
 ## Legacy Compatibility Policy
 

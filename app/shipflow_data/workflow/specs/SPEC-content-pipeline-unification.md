@@ -21,6 +21,7 @@ evidence: []
 next_step: "/sf-docs audit shipflow_data/workflow/specs/SPEC-content-pipeline-unification.md"
 ---
 # Spec: Unification du Content Pipeline — Sources, Angles, Formats
+🟢 [contentflow_app] spec: Unification du Content Pipeline — Sources, Angles, Formats | status: ready | path: shipflow_data/workflow/specs/SPEC-content-pipeline-unification.md | next: /sf-docs audit shipflow_data/workflow/specs/SPEC-content-pipeline-unification.md
 
 Date: 2026-03-25
 
