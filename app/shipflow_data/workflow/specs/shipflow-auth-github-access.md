@@ -1,13 +1,13 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "1.0.0"
 project: "shipflow_app"
 created: "2026-05-10"
 created_at: "2026-05-10 07:52:54 UTC"
-updated: "2026-05-10"
-updated_at: "2026-05-10 07:52:54 UTC"
-status: draft
+updated: "2026-05-30"
+updated_at: "2026-05-30 16:53:20 UTC"
+status: ready
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
 scope: "auth-github-access"
@@ -31,31 +31,31 @@ depends_on:
     artifact_version: "0.1.0"
     required_status: "draft"
   - artifact: "shipflow_data/workflow/specs/shipflow-firestore-data-model.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-github-managed-clone-indexer.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
-  - artifact: "https://shipflow_data.github.com/en/apps/overview"
-    artifact_version: "checked-2026-05-10"
+    artifact_version: "1.0.0"
+    required_status: "ready"
+  - artifact: "https://docs.github.com/en/apps/overview"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
-  - artifact: "https://shipflow_data.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
-  - artifact: "https://shipflow_data.github.com/en/rest/apps/apps"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://docs.github.com/en/rest/apps/apps"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
-  - artifact: "https://shipflow_data.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
-  - artifact: "https://firebase.google.com/shipflow_data/auth"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://firebase.google.com/docs/auth"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
-  - artifact: "https://firebase.google.com/shipflow_data/functions/callable"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://firebase.google.com/docs/functions/callable"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
-  - artifact: "https://firebase.google.com/shipflow_data/firestore/security/rules-conditions"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://firebase.google.com/docs/firestore/security/rules-conditions"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
 supersedes: []
 evidence:
@@ -75,10 +75,10 @@ evidence:
   - "User decision 2026-05-10: UI access cache can last 24h, but clone/index/action server paths must reverify GitHub access."
   - "User decision 2026-05-10: old Firestore projection remains visible and searchable with warning after GitHub access is lost."
   - "User decision 2026-05-10: `githubInstallations/{installationId}` is global and backend-only."
-next_step: "/sf-ready ShipFlow Auth GitHub Access"
+next_step: "/sf-ready ShipFlow Project Onboarding Flow"
 ---
 # Spec: ShipFlow Auth And GitHub Access
-🟡 [shipflow_app] spec: ShipFlow Auth And GitHub Access | status: draft | path: shipflow_data/workflow/specs/shipflow-auth-github-access.md | next: /sf-ready ShipFlow Auth GitHub Access
+🟢 [shipflow_app] spec: ShipFlow Auth And GitHub Access | status: ready | path: shipflow_data/workflow/specs/shipflow-auth-github-access.md | next: /sf-ready ShipFlow Project Onboarding Flow
 
 # Title
 
@@ -86,7 +86,7 @@ ShipFlow Auth And GitHub Access
 
 # Status
 
-Draft foundational spec. No implementation should start from this spec alone. It must be reviewed with the Firestore data model, runner/indexer, onboarding, and dashboard projection shipflow_data/workflow/specs during the foundational coherence pass.
+Ready after `/sf-ready`. Fresh official GitHub/Firebase documentation checks, Test Contract completion, structured implementation tasks, and alignment with the ready Firestore data model and managed clone/indexer producer slice are in place. Implementation remains contract-first: no production GitHub App, Cloud Functions, or Firestore rules should ship without the proof gates below.
 
 # User Story
 
@@ -218,16 +218,40 @@ Use Firebase Auth for ShipFlow identity and a GitHub App for repository authoriz
 
 # Implementation Tasks
 
-1. Extend `shipflow_data/technical/firestore-data-model.md` plan with backend-only `githubInstallations/{installationId}` and client-visible GitHub access summaries.
-2. Define access status enums: `not_connected`, `needs_github_app`, `connected`, `access_cached`, `github_access_lost`, `installation_suspended`, `access_check_failed`.
-3. Define permission enum: `none`, `read`, `write`, `admin`, plus raw GitHub permission payload for backend diagnostics only.
-4. Define trusted backend function contracts: `startGitHubAppInstall`, `syncGitHubInstallation`, `listAccessibleRepositories`, `verifyRepositoryAccess`, `refreshProjectAccess`.
-5. Define server-only token lifecycle: create installation token per operation, use it, discard it, log only redacted metadata.
-6. Define membership sync behavior when GitHub confirms access to an existing shared project.
-7. Define personal project hide/remove behavior and `archived_orphaned` transition.
-8. Define access-loss dashboard behavior for stale projection visibility.
-9. Define Firestore security rule requirements for client-readable project summaries and backend-only installation shipflow_data.
-10. Add auth/access fixtures and tests during implementation for token absence, membership sync, cache expiry, and access-loss behavior.
+- [ ] Task 1: Update the Firestore data model contract for auth/access fields.
+  - File: `shipflow_data/technical/firestore-data-model.md`
+  - Action: Define backend-only `githubInstallations/{installationId}`, client-visible GitHub access summaries, membership fields, personal project hide/remove state, and `archived_orphaned`.
+  - User story link: Separates Firebase identity from GitHub repository authority without exposing installation internals.
+  - Depends on: this spec passing `/sf-ready`.
+  - Validate with: `rg -n "githubInstallations|accessStatus|archived_orphaned|backend-only|membership" shipflow_data/technical/firestore-data-model.md`.
+- [ ] Task 2: Add pure Dart auth/access projection enums and validators.
+  - File: `lib/data/firestore_projection/firestore_projection_models.dart`
+  - File: `lib/data/firestore_projection/firestore_projection_validators.dart`
+  - Action: Add access status enum, permission enum, cache-expiry helpers, and validators that reject token/private-key/clone-url/service-credential fields from client-visible payloads.
+  - User story link: Lets Flutter display access state without becoming the authority or carrying secrets.
+  - Depends on: Task 1.
+  - Validate with: `flutter test test/data/firestore_projection`.
+- [ ] Task 3: Define trusted backend function contracts.
+  - File: `shipflow_data/technical/auth-github-access-contract.md`
+  - Action: Document `startGitHubAppInstall`, `syncGitHubInstallation`, `listAccessibleRepositories`, `verifyRepositoryAccess`, and `refreshProjectAccess` inputs, outputs, auth preconditions, error codes, idempotency expectations, and redaction policy.
+  - User story link: Keeps GitHub App tokens, webhooks, and permission checks server-side.
+  - Depends on: Tasks 1-2.
+  - Validate with: `rg -n "startGitHubAppInstall|verifyRepositoryAccess|refreshProjectAccess|installation token|redacted" shipflow_data/technical/auth-github-access-contract.md`.
+- [ ] Task 4: Add local contract tests and fixtures.
+  - File: `test/data/firestore_projection/firestore_projection_validators_test.dart`
+  - File: `test/shipflow/data/` or nearest existing ShipFlow app-layer test directory.
+  - Action: Cover unauthenticated, no installation, connected, access cached, access lost, installation suspended, token-generation failure, permission below read, hidden project, last-member orphan archive, and forbidden-field payloads.
+  - User story link: Proves the access model is observable and recoverable without production GitHub/Firebase calls.
+  - Depends on: Tasks 2-3.
+  - Validate with: `flutter test test/data/firestore_projection test/shipflow/data`.
+- [ ] Task 5: Add docs map and changelog alignment.
+  - File: `shipflow_data/technical/code-docs-map.md`
+  - File: `shipflow_data/editorial/content-map.md`
+  - File: `CHANGELOG.md`
+  - Action: Link the auth/access contract and document that production GitHub App/Cloud Functions wiring is still out of scope until a later implementation slice.
+  - User story link: Prevents future agents from reviving legacy OAuth or claiming production GitHub access too early.
+  - Depends on: Tasks 1-4.
+  - Validate with: `rg -n "auth-github-access|GitHub App|Firebase Auth|accessStatus" shipflow_data/technical shipflow_data/editorial CHANGELOG.md`.
 
 # Acceptance Criteria
 
@@ -242,6 +266,30 @@ Use Firebase Auth for ShipFlow identity and a GitHub App for repository authoriz
 - `githubInstallations/{installationId}` is global and backend-only.
 - No GitHub App token is stored in Firestore.
 - User/project membership sync is driven by GitHub-confirmed access.
+
+# Test Contract
+
+- `surface`: auth/access contract docs, Firestore projection DTOs/validators, fake repository/provider contracts, dashboard-visible access states, docs maps, and future trusted backend interfaces for GitHub App installation access. No real GitHub App key, installation token, Cloud Function deploy, Firestore rule deploy, or production repo access is in scope for this implementation slice unless a later spec expands it.
+- `proof_profile`: high-security local contract proof. Required evidence is fresh official GitHub/Firebase docs, pure Dart validation tests, forbidden-field scans, access-state transition tests, docs coherence, metadata lint, and diff hygiene. Production proof later requires `/sf-ship` -> `/sf-prod` plus emulator/backend evidence before real Firebase/GitHub access is enabled.
+- `proof_order`:
+  1. Update technical contract docs before adding code.
+  2. Add enum/validator tests before or alongside DTO implementation.
+  3. Add forbidden-field tests for token/private-key/webhook-secret/tokenized clone URL/service credential fields before any app-layer mapping.
+  4. Add access-state tests for connected, cached, lost, suspended, insufficient permission, and unauthenticated states.
+  5. Add docs-map/changelog alignment without claiming production GitHub/Firebase wiring.
+  6. Run focused projection tests, then broader `flutter test`, `flutter analyze`, secret scan, metadata lint, and `git diff --check`.
+- `checklist_path`: `shipflow_data/workflow/verification/shipflow-auth-github-access.md`.
+- `required_scenario_ids`:
+  - `AUTH-GH-001`: Firebase Auth identity and GitHub App repository authority remain separate in docs and DTOs.
+  - `AUTH-GH-002`: no GitHub token, installation token, private key, webhook secret, tokenized clone URL, service credential, or backend-only installation payload is client-readable.
+  - `AUTH-GH-003`: repo-sensitive actions require server-side GitHub access revalidation even when UI cache is fresh.
+  - `AUTH-GH-004`: access-lost state keeps old projection visible/searchable with warning and blocks refresh/index/clone actions.
+  - `AUTH-GH-005`: membership sync and personal hide/remove do not delete shared project projection; last-member removal archives orphaned project state.
+  - `AUTH-GH-006`: Firestore/query requirements are shaped around `request.auth`, membership-verifiable reads, and backend-owned writes.
+  - `AUTH-GH-007`: official GitHub/Firebase docs support installation-token and callable/rules assumptions used by the spec.
+- `required_results`: all required scenario ids pass; docs cite current official sources; implementation has no production secret material; client-visible models cannot carry forbidden fields; access states are recoverable; old projection visibility after access loss is explicit; every server-owned field remains server-owned by contract.
+- `exception_with_proof`: production Firebase/GitHub runtime proof may be deferred only while the implementation remains docs/pure-Dart/fake-contract scoped. Any real callable function, Firestore Security Rules deploy, GitHub webhook, installation-token generation, or repository access call removes this exception and requires official-doc recheck plus deployed/emulator proof.
+- `exception_without_proof`: none for forbidden-field redaction, server-side revalidation requirement, GitHub-wins authority, membership/user boundary, metadata lint, and diff hygiene.
 
 # Test Strategy
 
@@ -268,7 +316,7 @@ Use Firebase Auth for ShipFlow identity and a GitHub App for repository authoriz
 - Technical decision: Cloud Functions are V1 recommended backend; the spec says trusted backend so Cloud Run can replace long-running pieces later without changing product rules.
 - Technical decision: GitHub webhooks update backend metadata but do not by themselves expose repos to users. User action is still required before repo discovery/project creation in ShipFlow.
 - Product-impact decision: users can keep seeing/searching old projection after GitHub access is lost, with a warning and disabled refresh/indexing.
-- Fresh-shipflow_data verdict: checked against official GitHub and Firebase shipflow_data on 2026-05-10.
+- Fresh-docs verdict: checked against official GitHub and Firebase docs on 2026-05-30. GitHub App installation access tokens are short-lived, repository/permission-scoped, and generated server-side; Firebase callable functions include Firebase Auth and App Check tokens when available; Firestore rules use `request.auth` and evaluate queries against possible result sets.
 
 # Open Questions
 
@@ -279,13 +327,15 @@ None. Remaining choices are implementation details unless they change user-visib
 | Date UTC | Skill | Model | Action | Result | Next step |
 |----------|-------|-------|--------|--------|-----------|
 | 2026-05-10 07:52:54 UTC | sf-spec | GPT-5 Codex | Created foundational auth/GitHub access spec from user decisions and security-first defaults. | Draft spec created. | /sf-ready ShipFlow Auth GitHub Access after foundational coherence pass |
+| 2026-05-30 16:52:09 UTC | sf-spec | GPT-5 Codex | Repaired readiness gaps: fresh official docs, dependency versions, structured implementation tasks, Test Contract, proof order, scenarios, and exception policy. | reviewed | /sf-ready ShipFlow Auth GitHub Access |
+| 2026-05-30 16:53:20 UTC | sf-ready | GPT-5 Codex | Readiness review passed: behavior contract, auth/GitHub separation, security constraints, fresh-docs gate, tasks, Test Contract, and proof path are actionable. | ready | /sf-ready ShipFlow Project Onboarding Flow |
 
 # Current Chantier Flow
 
 | Step | Status | Notes |
 |------|--------|-------|
 | sf-spec | done | Auth/GitHub access spec created. |
-| sf-ready | deferred | Wait until all foundational specs are written, then review coherence as a group. |
+| sf-ready | ready | Passed after fresh-docs and Test Contract repair. |
 | sf-start | pending | No implementation before the foundational coherence pass. |
 | sf-verify | pending | Verify after future implementation only. |
 | sf-end | pending | Close after implementation and verification. |

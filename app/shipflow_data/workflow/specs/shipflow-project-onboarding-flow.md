@@ -1,13 +1,13 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "1.0.0"
 project: "shipflow_app"
 created: "2026-05-10"
 created_at: "2026-05-10 09:13:19 UTC"
-updated: "2026-05-10"
-updated_at: "2026-05-10 09:13:19 UTC"
-status: draft
+updated: "2026-05-30"
+updated_at: "2026-05-30 16:55:06 UTC"
+status: ready
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
 scope: "project-onboarding-flow"
@@ -30,25 +30,25 @@ depends_on:
     artifact_version: "0.1.0"
     required_status: "draft"
   - artifact: "shipflow_data/workflow/specs/shipflow-auth-github-access.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-firestore-data-model.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-github-managed-clone-indexer.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-project-source-onboarding.md"
     artifact_version: "0.4.0"
     required_status: "ready"
-  - artifact: "https://shipflow_data.github.com/en/apps/using-github-apps/installing-a-github-app-from-a-third-party"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://docs.github.com/en/apps/using-github-apps/installing-a-github-app-from-a-third-party"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
-  - artifact: "https://firebase.google.com/shipflow_data/auth"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://firebase.google.com/docs/auth"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
-  - artifact: "https://firebase.google.com/shipflow_data/functions/callable"
-    artifact_version: "checked-2026-05-10"
+  - artifact: "https://firebase.google.com/docs/functions/callable"
+    artifact_version: "checked-2026-05-30"
     required_status: "active"
 supersedes:
   - "shipflow_data/workflow/specs/shipflow-project-source-onboarding.md as cloud/Firebase onboarding flow target"
@@ -59,10 +59,10 @@ evidence:
   - "User decision 2026-05-10: GitHub App installation can cover all repos or selected repos, but ShipFlow project creation requires explicit repo selection in the app."
   - "User decision 2026-05-10: GitHub wins for repository access."
   - "User decision 2026-05-10: stale projection remains visible/searchable with warning after GitHub access is lost."
-next_step: "/sf-ready ShipFlow Project Onboarding Flow"
+next_step: "/sf-ready ShipFlow Markdown Artifact Governance"
 ---
 # Spec: ShipFlow Project Onboarding Flow
-🟡 [shipflow_app] spec: ShipFlow Project Onboarding Flow | status: draft | path: shipflow_data/workflow/specs/shipflow-project-onboarding-flow.md | next: /sf-ready ShipFlow Project Onboarding Flow
+🟢 [shipflow_app] spec: ShipFlow Project Onboarding Flow | status: ready | path: shipflow_data/workflow/specs/shipflow-project-onboarding-flow.md | next: /sf-ready ShipFlow Markdown Artifact Governance
 
 # Title
 
@@ -70,7 +70,7 @@ ShipFlow Project Onboarding Flow
 
 # Status
 
-Draft foundational UX/architecture spec. This spec defines the user-visible onboarding flow that binds Firebase Auth, GitHub App access, shared Firestore projects, managed clone indexing, and read-only dashboard projection. It must be reviewed with the other foundational specs before implementation.
+Ready after `/sf-ready`. This spec defines the user-visible onboarding flow that binds Firebase Auth, GitHub App access, shared Firestore projects, managed clone indexing, and read-only dashboard projection. Fresh official docs, ready auth/access, Firestore model, managed clone/indexer dependencies, and the Test Contract below are in place.
 
 # User Story
 
@@ -212,15 +212,38 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
 
 # Implementation Tasks
 
-1. Create a technical flow document `shipflow_data/technical/project-onboarding-flow.md` with state machine, transitions, and blocked states.
-2. Define onboarding state enum and DTOs in the future app layer without wiring Firebase yet.
-3. Define backend function contracts consumed by onboarding: `startGitHubAppInstall`, `listAccessibleRepositories`, `createOrJoinProject`, `startProjectIndexing`, `getProjectSetupStatus`.
-4. Define UI screens/panels for signed out, connect GitHub, select repo, setup progress, ready, and blocked states.
-5. Define project join behavior for existing, hidden, archived_orphaned, and new projects.
-6. Define progress mapping from Firestore project/index run statuses to UI labels.
-7. Define retry behavior for repo listing, access verification, clone failure, and index failure.
-8. Define tests for state transitions and resume behavior.
-9. Update shipflow_data maps and foundational architecture references.
+- [ ] Task 1: Create the onboarding technical flow document.
+  - File: `shipflow_data/technical/project-onboarding-flow.md`
+  - Action: Define state machine, transitions, blocked states, retry behavior, resume behavior, and copy constraints.
+  - User story link: Makes the user path implementable without exposing clone/backend internals.
+  - Depends on: this spec passing `/sf-ready`.
+  - Validate with: `rg -n "signed_out|needs_github_connection|select_repository|indexing_project|ready|blocked" shipflow_data/technical/project-onboarding-flow.md`.
+- [ ] Task 2: Define onboarding state DTOs and pure contracts.
+  - File: `lib/shipflow/` or nearest existing app-layer ShipFlow data directory chosen during implementation.
+  - Action: Add onboarding state enum, repository option DTO, setup status DTO, and failure/retry mapping without wiring Firebase SDKs yet.
+  - User story link: Gives Flutter a stable user-facing flow state independent of backend implementation details.
+  - Depends on: Task 1.
+  - Validate with: unit tests for every state and transition.
+- [ ] Task 3: Define fake backend/repository contracts consumed by onboarding.
+  - File: `test/shipflow/` or nearest existing ShipFlow test directory.
+  - Action: Cover `startGitHubAppInstall`, `listAccessibleRepositories`, `createOrJoinProject`, `startProjectIndexing`, and `getProjectSetupStatus` with fakes for no installation, no repos, existing project, hidden project, archived orphan, clone failed, index failed, and ready.
+  - User story link: Proves onboarding can create/join/read setup status without real GitHub/Firebase calls.
+  - Depends on: Tasks 1-2.
+  - Validate with: `flutter test test/shipflow`.
+- [ ] Task 4: Implement user-visible onboarding screens or panels.
+  - File: `lib/shipflow/presentation/**` or the existing ShipFlow route/presentation layer.
+  - Action: Add signed-out, connect GitHub, select repo, setup progress, ready, and blocked state UI with no clone paths, token fields, or backend jargon.
+  - User story link: Delivers the first-run path from repo selection to readable project.
+  - Depends on: Tasks 1-3.
+  - Validate with: widget tests for each state and accessibility labels for progress/errors.
+- [ ] Task 5: Update docs maps and changelog after implementation.
+  - File: `shipflow_data/technical/code-docs-map.md`
+  - File: `shipflow_data/editorial/content-map.md`
+  - File: `CHANGELOG.md`
+  - Action: Link the onboarding contract and implemented surfaces without claiming production GitHub/Firebase access unless deployed proof exists.
+  - User story link: Keeps future agents aligned on read-only onboarding and explicit repo selection.
+  - Depends on: Tasks 1-4.
+  - Validate with: `rg -n "project-onboarding-flow|GitHub App|select_repository|indexing_project" shipflow_data/technical shipflow_data/editorial CHANGELOG.md`.
 
 # Acceptance Criteria
 
@@ -234,6 +257,30 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
 - Empty repo/no known ShipFlow artifacts is a valid state.
 - Access-loss behavior matches `shipflow-auth-github-access.md`.
 - No implementation begins until foundational coherence review passes.
+
+# Test Contract
+
+- `surface`: onboarding technical contract, pure state DTOs, fake backend/repository contracts, onboarding UI states, docs maps, and future backend request assumptions for GitHub App installation and project indexing. Real Firebase Auth providers, GitHub App callbacks, Cloud Functions, Firestore Security Rules, and production repository access are out of scope unless a later spec expands the implementation surface.
+- `proof_profile`: high-risk user-flow contract proof before hosted auth/GitHub integration. Required evidence is fresh official GitHub/Firebase docs, state-machine tests, fake backend tests, widget tests, forbidden-field rendering checks, docs coherence, metadata lint, and diff hygiene.
+- `proof_order`:
+  1. Write `project-onboarding-flow.md` before app code.
+  2. Add state-machine tests for every success/error transition.
+  3. Add fake backend tests for repo discovery, create-or-join, hidden/reactivated project, archived orphan, clone/index failures, and resume from Firestore setup status.
+  4. Add widget tests for visible states and accessibility labels before declaring UI ready.
+  5. Run focused onboarding tests, broader `flutter test`, `flutter analyze`, forbidden-field scan, metadata lint, and `git diff --check`.
+  6. Use `/sf-ship` -> `/sf-prod` before any browser/user-flow claim in this `vercel-preview-push` project.
+- `checklist_path`: `shipflow_data/workflow/verification/shipflow-project-onboarding-flow.md`.
+- `required_scenario_ids`:
+  - `ONBOARD-AUTH-001`: signed-out user cannot call repo/backend project functions.
+  - `ONBOARD-GH-001`: GitHub App installation is necessary but never sufficient for project creation; explicit repo selection is required.
+  - `ONBOARD-REPO-001`: only GitHub-confirmed readable repositories appear as selectable options.
+  - `ONBOARD-PROJECT-001`: selected repo creates or joins one shared opaque `projectId`; existing hidden/orphaned projects are handled deterministically.
+  - `ONBOARD-INDEX-001`: queued/indexing/ready/empty/clone_failed/index_failed states are visible and resumable from stored status.
+  - `ONBOARD-SEC-001`: UI and DTOs never render GitHub tokens, installation internals, clone paths, tokenized URLs, private keys, or backend filesystem details.
+  - `ONBOARD-DOC-001`: docs and changelog explain read-only onboarding without claiming production GitHub/Firebase wiring before proof.
+- `required_results`: all required scenario ids pass; onboarding never auto-creates from installation alone; repo-sensitive actions route through trusted backend contracts; user-visible states are recoverable; implementation has no manual token/clone path inputs; docs do not overclaim production readiness.
+- `exception_with_proof`: hosted GitHub/Firebase proof may be deferred only while implementation remains local contracts, fakes, and widget states. Any real Firebase Auth provider flow, GitHub callback, callable function, Firestore query, or production project creation requires `/sf-ship` -> `/sf-prod` plus browser/auth proof.
+- `exception_without_proof`: none for explicit repo selection, forbidden-field rendering, create-or-join determinism, resume behavior, metadata lint, and diff hygiene.
 
 # Test Strategy
 
@@ -259,7 +306,7 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
 - Technical decision: successful repo selection is create-or-join, not blind create.
 - Technical decision: hidden project rejoin should unhide the user's `projectRef`; archived_orphaned should reactivate if GitHub access is valid.
 - Technical decision: no manual GitHub URL field in the primary V1 cloud flow unless repo discovery is unavailable; if added, it is a fallback path still verified by backend.
-- Fresh-shipflow_data verdict: checked. GitHub App installation flow and Firebase authenticated callable assumptions support this architecture.
+- Fresh-docs verdict: checked against official GitHub and Firebase docs on 2026-05-30. GitHub documents third-party GitHub App installation flow; Firebase callable functions include Firebase Auth and App Check tokens when available.
 
 # Open Questions
 
@@ -270,13 +317,15 @@ None. Remaining choices are implementation details unless they change visible on
 | Date UTC | Skill | Model | Action | Result | Next step |
 |----------|-------|-------|--------|--------|-----------|
 | 2026-05-10 09:13:19 UTC | sf-spec | GPT-5 Codex | Created foundational project onboarding flow spec. | Draft spec created. | /sf-ready ShipFlow Project Onboarding Flow after foundational coherence pass |
+| 2026-05-30 16:54:01 UTC | sf-spec | GPT-5 Codex | Repaired readiness gaps: dependency versions, fresh official docs, structured tasks, Test Contract, proof order, scenarios, and exception policy. | reviewed | /sf-ready ShipFlow Project Onboarding Flow |
+| 2026-05-30 16:55:06 UTC | sf-ready | GPT-5 Codex | Readiness review passed: explicit repo selection, create-or-join, resume behavior, failure states, security constraints, fresh-docs gate, and Test Contract are actionable. | ready | /sf-ready ShipFlow Markdown Artifact Governance |
 
 # Current Chantier Flow
 
 | Step | Status | Notes |
 |------|--------|-------|
 | sf-spec | done | Onboarding flow spec created from foundational auth, Firestore, and runner shipflow_data/workflow/specs. |
-| sf-ready | deferred | Wait until all foundational specs are written, then review coherence as a group. |
+| sf-ready | ready | Passed after fresh-docs and Test Contract repair. |
 | sf-start | pending | No implementation before foundational coherence review. |
 | sf-verify | pending | Verify after future implementation only. |
 | sf-end | pending | Close after implementation and verification. |

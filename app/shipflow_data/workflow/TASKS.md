@@ -6,12 +6,12 @@
 **Stack**: Flutter, Riverpod, Vercel, Firebase/Firestore projection specs, GitHub App target
 **Phase**: Read-only ShipFlow projection foundation
 
-**Top priority**: Run `/sf-verify` on `shipflow-github-managed-clone-indexer.md`, then close the bounded pure-Dart managed clone/indexer slice before any production Firebase/GitHub wiring.
+**Top priority**: Run `/sf-start` on `shipflow-dashboard-readonly-projection.md` to implement the first useful read-only dashboard surface from the Markdown/Firestore projection chain.
 
 🔴 [shipflow_app] task: Run `/sf-ready` for `shipflow-github-managed-clone-indexer.md` so the managed clone/indexer boundary can move from draft to implementation-ready | status: done
 🔴 [shipflow_app] task: Implement the GitHub managed clone/indexer slice after readiness: server-side access-check contract, local/fake runner, projection DTOs, stale/deleted/parse-failed tests | status: done
-🔴 [shipflow_app] task: Run `/sf-verify` for `shipflow-github-managed-clone-indexer.md` before closing or shipping the implementation | status: todo
-🟠 [shipflow_app] task: Ready the deferred foundational specs for auth/GitHub access, project onboarding, dashboard read-only projection, and Markdown artifact governance | status: todo
+🔴 [shipflow_app] task: Run `/sf-verify` for `shipflow-github-managed-clone-indexer.md` before closing or shipping the implementation | status: done
+🟠 [shipflow_app] task: Ready the deferred foundational specs for auth/GitHub access, project onboarding, dashboard read-only projection, and Markdown artifact governance | status: done
 🟠 [shipflow_app] task: Implement the dashboard read-only projection contract after readiness, keeping Firestore projection non-canonical and dashboard reads user-scoped | status: todo
 🟡 [shipflow_app] task: Verify and close `shipflow-legacy-file-migration-tracker.md`, then decide whether to close the parent legacy fusion chantier | status: todo
 🟢 [shipflow_app] task: Close the traffic-first operational record live migration and web-reader contract after verified zero-legacy migration proof | status: done

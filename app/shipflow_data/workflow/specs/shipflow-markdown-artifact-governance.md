@@ -1,13 +1,13 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "1.0.0"
 project: "shipflow_app"
 created: "2026-05-10"
 created_at: "2026-05-10 09:17:31 UTC"
-updated: "2026-05-10"
-updated_at: "2026-05-10 09:17:31 UTC"
-status: draft
+updated: "2026-05-30"
+updated_at: "2026-05-30 16:56:29 UTC"
+status: ready
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
 scope: "markdown-artifact-governance"
@@ -33,11 +33,11 @@ depends_on:
     artifact_version: "0.1.0"
     required_status: "draft"
   - artifact: "shipflow_data/workflow/specs/shipflow-github-managed-clone-indexer.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-firestore-data-model.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "/home/claude/shipflow/skills/sf-docs/SKILL.md"
     artifact_version: "local-checked-2026-05-10"
     required_status: "active"
@@ -55,10 +55,10 @@ evidence:
   - "Repo evidence 2026-05-10: sf-docs Location rule says `shipflow_data` hosts tracking and registry files and is the preferred location for project governance artifacts."
   - "Repo evidence 2026-05-10: `/home/claude/socialflow/shipflow_data/` uses business, editorial, technical, and workflow subdirectories."
   - "Repo evidence 2026-05-10: `/home/claude/shipflow_data/` contains current global/root tracking and project task files."
-next_step: "/sf-ready ShipFlow Markdown Artifact Governance"
+next_step: "/sf-ready ShipFlow Dashboard Read-only Projection"
 ---
 # Spec: ShipFlow Markdown Artifact Governance
-🟡 [shipflow_app] spec: ShipFlow Markdown Artifact Governance | status: draft | path: shipflow_data/workflow/specs/shipflow-markdown-artifact-governance.md | next: /sf-ready ShipFlow Markdown Artifact Governance
+🟢 [shipflow_app] spec: ShipFlow Markdown Artifact Governance | status: ready | path: shipflow_data/workflow/specs/shipflow-markdown-artifact-governance.md | next: /sf-ready ShipFlow Dashboard Read-only Projection
 
 # Title
 
@@ -66,7 +66,7 @@ ShipFlow Markdown Artifact Governance
 
 # Status
 
-Draft foundational spec. This spec defines what Markdown artifacts ShipFlow indexes as governance data and how `shipflow_data/` becomes the canonical per-project corpus. It must be reviewed with the onboarding, Firestore, auth/access, and runner/indexer shipflow_data/workflow/specs before implementation.
+Ready after `/sf-ready`. This spec defines what Markdown artifacts ShipFlow indexes as governance data and how `shipflow_data/` becomes the canonical per-project corpus. It is aligned with the ready Firestore model and managed clone/indexer producer slice, plus the Test Contract below.
 
 # User Story
 
@@ -192,16 +192,39 @@ Define `shipflow_data/` as the canonical artifact corpus for project governance.
 
 # Implementation Tasks
 
-1. Create `shipflow_data/technical/markdown-artifact-governance.md` with corpus root, path allowlist, ignore rules, artifact families, and examples.
-2. Update `shipflow_data/technical/markdown-source-of-truth.md` to prefer `shipflow_data/`.
-3. Define path-policy constants for `shipflow_data/`, `ShipFlow_Data/` legacy handling, and root fallback.
-4. Define artifact-family classification for business, technical, editorial, workflow, tracker, spec, bug, test, and legacy.
-5. Define frontmatter extraction contract for ShipFlow artifacts.
-6. Define tracker parsing contract for `shipflow_data/workflow/TASKS.md`, `shipflow_data/workflow/AUDIT_LOG.md`, `PROJECTS.md`, `TEST_LOG.md`, and `BUGS.md`.
-7. Define ignore/redaction rules for secrets, dependency folders, build output, caches, runtime content, and symlink escapes.
-8. Define Firestore projection fields for artifact governance metadata.
-9. Add fixtures for projects with canonical corpus, legacy casing, root fallback, duplicates, invalid frontmatter, and unsafe files.
-10. Update shipflow_data maps and foundational references.
+- [ ] Task 1: Create the Markdown artifact governance technical contract.
+  - File: `shipflow_data/technical/markdown-artifact-governance.md`
+  - Action: Define corpus root, path allowlist, ignore rules, artifact families, tracker exceptions, frontmatter extraction, Firestore projection fields, diagnostics, and examples.
+  - User story link: Gives the indexer a conservative corpus contract instead of indexing arbitrary Markdown.
+  - Depends on: this spec passing `/sf-ready`.
+  - Validate with: `rg -n "shipflow_data|artifactFamily|tracker|frontmatter|ignored|redacted|governance_corpus_missing" shipflow_data/technical/markdown-artifact-governance.md`.
+- [ ] Task 2: Update source-of-truth and docs maps.
+  - File: `shipflow_data/technical/markdown-source-of-truth.md`
+  - File: `shipflow_data/technical/code-docs-map.md`
+  - File: `shipflow_data/editorial/content-map.md`
+  - Action: Name `shipflow_data/` as the preferred project governance corpus and link the new technical contract.
+  - User story link: Keeps future agents and docs aligned on the same corpus root.
+  - Depends on: Task 1.
+  - Validate with: `rg -n "markdown-artifact-governance|shipflow_data|governance corpus" shipflow_data/technical shipflow_data/editorial`.
+- [ ] Task 3: Extend artifact path/classification policy.
+  - File: `lib/data/shipflow_sources/shipflow_artifact_index_policy.dart`
+  - File: `test/data/shipflow_sources/shipflow_artifact_index_policy_test.dart`
+  - Action: Add/confirm path-policy constants for canonical `shipflow_data/`, legacy `ShipFlow_Data/`, root fallback, approved artifact families, ignored runtime content, secret-like paths, dependency/build/cache folders, and symlink escape handling.
+  - User story link: Ensures the managed clone indexer reads the right governance files and rejects unsafe or unrelated Markdown.
+  - Depends on: Tasks 1-2.
+  - Validate with: `flutter test test/data/shipflow_sources/shipflow_artifact_index_policy_test.dart`.
+- [ ] Task 4: Add fixtures and parser/projection tests.
+  - File: `test/data/shipflow_sources/fixtures/` and related parser/indexer test files.
+  - Action: Cover canonical corpus, legacy casing, root fallback, duplicates, invalid frontmatter, tracker without frontmatter, secret-like path, large file, deleted file, renamed file, and unsafe runtime Markdown.
+  - User story link: Proves missing/dirty corpus states become diagnostics instead of unsafe projection.
+  - Depends on: Task 3.
+  - Validate with: `flutter test test/data/shipflow_sources`.
+- [ ] Task 5: Update changelog after implementation.
+  - File: `CHANGELOG.md`
+  - Action: Record only implemented artifact-governance behavior and avoid claiming production indexing if the work remains local/fake-runner scoped.
+  - User story link: Keeps operator-facing release notes honest.
+  - Depends on: Tasks 1-4.
+  - Validate with: `rg -n "artifact governance|shipflow_data|Markdown" CHANGELOG.md`.
 
 # Acceptance Criteria
 
@@ -214,6 +237,28 @@ Define `shipflow_data/` as the canonical artifact corpus for project governance.
 - Unsafe paths and secret-like files are ignored with redacted diagnostics.
 - Missing corpus is a warning/bootstrap state, not a fatal project failure.
 - Firestore projection can group artifacts by family/type.
+
+# Test Contract
+
+- `surface`: Markdown artifact governance technical docs, artifact path/classification policy, parser/indexer fixtures, diagnostics, docs maps, and Firestore projection field expectations for indexed governance artifacts. Production GitHub clone/indexing is not required for this slice when local fixtures and fake runner tests cover the policy.
+- `proof_profile`: high-security local corpus-selection proof. Required evidence is policy tests, parser/indexer fixtures, redaction/ignore tests, metadata lint, docs coherence, and diff hygiene. External-doc freshness is not needed because this is local ShipFlow corpus doctrine and repository parsing policy.
+- `proof_order`:
+  1. Write `markdown-artifact-governance.md` before policy changes.
+  2. Add path/classification tests before or alongside code changes.
+  3. Add fixtures for canonical corpus, legacy casing, root fallback, duplicates, malformed frontmatter, trackers, unsafe paths, large files, deleted files, and runtime content.
+  4. Run focused artifact policy tests, broader `flutter test test/data/shipflow_sources`, metadata lint, and `git diff --check`.
+  5. Use `/sf-ship` and `/sf-prod` only if the implementation affects deployed dashboard behavior in this `vercel-preview-push` project.
+- `checklist_path`: `shipflow_data/workflow/verification/shipflow-markdown-artifact-governance.md`.
+- `required_scenario_ids`:
+  - `ART-GOV-001`: canonical lowercase `shipflow_data/` is preferred over legacy/root fallback sources.
+  - `ART-GOV-002`: `ShipFlow_Data/` is treated as legacy casing with a migration diagnostic, not as a second canonical root.
+  - `ART-GOV-003`: approved artifact families and tracker exceptions are classified without indexing arbitrary Markdown.
+  - `ART-GOV-004`: malformed frontmatter, missing corpus, duplicates, large files, deleted files, and parse failures become bounded diagnostics.
+  - `ART-GOV-005`: secret-like paths, dependency/build/cache output, symlink escapes, and runtime content are ignored or redacted.
+  - `ART-GOV-006`: dashboard/indexer projection can group artifacts by family/type without treating Firestore as canonical.
+- `required_results`: all required scenario ids pass; no arbitrary Markdown crawl exists by default; unsafe paths are redacted; trackers remain allowed without frontmatter; missing corpus is warning/bootstrap state; docs maps name the governance contract.
+- `exception_with_proof`: production clone proof may be deferred when local fixture/fake-runner tests cover every required scenario. No exception may bypass redaction, no-arbitrary-Markdown, canonical corpus precedence, metadata lint, or diff hygiene.
+- `exception_without_proof`: none for secret-path redaction, symlink escape rejection, canonical corpus precedence, and no arbitrary Markdown indexing.
 
 # Test Strategy
 
@@ -250,13 +295,15 @@ None. Remaining choices are implementation details unless they change visible pr
 | Date UTC | Skill | Model | Action | Result | Next step |
 |----------|-------|-------|--------|--------|-----------|
 | 2026-05-10 09:17:31 UTC | sf-spec | GPT-5 Codex | Created foundational Markdown artifact governance spec from ShipFlow corpus doctrine. | Draft spec created. | /sf-ready ShipFlow Markdown Artifact Governance after foundational coherence pass |
+| 2026-05-30 16:55:32 UTC | sf-spec | GPT-5 Codex | Repaired readiness gaps: dependency versions, structured tasks, Test Contract, proof order, scenarios, and exception policy. | reviewed | /sf-ready ShipFlow Markdown Artifact Governance |
+| 2026-05-30 16:56:29 UTC | sf-ready | GPT-5 Codex | Readiness review passed: corpus precedence, allowlist, diagnostics, redaction, fixture policy, docs coherence, and Test Contract are actionable. | ready | /sf-ready ShipFlow Dashboard Read-only Projection |
 
 # Current Chantier Flow
 
 | Step | Status | Notes |
 |------|--------|-------|
 | sf-spec | done | Markdown artifact governance spec created. |
-| sf-ready | deferred | Wait until all foundational specs are written, then review coherence as a group. |
+| sf-ready | ready | Passed after Test Contract repair and dependency alignment. |
 | sf-start | pending | No implementation before foundational coherence review. |
 | sf-verify | pending | Verify after future implementation only. |
 | sf-end | pending | Close after implementation and verification. |

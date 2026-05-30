@@ -5,8 +5,8 @@ artifact_version: "1.0.0"
 project: "shipflow_app"
 created: "2026-05-09"
 created_at: "2026-05-09 17:22:02 UTC"
-updated: "2026-05-14"
-updated_at: "2026-05-14 20:31:08 UTC"
+updated: "2026-05-30"
+updated_at: "2026-05-30 16:49:28 UTC"
 status: ready
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
@@ -72,10 +72,10 @@ evidence:
   - "User decision 2026-05-09: V1 is read-only; no Markdown writes, commits, or pushes."
   - "User decision 2026-05-09: Firebase Auth identity and GitHub repository access are separate."
   - "User decision 2026-05-09: GitHub wins every conflict."
-next_step: "/sf-prod shipflow_app"
+next_step: "/sf-ready ShipFlow Dashboard Read-only Projection"
 ---
 # Spec: ShipFlow GitHub Managed Clone Indexer
-🟢 [shipflow_app] spec: ShipFlow GitHub Managed Clone Indexer | status: ready | path: shipflow_data/workflow/specs/shipflow-github-managed-clone-indexer.md | next: /sf-prod shipflow_app
+🟢 [shipflow_app] spec: ShipFlow GitHub Managed Clone Indexer | status: ready | path: shipflow_data/workflow/specs/shipflow-github-managed-clone-indexer.md | next: /sf-ready ShipFlow Dashboard Read-only Projection
 
 # Title
 
@@ -388,6 +388,7 @@ None for this spec. Decisions fixed by this readiness repair: V1 uses GitHub App
 | 2026-05-14 17:49:11 UTC | sf-start | GPT-5 Codex | Implemented bounded pure-Dart contracts, validators, local fake runner, repository interface, technical doc, docs maps, changelog, and tests without production Firebase/GitHub wiring. | implemented | /sf-verify ShipFlow GitHub Managed Clone Indexer |
 | 2026-05-14 18:06:57 UTC | sf-verify | GPT-5.5 xhigh | Verified implementation against ready spec; corrected wire enum serialization and managed-clone path redaction; ran targeted/full Flutter checks, secret scan, and documentation scans. | verified | /sf-end ShipFlow GitHub Managed Clone Indexer |
 | 2026-05-14 20:31:08 UTC | sf-ship | GPT-5 Codex | Quick ship after bug gate, secret scan, `flutter analyze`, full `flutter test`, and `git diff --check`; no full closeout. | shipped | /sf-prod shipflow_app |
+| 2026-05-30 16:49:28 UTC | sf-end | GPT-5 Codex | Closed the managed clone/indexer slice after confirming implementation, verification, and quick ship were already complete; moved product focus to dashboard read-only projection. | closed | /sf-ready ShipFlow Dashboard Read-only Projection |
 
 # Current Chantier Flow
 
@@ -397,5 +398,5 @@ None for this spec. Decisions fixed by this readiness repair: V1 uses GitHub App
 | sf-ready | done | Passed readiness after concrete tasks, auth dependency, idempotency/concurrency, size limits, token retry, language doctrine, and fresh-docs evidence were checked. |
 | sf-start | done | Implemented the bounded pure-Dart contract, local fake runner, docs contract, repository interface, and tests before production Firebase/GitHub wiring. |
 | sf-verify | done | Verified bounded pure-Dart implementation after correcting wire enum serialization and managed-clone path redaction; local checks passed. |
-| sf-end | next | Formal closeout remains pending because this run used quick ship mode. |
+| sf-end | done | Formal closeout completed; this slice is ready to serve as the producer foundation for the dashboard projection. |
 | sf-ship | done | Quick commit/push after green local checks; preview deployment validation remains required by project development mode. |

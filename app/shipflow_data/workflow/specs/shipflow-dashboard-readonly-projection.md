@@ -1,13 +1,13 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "1.0.0"
 project: "shipflow_app"
 created: "2026-05-10"
 created_at: "2026-05-10 09:26:21 UTC"
-updated: "2026-05-10"
-updated_at: "2026-05-10 09:26:21 UTC"
-status: draft
+updated: "2026-05-30"
+updated_at: "2026-05-30 16:56:47 UTC"
+status: ready
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
 scope: "dashboard-readonly-projection"
@@ -34,20 +34,20 @@ depends_on:
     artifact_version: "0.1.0"
     required_status: "draft"
   - artifact: "shipflow_data/workflow/specs/shipflow-firestore-data-model.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-auth-github-access.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-github-managed-clone-indexer.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-project-onboarding-flow.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
   - artifact: "shipflow_data/workflow/specs/shipflow-markdown-artifact-governance.md"
-    artifact_version: "0.1.0"
-    required_status: "draft"
+    artifact_version: "1.0.0"
+    required_status: "ready"
 supersedes: []
 evidence:
   - "User direction 2026-05-10: continue foundational specs without implementation."
@@ -57,10 +57,10 @@ evidence:
   - "shipflow-project-onboarding-flow.md routes ready projects to the dashboard and requires indexing state to resume from Firestore."
   - "shipflow-markdown-artifact-governance.md requires dashboard grouping by governance family/type and missing corpus as a setup warning."
   - "markdown-source-of-truth.md states repository Markdown is canonical and remote storage is projection/index/sync."
-next_step: "/sf-ready ShipFlow Dashboard Read-only Projection"
+next_step: "/sf-start ShipFlow Dashboard Read-only Projection"
 ---
 # Spec: ShipFlow Dashboard Read-only Projection
-🟡 [shipflow_app] spec: ShipFlow Dashboard Read-only Projection | status: draft | path: shipflow_data/workflow/specs/shipflow-dashboard-readonly-projection.md | next: /sf-ready ShipFlow Dashboard Read-only Projection
+🟢 [shipflow_app] spec: ShipFlow Dashboard Read-only Projection | status: ready | path: shipflow_data/workflow/specs/shipflow-dashboard-readonly-projection.md | next: /sf-start ShipFlow Dashboard Read-only Projection
 
 # Title
 
@@ -68,7 +68,7 @@ ShipFlow Dashboard Read-only Projection
 
 # Status
 
-Draft foundational spec. This spec defines the dashboard consumption contract only. It must be reviewed with the other foundational specs before any Firebase, Firestore, dashboard, or runner implementation begins.
+Ready after `/sf-ready`. This spec defines the dashboard consumption contract only. Firestore data model, auth/GitHub access, project onboarding, Markdown artifact governance, and GitHub managed clone/indexer producer dependencies are ready/closed; production Firebase SDK queries, Firestore Security Rules, and hosted validation remain gated by the proof contract below.
 
 # User Story
 
@@ -289,6 +289,32 @@ Define the dashboard as a read-only Firestore projection consumer. It reads user
 - [ ] AC 11: Given a forbidden field or backend-only document exists, when dashboard DTOs are built, then tokens, installation internals, clone paths, and raw backend paths are absent.
 - [ ] AC 12: Given an unknown future artifact type appears, when dashboard groups artifacts, then it remains safely viewable as unknown metadata or diagnostic, not executable content.
 
+# Test Contract
+
+- `surface`: dashboard read-only projection contract, technical read-model doc, pure Dart dashboard DTO/domain contracts, fake repository/provider contracts, widget states, cache/user-switch boundaries, docs maps, and future Firestore read-path assumptions. Covered source areas include `shipflow_data/technical/dashboard-readonly-projection.md`, `lib/shipflow/**`, `test/shipflow/**`, `shipflow_data/technical/code-docs-map.md`, `shipflow_data/editorial/content-map.md`, and related Firestore/indexer specs.
+- `proof_profile`: high-risk local product/data contract proof before real hosted Firestore reads. Required evidence is spec/doc coherence, pure Dart unit tests, fake repository tests, widget tests, forbidden-field scans, accessibility-oriented state assertions, metadata lint, and diff hygiene. Real Firebase SDK queries, Firestore Security Rules, Cloud Functions, GitHub App calls, hosted auth flows, and production data reads are out of scope for this implementation slice unless a later spec expands the surface.
+- `proof_order`:
+  1. Write `dashboard-readonly-projection.md` before code so state names, read paths, redaction, and no-write guarantees are explicit.
+  2. Add DTO/state mapping tests before or alongside DTO implementation.
+  3. Add fake repository/provider tests for signed-out, empty, ready, stale, access-lost, denied, deleted, partial-parse, and user-switch states before UI wiring.
+  4. Implement dashboard UI states only after read models and fake repository contracts pass.
+  5. Add forbidden-field and cache-partition tests before declaring the dashboard safe for preview.
+  6. Run focused dashboard tests, then broader `flutter test`, `flutter analyze`, metadata lint, and `git diff --check`.
+  7. Use `/sf-ship` then `/sf-prod` before any browser/user-flow claim in this `vercel-preview-push` project.
+- `checklist_path`: `shipflow_data/workflow/verification/shipflow-dashboard-readonly-projection.md`.
+- `required_scenario_ids`:
+  - `DASH-READ-001`: signed-in user sees only user-scoped project refs and no global project scan is possible in the repository contract.
+  - `DASH-READ-002`: signed-out or expired-auth state performs no project reads and shows an unauthorized/signed-out state.
+  - `DASH-OVERVIEW-001`: default dashboard entry is a multi-project overview with widget summaries, project filters, and projection-backed sorting.
+  - `DASH-STATE-001`: ready, indexing, stale, access-lost, corpus-missing, hidden, archived, partial, failed, deleted, and unknown artifact states map to visible dashboard states.
+  - `DASH-DIAG-001`: diagnostics are redacted, bounded, actionable, and never expose tokens, installation internals, clone paths, service credentials, raw backend payloads, or server filesystem paths.
+  - `DASH-CACHE-001`: Firebase user switch clears or partitions cached projection so previous-user project data is not rendered.
+  - `DASH-A11Y-001`: warnings, disabled refresh/index actions, stale labels, and diagnostics are conveyed with text/status semantics, not color alone.
+  - `DASH-DOC-001`: technical docs and maps align with dashboard read-only behavior and do not claim production Firebase/GitHub indexing beyond implemented proof.
+- `required_results`: all required scenario ids pass; dashboard code has no direct write path to server-owned projection fields; read models contain no forbidden secret/clone fields; stale/access-lost content is labeled; deleted files are not active artifacts; unknown artifact types remain inert metadata; docs and changelog do not overclaim production readiness; checks pass or exceptions are recorded with proof.
+- `exception_with_proof`: hosted preview/browser proof may be deferred only when implementation remains pure local contracts and widget/fake repository tests cover the visible states; any real Firebase SDK query, Firestore rule, auth route, Cloud Function, or deployed dashboard user flow removes this exception and requires `/sf-ship` -> `/sf-prod` -> browser/auth proof.
+- `exception_without_proof`: none for user-scoped read boundaries, forbidden-field redaction, account-switch isolation, no-write guarantee, metadata lint, and diff hygiene.
+
 # Test Strategy
 
 - Unit tests for dashboard state mapping from project/access/index/projection statuses.
@@ -330,13 +356,16 @@ None. Remaining choices are implementation details unless they change visible da
 | Date UTC | Skill | Model | Action | Result | Next step |
 |----------|-------|-------|--------|--------|-----------|
 | 2026-05-10 09:26:21 UTC | sf-spec | GPT-5 Codex | Created foundational dashboard read-only projection spec from existing foundational specs and shipflow_data. | Draft spec created. | /sf-ready ShipFlow Dashboard Read-only Projection after foundational coherence pass |
+| 2026-05-30 16:50:20 UTC | sf-spec | GPT-5 Codex | Repaired readiness gaps after managed clone/indexer closeout: dependency versions, status, Test Contract, proof order, scenarios, and exceptions. | reviewed | /sf-ready ShipFlow Dashboard Read-only Projection |
+| 2026-05-30 16:51:17 UTC | sf-ready | GPT-5 Codex | Reviewed readiness after Test Contract repair. | not ready: blocking dependencies still draft (`shipflow-auth-github-access.md`, `shipflow-project-onboarding-flow.md`, `shipflow-markdown-artifact-governance.md`). | /sf-ready ShipFlow Auth GitHub Access |
+| 2026-05-30 16:56:47 UTC | sf-ready | GPT-5 Codex | Re-ran readiness after dependencies were repaired and marked ready; dashboard contract, proof path, state taxonomy, security boundaries, and docs coherence are actionable. | ready | /sf-start ShipFlow Dashboard Read-only Projection |
 
 # Current Chantier Flow
 
 | Step | Status | Notes |
 |------|--------|-------|
 | sf-spec | done | Dashboard read-only projection spec created. |
-| sf-ready | deferred | Wait until all foundational specs are written, then review coherence as a group. |
+| sf-ready | ready | Passed after auth/GitHub access, project onboarding, and Markdown artifact governance dependencies were made ready. |
 | sf-start | pending | No implementation before foundational coherence review. |
 | sf-verify | pending | Verify after future implementation only. |
 | sf-end | pending | Close after implementation and verification. |

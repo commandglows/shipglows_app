@@ -13,6 +13,7 @@ The format is based on Keep a Changelog.
 ### Changed
 - Updated task tracking to reflect the active Firebase/GitHub/Firestore projection foundation instead of the retired Supabase migration path.
 - Migrated active operational tracker/spec summaries toward canonical traffic-first records, with zero-unmapped write gates and parser/TUI validation evidence.
+- Readied the foundational auth/GitHub access, project onboarding, Markdown artifact governance, and dashboard read-only projection specs for the next implementation slice.
 
 ## [2026-05-11]
 
