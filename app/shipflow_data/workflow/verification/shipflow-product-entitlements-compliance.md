@@ -1,12 +1,12 @@
 ---
 artifact: verification_checklist
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.0.3"
 project: "shipflow_app"
 created: "2026-05-30"
 created_at: "2026-05-30 20:44:06 UTC"
 updated: "2026-05-30"
-updated_at: "2026-05-30 20:46:31 UTC"
+updated_at: "2026-05-30 21:04:26 UTC"
 status: active
 source_skill: sf-start
 scope: "shipflow-product-entitlements-compliance"
@@ -30,7 +30,7 @@ evidence:
   - "flutter analyze"
   - "python3 /home/claude/shipflow/tools/shipflow_metadata_lint.py selected ShipFlow artifacts"
 next_review: "2026-06-30"
-next_step: "/sf-end ShipFlow Product Entitlements Compliance"
+next_step: "/sf-ship ShipFlow Product Entitlements Compliance verification trace"
 ---
 
 # Verification: ShipFlow Product Entitlements Compliance
@@ -61,3 +61,9 @@ python3 /home/claude/shipflow/tools/shipflow_metadata_lint.py shipflow_data/tech
 ## Preview And Production Proof
 
 This project is `vercel-preview-push`; browser/user-flow proof requires `/sf-ship` then `/sf-prod` for a matching Vercel deployment if hosted behavior is claimed.
+
+Post-ship production deployment `dpl_491rXUVf8JMBvUiU5PNFC95q5mMi` is `Ready`, commit `1e835bb` has successful GitHub status, and `https://shipflowapp.vercel.app/` returned HTTP 200 with ShipFlow and `flutter_bootstrap.js` markers on 2026-05-30 20:59:30 UTC.
+
+Chromium headless proof on 2026-05-30 21:01:09 UTC rendered the Flutter UI instead of a gray page. Visible state: sidebar with ShipFlow, Overview, Diagnostics, Settings; header `ShipFlow Operations Dashboard`; main panel message `No projects found in PROJECTS.md.` Screenshot evidence: `/tmp/shipflowapp-prod-sf-browser.png`. DOM proof included `main.dart.js`, `flutter_bootstrap.js`, `flutter-view`, and title `ShipFlow Operations Dashboard`.
+
+Final sf-verify reconciliation on 2026-05-30 21:04:26 UTC: browser proof gap is closed for this chantier. Local contract proof remains the focused Flutter test suite plus full analyzer from 2026-05-30 20:59 UTC, production proof remains Vercel `Ready` plus HTTP 200, and metadata lint passes after the verification trace. Historical high-severity bug files still exist as active records, but their current symptom risk does not block this chantier because the current production browser evidence shows a rendered Flutter UI rather than the blank gray page.

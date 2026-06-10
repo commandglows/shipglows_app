@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.4"
+artifact_version: "1.0.7"
 project: "shipflow_app"
 created: "2026-05-30"
 created_at: "2026-05-30 18:53:35 UTC"
 updated: "2026-05-30"
-updated_at: "2026-05-30 20:47:50 UTC"
+updated_at: "2026-05-30 21:04:26 UTC"
 status: active
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
@@ -46,10 +46,10 @@ evidence:
   - "Audit finding: open access/demo and cached bootstrap could previously imply usable workspace data."
   - "Local preflight: ShipFlow App has no product entitlement ledger."
   - "Suite preflight: WinFlowz owns productEntitlements, productAccessEvents, and suiteAccess-style mirror patterns."
-next_step: "/sf-prod shipflow_app"
+next_step: "/sf-ship ShipFlow Product Entitlements Compliance verification trace"
 ---
 # Spec: ShipFlow Product Entitlements Compliance
-🔴 [shipflow_app] spec: ShipFlow Product Entitlements Compliance | status: active | path: shipflow_data/workflow/specs/shipflow-product-entitlements-compliance.md | next: /sf-prod shipflow_app
+🔴 [shipflow_app] spec: ShipFlow Product Entitlements Compliance | status: active | path: shipflow_data/workflow/specs/shipflow-product-entitlements-compliance.md | next: /sf-ship ShipFlow Product Entitlements Compliance verification trace
 
 # Title
 
@@ -241,6 +241,9 @@ None for the local-contract-first slice. Hosted suite bridge implementation rema
 | 2026-05-30 20:46:31 UTC | sf-verify | GPT-5 Codex | Verified user story, success/error behavior, fail-closed security gates, local Flutter tests, analyzer, metadata lint, docs coherence, project development mode, and checklist scenarios. | verified | /sf-end ShipFlow Product Entitlements Compliance |
 | 2026-05-30 20:47:08 UTC | sf-end | GPT-5 Codex | Closed local-contract-first implementation with TASKS and CHANGELOG bookkeeping; no commit or push performed. | closed | /sf-ship ShipFlow Product Entitlements Compliance |
 | 2026-05-30 20:47:50 UTC | sf-ship | GPT-5 Codex | Prepared commit and push for local-contract-first entitlement gate after focused tests, full analyzer, metadata lint, and diff hygiene passed. | shipped | /sf-prod shipflow_app |
+| 2026-05-30 20:59:30 UTC | sf-verify | GPT-5 Codex | Re-verified post-ship local contract, focused tests, full analyzer, metadata lint, GitHub commit status, Vercel production deployment readiness, prod alias HTTP 200, and proof gaps. | partial | /sf-browser https://shipflowapp.vercel.app verify Flutter web render and absence of gray page |
+| 2026-05-30 21:01:09 UTC | sf-browser | GPT-5 Codex | Captured production Chromium headless screenshot and DOM proof for `https://shipflowapp.vercel.app/`; confirmed Flutter UI renders and is not a gray page. | pass | /sf-verify ShipFlow Product Entitlements Compliance close browser proof gap |
+| 2026-05-30 21:04:26 UTC | sf-verify | GPT-5 Codex | Reconciled browser proof gap with sf-browser evidence, metadata lint, production deploy proof, local test/analyzer evidence, and contract gates. | verified | /sf-ship ShipFlow Product Entitlements Compliance verification trace |
 
 # Current Chantier Flow
 
@@ -249,6 +252,6 @@ None for the local-contract-first slice. Hosted suite bridge implementation rema
 | sf-spec | done | Spec created and restored as the chantier source of truth. |
 | sf-ready | ready | Product id, suite bridge ownership, fail-closed scope, language doctrine, security stance, and fresh-doc requirements reviewed. |
 | sf-start | implemented | Local-contract-first implementation complete; hosted/provider runtime is still out of scope. |
-| sf-verify | verified | Local contract verified with focused tests, full Flutter analyzer, metadata lint, docs greps, and checklist PASS rows. |
+| sf-verify | verified | Local contract, GitHub status, Vercel deployment readiness, prod alias HTTP 200, and browser-render proof are complete for this chantier. |
 | sf-end | closed | TASKS and CHANGELOG bookkeeping updated; hosted/provider proof remains out of scope. |
-| sf-ship | shipped | Commit/push prepared by sf-ship; Vercel preview/prod confirmation is the next required hosted validation step. |
+| sf-ship | shipped | Commit `1e835bb` pushed to origin/main and deployed by Vercel production deployment `dpl_491rXUVf8JMBvUiU5PNFC95q5mMi`. |
