@@ -31,6 +31,11 @@ class AppConfig {
     defaultValue: 'unknown',
   );
 
+  static const buildId = String.fromEnvironment(
+    'BUILD_ID',
+    defaultValue: 'unknown',
+  );
+
   static const buildEnvironment = String.fromEnvironment(
     'BUILD_ENVIRONMENT',
     defaultValue: 'unknown',
@@ -40,6 +45,31 @@ class AppConfig {
     'BUILD_TIMESTAMP',
     defaultValue: 'unknown',
   );
+
+  static const buildAtParis = String.fromEnvironment(
+    'BUILD_AT_PARIS',
+    defaultValue: 'unknown',
+  );
+
+  static const buildAtUtc = String.fromEnvironment(
+    'BUILD_AT_UTC',
+    defaultValue: buildTimestamp,
+  );
+
+  static List<String> buildIdentityHeader() {
+    final buildPart = buildId == 'unknown' || buildId.trim().isEmpty
+        ? buildCommitSha
+        : '$buildCommitSha $buildId';
+    return <String>[
+      'commit/build: $buildPart',
+      'build_at_paris: $buildAtParis',
+      'build_at_utc: $buildAtUtc',
+    ];
+  }
+
+  static String buildIdentityText() {
+    return buildIdentityHeader().join('\n');
+  }
 
   static bool get openAccessEnabled {
     final normalized = _openAccessOverride.trim().toLowerCase();

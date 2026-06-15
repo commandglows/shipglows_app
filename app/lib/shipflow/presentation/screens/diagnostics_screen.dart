@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/shipflow_sources/source_models.dart';
+import '../../../core/app_config.dart';
 import '../../providers/dashboard_provider.dart';
 import '../widgets/shipflow_scaffold.dart';
 
@@ -155,7 +156,9 @@ class DiagnosticsScreen extends ConsumerWidget {
         .where((diagnostic) => diagnostic.severity == DiagnosticSeverity.error)
         .length;
     final warningCount = diagnostics
-        .where((diagnostic) => diagnostic.severity == DiagnosticSeverity.warning)
+        .where(
+          (diagnostic) => diagnostic.severity == DiagnosticSeverity.warning,
+        )
         .length;
     final infoCount = diagnostics
         .where((diagnostic) => diagnostic.severity == DiagnosticSeverity.info)
@@ -163,6 +166,7 @@ class DiagnosticsScreen extends ConsumerWidget {
     await Clipboard.setData(
       ClipboardData(
         text: [
+          ...AppConfig.buildIdentityHeader(),
           'ShipFlow diagnostics report',
           'Generated at: ${DateTime.now().toUtc().toIso8601String()}',
           'Dashboard data generated at: ${generatedAt.toUtc().toIso8601String()}',
@@ -192,9 +196,7 @@ class DiagnosticsScreen extends ConsumerWidget {
     BuildContext context,
     SourceDiagnostic diagnostic,
   ) async {
-    await Clipboard.setData(
-      ClipboardData(text: _formatDiagnostic(diagnostic)),
-    );
+    await Clipboard.setData(ClipboardData(text: _formatDiagnostic(diagnostic)));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -206,6 +208,7 @@ class DiagnosticsScreen extends ConsumerWidget {
 
   String _formatDiagnostic(SourceDiagnostic diagnostic) {
     final lines = <String>[
+      ...AppConfig.buildIdentityHeader(),
       'ShipFlow diagnostic',
       'Severity: ${diagnostic.severity.name}',
       'Code: ${diagnostic.code.name}',
