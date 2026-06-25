@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
-    name: "app",
-    cwd: "/home/claude/shipflow_app/app",
+    name: "shipflow_app",
+    cwd: "/home/claude/shipflow_app/shipflow_app",
     script: "bash",
     args: ["-lc", "export PORT=3010 && flox activate -- doppler run -- bash -lc 'env PORT=3010 ./pm2-web.sh'"],
     env: {
