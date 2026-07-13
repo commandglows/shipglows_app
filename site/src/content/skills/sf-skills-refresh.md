@@ -2,21 +2,21 @@
 title: "sf-skills-refresh"
 slug: "sf-skills-refresh"
 tagline: "Refresh the skill library itself so the framework stays aligned with newer practice."
-summary: "A maintenance skill for updating ShipFlow skills with more current standards, patterns, and references."
+summary: "A maintenance skill for updating ShipGlowz skills with more current standards, patterns, and references."
 category: "Meta & Setup"
 audience:
-  - "Maintainers of the ShipFlow skill system"
+  - "Maintainers of the ShipGlowz skill system"
   - "Founders treating the framework itself as a living product"
 problem: "Skills decay when the world changes but the workflow instructions stay frozen in older assumptions."
 outcome: "You get a more up-to-date skill library that better reflects current standards and execution realities."
-founder_angle: "This skill matters when ShipFlow itself is part of the product surface. The framework cannot stay trustworthy if its own playbooks go stale."
+founder_angle: "This skill matters when ShipGlowz itself is part of the product surface. The framework cannot stay trustworthy if its own playbooks go stale."
 when_to_use:
   - "When the skill library needs a standards refresh"
   - "When major changes in tooling, UX, SEO, or AI practice should be reflected in the skills"
-  - "When ShipFlow maintenance becomes part of the active roadmap"
+  - "When ShipGlowz maintenance becomes part of the active roadmap"
 what_you_give:
   - "A skill or set of skills to refresh"
-  - "The current ShipFlow repository context"
+  - "The current ShipGlowz repository context"
 what_you_get:
   - "An updated skill doctrine"
   - "Better alignment with current practice"

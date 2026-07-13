@@ -1,7 +1,7 @@
 ---
 title: "sf-design"
 slug: "sf-design"
-tagline: "Ask one design question and let ShipFlow choose the right design workflow."
+tagline: "Ask one design question and let ShipGlowz choose the right design workflow."
 summary: "A master design lifecycle skill that routes design questions through audits, token systems, playgrounds, implementation, browser proof, verification, and shipping."
 category: "Build & Fix"
 audience:

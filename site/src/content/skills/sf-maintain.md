@@ -5,7 +5,7 @@ tagline: "Run project maintenance from triage through delegated fixes, verificat
 summary: "A master maintenance lifecycle skill for reviewing project health, creating or continuing specs when needed, delegating remediation, verifying results, and routing ship or deploy."
 category: "Operate & Ship"
 audience:
-  - "Founders maintaining long-lived ShipFlow projects"
+  - "Founders maintaining long-lived ShipGlowz projects"
   - "Operators who want one maintenance entrypoint that can resolve work, not only report it"
 problem: "Project upkeep spreads across bugs, dependencies, docs, checks, audits, migrations, fixes, verification, and shipping, so maintenance can stall as a list of disconnected commands."
 outcome: "You get a master maintenance run that triages, specs when needed, delegates bounded work, verifies, and routes ship or deploy."
@@ -15,7 +15,7 @@ when_to_use:
   - "When you want bugs, dependencies, docs, checks, audits, fixes, verification, and shipping handled together"
   - "When you need a security-oriented maintenance route without creating a separate security audit skill"
 what_you_give:
-  - "A ShipFlow-compatible project"
+  - "A ShipGlowz-compatible project"
   - "Optional mode such as quick, full, security, deps, docs, audits, global, or no-ship"
   - "Any explicit maintenance concern you want prioritized"
 what_you_get:

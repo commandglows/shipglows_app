@@ -28,7 +28,7 @@ L’état actuel est déjà bon sur la base : CONTENT_MAP.md existe, sf-docs sai
 
   Je proposerais une spec dédiée :
 
-  $sf-spec ShipFlow Editorial Content Governance Layer for AI Agents
+  $sf-spec ShipGlowz Editorial Content Governance Layer for AI Agents
                                                                                                   Le plan de tête :
 
   1. Garder CONTENT_MAP.md comme carte canonique des surfaces éditoriales : landing pages, docs

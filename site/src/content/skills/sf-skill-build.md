@@ -1,17 +1,17 @@
 ---
 title: "sf-skill-build"
 slug: "sf-skill-build"
-tagline: "Build or modify a ShipFlow skill through one gated lifecycle instead of manual command stitching."
-summary: "A master maintenance workflow for ShipFlow skills that routes fuzzy ideas through exploration, then keeps spec, refresh, budget, verification, docs, and public skill pages aligned before shipping."
+tagline: "Build or modify a ShipGlowz skill through one gated lifecycle instead of manual command stitching."
+summary: "A master maintenance workflow for ShipGlowz skills that routes fuzzy ideas through exploration, then keeps spec, refresh, budget, verification, docs, and public skill pages aligned before shipping."
 category: "Meta & Setup"
 audience:
-  - "ShipFlow maintainers creating or evolving skills"
+  - "ShipGlowz maintainers creating or evolving skills"
   - "Operators who want one safe entrypoint for skill lifecycle changes"
 problem: "Skill work often drifts when SKILL.md edits are done without refresh, budget checks, verification, and documentation/public-surface updates."
 outcome: "You get one workflow that clarifies fuzzy skill ideas before spec work, then orchestrates the full skill maintenance path with explicit gates and observable outcomes."
 founder_angle: "This move reduces governance drift. It protects discovery quality and public trust while keeping skill evolution shippable."
 when_to_use:
-  - "When you create a new ShipFlow skill"
+  - "When you create a new ShipGlowz skill"
   - "When you materially change an existing skill contract"
   - "When skill work affects help docs or public skill pages"
 what_you_give:

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import { getCollection } from "astro:content";
+
+const articles = (await getCollection("articles")).sort(
+  (a, b) => b.data.date.localeCompare(a.data.date)
+);
+---
+
+<BaseLayout
+  title="Articles | ContentFlow App"
+  description="Articles pratiques about workflows, content operations, and operator tooling."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Articles</p>
+        <h1 class="page-title">Operator stories and workflow notes.</h1>
+        <p>
+          Short, practical pieces that explain how the product and its workflow
+          surface work in real use.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="skill-grid">
+        {
+          articles.map((article) => (
+            <article class="card">
+              <p class="eyebrow">{article.data.category}</p>
+              <h2>{article.data.title}</h2>
+              <p>{article.data.excerpt}</p>
+              <p class="small-text">{article.data.date}</p>
+              <a class="doc-action" href={`/articles/${article.slug}`}>
+                Read article
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

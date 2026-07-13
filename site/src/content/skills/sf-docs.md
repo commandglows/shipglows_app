@@ -14,7 +14,7 @@ when_to_use:
   - "When the repo needs a new README, guide, or audit of existing docs"
   - "When implementation changed user-facing behavior or contracts"
   - "When the documentation surface feels inconsistent or stale"
-  - "When legacy ShipFlow files at the project root need to move into the canonical shipflow_data layout"
+  - "When legacy ShipGlowz files at the project root need to move into the canonical shipglowz_data layout"
 what_you_give:
   - "A target file, doc mode, or documentation goal"
   - "The current repo and decision-doc context"
@@ -31,7 +31,7 @@ limits:
   - "It can improve documentation quality, but only the code proves real behavior"
   - "Docs still need product judgment when the underlying decision is unsettled"
   - "Bug workflow docs should be checked for coherence across TEST_LOG.md, BUGS.md, dossier formats, and public skill pages"
-  - "Docs audits should also verify skill-budget coherence with the ShipFlow skill budget audit script when skill docs change"
+  - "Docs audits should also verify skill-budget coherence with the ShipGlowz skill budget audit script when skill docs change"
 related_skills:
   - "sf-context"
   - "sf-spec"
@@ -46,6 +46,6 @@ order: 350
 
 If one page still implies the old tracker behavior, the docs result should call out the mismatch instead of silently accepting it.
 
-`sf-docs migrate-layout` owns the cleanup of legacy ShipFlow governance files that were left at a project root. Files such as `BUSINESS.md`, `PRODUCT.md`, `GTM.md`, `CONTENT_MAP.md`, `CONTEXT.md`, `GUIDELINES.md`, `TASKS.md`, and `AUDIT_LOG.md` are migration sources only; their compliant destinations live under `shipflow_data/business/`, `shipflow_data/editorial/`, `shipflow_data/technical/`, or `shipflow_data/workflow/`.
+`sf-docs migrate-layout` owns the cleanup of legacy ShipGlowz governance files that were left at a project root. Files such as `BUSINESS.md`, `PRODUCT.md`, `GTM.md`, `CONTENT_MAP.md`, `CONTEXT.md`, `GUIDELINES.md`, `TASKS.md`, and `AUDIT_LOG.md` are migration sources only; their compliant destinations live under `shipglowz_data/business/`, `shipglowz_data/editorial/`, `shipglowz_data/technical/`, or `shipglowz_data/workflow/`.
 
 When public or internal skill documentation changes, `sf-docs` should also treat the skill budget audit as part of documentary coherence. The skill catalog has to remain understandable to humans and discoverable by Codex and Claude Code.

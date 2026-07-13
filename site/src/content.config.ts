@@ -38,4 +38,16 @@ const skills = defineCollection({
   })
 });
 
-export const collections = { skills };
+const articles = defineCollection({
+  type: "content",
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    date: z.string(),
+    category: z.string(),
+    excerpt: z.string(),
+    keywords: z.array(z.string()).default([])
+  })
+});
+
+export const collections = { skills, articles };

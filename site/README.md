@@ -1,6 +1,6 @@
-# ShipFlow Site
+# ShipGlowz Site
 
-Astro scaffold for the public ShipFlow website.
+Astro scaffold for the public ShipGlowz website.
 
 ## Commands
 

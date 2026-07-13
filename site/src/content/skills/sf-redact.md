@@ -24,7 +24,7 @@ what_you_get:
   - "Governance notes for public claims, target surfaces, and documentation impact when relevant"
 example_prompts:
   - "/sf-redact article on agent handoffs"
-  - "/sf-redact launch guide for ShipFlow"
+  - "/sf-redact launch guide for ShipGlowz"
   - "/sf-redact founder note on why specs matter"
 limits:
   - "It creates content, not proof or market demand on its own"

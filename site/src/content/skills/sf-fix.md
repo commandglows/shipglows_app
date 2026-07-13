@@ -2,7 +2,7 @@
 title: "sf-fix"
 slug: "sf-fix"
 tagline: "Triage a bug fast, decide whether it is safe to patch now, and route it correctly."
-summary: "The bug-first entrypoint for ShipFlow when the work starts from broken behavior instead of a new feature request."
+summary: "The bug-first entrypoint for ShipGlowz when the work starts from broken behavior instead of a new feature request."
 category: "Build & Fix"
 audience:
   - "Solo founders facing product or QA bugs"

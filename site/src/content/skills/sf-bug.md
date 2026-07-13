@@ -2,13 +2,13 @@
 title: "sf-bug"
 slug: "sf-bug"
 tagline: "Run a bug from report to dossier, fix, retest, verification, and ship risk without skipping gates."
-summary: "A professional bug loop executor that reads bug state and continues through the right ShipFlow owner skills when safe."
+summary: "A professional bug loop executor that reads bug state and continues through the right ShipGlowz owner skills when safe."
 category: "Build & Fix"
 audience:
   - "Founders managing bugs across multiple agent sessions"
   - "Developers who want one command to carry bug state safely"
   - "Operators using BUG-ID dossiers as durable project memory"
-problem: "ShipFlow already has bug capture, fix, retest, verification, and shipping gates, but the operator still has to remember which command comes next and when the loop can continue safely."
+problem: "ShipGlowz already has bug capture, fix, retest, verification, and shipping gates, but the operator still has to remember which command comes next and when the loop can continue safely."
 outcome: "The bug loop continues through the right owner skills when safe, or reports the blocked next command based on dossier status, severity, evidence needs, development mode, and ship risk."
 founder_angle: "This skill keeps bug work from turning into scattered chat memory. It protects speed by making the next action obvious, and it protects quality by refusing unsafe closure."
 when_to_use:
@@ -69,7 +69,7 @@ The professional bug model already splits work into compact trackers and detaile
 `sf-bug` sits above the phase skills and answers one question:
 
 ```text
-What should happen next for this bug, and can ShipFlow safely continue it now?
+What should happen next for this bug, and can ShipGlowz safely continue it now?
 ```
 
 It reads the bug state and continues through the owner skill when safe. It does not patch code in the master thread, mutate the dossier directly, or declare closure by itself.

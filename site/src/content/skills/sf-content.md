@@ -10,7 +10,7 @@ audience:
   - "Teams that need public claims, surfaces, and validation kept in sync"
 problem: "Content work can start from many places: a source note, a build conversation, an article idea, a stale page, an SEO issue, or a public claim. Without one lifecycle entrypoint, agents can pick the wrong owner skill or bypass the content governance layer."
 outcome: "You get a routed content workflow that checks the content map, editorial governance, claims, target surfaces, specialist skills, validation, and ship scope before treating content as done."
-founder_angle: "Content is not just writing. For ShipFlow, it is a product surface that must stay aligned with the real workflow, public promises, support answers, and shipped behavior."
+founder_angle: "Content is not just writing. For ShipGlowz, it is a product surface that must stay aligned with the real workflow, public promises, support answers, and shipped behavior."
 when_to_use:
   - "When you want to manage content work but do not know whether to start with repurposing, drafting, enrichment, docs, copy audit, SEO, or research"
   - "When a content update touches public pages, README, FAQ, public docs, public skill pages, pricing, support copy, or claims"
@@ -27,7 +27,7 @@ what_you_get:
 example_prompts:
   - "/sf-content repurpose this build conversation into docs, FAQ, and public skill-page updates"
   - "/sf-content audit the public content around skill modes and update the right surfaces"
-  - "/sf-content draft article about ShipFlow skill lifecycle"
+  - "/sf-content draft article about ShipGlowz skill lifecycle"
 argument_modes:
   - argument: "plan / strategy"
     effect: "Creates or routes a content plan before edits."

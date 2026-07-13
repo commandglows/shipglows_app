@@ -2,16 +2,16 @@
 title: "sf-help"
 slug: "sf-help"
 tagline: "See the workflow map when you need to remember which skill to use next."
-summary: "A reference skill that explains the ShipFlow system, available skills, and the intended execution paths between them."
+summary: "A reference skill that explains the ShipGlowz system, available skills, and the intended execution paths between them."
 category: "Meta & Setup"
 audience:
-  - "New ShipFlow users"
+  - "New ShipGlowz users"
   - "Returning operators who need a quick workflow refresher"
 problem: "A skill system only helps if you can quickly see how the parts fit together and which tool belongs to which stage."
 outcome: "You get a clearer map of the available skills and how they connect inside the framework."
 founder_angle: "This skill is valuable early and whenever the workflow feels fuzzy. It reduces the meta-friction of using the system itself."
 when_to_use:
-  - "When you are learning or revisiting ShipFlow"
+  - "When you are learning or revisiting ShipGlowz"
   - "When you cannot remember which skill fits the current situation"
   - "When you want a fast map of the system before choosing a path"
 what_you_give:

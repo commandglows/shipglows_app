@@ -51,7 +51,7 @@ order: 65
 
 ## The Missing Proof Layer
 
-ShipFlow already has strong gates for planning, implementation, technical checks, and readiness review:
+ShipGlowz already has strong gates for planning, implementation, technical checks, and readiness review:
 
 ```text
 sf-spec -> sf-ready -> sf-start -> sf-check -> sf-verify
