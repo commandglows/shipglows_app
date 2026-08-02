@@ -27,7 +27,7 @@ what_you_get:
   - "A clear answer on whether product governance belongs in the public wording or only in the internal notes"
 example_prompts:
   - "/sg-redact article on agent handoffs"
-  - "/sg-redact launch guide for ShipGlowz"
+  - "/sg-redact launch guide for ShipGlows"
   - "/sg-redact founder note on why specs matter"
   - "/sg-redact finalise puis note ce brouillon"
 limits:

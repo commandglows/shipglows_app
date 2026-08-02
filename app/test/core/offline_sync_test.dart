@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:shipglowz_app/data/models/app_access_state.dart';
-import 'package:shipglowz_app/data/models/app_bootstrap.dart';
-import 'package:shipglowz_app/data/models/offline_sync.dart';
-import 'package:shipglowz_app/core/offline_storage_contract.dart';
+import 'package:shipglows_app/data/models/app_access_state.dart';
+import 'package:shipglows_app/data/models/app_bootstrap.dart';
+import 'package:shipglows_app/data/models/offline_sync.dart';
+import 'package:shipglows_app/core/offline_storage_contract.dart';
 import '../legacy_contract.dart';
 
 void main() {

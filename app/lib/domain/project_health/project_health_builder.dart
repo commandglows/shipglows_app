@@ -1,13 +1,13 @@
 import 'package:intl/intl.dart';
 
-import '../../data/shipglowz_sources/parsers/parsed_models.dart';
-import '../../data/shipglowz_sources/parsers/shipglowz_sources_parser.dart';
-import '../../data/shipglowz_sources/source_models.dart';
+import '../../data/shipglows_sources/parsers/parsed_models.dart';
+import '../../data/shipglows_sources/parsers/shipglows_sources_parser.dart';
+import '../../data/shipglows_sources/source_models.dart';
 import 'project_health_models.dart';
 
 class ProjectHealthBuilder {
   DashboardModel build({
-    required ParsedShipGlowzData parsedData,
+    required ParsedShipGlowsData parsedData,
     required List<String> allowlistedRoots,
     required DateTime generatedAt,
   }) {
@@ -187,9 +187,9 @@ class ProjectHealthBuilder {
       case DependencyPosture.migrationRequired:
         return '/sf-migrate package@version';
       case DependencyPosture.sourceGap:
-        return '/sf-verify ShipGlowz Operations Dashboard App';
+        return '/sf-verify ShipGlows Operations Dashboard App';
       case DependencyPosture.healthy:
-        return '/sf-verify ShipGlowz Operations Dashboard App';
+        return '/sf-verify ShipGlows Operations Dashboard App';
     }
   }
 
@@ -212,7 +212,7 @@ class ProjectHealthBuilder {
         dimension: HealthDimension.tech,
         status: status,
         summary: message,
-        producer: 'shipglowz.dependency-ledger',
+        producer: 'shipglows.dependency-ledger',
         evidenceCount: dependencyEvents.length,
         checkedAt: latest?.finishedAt,
       ),
@@ -229,7 +229,7 @@ class ProjectHealthBuilder {
       final matchesProject =
           spec.title.toLowerCase().contains(projectKey) ||
           spec.path.toLowerCase().contains(projectKey) ||
-          spec.title.toLowerCase().contains('shipglowz');
+          spec.title.toLowerCase().contains('shipglows');
       if (!matchesProject) {
         return false;
       }

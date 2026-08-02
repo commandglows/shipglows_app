@@ -13,11 +13,11 @@ import {
 
 describe("versioned public contracts", () => {
   it("publishes stable v1 schema identifiers and a closed event vocabulary", () => {
-    assert.equal((VersionResponseSchema as { $id?: string }).$id, "shipglowz.v1.version.response");
-    assert.equal((ApiErrorSchema as { $id?: string }).$id, "shipglowz.v1.error.response");
+    assert.equal((VersionResponseSchema as { $id?: string }).$id, "shipglows.v1.version.response");
+    assert.equal((ApiErrorSchema as { $id?: string }).$id, "shipglows.v1.error.response");
     assert.equal(
       (NormalizedEventSchema as { $id?: string }).$id,
-      "shipglowz.v1.conversation.event",
+      "shipglows.v1.conversation.event",
     );
     assert.ok(EVENT_TYPES.includes("conversation.created"));
     assert.ok(EVENT_TYPES.includes("approval.requested"));

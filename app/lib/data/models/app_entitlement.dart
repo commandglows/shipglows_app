@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-const String productEntitlementProductId = 'shipglowz_app';
+const String productEntitlementProductId = 'shipglows_app';
 
 enum ProductEntitlementStatus {
   active,

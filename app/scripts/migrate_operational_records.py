@@ -30,10 +30,10 @@ CANONICAL_RECORD_RE = re.compile(
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 VALID_TRAFFIC = {"🔴", "🟠", "🟡", "🟢"}
 ROOT = Path(__file__).resolve().parents[1]
-WEB_READER_CONTRACT_PATH = ROOT / "shipglowz_data/technical/operational-record-web-reader-contract.md"
-WEB_READER_FIXTURE_PATH = ROOT / "test/data/shipglowz_sources/fixtures/operational_records_web_reader.md"
+WEB_READER_CONTRACT_PATH = ROOT / "shipglows_data/technical/operational-record-web-reader-contract.md"
+WEB_READER_FIXTURE_PATH = ROOT / "test/data/shipglows_sources/fixtures/operational_records_web_reader.md"
 REQUIRED_TEST_COMMAND = [
-    ["flutter", "test", "test/data/shipglowz_sources/parsers/operational_record_parser_test.dart"],
+    ["flutter", "test", "test/data/shipglows_sources/parsers/operational_record_parser_test.dart"],
 ]
 TUI_WORKDIR = Path("/home/claude/shipglowz/tui")
 TUI_CHECK_COMMANDS = [
@@ -505,10 +505,10 @@ def find_spec_title(lines: Sequence[str]) -> str:
 
 def infer_project_from_path(path: Path) -> Optional[str]:
     rel = str(path)
-    if "shipglowz_app" in rel:
-        return "shipglowz_app"
-    if "shipglowz_data" in rel:
-        return "shipglowz_data"
+    if "shipglows_app" in rel:
+        return "shipglows_app"
+    if "shipglows_data" in rel:
+        return "shipglows_data"
     return None
 
 
@@ -544,7 +544,7 @@ def parse_file_records(path: Path) -> Tuple[List[Record], List[Record]]:
     lines = text.splitlines()
     canonical: List[Record] = []
     legacy: List[Record] = []
-    is_local_task_file = path == ROOT / "shipglowz_data/workflow/TASKS.md"
+    is_local_task_file = path == ROOT / "shipglows_data/workflow/TASKS.md"
     body_lines = active_task_content_lines(lines, is_local_task_file=is_local_task_file)
     project_hint = infer_project_from_path(path)
 
@@ -596,12 +596,12 @@ def parse_file_records(path: Path) -> Tuple[List[Record], List[Record]]:
 
 def build_targets() -> List[Path]:
     targets: List[Path] = [
-        ROOT / "shipglowz_data/workflow/TASKS.md",
-        ROOT / "shipglowz_data/workflow/AUDIT_LOG.md",
+        ROOT / "shipglows_data/workflow/TASKS.md",
+        ROOT / "shipglows_data/workflow/AUDIT_LOG.md",
     ]
-    targets.extend(sorted((ROOT / "shipglowz_data/workflow/specs").glob("*.md")))
-    targets.append(Path("/home/claude/shipglowz_data/TASKS.md"))
-    targets.append(Path("/home/claude/shipglowz_data/AUDIT_LOG.md"))
+    targets.extend(sorted((ROOT / "shipglows_data/workflow/specs").glob("*.md")))
+    targets.append(Path("/home/claude/shipglows_data/TASKS.md"))
+    targets.append(Path("/home/claude/shipglows_data/AUDIT_LOG.md"))
     return targets
 
 

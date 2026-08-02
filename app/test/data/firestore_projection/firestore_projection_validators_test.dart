@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shipglowz_app/data/firestore_projection/firestore_projection_models.dart';
-import 'package:shipglowz_app/data/firestore_projection/firestore_projection_validators.dart';
+import 'package:shipglows_app/data/firestore_projection/firestore_projection_models.dart';
+import 'package:shipglows_app/data/firestore_projection/firestore_projection_validators.dart';
 
 void main() {
   group('FirestoreProjectionValidators', () {
@@ -125,13 +125,13 @@ void main() {
     test('accepts owner and viewer roles', () {
       expect(
         () => FirestoreProjectionValidators.validateProjectRole(
-          ShipGlowzProjectRole.owner,
+          ShipGlowsProjectRole.owner,
         ),
         returnsNormally,
       );
       expect(
         () => FirestoreProjectionValidators.validateProjectRole(
-          ShipGlowzProjectRole.viewer,
+          ShipGlowsProjectRole.viewer,
         ),
         returnsNormally,
       );

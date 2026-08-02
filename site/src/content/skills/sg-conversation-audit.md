@@ -1,11 +1,11 @@
 ---
 title: "sg-conversation-audit"
 slug: "sg-conversation-audit"
-tagline: "Audit exported ShipGlowz transcripts for systemic agent flaws and route durable fixes."
+tagline: "Audit exported ShipGlows transcripts for systemic agent flaws and route durable fixes."
 summary: "A focused audit lane that reads canonical conversation evidence, classifies repeatable failure patterns, and routes recommended owners."
 category: "Audit & Improve"
 audience:
-  - "Operators running ShipGlowz with recurring execution friction"
+  - "Operators running ShipGlows with recurring execution friction"
   - "Teams that want recurring skill-level quality loops"
 problem: "Conversations can contain recurring behavior flaws, but ad hoc fixes are hard to compare without durable, standardized evidence."
 outcome: "You get a durable audit report tied to evidence, severity, and an explicit owner route."
@@ -18,23 +18,23 @@ what_you_give:
   - "A path to one or more conversation transcripts."
   - "An explicit quality policy and routing preference."
 what_you_get:
-  - "A `conversation_audit` artifact in `shipglowz_data/workflow/conversation-audits/`."
+  - "A `conversation_audit` artifact in `shipglows_data/workflow/conversation-audits/`."
   - "Stability-oriented category counts and top findings."
   - "A direct owner route for actionable failures."
 example_prompts:
   - "sg-conversation-audit latest"
-  - "sg-conversation-audit path shipglowz_data/workflow/conversations/conversation-..."
-  - "sg-conversation-audit export shipflow"
+  - "sg-conversation-audit path shipglows_data/workflow/conversations/conversation-..."
+  - "sg-conversation-audit export shipglows"
   - "sg-conversation-audit report=agent"
 argument_modes:
   - argument: "latest"
-    effect: "Audit the latest transcript under shipglowz_data/workflow/conversations/."
+    effect: "Audit the latest transcript under shipglows_data/workflow/conversations/."
     consequence: "Fast loop for operator-incremental evidence."
   - argument: "path <file-or-dir>"
     effect: "Audit one transcript file or all files in a directory."
     consequence: "Useful for backfills and fixture audits."
-  - argument: "export shipflow"
-    effect: "Capture a fresh transcript through the shipflow preset, then audit it."
+  - argument: "export shipglows"
+    effect: "Capture a fresh transcript through the shipglows preset, then audit it."
     consequence: "One-step capture-to-audit flow."
   - argument: "report=agent"
     effect: "Show full evidence table and routing rationale."
@@ -54,4 +54,4 @@ order: 540
 
 # Conversation Audit
 
-`sg-conversation-audit` standardizes how ShipGlowz consumes conversation evidence, classifies recurring agent behavior issues, and routes follow-up work to the right owner skill.
+`sg-conversation-audit` standardizes how ShipGlows consumes conversation evidence, classifies recurring agent behavior issues, and routes follow-up work to the right owner skill.

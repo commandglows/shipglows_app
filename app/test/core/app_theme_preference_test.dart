@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:shipglowz_app/core/app_theme_preference.dart';
-import 'package:shipglowz_app/core/shared_preferences_provider.dart';
+import 'package:shipglows_app/core/app_theme_preference.dart';
+import 'package:shipglows_app/core/shared_preferences_provider.dart';
 import '../legacy_contract.dart';
 
 void main() {

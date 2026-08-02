@@ -16,13 +16,13 @@ import {
 import type { GitRepositoryTransport } from "../../src/workspaces/index.js";
 
 async function temporaryRoot(): Promise<string> {
-  return mkdtemp(join(tmpdir(), "shipglowz-runner-workspaces-"));
+  return mkdtemp(join(tmpdir(), "shipglows-runner-workspaces-"));
 }
 
 const binding: GitHubRepositoryBinding = {
   installationId: 42,
   repositoryId: 101,
-  fullName: "shipglowz/fixture",
+  fullName: "shipglows/fixture",
   defaultBranch: "main",
 };
 
@@ -62,8 +62,8 @@ async function sourceRepository(root: string): Promise<string> {
   const source = join(root, "source");
   const git = new ProcessGitCommand();
   await git.run({ args: ["init", "--initial-branch=main", source] });
-  await git.run({ args: ["-C", source, "config", "user.email", "shipglowz@example.test"] });
-  await git.run({ args: ["-C", source, "config", "user.name", "ShipGlowz Test"] });
+  await git.run({ args: ["-C", source, "config", "user.email", "shipglows@example.test"] });
+  await git.run({ args: ["-C", source, "config", "user.name", "ShipGlows Test"] });
   await writeFile(join(source, "README.md"), "managed fixture\n");
   await git.run({ args: ["-C", source, "add", "README.md"] });
   await git.run({ args: ["-C", source, "commit", "-m", "fixture"] });
@@ -138,7 +138,7 @@ describe("managed Git mirrors and worktrees", () => {
       "clone",
       "--mirror",
       "--no-checkout",
-      "https://github.com/shipglowz/fixture.git",
+      "https://github.com/shipglows/fixture.git",
       join(root, "mirror.git"),
     ]);
     assert.doesNotMatch(JSON.stringify(command.args), /ghs_/);
@@ -158,7 +158,7 @@ describe("managed Git mirrors and worktrees", () => {
 
     assert.equal(workspace.kind, "audit");
     assert.equal(await readFile(join(workspace.root, "README.md"), "utf8"), "managed fixture\n");
-    assert.doesNotMatch(workspace.root, /shipglowz\/fixture|github\.com/);
+    assert.doesNotMatch(workspace.root, /shipglows\/fixture|github\.com/);
     await manager.close();
   });
 

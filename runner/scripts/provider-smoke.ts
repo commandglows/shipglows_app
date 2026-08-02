@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     new ShortLivedInstallationTokenService(issuer),
     new GitHubRestRepositoryApi(apiBaseUrl === undefined ? {} : { apiBaseUrl }),
   );
-  const root = await mkdtemp(join(tmpdir(), "shipglowz-provider-smoke-"));
+  const root = await mkdtemp(join(tmpdir(), "shipglows-provider-smoke-"));
   const workspaces = await LocalWorkspaceManager.create({ root });
   const runtime = new CodexAppServerRuntime((workspaceRoot) => new StdioCodexConnection({ cwd: workspaceRoot ?? root }));
   try {

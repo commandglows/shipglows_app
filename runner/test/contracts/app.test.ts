@@ -25,7 +25,7 @@ describe("runner API foundation", () => {
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.json(), {
       apiVersion: "v1",
-      service: "shipglowz-managed-runner",
+      service: "shipglows-managed-runner",
       serviceVersion: "0.1.0",
       providers: { supabase: false, github: false, codex: false, eve: false },
     });
@@ -83,7 +83,7 @@ describe("runner API foundation", () => {
     const projectAccess: ProjectAccessRepository = {
       resolveProjectId: (input) => {
         resolverInputs.push(input);
-        return input.sourceSystem === "shipglowz-app" && input.sourceProjectId === "api_proj_1"
+        return input.sourceSystem === "shipglows-app" && input.sourceProjectId === "api_proj_1"
           ? "runner_proj_1"
           : null;
       },
@@ -96,17 +96,17 @@ describe("runner API foundation", () => {
 
     const resolved = await app.inject({
       method: "GET",
-      url: "/v1/projects/resolve?sourceSystem=shipglowz-app&sourceProjectId=api_proj_1",
+      url: "/v1/projects/resolve?sourceSystem=shipglows-app&sourceProjectId=api_proj_1",
     });
     const missingAccess = await app.inject({
       method: "GET",
-      url: "/v1/projects/resolve?sourceSystem=shipglowz-app&sourceProjectId=api_proj_missing",
+      url: "/v1/projects/resolve?sourceSystem=shipglows-app&sourceProjectId=api_proj_missing",
     });
     await app.close();
 
     assert.equal(resolved.statusCode, 200);
     assert.deepEqual(resolved.json(), {
-      sourceSystem: "shipglowz-app",
+      sourceSystem: "shipglows-app",
       sourceProjectId: "api_proj_1",
       projectId: "runner_proj_1",
     });
@@ -115,12 +115,12 @@ describe("runner API foundation", () => {
     assert.deepEqual(resolverInputs, [{
       tenantId: actor.tenantId,
       userId: actor.userId,
-      sourceSystem: "shipglowz-app",
+      sourceSystem: "shipglows-app",
       sourceProjectId: "api_proj_1",
     }, {
       tenantId: actor.tenantId,
       userId: actor.userId,
-      sourceSystem: "shipglowz-app",
+      sourceSystem: "shipglows-app",
       sourceProjectId: "api_proj_missing",
     }]);
   });
@@ -135,7 +135,7 @@ describe("runner API foundation", () => {
     });
     const response = await app.inject({
       method: "GET",
-      url: "/v1/projects/resolve?sourceSystem=shipglowz-app&sourceProjectId=api_proj_1",
+      url: "/v1/projects/resolve?sourceSystem=shipglows-app&sourceProjectId=api_proj_1",
     });
     await app.close();
 

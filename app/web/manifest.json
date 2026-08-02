@@ -1,6 +1,6 @@
 {
-    "name": "shipglowz_app",
-    "short_name": "shipglowz_app",
+    "name": "shipglows_app",
+    "short_name": "shipglows_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

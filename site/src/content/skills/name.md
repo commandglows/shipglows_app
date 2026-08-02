@@ -24,7 +24,7 @@ what_you_get:
 example_prompts:
   - "/name onboarding bug triage"
   - "/name pricing page rewrite"
-  - "/name ShipGlowz skills rollout"
+  - "/name ShipGlows skills rollout"
 limits:
   - "It improves organization, not the quality of the underlying work"
   - "It is useful because of repetition, not because it changes execution logic"

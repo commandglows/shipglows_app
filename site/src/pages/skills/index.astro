@@ -26,13 +26,13 @@ const categoryCopy: Record<(typeof categoryOrder)[number], string> = {
   "Operate & Ship":
     "Keep delivery reliable with checks, docs, migrations, release routines, and production validation.",
   "Meta & Setup":
-    "Maintain the ShipGlowz system itself: setup, orientation, meta tooling, and operator guidance."
+    "Maintain the ShipGlows system itself: setup, orientation, meta tooling, and operator guidance."
 };
 
 const runtimeFamilies = [
   {
     title: "Lifecycle and master",
-    skills: "shipflow, sf-build, sf-maintain, sf-deploy, sf-design, sf-content, sf-customer, plus the manual spec -> ready -> start -> verify -> end -> ship path",
+    skills: "shipglows, sf-build, sf-maintain, sf-deploy, sf-design, sf-content, sf-customer, plus the manual spec -> ready -> start -> verify -> end -> ship path",
     role:
       "Use these when the work should move across several gates instead of staying inside one specialist lane."
   },
@@ -77,8 +77,8 @@ const groupedSkills = categoryOrder.map((category) => ({
 ---
 
 <BaseLayout
-  title="ShipGlowz Skills | Public workflow catalog"
-  description="Explore every ShipGlowz skill, what problem it solves, and how it fits into a stronger solo-founder workflow."
+  title="ShipGlows Skills | Public workflow catalog"
+  description="Explore every ShipGlows skill, what problem it solves, and how it fits into a stronger solo-founder workflow."
 >
   <main class="page-shell">
     <NavBar />
@@ -88,7 +88,7 @@ const groupedSkills = categoryOrder.map((category) => ({
         <p class="eyebrow">Skills Catalog</p>
         <h1 class="page-title">A skill is a public workflow move, not just an internal prompt.</h1>
         <p>
-          ShipGlowz skills break the operating model into reusable actions:
+          ShipGlows skills break the operating model into reusable actions:
           triage a bug, shape a spec, verify readiness, audit a system, or
           research a market before you waste build time. The point is not more
           prompt cleverness. The point is fewer weak handoffs.
@@ -119,7 +119,7 @@ const groupedSkills = categoryOrder.map((category) => ({
         <p class="eyebrow">Skill Language</p>
         <h2>Skill contracts stay in English on purpose.</h2>
         <p>
-          ShipGlowz can localize the public navigation, but the skill pages keep
+          ShipGlows can localize the public navigation, but the skill pages keep
           their operational language in English because the agents that consume
           these contracts follow them more reliably that way.
         </p>
@@ -131,7 +131,7 @@ const groupedSkills = categoryOrder.map((category) => ({
         <p class="eyebrow">Current Runtime Taxonomy</p>
         <h2>The public categories help browsing. The runtime families explain routing.</h2>
         <p>
-          ShipGlowz now keeps skill discovery descriptions compact, so the
+          ShipGlows now keeps skill discovery descriptions compact, so the
           runtime can select skills without carrying long summaries. The
           important distinction is whether a skill owns a lifecycle, exposes
           risk, proves behavior, supports content or docs, or simply helps route
@@ -159,14 +159,14 @@ const groupedSkills = categoryOrder.map((category) => ({
         <article class="doc-card">
           <h3>Start with the primary router</h3>
           <p>
-            Use `shipflow <instruction>` when you do not want to choose a skill
+            Use `shipglows <instruction>` when you do not want to choose a skill
             manually. It answers simple questions directly or hands the current
             thread to `sf-build`, `sf-maintain`, `sf-deploy`, `sf-bug`,
             `sf-content`, `sf-design`, `009-sg-marketing`, `sf-customer`, or an obvious audit specialist.
             If the route is not context-safe, it asks one numbered decision
             question instead of guessing.
           </p>
-          <a class="doc-action" href="/skills/shipflow">Open shipflow</a>
+          <a class="doc-action" href="/skills/shipglows">Open shipglows</a>
         </article>
 
         <article class="doc-card">
@@ -294,7 +294,7 @@ const groupedSkills = categoryOrder.map((category) => ({
         </div>
         <div class="docs-links">
           <a class="docs-link" href="/docs">Documentation Overview</a>
-          <a class="docs-link" href="https://github.com/dianedef/ShipGlowz/tree/main/skills">Skills on GitHub</a>
+          <a class="docs-link" href="https://github.com/dianedef/ShipGlows/tree/main/skills">Skills on GitHub</a>
           <a class="docs-link" href="/docs#execution-logic">Workflow doctrine</a>
         </div>
       </div>

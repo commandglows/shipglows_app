@@ -27,7 +27,7 @@ const ids = {
 };
 
 async function databasePath(name: string): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "shipglowz-runner-db-"));
+  const root = await mkdtemp(join(tmpdir(), "shipglows-runner-db-"));
   return join(root, `${name}.sqlite`);
 }
 
@@ -115,7 +115,7 @@ describe("SQLite operational projection", () => {
     seed(store);
     store.bindProjectIdentity({
       tenantId: ids.tenantA,
-      sourceSystem: "shipglowz-app",
+      sourceSystem: "shipglows-app",
       sourceProjectId: "api_project_a",
       projectId: ids.projectA,
     });
@@ -124,7 +124,7 @@ describe("SQLite operational projection", () => {
       store.resolveProjectId({
         tenantId: ids.tenantA,
         userId: ids.userA,
-        sourceSystem: "shipglowz-app",
+        sourceSystem: "shipglows-app",
         sourceProjectId: "api_project_a",
       }),
       ids.projectA,
@@ -133,7 +133,7 @@ describe("SQLite operational projection", () => {
       store.resolveProjectId({
         tenantId: ids.tenantB,
         userId: ids.userB,
-        sourceSystem: "shipglowz-app",
+        sourceSystem: "shipglows-app",
         sourceProjectId: "api_project_a",
       }),
       null,
@@ -149,7 +149,7 @@ describe("SQLite operational projection", () => {
     store.createProject({
       id: ids.projectA,
       tenantId: ids.tenantA,
-      sourceSystem: "shipglowz-app",
+      sourceSystem: "shipglows-app",
       sourceProjectId: "api_project_a",
     });
     store.grantProjectMembership({
@@ -163,7 +163,7 @@ describe("SQLite operational projection", () => {
       store.resolveProjectId({
         tenantId: ids.tenantA,
         userId: ids.userA,
-        sourceSystem: "shipglowz-app",
+        sourceSystem: "shipglows-app",
         sourceProjectId: "api_project_a",
       }),
       ids.projectA,
@@ -181,7 +181,7 @@ describe("SQLite operational projection", () => {
       binding: {
         installationId: 42,
         repositoryId: 101,
-        fullName: "shipglowz/example",
+        fullName: "shipglows/example",
         defaultBranch: "main",
       },
     });
@@ -191,7 +191,7 @@ describe("SQLite operational projection", () => {
       {
         installationId: 42,
         repositoryId: 101,
-        fullName: "shipglowz/example",
+        fullName: "shipglows/example",
         defaultBranch: "main",
       },
     );
@@ -206,7 +206,7 @@ describe("SQLite operational projection", () => {
         binding: {
           installationId: 42,
           repositoryId: 101,
-          fullName: "shipglowz/example",
+          fullName: "shipglows/example",
           defaultBranch: "main",
         },
       }),
@@ -220,7 +220,7 @@ describe("SQLite operational projection", () => {
       {
         installationId: 42,
         repositoryId: 101,
-        fullName: "shipglowz/example",
+        fullName: "shipglows/example",
         defaultBranch: "main",
       },
     );
@@ -531,7 +531,7 @@ describe("SQLite operational projection", () => {
       projectId: ids.projectA,
       dimension: "security",
       status: "warning",
-      summary: { issueCount: 1, source: "shipglowz-skill" },
+      summary: { issueCount: 1, source: "shipglows-skill" },
       sourceCommit: "abc123",
       observedAt: "2026-08-02T09:02:00.000Z",
     });
@@ -541,7 +541,7 @@ describe("SQLite operational projection", () => {
       projectId: ids.projectA,
       dimension: "security",
       status: "warning",
-      summary: { issueCount: 1, source: "shipglowz-skill" },
+      summary: { issueCount: 1, source: "shipglows-skill" },
       sourceCommit: "abc123",
       observedAt: "2026-08-02T09:02:00.000Z",
     }]);

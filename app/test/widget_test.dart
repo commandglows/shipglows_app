@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:shipglowz_app/core/app_diagnostics.dart';
-import 'package:shipglowz_app/main.dart';
+import 'package:shipglows_app/core/app_diagnostics.dart';
+import 'package:shipglows_app/main.dart';
 
 void main() {
-  testWidgets('ShipGlowz app is the default root app', (tester) async {
+  testWidgets('ShipGlows app is the default root app', (tester) async {
     SharedPreferences.setMockInitialValues({'app_theme_preference': 'dark'});
     final prefs = await SharedPreferences.getInstance();
 
@@ -16,7 +16,7 @@ void main() {
     await tester.pump();
 
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
-    expect(app.title, 'ShipGlowz Operations Dashboard');
+    expect(app.title, 'ShipGlows Operations Dashboard');
     expect(app.themeMode, ThemeMode.dark);
   });
 }

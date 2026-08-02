@@ -10,7 +10,7 @@ audience:
   - "Teams that need public claims, surfaces, and validation kept in sync"
 problem: "Content work can start from many places: a source note, a build conversation, an article idea, a stale page, an SEO issue, or a public claim. Without one lifecycle entrypoint, agents can pick the wrong owner skill or bypass the content governance layer."
 outcome: "You get a routed content workflow that checks the content map, editorial governance, claims, target surfaces, specialist skills, validation, and ship scope before treating content as done."
-founder_angle: "Content is not just writing. For ShipGlowz, it is a product surface that must stay aligned with the real workflow, public promises, support answers, and shipped behavior. ShipGlowz also treats declared products as governed surfaces: product inventory, public routes, and proof-backed claims stay aligned before copy is considered done."
+founder_angle: "Content is not just writing. For ShipGlows, it is a product surface that must stay aligned with the real workflow, public promises, support answers, and shipped behavior. ShipGlows also treats declared products as governed surfaces: product inventory, public routes, and proof-backed claims stay aligned before copy is considered done."
 when_to_use:
   - "When you want to manage content work but do not know whether to start with repurposing, drafting, enrichment, docs, marketing review, SEO, or research"
   - "When a content update touches public pages, README, FAQ, public docs, public skill pages, pricing, support copy, or claims"
@@ -32,7 +32,7 @@ example_prompts:
   - "/sg-content capture-full-conversation"
   - "/sg-content clean-transcript /path/to/conversation.md"
   - "/sg-content audit the public content around skill modes and update the right surfaces"
-  - "/sg-content draft article about ShipGlowz skill lifecycle"
+  - "/sg-content draft article about ShipGlows skill lifecycle"
   - "/sg-content audit article avec grille projet"
 argument_modes:
   - argument: "capture-full-conversation"
@@ -87,6 +87,6 @@ content stays tied to declared surfaces, product truth, and claim evidence.
 
 When a workflow asks whether a draft is good enough for a specific project,
 `sg-content` can route the piece through the shared content quality rubric. The
-rubric reads project rules from `shipglowz_data/business/*` and
-`shipglowz_data/editorial/*`, then returns scores, a final status, evidence, and
+rubric reads project rules from `shipglows_data/business/*` and
+`shipglows_data/editorial/*`, then returns scores, a final status, evidence, and
 revision guidance without creating a separate skill for each project.

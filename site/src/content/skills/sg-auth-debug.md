@@ -49,7 +49,7 @@ order: 525
 
 ## Bundled Technical References
 
-`sg-auth-debug` carries focused reference notes for the auth stacks used most often in ShipGlowz projects:
+`sg-auth-debug` carries focused reference notes for the auth stacks used most often in ShipGlows projects:
 
 - Clerk session and callback debugging
 - Google OAuth and YouTube OAuth consent/token flows

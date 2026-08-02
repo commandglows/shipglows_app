@@ -4,14 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:shipglowz_app/core/app_diagnostics.dart';
-import 'package:shipglowz_app/core/shared_preferences_provider.dart';
-import 'package:shipglowz_app/data/models/app_access_state.dart';
-import 'package:shipglowz_app/data/models/app_bootstrap.dart';
-import 'package:shipglowz_app/data/models/auth_session.dart';
-import 'package:shipglowz_app/data/models/app_entitlement.dart';
-import 'package:shipglowz_app/core/api_error_contract.dart';
-import 'package:shipglowz_app/core/api_service_contract.dart';
+import 'package:shipglows_app/core/app_diagnostics.dart';
+import 'package:shipglows_app/core/shared_preferences_provider.dart';
+import 'package:shipglows_app/data/models/app_access_state.dart';
+import 'package:shipglows_app/data/models/app_bootstrap.dart';
+import 'package:shipglows_app/data/models/auth_session.dart';
+import 'package:shipglows_app/data/models/app_entitlement.dart';
+import 'package:shipglows_app/core/api_error_contract.dart';
+import 'package:shipglows_app/core/api_service_contract.dart';
 import '../legacy_contract.dart';
 
 void main() {

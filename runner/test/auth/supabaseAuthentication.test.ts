@@ -32,7 +32,7 @@ describe("Supabase authentication adapter", () => {
     const actor = await adapter.authenticate({
       headers: {
         authorization: "Bearer valid.jwt.token",
-        "x-shipglowz-tenant": "ten_000000000001",
+        "x-shipglows-tenant": "ten_000000000001",
       },
     });
 
@@ -47,10 +47,10 @@ describe("Supabase authentication adapter", () => {
     const adapter = new SupabaseAuthenticationAdapter(verifier, resolver);
 
     for (const headers of [
-      { authorization: "Token valid.jwt.token", "x-shipglowz-tenant": "ten_000000000001" },
-      { authorization: "Bearer invalid.jwt.token", "x-shipglowz-tenant": "ten_000000000001" },
-      { authorization: "Bearer valid.jwt.token", "x-shipglowz-tenant": "ten_000000000002" },
-      { authorization: "Bearer valid.jwt.token", "x-shipglowz-tenant": "../ten_000000000001" },
+      { authorization: "Token valid.jwt.token", "x-shipglows-tenant": "ten_000000000001" },
+      { authorization: "Bearer invalid.jwt.token", "x-shipglows-tenant": "ten_000000000001" },
+      { authorization: "Bearer valid.jwt.token", "x-shipglows-tenant": "ten_000000000002" },
+      { authorization: "Bearer valid.jwt.token", "x-shipglows-tenant": "../ten_000000000001" },
     ]) {
       assert.equal(await adapter.authenticate({ headers }), null);
     }

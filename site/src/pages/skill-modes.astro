@@ -6,8 +6,8 @@ import NavBar from "../components/NavBar.astro";
 
 const masterSkillCheatsheet = [
   {
-    command: "shipflow <instruction>",
-    when: "Recommended non-technical first command when you want ShipGlowz to choose the route.",
+    command: "shipglows <instruction>",
+    when: "Recommended non-technical first command when you want ShipGlows to choose the route.",
     modes:
       "Answers pure conversation directly; routes feature/code/docs to sf-build, maintenance to sf-maintain, bugs to sf-bug, release/deploy/prod proof to sf-deploy, content to sf-content, marketing study/GTM/copy work to 009-sg-marketing, design to sf-design, customer experience to sf-customer, local-to-cloud sync to sf-local-cloud-sync, internal skill maintenance to the internal 900 core workflow, and obvious specialist audits to sf-audit-*. Asks one numbered question when ambiguous."
   },
@@ -108,7 +108,7 @@ const runtimeFamilies = [
   {
     title: "Lifecycle/master",
     use: "Carry a work item across several gates.",
-    examples: "shipflow, sf-build, sf-maintain, sf-deploy, sf-design, sf-content, sf-customer"
+    examples: "shipglows, sf-build, sf-maintain, sf-deploy, sf-design, sf-content, sf-customer"
   },
   {
     title: "Data trust/source",
@@ -143,8 +143,8 @@ const skillsWithModes = (await getCollection("skills"))
 ---
 
 <BaseLayout
-  title="Skill Modes | ShipGlowz launch cheatsheet"
-  description="A practical ShipGlowz cheatsheet for master skills, supporting skills, and the argument modes that change workflow behavior."
+  title="Skill Modes | ShipGlows launch cheatsheet"
+  description="A practical ShipGlows cheatsheet for master skills, supporting skills, and the argument modes that change workflow behavior."
 >
   <main class="page-shell">
     <NavBar />
@@ -154,9 +154,9 @@ const skillsWithModes = (await getCollection("skills"))
         <p class="eyebrow">Skill Launch Cheatsheet</p>
         <h1 class="page-title">Skill launch cheatsheet.</h1>
         <p>
-          ShipGlowz skills are not all simple free-text commands. Some arguments
+          ShipGlows skills are not all simple free-text commands. Some arguments
           describe the work, some switch modes, and some select a structured
-          target. Start with <code>shipflow &lt;instruction&gt;</code> when you
+          target. Start with <code>shipglows &lt;instruction&gt;</code> when you
           want routing handled, then use direct master or owner skills when you
           already know the lane.
         </p>
@@ -167,7 +167,7 @@ const skillsWithModes = (await getCollection("skills"))
       <div class="pricing-grid">
         <article class="price-card">
           <p class="eyebrow">The Short Version</p>
-          <h2>Use <code>shipflow &lt;instruction&gt;</code> when you are not choosing manually.</h2>
+          <h2>Use <code>shipglows &lt;instruction&gt;</code> when you are not choosing manually.</h2>
           <p>
             The router answers pure questions directly or hands the main thread
             to the selected skill. Direct master skills still matter when you
@@ -193,7 +193,7 @@ const skillsWithModes = (await getCollection("skills"))
         <h2>The right route depends on the role the skill plays.</h2>
         <p>
           Public categories make the catalog easier to browse. Runtime families
-          explain how ShipGlowz routes work: lifecycle owners carry work, source
+          explain how ShipGlows routes work: lifecycle owners carry work, source
           skills expose future chantiers, proof skills validate behavior, and
           helpers keep orientation clean without owning closure. Routing should
           preserve quality and proof first; shortest path is not the default
@@ -219,7 +219,7 @@ const skillsWithModes = (await getCollection("skills"))
     <section class="section">
       <div class="section-heading">
         <p class="eyebrow">Primary And Master Skills</p>
-        <h2>Launch these when you want ShipGlowz to carry the work across multiple gates.</h2>
+        <h2>Launch these when you want ShipGlows to carry the work across multiple gates.</h2>
       </div>
 
       <div class="role-list">
@@ -455,7 +455,7 @@ const skillsWithModes = (await getCollection("skills"))
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href="/skills">Browse public skill pages</a>
-          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/shipglowz_data/technical/operator-guides/skill-launch-cheatsheet.md">Open Markdown reference</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlows/blob/main/shipglows_data/technical/operator-guides/skill-launch-cheatsheet.md">Open Markdown reference</a>
           <a class="button button-secondary" href="/faq">Open the FAQ</a>
         </div>
       </div>

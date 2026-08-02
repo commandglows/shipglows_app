@@ -2,7 +2,7 @@
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
 artifact_version: "0.2.0"
-project: shipglowz_app
+project: shipglows_app
 created: "2026-04-26"
 updated: "2026-05-14"
 status: draft
@@ -16,12 +16,12 @@ docs_impact: yes
 evidence:
   - "README.md"
   - "lib/main.dart"
-  - "shipglowz_data/technical/runtime-boundary.md"
-  - "shipglowz_data/technical/markdown-source-of-truth.md"
-  - "shipglowz_data/technical/legacy-contentflow-inventory.md"
+  - "shipglows_data/technical/runtime-boundary.md"
+  - "shipglows_data/technical/markdown-source-of-truth.md"
+  - "shipglows_data/technical/legacy-contentflow-inventory.md"
 depends_on:
-  - "shipglowz_data/workflow/specs/shipglowz-legacy-contentflow-fusion.md@0.1.0"
-  - "shipglowz_data/technical/code-docs-map.md@0.1.0"
+  - "shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md@0.1.0"
+  - "shipglows_data/technical/code-docs-map.md@0.1.0"
 supersedes:
   - "CLAUDE.md@1.1.0 contentflow_app guidance"
 linked_systems:
@@ -38,21 +38,21 @@ next_step: "/sf-docs update"
 
 ## Project Overview
 
-`shipglowz_app` is the Flutter application for ShipGlowz operational visibility. The active runtime is a local-first ShipGlowz dashboard that reads Markdown and ledger files from ShipGlowz repositories and registries.
+`shipglows_app` is the Flutter application for ShipGlows operational visibility. The active runtime is a local-first ShipGlows dashboard that reads Markdown and ledger files from ShipGlows repositories and registries.
 
-The repository still contains a legacy ContentFlow runtime. Treat it as migration/reference material unless a ready ShipGlowz spec explicitly adapts it.
+The repository still contains a legacy ContentFlow runtime. Treat it as migration/reference material unless a ready ShipGlows spec explicitly adapts it.
 
 ## Current Product Contract
 
-- Active product: ShipGlowz.
-- Active default runtime: `APP_TARGET=shipglowz`.
+- Active product: ShipGlows.
+- Active default runtime: `APP_TARGET=shipglows`.
 - Temporary legacy runtimes: `APP_TARGET=legacy` and `APP_TARGET=contentflow`.
 - Current V1 mode: local-first, read-oriented, with Android and Web targets.
 - Current validation loop: push to Git, let Vercel build the Flutter web app, then validate the served web version.
 - Source of truth: Markdown and repository files.
 - Future database role: projection, index, cache, or sync layer unless a later reviewed spec supersedes this.
 
-## ShipGlowz Development Mode
+## ShipGlows Development Mode
 
 - development_mode: vercel-preview-push
 - validation_surface: vercel-preview
@@ -60,7 +60,7 @@ The repository still contains a legacy ContentFlow runtime. Treat it as migratio
 - post_ship_verification: sf-prod
 - deployment_provider: vercel
 - preview_source: Vercel deployment URL confirmed by `/sf-prod`
-- production_url: https://shipglowzapp.vercel.app/
+- production_url: https://shipglowsapp.vercel.app/
 - notes: Push first, wait for Vercel to build the Flutter web app, then validate the matching served web deployment. Local Flutter checks are useful, but browser/user-flow proof comes from the Vercel URL.
 - last_reviewed: 2026-05-14
 
@@ -69,11 +69,11 @@ The repository still contains a legacy ContentFlow runtime. Treat it as migratio
 - Flutter / Dart
 - Riverpod
 - GoRouter
-- The existing ShipGlowz read-only terminal TUI lives in `/home/claude/shipglowz/tui`; this Flutter app does not own the Bun/OpenTUI package.
+- The existing ShipGlows read-only terminal TUI lives in `/home/claude/shipglowz/tui`; this Flutter app does not own the Bun/OpenTUI package.
 - The planned authenticated operator workspace—terminal rendering, tmux attachment, Neovim access, and bounded file operations—belongs to this repository's Flutter `app/` plus managed `runner/`, and must remain separate from the read-only TUI and ordinary customer permissions.
 - Vercel builds and serves the Flutter web output
 - Shared preferences for local settings
-- Markdown/source parsers under `lib/data/shipglowz_sources/`
+- Markdown/source parsers under `lib/data/shipglows_sources/`
 
 Do not infer that FastAPI, Clerk, Supabase, Firebase, Firestore, or OpenRouter are active product dependencies just because legacy files mention them.
 
@@ -89,9 +89,9 @@ flutter analyze
 Focused checks:
 
 ```bash
-flutter test test/data/shipglowz_sources
+flutter test test/data/shipglows_sources
 flutter test test/domain/project_health
-rg -n "APP_TARGET|LegacyShipGlowzApp|ShipGlowzApp" lib test
+rg -n "APP_TARGET|LegacyShipGlowsApp|ShipGlowsApp" lib test
 ```
 
 Optional TUI checks:
@@ -109,12 +109,12 @@ On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: n
 ## Active App Structure
 
 - `lib/main.dart`: root app target switch.
-- `lib/shipglowz/`: active ShipGlowz UI runtime.
-- `lib/data/shipglowz_sources/`: active source readers and parsers.
+- `lib/shipglows/`: active ShipGlows UI runtime.
+- `lib/data/shipglows_sources/`: active source readers and parsers.
 - `lib/domain/project_health/`: active project posture model.
-- `tui/`: optional ShipGlowz terminal dashboard runtime (Bun/OpenTUI), read-only V1.
-- `shipglowz_data/technical/`: technical governance for active and legacy boundaries.
-- `shipglowz_data/workflow/specs/shipglowz-legacy-contentflow-fusion.md`: active migration/fusion chantier.
+- `tui/`: optional ShipGlows terminal dashboard runtime (Bun/OpenTUI), read-only V1.
+- `shipglows_data/technical/`: technical governance for active and legacy boundaries.
+- `shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md`: active migration/fusion chantier.
 
 ## Legacy Structure
 
@@ -127,9 +127,9 @@ These areas are retained for classification, not as active product direction:
 - `lib/data/models/**`
 - `lib/core/**` when tied to ContentFlow assumptions
 - `web_auth/**`
-- legacy `shipglowz_data/workflow/specs/*.md`
+- legacy `shipglows_data/workflow/specs/*.md`
 
-Use `shipglowz_data/technical/legacy-contentflow-inventory.md` before moving or deleting any of them.
+Use `shipglows_data/technical/legacy-contentflow-inventory.md` before moving or deleting any of them.
 
 ## Data Rules
 
@@ -152,8 +152,8 @@ Use `shipglowz_data/technical/legacy-contentflow-inventory.md` before moving or 
 
 Before broad implementation work, keep these in sync:
 
-- `shipglowz_data/editorial/content-map.md`
-- `shipglowz_data/technical/code-docs-map.md`
-- `shipglowz_data/technical/runtime-boundary.md`
-- `shipglowz_data/technical/markdown-source-of-truth.md`
-- `shipglowz_data/technical/legacy-contentflow-inventory.md`
+- `shipglows_data/editorial/content-map.md`
+- `shipglows_data/technical/code-docs-map.md`
+- `shipglows_data/technical/runtime-boundary.md`
+- `shipglows_data/technical/markdown-source-of-truth.md`
+- `shipglows_data/technical/legacy-contentflow-inventory.md`

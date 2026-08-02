@@ -1,12 +1,12 @@
 ---
-title: "Why ShipGlowz should not rush global primitives for profiles and tags"
+title: "Why ShipGlows should not rush global primitives for profiles and tags"
 description: "A precise explanation of why global runtime primitives for profiles and tags should wait until the semantics are stable."
-summary: "Global primitives look elegant, but they hard-freeze semantics, debugging posture, and runtime obligations earlier than ShipGlowz can safely support."
+summary: "Global primitives look elegant, but they hard-freeze semantics, debugging posture, and runtime obligations earlier than ShipGlows can safely support."
 publishDate: 2026-06-28
 locale: "en"
 articleKey: "global-primitives-vs-local-conventions"
 slug: "global-primitives-vs-local-conventions"
-alternateSlug: "pourquoi-shipflow-ne-doit-pas-figer-trop-vite-des-primitives-globales"
+alternateSlug: "pourquoi-shipglows-ne-doit-pas-figer-trop-vite-des-primitives-globales"
 tags:
   - "runtime"
   - "profiles"
@@ -21,11 +21,11 @@ Global primitives sound attractive because they make the syntax feel native.
 
 If `%Victoire` or `#Adhesion` became true runtime primitives, they would no longer behave like a local convention loaded at the beginning of a thread. They would become part of the platform contract itself.
 
-That is exactly why ShipGlowz should not rush them.
+That is exactly why ShipGlows should not rush them.
 
 ## The distinction that matters
 
-A local convention is implemented inside the ShipGlowz layer. It can be changed, renamed, clarified, or even removed without pretending that the host runtime understands it natively.
+A local convention is implemented inside the ShipGlows layer. It can be changed, renamed, clarified, or even removed without pretending that the host runtime understands it natively.
 
 A global primitive is different:
 
@@ -40,7 +40,7 @@ Once that contract exists, every ambiguity becomes product debt.
 
 The current profile system is still proving its operating model.
 
-ShipGlowz already knows the value of named profiles such as `%Victoire`, `%Prudence`, and `%Ariane`: they change posture and arbitration. They do not replace skill ownership, and they do not remove the need for project context.
+ShipGlows already knows the value of named profiles such as `%Victoire`, `%Prudence`, and `%Ariane`: they change posture and arbitration. They do not replace skill ownership, and they do not remove the need for project context.
 
 What is still stabilizing is the runtime behavior around them:
 
@@ -56,7 +56,7 @@ If those answers are not fixed first, a global primitive only hides uncertainty 
 
 ### 1. We may not control the host runtime deeply enough
 
-ShipGlowz can document conventions today because documentation is under our control.
+ShipGlows can document conventions today because documentation is under our control.
 
 A native primitive requires a real execution hook in the runtime layer. If that layer is partial, indirect, or dependent on plugin behavior, the primitive becomes misleading. It looks native but still behaves like a workaround.
 
@@ -83,7 +83,7 @@ Those two concepts may need different persistence rules. Treating them as one pr
 
 ## The practical rule
 
-ShipGlowz should first prove the model locally:
+ShipGlows should first prove the model locally:
 
 1. document the invocation convention clearly
 2. implement plugin-level routing where we control the behavior
@@ -98,6 +98,6 @@ Before that, they are mostly premature API design.
 
 The issue is not whether global primitives are elegant. They are.
 
-The issue is whether ShipGlowz is ready to promise exact runtime semantics for profiles and tags across threads, tools, and debugging surfaces.
+The issue is whether ShipGlows is ready to promise exact runtime semantics for profiles and tags across threads, tools, and debugging surfaces.
 
 Right now, the safer move is to mature the model first, then promote it.

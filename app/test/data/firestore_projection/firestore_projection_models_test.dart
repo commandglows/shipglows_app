@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shipglowz_app/data/firestore_projection/firestore_projection_models.dart';
+import 'package:shipglows_app/data/firestore_projection/firestore_projection_models.dart';
 
 void main() {
   group('Firestore projection models', () {
@@ -7,7 +7,7 @@ void main() {
       final now = DateTime.utc(2026, 5, 10, 12);
 
       expect(
-        ShipGlowzUserProfile(
+        ShipGlowsUserProfile(
           uid: 'u1',
           email: 'u1@example.com',
           displayName: 'User One',
@@ -19,7 +19,7 @@ void main() {
         'u1',
       );
 
-      final project = ShipGlowzProjectRecord(
+      final project = ShipGlowsProjectRecord(
         projectId: 'proj1',
         githubOwner: 'octocat',
         githubRepo: 'hello-world',
@@ -48,7 +48,7 @@ void main() {
       expect(
         ProjectMemberRecord(
           uid: 'u1',
-          role: ShipGlowzProjectRole.owner,
+          role: ShipGlowsProjectRole.owner,
           addedAt: now,
         ).toMap()['role'],
         'owner',
@@ -56,7 +56,7 @@ void main() {
 
       final indexedFile = IndexedFileRecord(
         fileId: 'f1',
-        path: 'shipglowz_data/workflow/specs/demo.md',
+        path: 'shipglows_data/workflow/specs/demo.md',
         artifactType: 'spec',
         sourceCommit: 'abc123',
         contentHash: 'hash1',
@@ -110,7 +110,7 @@ void main() {
       expect(
         UserProjectRef(
           projectId: 'proj1',
-          role: ShipGlowzProjectRole.viewer,
+          role: ShipGlowsProjectRole.viewer,
           projectionStatus: ProjectionStatus.stale,
           updatedAt: now,
         ).toMap()['projectId'],

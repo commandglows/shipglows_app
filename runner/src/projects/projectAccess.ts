@@ -31,7 +31,7 @@ export function projectAuthorizationGuard(
 ): preHandlerAsyncHookHandler {
   return async (request): Promise<void> => {
     const projectRequest = request as ProjectRequest;
-    const actor = projectRequest.shipglowzActor;
+    const actor = projectRequest.shipglowsActor;
     const projectId = projectRequest.params.projectId;
     if (
       actor === undefined ||

@@ -5,11 +5,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-echo "== ShipGlowz Boundary Suite =="
+echo "== ShipGlows Boundary Suite =="
 
 failed=0
 
-if ! ./scripts/validate-shipglowz-runtime-boundary.sh; then
+if ! ./scripts/validate-shipglows-runtime-boundary.sh; then
   failed=1
 fi
 

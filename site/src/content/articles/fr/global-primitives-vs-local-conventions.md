@@ -1,11 +1,11 @@
 ---
-title: "Pourquoi ShipGlowz ne doit pas figer trop vite des primitives globales"
+title: "Pourquoi ShipGlows ne doit pas figer trop vite des primitives globales"
 description: "Une explication précise des raisons pour lesquelles les primitives runtime globales pour les profils et les tags doivent attendre que la sémantique soit stabilisée."
 summary: "Les primitives globales sont élégantes, mais elles figent trop tôt la sémantique, le débogage et les obligations runtime."
 publishDate: 2026-06-28
 locale: "fr"
 articleKey: "global-primitives-vs-local-conventions"
-slug: "pourquoi-shipflow-ne-doit-pas-figer-trop-vite-des-primitives-globales"
+slug: "pourquoi-shipglows-ne-doit-pas-figer-trop-vite-des-primitives-globales"
 alternateSlug: "global-primitives-vs-local-conventions"
 tags:
   - "runtime"
@@ -21,11 +21,11 @@ Les primitives globales paraissent séduisantes parce qu’elles donnent l’imp
 
 Si `%Victoire` ou `#Adhesion` devenaient de vraies primitives runtime, ils ne se comporteraient plus comme une convention locale chargée au début d’une conversation. Ils deviendraient une partie du contrat de la plateforme elle-même.
 
-C’est précisément pour cela que ShipGlowz ne doit pas se précipiter.
+C’est précisément pour cela que ShipGlows ne doit pas se précipiter.
 
 ## La distinction qui compte
 
-Une convention locale est implémentée dans la couche ShipGlowz. On peut la faire évoluer, la renommer, la clarifier, voire la retirer, sans prétendre que le runtime hôte la comprend nativement.
+Une convention locale est implémentée dans la couche ShipGlows. On peut la faire évoluer, la renommer, la clarifier, voire la retirer, sans prétendre que le runtime hôte la comprend nativement.
 
 Une primitive globale, c’est autre chose :
 
@@ -40,7 +40,7 @@ Dès que ce contrat existe, toute ambiguïté devient une dette produit.
 
 Le système de profils actuel est encore en train de prouver son modèle opératoire.
 
-ShipGlowz connaît déjà la valeur de profils nommés comme `%Victoire`, `%Prudence` et `%Ariane` : ils changent la posture et l’arbitrage. Ils ne remplacent pas le skill propriétaire, et ils ne retirent pas le besoin de contexte projet.
+ShipGlows connaît déjà la valeur de profils nommés comme `%Victoire`, `%Prudence` et `%Ariane` : ils changent la posture et l’arbitrage. Ils ne remplacent pas le skill propriétaire, et ils ne retirent pas le besoin de contexte projet.
 
 Ce qui reste à stabiliser, c’est le comportement runtime autour d’eux :
 
@@ -56,7 +56,7 @@ Si ces réponses ne sont pas figées d’abord, une primitive globale ne fait qu
 
 ### 1. On ne contrôle peut-être pas encore assez profondément le runtime hôte
 
-ShipGlowz peut documenter des conventions aujourd’hui parce que la documentation est sous notre contrôle.
+ShipGlows peut documenter des conventions aujourd’hui parce que la documentation est sous notre contrôle.
 
 Une primitive native exige un vrai point d’accroche dans la couche runtime. Si cette couche reste partielle, indirecte ou dépendante du plugin, la primitive devient trompeuse. Elle a l’air native, mais se comporte encore comme un contournement.
 
@@ -83,7 +83,7 @@ Ces deux concepts peuvent demander des règles de persistance différentes. Les 
 
 ## La règle pragmatique
 
-ShipGlowz devrait d’abord prouver le modèle localement :
+ShipGlows devrait d’abord prouver le modèle localement :
 
 1. documenter clairement la convention d’invocation
 2. implémenter le routage au niveau du plugin, là où le comportement est contrôlé
@@ -98,6 +98,6 @@ Avant cela, c’est surtout de l’API design prématuré.
 
 La question n’est pas de savoir si les primitives globales sont élégantes. Elles le sont.
 
-La vraie question est de savoir si ShipGlowz est prêt à promettre une sémantique runtime exacte pour les profils et les tags à travers les fils, les outils et les surfaces de débogage.
+La vraie question est de savoir si ShipGlows est prêt à promettre une sémantique runtime exacte pour les profils et les tags à travers les fils, les outils et les surfaces de débogage.
 
 Pour l’instant, le choix le plus sûr est de faire mûrir le modèle d’abord, puis de le promouvoir.

@@ -7,10 +7,10 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
-- Added pure Dart GitHub managed clone/indexer contracts, local fake runner, allowlisted ShipGlowz Markdown artifact indexing policy, repository interface, documentation, and tests.
+- Added pure Dart GitHub managed clone/indexer contracts, local fake runner, allowlisted ShipGlows Markdown artifact indexing policy, repository interface, documentation, and tests.
 - Added the traffic-first operational record web-reader contract and shared parser fixture for future Markdown-backed web projections.
 - Added the dashboard read-only projection contract, in-memory projection repository, and tests for user-scoped refs, access-lost visibility, filtering, sorting, account switching, and forbidden-field rejection.
-- Added the local-contract-first ShipGlowz product entitlement gate with bootstrap snapshot parsing, access-state stages, route/entry states, support docs, verification checklist, and tests.
+- Added the local-contract-first ShipGlows product entitlement gate with bootstrap snapshot parsing, access-state stages, route/entry states, support docs, verification checklist, and tests.
 
 ### Changed
 - Updated task tracking to reflect the active Firebase/GitHub/Firestore projection foundation instead of the retired Supabase migration path.
@@ -18,18 +18,18 @@ The format is based on Keep a Changelog.
 - Readied the foundational auth/GitHub access, project onboarding, Markdown artifact governance, and dashboard read-only projection specs for the next implementation slice.
 
 ### Security
-- Separated product entitlement from identity, GitHub access, open access, and cached bootstrap state so protected workspace data fails closed without a trusted `shipglowz_app` entitlement snapshot.
+- Separated product entitlement from identity, GitHub access, open access, and cached bootstrap state so protected workspace data fails closed without a trusted `shipglows_app` entitlement snapshot.
 
 ## [2026-05-11]
 
 ### Changed
 - Moved the repository app runtime assets under `app/` and introduced a sibling `site/` folder from the existing TubeFlow-like site scaffold.
-- Replaced public-site content to ship a ShipGlowz App landing/docs/FAQ/pricing/workflow narrative while preserving the prior design system.
+- Replaced public-site content to ship a ShipGlows App landing/docs/FAQ/pricing/workflow narrative while preserving the prior design system.
 
 ## [2026-05-10]
 
 ### Added
-- Added a canonical foundational coherence gate for ShipGlowz Firebase/GitHub/Firestore/runner/dashboard shipglowz_data/workflow/specs, including cross-spec state vocabulary, security controls, failure gates, and shipglowz_data navigation.
+- Added a canonical foundational coherence gate for ShipGlows Firebase/GitHub/Firestore/runner/dashboard shipglows_data/workflow/specs, including cross-spec state vocabulary, security controls, failure gates, and shipglows_data navigation.
 
 ## [2026-04-29]
 
@@ -113,7 +113,7 @@ The format is based on Keep a Changelog.
 - Added a persisted app theme preference with `light`, `dark`, and `system` modes, plus Flutter tests covering theme normalization and app-level theme restoration.
 - Added a shared editorial theme palette and semantic color tokens so surfaces, accents, and status tones can be reused consistently across the Flutter shell.
 - Added queue-aware offline sync badges on supported list surfaces so projects, personas, affiliations, content cards, and drip plans can show `Pending sync` or `Sync failed`.
-- Added the offline sync V2 reference spec in `shipglowz_data/workflow/specs/SPEC-offline-sync-v2.md` and aligned project documentation with the current degraded-mode behavior.
+- Added the offline sync V2 reference spec in `shipglows_data/workflow/specs/SPEC-offline-sync-v2.md` and aligned project documentation with the current degraded-mode behavior.
 - Added a multi-project management flow with a dedicated `Projects` screen, a global current-project switcher, and backend-aligned project selection persistence.
 - Added Drip plan scheduling window fields (`publish_time_start`, `publish_time_end`) so plans can configure random publish slots instead of one fixed time.
 
@@ -232,7 +232,7 @@ The format is based on Keep a Changelog.
 - **ContentType.short** in Flutter enum with parser, serializer, icon, and theme color.
 - **Format-specific metadata** in Flutter: content cards and editor show SEO keyword, platform, duration, hashtags, narrative thread depending on content type.
 - **Settings: Content Frequency section** with sliders for each format.
-- Spec document: `shipglowz_data/workflow/specs/SPEC-content-pipeline-unification.md`.
+- Spec document: `shipglows_data/workflow/specs/SPEC-content-pipeline-unification.md`.
 - Flutter repo initialized and pushed to GitHub (`dianedef/ContentFlow-app`).
 
 ### Changed
@@ -258,7 +258,7 @@ The format is based on Keep a Changelog.
 - SharedPreferences-backed Clerk persistence for restoring the real Flutter session.
 - FastAPI-backed Flutter creator profile model/provider.
 - Publish account parsing from `/api/publish/accounts` with real Zernio/LATE account IDs.
-- Technical shipglowz_data/workflow/specs for LATE integration and target architecture.
+- Technical shipglows_data/workflow/specs for LATE integration and target architecture.
 
 ### Changed
 - Settings publishing channels now show real connected account state.

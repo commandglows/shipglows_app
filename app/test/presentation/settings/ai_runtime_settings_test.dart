@@ -1,5 +1,5 @@
-import 'package:shipglowz_app/data/models/ai_runtime.dart';
-import 'package:shipglowz_app/l10n/app_localizations.dart';
+import 'package:shipglows_app/data/models/ai_runtime.dart';
+import 'package:shipglows_app/l10n/app_localizations.dart';
 import '../../legacy_contract.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

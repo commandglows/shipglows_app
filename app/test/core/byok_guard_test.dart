@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:shipglowz_app/core/openrouter_guard.dart';
-import 'package:shipglowz_app/core/api_error_contract.dart';
+import 'package:shipglows_app/core/openrouter_guard.dart';
+import 'package:shipglows_app/core/api_error_contract.dart';
 
 void main() {
   group('requiresOpenRouterCredential', () {

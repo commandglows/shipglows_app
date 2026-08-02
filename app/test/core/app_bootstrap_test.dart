@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:shipglowz_app/data/models/app_bootstrap.dart';
+import 'package:shipglows_app/data/models/app_bootstrap.dart';
 
 void main() {
   group('AppBootstrap.shouldOnboard', () {

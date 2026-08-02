@@ -215,7 +215,7 @@ export class LocalWorkspaceManager {
       }
       await mkdir(path.dirname(workspacePath), { recursive: true });
       await input.transport.ensureMirror({ binding: input.binding, mirrorPath });
-      const branch = `shipglowz/fix/${input.projectId}/${input.conversationId}`;
+      const branch = `shipglows/fix/${input.projectId}/${input.conversationId}`;
       await input.transport.addFixWorktree({ mirrorPath, workspacePath, revision, branch });
       return { root: await realpath(workspacePath), kind: "fix" };
     });

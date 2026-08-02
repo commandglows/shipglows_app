@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shipglowz_app/data/firestore_projection/firestore_projection_paths.dart';
+import 'package:shipglows_app/data/firestore_projection/firestore_projection_paths.dart';
 
 void main() {
   group('FirestoreProjectionPaths', () {

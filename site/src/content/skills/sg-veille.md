@@ -44,6 +44,6 @@ order: 450
 
 ## Governance Fit
 
-`sg-veille` uses the cross-project registry to discover candidate projects, but it scores relevance from each project's local `shipglowz_data/` contracts. Research output belongs under `shipglowz_data/workflow/research/`, not an ad hoc research directory.
+`sg-veille` uses the cross-project registry to discover candidate projects, but it scores relevance from each project's local `shipglows_data/` contracts. Research output belongs under `shipglows_data/workflow/research/`, not an ad hoc research directory.
 
 When a source suggests a blog, newsletter, social post, public docs update, or claim-sensitive content, `sg-veille` routes through `sg-content repurpose <source>` and the editorial corpus. If no blog/article surface is declared, the correct finding is `surface missing: blog`.

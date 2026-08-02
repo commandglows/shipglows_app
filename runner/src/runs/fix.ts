@@ -143,7 +143,7 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
       const workspace = await this.workspaces.createFixWorktree({ projectId: input.projectId, conversationId, binding, transport: this.transport });
       const session = await this.runtime.createSession({ conversationId: opaque(conversationId), workspaceRoot: workspace.root });
       this.store.saveRuntimeSession({ id: id("ses"), tenantId: input.tenantId, conversationId, runtimeId: this.runtime.id, runtimeSessionId: String(session.runtimeSessionId), state: session.state });
-      const turn = await this.runtime.startTurn({ runtimeSessionId: session.runtimeSessionId, message: `Apply the approved ShipGlowz fix ${input.issueId} in the isolated workspace. Instruction: ${input.instruction}` });
+      const turn = await this.runtime.startTurn({ runtimeSessionId: session.runtimeSessionId, message: `Apply the approved ShipGlows fix ${input.issueId} in the isolated workspace. Instruction: ${input.instruction}` });
       this.store.checkpointRun({ tenantId: input.tenantId, runId, state: "running", checkpoint: { phase: "turn_started", runtimeTurnId: String(turn.runtimeTurnId), workspaceKind: "fix" } });
       this.#appendEvent({ id: id("evt"), tenantId: input.tenantId, conversationId, type: "run.started", payload: { runId, taskKind: "fix" } });
       const lifecycle: FixLifecycle = { tenantId: input.tenantId, conversationId, runId, runtimeSessionId: session.runtimeSessionId, runtimeTurnId: turn.runtimeTurnId, release, finalized: false };

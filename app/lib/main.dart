@@ -9,20 +9,20 @@ import 'l10n/app_localizations.dart';
 import 'providers/providers.dart';
 import 'presentation/theme/app_theme.dart';
 import 'router.dart';
-import 'shipglowz/app.dart' as shipglowz;
-import 'shipglowz/auth/auth_provider.dart';
-import 'shipglowz/auth/supabase_bootstrap.dart';
-import 'shipglowz/providers/auth_provider.dart';
+import 'shipglows/app.dart' as shipglows;
+import 'shipglows/auth/auth_provider.dart';
+import 'shipglows/auth/supabase_bootstrap.dart';
+import 'shipglows/providers/auth_provider.dart';
 
 const _appTarget = String.fromEnvironment(
   'APP_TARGET',
-  defaultValue: 'shipglowz',
+  defaultValue: 'shipglows',
 );
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPreferences = await SharedPreferences.getInstance();
-  final authProvider = await bootstrapShipGlowzAuth(
+  final authProvider = await bootstrapShipGlowsAuth(
     const SupabaseBootstrapConfiguration.fromEnvironment(),
   );
 
@@ -39,26 +39,26 @@ Widget buildRootApp({
   required SharedPreferences sharedPreferences,
   required AppDiagnostics diagnostics,
   String appTarget = _appTarget,
-  ShipGlowzAuthProvider authProvider = const DisabledShipGlowzAuthProvider(),
+  ShipGlowsAuthProvider authProvider = const DisabledShipGlowsAuthProvider(),
 }) {
   final normalizedTarget = appTarget.trim().toLowerCase();
   final app = switch (normalizedTarget) {
-    'legacy' || 'contentflow' => const LegacyShipGlowzApp(),
-    _ => const shipglowz.ShipGlowzApp(),
+    'legacy' || 'contentflow' => const LegacyShipGlowsApp(),
+    _ => const shipglows.ShipGlowsApp(),
   };
 
   return ProviderScope(
     overrides: [
       sharedPrefsProvider.overrideWithValue(sharedPreferences),
       appDiagnosticsProvider.overrideWithValue(diagnostics),
-      shipGlowzAuthProvider.overrideWithValue(authProvider),
+      shipGlowsAuthProvider.overrideWithValue(authProvider),
     ],
     child: app,
   );
 }
 
-class LegacyShipGlowzApp extends ConsumerWidget {
-  const LegacyShipGlowzApp({super.key});
+class LegacyShipGlowsApp extends ConsumerWidget {
+  const LegacyShipGlowsApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,7 +67,7 @@ class LegacyShipGlowzApp extends ConsumerWidget {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'ShipGlowz Legacy',
+      title: 'ShipGlows Legacy',
       routerConfig: router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

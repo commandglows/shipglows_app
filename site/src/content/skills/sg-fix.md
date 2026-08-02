@@ -2,7 +2,7 @@
 title: "sg-fix"
 slug: "sg-fix"
 tagline: "Triage a bug fast, decide whether it is safe to patch now, and route it correctly."
-summary: "The bug-first entrypoint for ShipGlowz when the work starts from broken behavior instead of a new feature request."
+summary: "The bug-first entrypoint for ShipGlows when the work starts from broken behavior instead of a new feature request."
 category: "Build & Fix"
 audience:
   - "Solo founders facing product or QA bugs"
@@ -31,7 +31,7 @@ example_prompts:
 limits:
   - "It is for bounded bug work, not broad redesign"
   - "Some bug reports still need deeper clarification before safe implementation"
-  - "When a bug id is supplied, the skill consumes shipglowz_data/workflow/bugs/BUG-ID.md and appends diagnosis and fix attempts there instead of relying on chat history"
+  - "When a bug id is supplied, the skill consumes shipglows_data/workflow/bugs/BUG-ID.md and appends diagnosis and fix attempts there instead of relying on chat history"
 related_skills:
   - "sg-spec"
   - "sg-bug"
@@ -44,14 +44,14 @@ order: 20
 
 ## Bug-First Flow
 
-When you pass `BUG-ID`, `sg-fix` treats `shipglowz_data/workflow/bugs/BUG-ID.md` as the primary source of truth. It should read the dossier, append diagnosis notes, record fix attempts, and keep the retest history attached to the same record.
+When you pass `BUG-ID`, `sg-fix` treats `shipglows_data/workflow/bugs/BUG-ID.md` as the primary source of truth. It should read the dossier, append diagnosis notes, record fix attempts, and keep the retest history attached to the same record.
 
 When no `BUG-ID` exists yet, `sg-fix` should usually create one before ending the run so the correction is not remembered only through chat history. The intended default is simple: a direct fix can stay fast without becoming untraceable.
 
 That rule matters most for the "small fix" path. If the bug is real enough to change code, data flow, permissions, routing, payment, cache behavior, API behavior, or stateful UI, it should leave a durable record:
 
-- a compact `shipglowz_data/workflow/BUGS.md` index pointer
-- a detailed `shipglowz_data/workflow/bugs/BUG-ID.md` dossier
+- a compact `shipglows_data/workflow/BUGS.md` index pointer
+- a detailed `shipglows_data/workflow/bugs/BUG-ID.md` dossier
 - diagnosis and fix-attempt notes attached to the same bug
 - retest history when the fix is checked later
 

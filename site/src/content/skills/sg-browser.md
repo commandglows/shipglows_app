@@ -8,8 +8,8 @@ audience:
   - "Founders who need quick browser evidence before deciding what to fix"
   - "Developers checking local pages, previews, or production routes"
   - "Teams separating browser observation from auth debugging, deployment checks, and manual QA logs"
-problem: "ShipGlowz had auth debugging, manual QA, and production verification skills, but no small general-purpose browser evidence entrypoint for non-auth page checks."
-outcome: "You get a concise browser report with target, runtime, objective, observed state, verdict, evidence, limits, and the right next ShipGlowz command."
+problem: "ShipGlows had auth debugging, manual QA, and production verification skills, but no small general-purpose browser evidence entrypoint for non-auth page checks."
+outcome: "You get a concise browser report with target, runtime, objective, observed state, verdict, evidence, limits, and the right next ShipGlows command."
 founder_angle: "This skill matters when you need to know what the browser actually sees without opening a full bug dossier or stretching an auth-specialized workflow."
 when_to_use:
   - "When you need to verify that a public page, preview, or production URL displays an expected state"
@@ -24,7 +24,7 @@ what_you_get:
   - "A narrow pass, fail, partial, blocked, or routed verdict"
   - "Sanitized console or network summaries when relevant"
   - "Screenshot or snapshot evidence when useful"
-  - "Clear limits and the next ShipGlowz command"
+  - "Clear limits and the next ShipGlows command"
 example_prompts:
   - "/sg-browser https://example.com verify Example Domain is visible"
   - "/sg-browser local homepage check that the pricing CTA renders"
@@ -49,7 +49,7 @@ order: 526
 
 `sg-browser` opens the requested surface in a real browser and checks one concrete objective. The objective may be visual, structural, console-related, network-related, or screenshot-based.
 
-The report is intentionally narrow: it says what was opened, what was expected, what was observed, what evidence was collected, what remains unproven, and which ShipGlowz command should follow.
+The report is intentionally narrow: it says what was opened, what was expected, what was observed, what evidence was collected, what remains unproven, and which ShipGlows command should follow.
 
 ## Boundaries
 

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:shipglowz_app/data/models/app_access_state.dart';
-import 'package:shipglowz_app/data/models/app_bootstrap.dart';
-import 'package:shipglowz_app/presentation/navigation/app_redirect_rules.dart';
+import 'package:shipglows_app/data/models/app_access_state.dart';
+import 'package:shipglows_app/data/models/app_bootstrap.dart';
+import 'package:shipglows_app/presentation/navigation/app_redirect_rules.dart';
 
 void main() {
   group('resolveAppRedirect (resume no jump)', () {

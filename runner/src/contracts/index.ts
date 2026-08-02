@@ -162,7 +162,7 @@ export const VersionResponseSchema = Type.Object(
       { additionalProperties: false },
     ),
   },
-  { $id: "shipglowz.v1.version.response", additionalProperties: false },
+  { $id: "shipglows.v1.version.response", additionalProperties: false },
 );
 
 export const ApiErrorSchema = Type.Object(
@@ -176,7 +176,7 @@ export const ApiErrorSchema = Type.Object(
       { additionalProperties: false },
     ),
   },
-  { $id: "shipglowz.v1.error.response", additionalProperties: false },
+  { $id: "shipglows.v1.error.response", additionalProperties: false },
 );
 
 export const NormalizedEventSchema = Type.Object(
@@ -187,7 +187,7 @@ export const NormalizedEventSchema = Type.Object(
     payload: Type.Record(Type.String(), Type.Unknown()),
     occurredAt: Type.String(),
   },
-  { $id: "shipglowz.v1.conversation.event", additionalProperties: false },
+  { $id: "shipglows.v1.conversation.event", additionalProperties: false },
 );
 
 export const CommandRequestSchemas = {

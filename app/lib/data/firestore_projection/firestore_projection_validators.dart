@@ -59,9 +59,9 @@ class FirestoreProjectionValidators {
     }
   }
 
-  static void validateProjectRole(ShipGlowzProjectRole role) {
-    if (role != ShipGlowzProjectRole.owner &&
-        role != ShipGlowzProjectRole.viewer) {
+  static void validateProjectRole(ShipGlowsProjectRole role) {
+    if (role != ShipGlowsProjectRole.owner &&
+        role != ShipGlowsProjectRole.viewer) {
       throw const FirestoreProjectionValidationError(
         'Invalid project role. Allowed values: owner, viewer.',
       );

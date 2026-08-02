@@ -2,7 +2,7 @@
 title: "sg-platform-parity"
 slug: "sg-platform-parity"
 tagline: "Keep product expectations and technical implementation aligned across every supported platform."
-summary: "Audits platform parity, separates legitimate platform adaptations from implementation debt, and routes missing work to the right ShipGlowz skill."
+summary: "Audits platform parity, separates legitimate platform adaptations from implementation debt, and routes missing work to the right ShipGlows skill."
 category: "Audit & Improve"
 audience:
   - "Founders shipping the same product across web, mobile, and desktop"

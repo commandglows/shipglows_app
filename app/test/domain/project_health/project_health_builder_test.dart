@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shipglowz_app/data/shipglowz_sources/parsers/parsed_models.dart';
-import 'package:shipglowz_app/data/shipglowz_sources/parsers/shipglowz_sources_parser.dart';
-import 'package:shipglowz_app/domain/project_health/project_health_builder.dart';
-import 'package:shipglowz_app/domain/project_health/project_health_models.dart';
+import 'package:shipglows_app/data/shipglows_sources/parsers/parsed_models.dart';
+import 'package:shipglows_app/data/shipglows_sources/parsers/shipglows_sources_parser.dart';
+import 'package:shipglows_app/domain/project_health/project_health_builder.dart';
+import 'package:shipglows_app/domain/project_health/project_health_models.dart';
 
 void main() {
   group('ProjectHealthBuilder', () {
     test('marks project as neverChecked without dependency events', () {
-      final parsed = ParsedShipGlowzData(
+      final parsed = ParsedShipGlowsData(
         projects: const [
           ProjectRegistryEntry(
             name: 'demo',
@@ -59,7 +59,7 @@ void main() {
         final checkedAt = DateTime.now().toUtc().subtract(
           const Duration(days: 2),
         );
-        final parsed = ParsedShipGlowzData(
+        final parsed = ParsedShipGlowsData(
           projects: const [
             ProjectRegistryEntry(
               name: 'demo',

@@ -18,7 +18,7 @@ import type {
 const binding = {
   installationId: 42,
   repositoryId: 101,
-  fullName: "shipglowz/example",
+  fullName: "shipglows/example",
   defaultBranch: "main",
 } as const;
 
@@ -134,7 +134,7 @@ describe("GitHub repository REST adapter", () => {
         authorization = headers?.["authorization"] ?? "";
         return new Response(JSON.stringify({
           id: 101,
-          full_name: "shipglowz/example",
+          full_name: "shipglows/example",
           default_branch: "main",
           private: true,
           archived: false,
@@ -151,7 +151,7 @@ describe("GitHub repository REST adapter", () => {
     assert.equal(authorization, "Bearer ghs_server_only_token");
     assert.deepEqual(repository, {
       id: 101,
-      fullName: "shipglowz/example",
+      fullName: "shipglows/example",
       defaultBranch: "main",
       private: true,
       archived: false,

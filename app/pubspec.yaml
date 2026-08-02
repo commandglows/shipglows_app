@@ -1,5 +1,5 @@
-name: shipglowz_app
-description: "ShipGlowz Operations Dashboard - local desktop read-only evidence cockpit."
+name: shipglows_app
+description: "ShipGlows Operations Dashboard - local desktop read-only evidence cockpit."
 publish_to: 'none'
 version: 0.1.0+1
 

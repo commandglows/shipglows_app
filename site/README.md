@@ -1,22 +1,22 @@
-# ShipGlowz Public Site
+# ShipGlows Public Site
 
-Canonical Astro source for the public ShipGlowz website.
+Canonical Astro source for the public ShipGlows website.
 
 ## Canonical ownership
 
 - Canonical source: `/home/claude/shipglowz_app/site`
-- Git repository: `shipglowz_app`
-- Vercel project: `shipglowz_site`
-- Previous source `/home/claude/shipglowz/shipglowz-site` was migrated here on 2026-08-02 and must not be recreated or edited as a second public surface.
+- Git repository: `shipglows_app`
+- Vercel project: `shipglows-site`
+- Previous source `/home/claude/shipglowz/shipglows-site` was migrated here on 2026-08-02 and must not be recreated or edited as a second public surface.
 - A deployed URL or `.vercel` link identifies the delivery target; it does not override this source-ownership decision.
 
 Live URL:
 
 ```text
-https://shipflowzsite.vercel.app
+https://shipglows.com
 ```
 
-This site is the public explanation, docs, FAQ, pricing hypothesis, blog, and skill-discovery surface for ShipGlowz. It should stay aligned with the repository README and the governance corpus under `app/shipglowz_data/` until that corpus is normalized at the monorepo root.
+This site is the public explanation, docs, FAQ, pricing hypothesis, blog, and skill-discovery surface for ShipGlows. It should stay aligned with the repository README and the governance corpus under `app/shipglows_data/` until that corpus is normalized at the monorepo root.
 
 ## Commands
 
@@ -63,9 +63,9 @@ pnpm preview
 
 ## Content Rules
 
-- Do not publish `shipglowz_data/technical/` as public site content.
+- Do not publish `shipglows_data/technical/` as public site content.
 - Do not expose secrets, private logs, credentials, private hostnames, or operator-only traces.
-- Keep public claims aligned with `shipglowz_data/business/`, `shipglowz_data/editorial/`, and the current product reality.
-- Keep plugin packaging claims aligned with `shipglowz_data/technical/codex-plugin-packaging.md`.
+- Keep public claims aligned with `shipglows_data/business/`, `shipglows_data/editorial/`, and the current product reality.
+- Keep plugin packaging claims aligned with `shipglows_data/technical/codex-plugin-packaging.md`.
 - French routes may localize navigation and explanatory framing, but skill descriptions stay in English by default because agents consume the English skill contracts more reliably.
 - From the monorepo root, run `pnpm --dir site build` after changing rendered site content or schemas.

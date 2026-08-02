@@ -135,20 +135,20 @@ class AppLocalizations {
     'Connect your project source': 'Connectez la source de votre projet',
     'GitHub connection is optional. Connect it only if you want to pick a repository automatically.':
         'La connexion GitHub est optionnelle. Connecte-la seulement si tu veux sélectionner un dépôt automatiquement.',
-    'How should ShipGlowz discover your GitHub repositories?':
-        'Comment ShipGlowz doit-il découvrir vos dépôts GitHub ?',
-    'Choose whether ShipGlowz should scan every repository now, or only the repositories you select manually.':
-        'Choisissez si ShipGlowz doit scanner tous les dépôts maintenant, ou seulement les dépôts que vous sélectionnez manuellement.',
+    'How should ShipGlows discover your GitHub repositories?':
+        'Comment ShipGlows doit-il découvrir vos dépôts GitHub ?',
+    'Choose whether ShipGlows should scan every repository now, or only the repositories you select manually.':
+        'Choisissez si ShipGlows doit scanner tous les dépôts maintenant, ou seulement les dépôts que vous sélectionnez manuellement.',
     'Import all repositories automatically':
         'Importer tous les dépôts automatiquement',
-    'ShipGlowz will fetch every accessible GitHub repository and read available ShipGlowz metadata automatically.':
-        'ShipGlowz récupérera chaque dépôt GitHub accessible et lira automatiquement les métadonnées ShipGlowz disponibles.',
+    'ShipGlows will fetch every accessible GitHub repository and read available ShipGlows metadata automatically.':
+        'ShipGlows récupérera chaque dépôt GitHub accessible et lira automatiquement les métadonnées ShipGlows disponibles.',
     'I will choose repositories manually':
         'Je choisirai les dépôts manuellement',
-    'ShipGlowz will only connect repositories you explicitly pick.':
-        'ShipGlowz connectera uniquement les dépôts que vous choisissez explicitement.',
-    'Connect GitHub before continuing so ShipGlowz can access the repository list.':
-        'Connectez GitHub avant de continuer pour que ShipGlowz puisse accéder à la liste des dépôts.',
+    'ShipGlows will only connect repositories you explicitly pick.':
+        'ShipGlows connectera uniquement les dépôts que vous choisissez explicitement.',
+    'Connect GitHub before continuing so ShipGlows can access the repository list.':
+        'Connectez GitHub avant de continuer pour que ShipGlows puisse accéder à la liste des dépôts.',
     'GitHub repository preference saved.':
         'Préférence des dépôts GitHub enregistrée.',
     'Failed to save GitHub repository preference.':

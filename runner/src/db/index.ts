@@ -1124,7 +1124,7 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
          SELECT p.id AS projectId
          FROM projects p
          JOIN memberships m ON m.tenant_id = p.tenant_id AND m.project_id = p.id
-         WHERE p.tenant_id = ? AND p.id = ? AND ? = 'shipglowz-app'
+         WHERE p.tenant_id = ? AND p.id = ? AND ? = 'shipglows-app'
            AND m.user_id = ? AND m.capability IN ('read', 'mutate')
          LIMIT 1`,
         tenantId,

@@ -5,8 +5,8 @@
 /// boundaries evolve.
 library;
 
-export 'package:shipglowz_app/providers/providers.dart';
-export 'package:shipglowz_app/presentation/screens/feed/feed_screen.dart';
-export 'package:shipglowz_app/presentation/screens/projects/projects_screen.dart';
-export 'package:shipglowz_app/presentation/screens/settings/integrations_screen.dart';
-export 'package:shipglowz_app/presentation/widgets/project_picker_action.dart';
+export 'package:shipglows_app/providers/providers.dart';
+export 'package:shipglows_app/presentation/screens/feed/feed_screen.dart';
+export 'package:shipglows_app/presentation/screens/projects/projects_screen.dart';
+export 'package:shipglows_app/presentation/screens/settings/integrations_screen.dart';
+export 'package:shipglows_app/presentation/widgets/project_picker_action.dart';

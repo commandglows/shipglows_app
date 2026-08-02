@@ -1,9 +1,9 @@
-import 'package:shipglowz_app/core/app_diagnostics.dart';
-import 'package:shipglowz_app/core/shared_preferences_provider.dart';
-import 'package:shipglowz_app/data/models/app_settings.dart';
-import 'package:shipglowz_app/data/models/auth_session.dart';
-import 'package:shipglowz_app/data/models/project.dart';
-import 'package:shipglowz_app/l10n/app_localizations.dart';
+import 'package:shipglows_app/core/app_diagnostics.dart';
+import 'package:shipglows_app/core/shared_preferences_provider.dart';
+import 'package:shipglows_app/data/models/app_settings.dart';
+import 'package:shipglows_app/data/models/auth_session.dart';
+import 'package:shipglows_app/data/models/project.dart';
+import 'package:shipglows_app/l10n/app_localizations.dart';
 import '../../../legacy_contract.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -18,7 +18,7 @@ import { GitHubAppGitTransport, LocalWorkspaceManager, ProcessGitCommand } from 
 import { WorkspaceCleanupWorker } from "./workspaces/cleanup.js";
 
 const config = loadConfig();
-const databasePath = process.env["RUNNER_DB_PATH"] ?? resolve(config.cwd, ".shipglowz-runner.sqlite");
+const databasePath = process.env["RUNNER_DB_PATH"] ?? resolve(config.cwd, ".shipglows-runner.sqlite");
 const store = await openOperationalStore(databasePath);
 const eventHub = new EventHub();
 const runAdmission = new RunAdmission();
@@ -54,7 +54,7 @@ const fixRuntime = config.integrations.github.enabled && agentRuntime !== undefi
         ),
         new GitHubRestRepositoryApi(github.apiBaseUrl === undefined ? {} : { apiBaseUrl: github.apiBaseUrl }),
       );
-      return LocalWorkspaceManager.create({ root: resolve(config.cwd, ".shipglowz-workspaces") }).then((workspaces) => {
+      return LocalWorkspaceManager.create({ root: resolve(config.cwd, ".shipglows-workspaces") }).then((workspaces) => {
         const transport = new GitHubAppGitTransport(new ProcessGitCommand(), verifier.withVerifiedRepository.bind(verifier));
         return {
           executor: new ManagedFixCommandExecutor(store, agentRuntime, workspaces, transport, eventHub, config.limits, runAdmission),

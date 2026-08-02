@@ -220,7 +220,7 @@ export class CodexAppServerRuntime implements AgentRuntime {
 
   async #initialize(connection: CodexConnection): Promise<void> {
     await connection.request("initialize", {
-      clientInfo: { name: "shipglowz", title: "ShipGlowz", version: "0.1.0" },
+      clientInfo: { name: "shipglows", title: "ShipGlows", version: "0.1.0" },
     });
     await connection.notify("initialized", {});
   }

@@ -2,7 +2,7 @@
 artifact: exploration_report
 metadata_schema_version: "1.0"
 artifact_version: "1.0.0"
-project: "shipglowz_app"
+project: "shipglows_app"
 created: "2026-05-22"
 updated: "2026-05-22"
 status: draft
@@ -14,51 +14,51 @@ risk_level: medium
 security_impact: no
 docs_impact: yes
 linked_systems:
-  - "ShipGlowz Markdown trackers"
-  - "ShipGlowz App Flutter readers"
-  - "ShipGlowz terminal TUI"
-  - "ShipGlowz skills writer protocols"
+  - "ShipGlows Markdown trackers"
+  - "ShipGlows App Flutter readers"
+  - "ShipGlows terminal TUI"
+  - "ShipGlows skills writer protocols"
 evidence:
   - "CLAUDE.md"
   - "AGENT.md"
-  - "shipglowz_data/technical/markdown-source-of-truth.md"
-  - "shipglowz_data/technical/code-docs-map.md"
-  - "shipglowz_data/workflow/TASKS.md"
-  - "shipglowz_data/workflow/AUDIT_LOG.md"
-  - "/home/claude/shipglowz/shipglowz_data/workflow/specs/shipglowz-terminal-tui-v1.md"
-  - "lib/data/shipglowz_sources/parsers/tasks_parser.dart"
-  - "lib/data/shipglowz_sources/parsers/audit_log_parser.dart"
-  - "lib/data/shipglowz_sources/parsers/specs_parser.dart"
+  - "shipglows_data/technical/markdown-source-of-truth.md"
+  - "shipglows_data/technical/code-docs-map.md"
+  - "shipglows_data/workflow/TASKS.md"
+  - "shipglows_data/workflow/AUDIT_LOG.md"
+  - "/home/claude/shipglowz/shipglows_data/workflow/specs/shipglows-terminal-tui-v1.md"
+  - "lib/data/shipglows_sources/parsers/tasks_parser.dart"
+  - "lib/data/shipglows_sources/parsers/audit_log_parser.dart"
+  - "lib/data/shipglows_sources/parsers/specs_parser.dart"
   - "tui/src/sources/readers.ts"
 depends_on: []
 supersedes: []
-next_step: "/sf-spec Traffic-first Markdown operational record format for ShipGlowz tasks specs and audits"
+next_step: "/sf-spec Traffic-first Markdown operational record format for ShipGlows tasks specs and audits"
 ---
 
 # Exploration Report: Traffic-First Markdown Operational Records
 
 ## Starting Question
 
-ShipGlowz already has a dashboard app and a terminal TUI that read Markdown as the source of truth. The question is whether tasks, audits, and spec indexes should keep their current table-oriented formats and let readers normalize them, or whether the canonical Markdown itself should become easier to read directly by humans, TUI views, and a future web app.
+ShipGlows already has a dashboard app and a terminal TUI that read Markdown as the source of truth. The question is whether tasks, audits, and spec indexes should keep their current table-oriented formats and let readers normalize them, or whether the canonical Markdown itself should become easier to read directly by humans, TUI views, and a future web app.
 
 The user preference is that the traffic-light marker should appear at the very beginning of each visible record line, and that project names should remain visible near the beginning so tasks and audits can be filtered or scanned by project.
 
 ## Context Read
 
-- `CLAUDE.md` - confirms `shipglowz_app` is the active ShipGlowz dashboard and Markdown/repo files remain canonical.
-- `AGENT.md` - identifies active source-reader surfaces, including `lib/data/shipglowz_sources/**` and `tui/**`.
-- `shipglowz_data/technical/markdown-source-of-truth.md` - describes Markdown as the canonical operational source.
-- `shipglowz_data/technical/code-docs-map.md` - maps code readers to documentation responsibilities.
-- `/home/claude/shipglowz_data/TASKS.md` - shows global task tracking with dashboard and per-project table sections.
-- `/home/claude/shipglowz_data/AUDIT_LOG.md` - shows the current global audit log as a wide Markdown table.
-- `shipglowz_data/workflow/TASKS.md` - shows local task tracking with legends, top priority, and tables.
-- `shipglowz_data/workflow/AUDIT_LOG.md` - shows local audit tracking as a table with local project inference.
-- `/home/claude/shipglowz/shipglowz_data/workflow/specs/shipglowz-terminal-tui-v1.md` - shows current spec frontmatter plus structured sections and history tables.
-- `lib/data/shipglowz_sources/parsers/tasks_parser.dart` - parses project sections, task status markers, and top priority text.
-- `lib/data/shipglowz_sources/parsers/audit_log_parser.dart` - parses Markdown audit tables with expected columns.
-- `lib/data/shipglowz_sources/parsers/specs_parser.dart` - parses frontmatter and flow sections from specs.
+- `CLAUDE.md` - confirms `shipglows_app` is the active ShipGlows dashboard and Markdown/repo files remain canonical.
+- `AGENT.md` - identifies active source-reader surfaces, including `lib/data/shipglows_sources/**` and `tui/**`.
+- `shipglows_data/technical/markdown-source-of-truth.md` - describes Markdown as the canonical operational source.
+- `shipglows_data/technical/code-docs-map.md` - maps code readers to documentation responsibilities.
+- `/home/claude/shipglows_data/TASKS.md` - shows global task tracking with dashboard and per-project table sections.
+- `/home/claude/shipglows_data/AUDIT_LOG.md` - shows the current global audit log as a wide Markdown table.
+- `shipglows_data/workflow/TASKS.md` - shows local task tracking with legends, top priority, and tables.
+- `shipglows_data/workflow/AUDIT_LOG.md` - shows local audit tracking as a table with local project inference.
+- `/home/claude/shipglowz/shipglows_data/workflow/specs/shipglows-terminal-tui-v1.md` - shows current spec frontmatter plus structured sections and history tables.
+- `lib/data/shipglows_sources/parsers/tasks_parser.dart` - parses project sections, task status markers, and top priority text.
+- `lib/data/shipglows_sources/parsers/audit_log_parser.dart` - parses Markdown audit tables with expected columns.
+- `lib/data/shipglows_sources/parsers/specs_parser.dart` - parses frontmatter and flow sections from specs.
 - `tui/src/sources/readers.ts` - already normalizes task, audit, and spec records into TUI-friendly display lines.
-- ShipGlowz skill references for audit/task workflows - show that several skills write directly to `TASKS.md` and `AUDIT_LOG.md`.
+- ShipGlows skill references for audit/task workflows - show that several skills write directly to `TASKS.md` and `AUDIT_LOG.md`.
 
 ## Internet Research
 
@@ -72,7 +72,7 @@ The current Markdown sources are usable, but they optimize for tabular editing m
 - Each reader has to compensate. The terminal TUI can normalize display, but the future web app would need to duplicate similar presentation logic unless the canonical source is clearer.
 - Writer conventions are fragmented. Audit skills, task workflows, review workflows, and readiness/verification flows can drift if they continue writing different structures for similar operational records.
 
-The key design question is not just visual formatting. It is whether ShipGlowz should define a canonical operational record grammar that every writer and reader can share.
+The key design question is not just visual formatting. It is whether ShipGlows should define a canonical operational record grammar that every writer and reader can share.
 
 ## Option Space
 
@@ -95,8 +95,8 @@ The key design question is not just visual formatting. It is whether ShipGlowz s
 - Example:
 
 ```text
-🔴 [shipglowz_app] 📋 todo - Run /sf-verify for shipglowz-github-managed-clone-indexer.md before closing or shipping the implementation
-🟠 [ShipGlowz] 🔄 in progress - Harden install.sh supply-chain and failure handling
+🔴 [shipglows_app] 📋 todo - Run /sf-verify for shipglows-github-managed-clone-indexer.md before closing or shipping the implementation
+🟠 [ShipGlows] 🔄 in progress - Harden install.sh supply-chain and failure handling
 ```
 
 - Pros:
@@ -116,29 +116,29 @@ The key design question is not just visual formatting. It is whether ShipGlowz s
 - Task examples:
 
 ```text
-🔴 [shipglowz_app] task: Run /sf-verify for shipglowz-github-managed-clone-indexer.md | status: todo | area: github-clone-indexer
-🟠 [ShipGlowz] task: Harden install.sh supply-chain and failure handling | status: in_progress | area: installer
+🔴 [shipglows_app] task: Run /sf-verify for shipglows-github-managed-clone-indexer.md | status: todo | area: github-clone-indexer
+🟠 [ShipGlows] task: Harden install.sh supply-chain and failure handling | status: in_progress | area: installer
 ```
 
 - More compact task variant:
 
 ```text
-🔴 [shipglowz_app] 📋 todo - Run /sf-verify for shipglowz-github-managed-clone-indexer.md
-🟠 [ShipGlowz] 🔄 in progress - Harden install.sh supply-chain and failure handling
+🔴 [shipglows_app] 📋 todo - Run /sf-verify for shipglows-github-managed-clone-indexer.md
+🟠 [ShipGlows] 🔄 in progress - Harden install.sh supply-chain and failure handling
 ```
 
 - Audit examples:
 
 ```text
-🟠 [shipglowz_app] audit: dependencies | date: 2026-04-27 | overall: C | issues: 0/1/2
+🟠 [shipglows_app] audit: dependencies | date: 2026-04-27 | overall: C | issues: 0/1/2
 🔴 [ContentFlow] audit: design-tokens | date: 2026-05-21 | overall: D | issues: 2/4/3
 ```
 
 - Spec examples:
 
 ```text
-🟢 [ShipGlowz] spec: ShipGlowz Terminal TUI V1 | status: ready | next: /sf-verify
-🟡 [shipglowz_app] spec: Markdown artifact governance | status: draft | next: /sf-ready
+🟢 [ShipGlows] spec: ShipGlows Terminal TUI V1 | status: ready | next: /sf-verify
+🟡 [shipglows_app] spec: Markdown artifact governance | status: draft | next: /sf-ready
 ```
 
 - Pros:
@@ -148,7 +148,7 @@ The key design question is not just visual formatting. It is whether ShipGlowz s
   - Lets detailed artifacts keep richer Markdown structures where they add value.
 - Cons:
   - Requires a real migration and compatibility period.
-  - Requires writer-skill updates across several ShipGlowz workflows.
+  - Requires writer-skill updates across several ShipGlows workflows.
   - Exact grammar must be specified carefully to avoid future drift.
   - Human editing is slightly more constrained than freeform Markdown.
 
@@ -217,7 +217,7 @@ The spec should decide whether compact lines are canonical or just display sugar
 
 ## Decision Inputs For Spec
 
-- User story seed: As Diane, I want ShipGlowz tasks, audits, and specs to use a readable traffic-first Markdown convention so raw files, the terminal TUI, and the future web app all show the same operational signals clearly.
+- User story seed: As Diane, I want ShipGlows tasks, audits, and specs to use a readable traffic-first Markdown convention so raw files, the terminal TUI, and the future web app all show the same operational signals clearly.
 - Scope in seed: Define canonical record grammar, update source docs, update parsers, add migration compatibility, and update writer skills that create or modify operational records.
 - Scope out seed: Full redesign of the dashboard UI, unrelated product features, and rewriting detailed spec/audit evidence sections that do not need operational-index formatting.
 - Invariants/constraints seed:
@@ -237,11 +237,11 @@ The spec should decide whether compact lines are canonical or just display sugar
 
 ## Handoff
 
-- Recommended next command: `/sf-spec Traffic-first Markdown operational record format for ShipGlowz tasks specs and audits`
+- Recommended next command: `/sf-spec Traffic-first Markdown operational record format for ShipGlows tasks specs and audits`
 - Why this next step: The direction is clear enough to specify contracts, migration stages, parser compatibility, and writer-skill updates before changing live trackers.
 
 ## Exploration Run History
 
 | Date UTC | Prompt/Focus | Action | Result | Next step |
 |----------|--------------|--------|--------|-----------|
-| 2026-05-22 09:55:56 UTC | Explore readable Markdown conventions for tasks, audits, and specs | Read ShipGlowz App context, current parsers, global/local trackers, technical docs, and related skill workflow references | Recommended traffic-first operational records with structured attributes and compatibility migration | Draft `/sf-spec` |
+| 2026-05-22 09:55:56 UTC | Explore readable Markdown conventions for tasks, audits, and specs | Read ShipGlows App context, current parsers, global/local trackers, technical docs, and related skill workflow references | Recommended traffic-first operational records with structured attributes and compatibility migration | Draft `/sf-spec` |

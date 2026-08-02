@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:shipglowz_app/data/models/app_bootstrap.dart';
-import 'package:shipglowz_app/data/models/app_entitlement.dart';
+import 'package:shipglows_app/data/models/app_bootstrap.dart';
+import 'package:shipglows_app/data/models/app_entitlement.dart';
 
 void main() {
   group('ProductEntitlementSnapshot', () {
@@ -9,7 +9,7 @@ void main() {
       const payload = {
         'product_entitlements': [
           {
-            'product_id': 'shipglowz_app',
+            'product_id': 'shipglows_app',
             'status': 'active',
             'plan_id': 'pro',
             'environment': 'local',
@@ -21,7 +21,7 @@ void main() {
       final bootstrap = AppBootstrap.fromJson(payload);
       final entitlement = bootstrap.entitlement;
 
-      expect(entitlement?.productId, 'shipglowz_app');
+      expect(entitlement?.productId, 'shipglows_app');
       expect(entitlement?.status, ProductEntitlementStatus.active);
       expect(entitlement?.grantsAccess, isTrue);
       expect(entitlement?.planId, 'pro');
@@ -31,7 +31,7 @@ void main() {
     test('parses active trialing entitlement until expiry', () {
       final payload = {
         'entitlement': {
-          'product_id': 'shipglowz_app',
+          'product_id': 'shipglows_app',
           'status': 'trialing',
           'environment': 'local',
           'grants_access': true,
@@ -54,7 +54,7 @@ void main() {
     test('marks expired trialing entitlement inactive', () {
       final payload = {
         'entitlement_snapshot': {
-          'product_id': 'shipglowz_app',
+          'product_id': 'shipglows_app',
           'status': 'trialing',
           'environment': 'local',
           'grants_access': true,
@@ -73,7 +73,7 @@ void main() {
 
     test('keeps top-level bootstrap fields from granting access', () {
       final payload = {
-        'product_id': 'shipglowz_app',
+        'product_id': 'shipglows_app',
         'status': 'active',
         'plan_id': 'pro',
         'global_user_id': 'evil_user',
@@ -89,7 +89,7 @@ void main() {
     test('returns malformed for unsupported entitlement status', () {
       final payload = {
         'product_entitlement': {
-          'product_id': 'shipglowz_app',
+          'product_id': 'shipglows_app',
           'status': 'unexpected_status',
           'environment': 'local',
           'grants_access': true,
@@ -104,7 +104,7 @@ void main() {
     test('fails closed when active snapshot omits environment', () {
       final bootstrap = AppBootstrap.fromJson(const {
         'entitlement': {
-          'product_id': 'shipglowz_app',
+          'product_id': 'shipglows_app',
           'status': 'active',
           'grants_access': true,
         },
@@ -117,7 +117,7 @@ void main() {
     test('fails closed when active snapshot omits grants_access', () {
       final bootstrap = AppBootstrap.fromJson(const {
         'entitlement': {
-          'product_id': 'shipglowz_app',
+          'product_id': 'shipglows_app',
           'status': 'active',
           'environment': 'local',
         },
@@ -130,7 +130,7 @@ void main() {
     test('respects server-owned grants_access false for active status', () {
       final bootstrap = AppBootstrap.fromJson(const {
         'entitlement': {
-          'product_id': 'shipglowz_app',
+          'product_id': 'shipglows_app',
           'status': 'active',
           'environment': 'local',
           'grants_access': false,

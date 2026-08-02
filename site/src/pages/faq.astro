@@ -5,7 +5,7 @@ import NavBar from "../components/NavBar.astro";
 
 const items = [
   {
-    q: "Is ShipGlowz a server tool or an AI workflow framework?",
+    q: "Is ShipGlows a server tool or an AI workflow framework?",
     a: "Both. It handles real server-delivery work while giving agents a stronger execution frame through context, contracts, and verification."
   },
   {
@@ -13,16 +13,16 @@ const items = [
     a: "No. Some skills treat the argument as plain task text, but others use it as a mode switch or a structured input. That is why reading the skill contract matters."
   },
   {
-    q: "Do ShipGlowz skills work with both Codex and Claude Code?",
-    a: "Yes. ShipGlowz maintains skill metadata for both discovery models: Codex starts from each skill name, description, and path, while Claude Code relies on description and optional when_to_use metadata with a 1536-character per-skill listing cap. ShipGlowz treats the stricter shared budget as the rule: descriptions are front-loaded, audited, and kept within the roughly 2% or 8000-character Codex baseline. The current audit target is zero hard violations and zero warnings while keeping discovery text under the shared budget.",
+    q: "Do ShipGlows skills work with both Codex and Claude Code?",
+    a: "Yes. ShipGlows maintains skill metadata for both discovery models: Codex starts from each skill name, description, and path, while Claude Code relies on description and optional when_to_use metadata with a 1536-character per-skill listing cap. ShipGlows treats the stricter shared budget as the rule: descriptions are front-loaded, audited, and kept within the roughly 2% or 8000-character Codex baseline. The current audit target is zero hard violations and zero warnings while keeping discovery text under the shared budget.",
     links: [
       ["Codex skills documentation", "https://developers.openai.com/codex/skills"],
       ["Claude Code skills documentation", "https://code.claude.com/docs/en/skills"]
     ]
   },
   {
-    q: "How do I install ShipGlowz in Codex?",
-    a: "Add the ShipGlowz marketplace source with `codex plugin marketplace add dianedef/ShipGlowz --ref main --sparse .agents/plugins --sparse plugins/shipflow`, restart Codex, open the plugin directory, install `shipglowz` from the ShipGlowz marketplace, then start with `$shipglowz help me choose the right workflow`."
+    q: "How do I install ShipGlows in Codex?",
+    a: "Add the ShipGlows marketplace source with `codex plugin marketplace add dianedef/ShipGlows --ref main --sparse .agents/plugins --sparse plugins/shipglows`, restart Codex, open the plugin directory, install `shipglows` from the ShipGlows marketplace, then start with `$shipglows help me choose the right workflow`."
   },
   {
     q: "What is a skill mode?",
@@ -43,16 +43,16 @@ const items = [
     a: "Because stronger prompting does not remove weak handoffs, stale docs, ambiguous task framing, or drift between product intent and implementation."
   },
   {
-    q: "Does ShipGlowz choose the fastest path by default?",
-    a: "No. ShipGlowz is designed to choose the smallest professional path, not the shortest fragile path. Speed, cost, and convenience only decide when the options are already equivalent on correctness, security, maintainability, relevant performance, and proof."
+    q: "Does ShipGlows choose the fastest path by default?",
+    a: "No. ShipGlows is designed to choose the smallest professional path, not the shortest fragile path. Speed, cost, and convenience only decide when the options are already equivalent on correctness, security, maintainability, relevant performance, and proof."
   },
   {
-    q: "Do I need every ShipGlowz document before I can use it?",
+    q: "Do I need every ShipGlows document before I can use it?",
     a: "No. The framework still helps on smaller work. But the more expensive or ambiguous the work becomes, the more the context layer and decision contracts start to pay off."
   },
   {
-    q: "Does every Markdown file need ShipGlowz frontmatter?",
-    a: "No. ShipGlowz targets explicit active artifacts, not every Markdown file in a repo. Some files can be officialized later, but that should be a conscious doctrine decision."
+    q: "Does every Markdown file need ShipGlows frontmatter?",
+    a: "No. ShipGlows targets explicit active artifacts, not every Markdown file in a repo. Some files can be officialized later, but that should be a conscious doctrine decision."
   },
   {
     q: "Is sf-migrate the skill for metadata migration?",
@@ -64,7 +64,7 @@ const items = [
   },
   {
     q: "Does a direct sf-fix need a bug record?",
-    a: "Usually yes. A direct fix can stay fast, but if it changes real behavior it should create or reuse a BUG-ID, keep a compact shipglowz_data/workflow/BUGS.md pointer, and record the detail in shipglowz_data/workflow/bugs/BUG-ID.md. Only narrow copy-only, cosmetic-only, or duplicate cases should skip that, and the exception has to be stated."
+    a: "Usually yes. A direct fix can stay fast, but if it changes real behavior it should create or reuse a BUG-ID, keep a compact shipglows_data/workflow/BUGS.md pointer, and record the detail in shipglows_data/workflow/bugs/BUG-ID.md. Only narrow copy-only, cosmetic-only, or duplicate cases should skip that, and the exception has to be stated."
   },
   {
     q: "Do TASKS.md, AUDIT_LOG.md, or PROJECTS.md store the chantier history?",
@@ -74,8 +74,8 @@ const items = [
 ---
 
 <BaseLayout
-  title="ShipGlowz FAQ | Direct answers about workflow, docs, and skills"
-  description="Direct answers to the most common ShipGlowz questions: what it is, how skills work, and why the framework is structured the way it is."
+  title="ShipGlows FAQ | Direct answers about workflow, docs, and skills"
+  description="Direct answers to the most common ShipGlows questions: what it is, how skills work, and why the framework is structured the way it is."
 >
   <main class="page-shell">
     <NavBar />
@@ -85,7 +85,7 @@ const items = [
         <p class="eyebrow">FAQ</p>
         <h1 class="page-title">The common questions, without the soft-focus version.</h1>
         <p>
-          ShipGlowz mixes product workflow, documentation discipline, and server
+          ShipGlows mixes product workflow, documentation discipline, and server
           delivery. That combination raises the same questions repeatedly. This
           page answers them directly.
         </p>
@@ -132,7 +132,7 @@ const items = [
         <article class="doc-card">
           <h3>Want the install path?</h3>
           <p>
-            If the question is really how to add ShipGlowz to Codex, the install
+            If the question is really how to add ShipGlows to Codex, the install
             page gives the marketplace command and the first-run path.
           </p>
           <a class="doc-action" href="/install">Open install instructions</a>
@@ -152,7 +152,7 @@ const items = [
           <p>
             Use simple fast tags like <code>#partner</code>,
             <code>#growth</code>, <code>#clarity</code>, or
-            <code>#shipflow</code> instead of rewriting a long corrective
+            <code>#shipglows</code> instead of rewriting a long corrective
             prompt.
           </p>
           <a class="doc-action" href="/docs#recommended-combos">Open the focus-tags cheatsheet</a>

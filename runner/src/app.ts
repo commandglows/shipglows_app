@@ -30,7 +30,7 @@ const ProjectAuthorizationResponseSchema = Type.Object(
     projectId: Type.String({ minLength: 1, maxLength: 128 }),
     access: Type.Literal("read"),
   },
-  { $id: "shipglowz.v1.project.authorization.response", additionalProperties: false },
+  { $id: "shipglows.v1.project.authorization.response", additionalProperties: false },
 );
 
 const ProjectIdentityResolutionResponseSchema = Type.Object(
@@ -39,7 +39,7 @@ const ProjectIdentityResolutionResponseSchema = Type.Object(
     sourceProjectId: Type.String({ minLength: 1, maxLength: 128 }),
     projectId: Type.String({ minLength: 1, maxLength: 128 }),
   },
-  { $id: "shipglowz.v1.project.identity-resolution.response", additionalProperties: false },
+  { $id: "shipglows.v1.project.identity-resolution.response", additionalProperties: false },
 );
 
 const noProjectAccess: ProjectAccessRepository = {
@@ -104,7 +104,7 @@ export function buildRunnerApp({
     { schema: { response: { 200: VersionResponseSchema } } },
     () => ({
       apiVersion: "v1" as const,
-      service: "shipglowz-managed-runner",
+      service: "shipglows-managed-runner",
       serviceVersion: "0.1.0",
       providers: {
         supabase: config.integrations.supabase.enabled,
@@ -137,7 +137,7 @@ export function buildRunnerApp({
       },
     },
     async (request, reply) => {
-      const actor = request.shipglowzActor;
+      const actor = request.shipglowsActor;
       const configuredResolver = projectAccess.resolveProjectId;
       const resolver = configuredResolver === undefined
         ? undefined
@@ -193,12 +193,12 @@ export function buildRunnerApp({
         body: Type.Object({ title: Type.String({ minLength: 1, maxLength: 200 }) }, { additionalProperties: false }),
         headers: Type.Object({ "idempotency-key": Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: true }),
         response: {
-          201: Type.Object({ conversationId: Type.String(), state: Type.Literal("idle") }, { $id: "shipglowz.v1.conversation.create.response", additionalProperties: false }),
+          201: Type.Object({ conversationId: Type.String(), state: Type.Literal("idle") }, { $id: "shipglows.v1.conversation.create.response", additionalProperties: false }),
         },
       },
     },
     async (request, reply) => {
-      const actor = request.shipglowzActor;
+      const actor = request.shipglowsActor;
       const runtime = dependencies.agentRuntime;
       const store = dependencies.conversationStore;
       const idempotencyStore = dependencies.idempotencyStore;
@@ -219,12 +219,12 @@ export function buildRunnerApp({
   );
 
   const conversationCommand = async (request: {
-    readonly shipglowzActor?: { readonly tenantId: string; readonly userId: string };
+    readonly shipglowsActor?: { readonly tenantId: string; readonly userId: string };
     readonly params: { readonly projectId: string; readonly conversationId: string };
     readonly body: { readonly text?: string };
     readonly headers: { readonly "idempotency-key": string };
   }, reply: { status: (code: number) => { send: (body: unknown) => unknown } }, action: "message" | "interrupt" | "resume") => {
-    const actor = request.shipglowzActor;
+    const actor = request.shipglowsActor;
     const runtime = dependencies.agentRuntime;
     const store = dependencies.conversationStore;
     const idempotencyStore = dependencies.idempotencyStore;
@@ -306,13 +306,13 @@ export function buildRunnerApp({
               runId: Type.String(),
               state: Type.Union([Type.Literal("running"), Type.Literal("failed")]),
             },
-            { $id: "shipglowz.v1.audit.response", additionalProperties: false },
+            { $id: "shipglows.v1.audit.response", additionalProperties: false },
           ),
         },
       },
     },
     async (request, reply) => {
-      const actor = request.shipglowzActor;
+      const actor = request.shipglowsActor;
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       if (dependencies.auditStore === undefined || dependencies.agentRuntime === undefined) {
         return reply.status(503).send({ error: { code: "runtimeUnavailable", message: "The managed runtime is unavailable." } });
@@ -383,13 +383,13 @@ export function buildRunnerApp({
               runId: Type.String(),
               state: Type.Union([Type.Literal("running"), Type.Literal("failed")]),
             },
-            { $id: "shipglowz.v1.fix.response", additionalProperties: false },
+            { $id: "shipglows.v1.fix.response", additionalProperties: false },
           ),
         },
       },
     },
     async (request, reply) => {
-      const actor = request.shipglowzActor;
+      const actor = request.shipglowsActor;
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       const fixExecutor = dependencies.fixExecutor;
       if (fixExecutor === undefined) {
@@ -466,13 +466,13 @@ export function buildRunnerApp({
               approvalId: Type.String(),
               state: Type.Union([Type.Literal("approved"), Type.Literal("denied")]),
             },
-            { $id: "shipglowz.v1.approval.response", additionalProperties: false },
+            { $id: "shipglows.v1.approval.response", additionalProperties: false },
           ),
         },
       },
     },
     async (request, reply) => {
-      const actor = request.shipglowzActor;
+      const actor = request.shipglowsActor;
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       if (dependencies.agentRuntime === undefined || dependencies.approvalStore === undefined) {
         return reply.status(503).send({ error: { code: "runtimeUnavailable", message: "The managed runtime is unavailable." } });
@@ -541,7 +541,7 @@ export function buildRunnerApp({
       },
     },
     async (request, reply) => {
-      const actor = request.shipglowzActor;
+      const actor = request.shipglowsActor;
       const eventStore = dependencies.eventStore;
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       if (eventStore === undefined) {

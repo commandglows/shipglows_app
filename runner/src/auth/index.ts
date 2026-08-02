@@ -5,7 +5,7 @@ import { HttpError } from "../contracts/index.js";
 
 declare module "fastify" {
   interface FastifyRequest {
-    shipglowzActor?: ActorContext;
+    shipglowsActor?: ActorContext;
   }
 }
 
@@ -51,7 +51,7 @@ function bearerToken(headers: FastifyRequest["headers"]): string | undefined {
 }
 
 function tenantHeader(headers: FastifyRequest["headers"]): string | undefined {
-  const tenantId = oneHeaderValue(headers, "x-shipglowz-tenant");
+  const tenantId = oneHeaderValue(headers, "x-shipglows-tenant");
   if (tenantId === undefined || tenantId.length === 0 || tenantId.length > 128) return undefined;
   if (!/^[A-Za-z0-9_-]+$/.test(tenantId)) return undefined;
   return tenantId;
@@ -111,6 +111,6 @@ export function authenticationGuard(adapter: AuthenticationAdapter): preHandlerA
     if (actor === null) {
       throw new HttpError(401, "unauthorized", "Authentication is required.");
     }
-    request.shipglowzActor = actor;
+    request.shipglowsActor = actor;
   };
 }

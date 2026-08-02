@@ -975,7 +975,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          context.tr('How should ShipGlowz discover your GitHub repositories?'),
+          context.tr('How should ShipGlows discover your GitHub repositories?'),
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -983,7 +983,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
         const SizedBox(height: 6),
         Text(
           context.tr(
-            'Choose whether ShipGlowz should scan every repository now, or only the repositories you select manually.',
+            'Choose whether ShipGlows should scan every repository now, or only the repositories you select manually.',
           ),
           style: theme.textTheme.bodySmall?.copyWith(
             color: colorScheme.onSurfaceVariant,
@@ -1004,7 +1004,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
                 ),
                 subtitle: Text(
                   context.tr(
-                    'ShipGlowz will fetch every accessible GitHub repository and read available ShipGlowz metadata automatically.',
+                    'ShipGlows will fetch every accessible GitHub repository and read available ShipGlows metadata automatically.',
                   ),
                 ),
               ),
@@ -1015,7 +1015,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
                 title: Text(context.tr('I will choose repositories manually')),
                 subtitle: Text(
                   context.tr(
-                    'ShipGlowz will only connect repositories you explicitly pick.',
+                    'ShipGlows will only connect repositories you explicitly pick.',
                   ),
                 ),
               ),

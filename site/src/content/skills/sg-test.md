@@ -23,9 +23,9 @@ what_you_give:
 what_you_get:
   - "Step-by-step manual test instructions"
   - "Structured result choices for common failure modes"
-  - "A compact shipglowz_data/workflow/TEST_LOG.md record for the campaign"
-  - "A compact shipglowz_data/workflow/BUGS.md index entry when the test fails"
-  - "A per-bug dossier under shipglowz_data/workflow/bugs/BUG-ID.md"
+  - "A compact shipglows_data/workflow/TEST_LOG.md record for the campaign"
+  - "A compact shipglows_data/workflow/BUGS.md index entry when the test fails"
+  - "A per-bug dossier under shipglows_data/workflow/bugs/BUG-ID.md"
   - "Redacted evidence references under test-evidence/BUG-ID/ when needed"
   - "A route into sg-browser when a narrow non-auth browser check is enough"
   - "A clean route into sg-fix or sg-auth-debug when the failure needs diagnosis"
@@ -51,7 +51,7 @@ order: 65
 
 ## The Missing Proof Layer
 
-ShipGlowz already has strong gates for planning, implementation, technical checks, and readiness review:
+ShipGlows already has strong gates for planning, implementation, technical checks, and readiness review:
 
 ```text
 sg-spec -> sg-ready -> sg-start -> sg-check -> sg-verify
@@ -134,15 +134,15 @@ sg-spec
 
 The skill should preserve three different kinds of memory:
 
-- `shipglowz_data/workflow/TEST_LOG.md` for compact campaigns, scenarios, environments, and results
-- `shipglowz_data/workflow/BUGS.md` for a compact bug index with status, severity, owner, and links
-- `shipglowz_data/workflow/bugs/BUG-ID.md` for the full dossier, including reproduction, expected and observed behavior, diagnosis, fixes, retests, and next action
+- `shipglows_data/workflow/TEST_LOG.md` for compact campaigns, scenarios, environments, and results
+- `shipglows_data/workflow/BUGS.md` for a compact bug index with status, severity, owner, and links
+- `shipglows_data/workflow/bugs/BUG-ID.md` for the full dossier, including reproduction, expected and observed behavior, diagnosis, fixes, retests, and next action
 
 Evidence that is too large or sensitive should be redacted and stored by path in `test-evidence/BUG-ID/`, not pasted into the trackers. That split matters. A test is evidence. A bug is work to resolve. Keeping them separate makes future agent sessions more precise.
 
 ## Checklist-First Testing
 
-When a spec provides a manual checklist artifact under `shipglowz_data/workflow/test-checklists/<scope>.md`, `sg-test` should use it as the primary scenario source instead of inventing a new list from scratch. The checklist is parsed by ShipGlowz tooling, so existing statuses, observations, evidence pointers, and bug links become durable test state.
+When a spec provides a manual checklist artifact under `shipglows_data/workflow/test-checklists/<scope>.md`, `sg-test` should use it as the primary scenario source instead of inventing a new list from scratch. The checklist is parsed by ShipGlows tooling, so existing statuses, observations, evidence pointers, and bug links become durable test state.
 
 The checklist contract should include:
 

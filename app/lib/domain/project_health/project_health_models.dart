@@ -1,5 +1,5 @@
-import '../../data/shipglowz_sources/source_models.dart';
-import '../../data/shipglowz_sources/parsers/parsed_models.dart';
+import '../../data/shipglows_sources/source_models.dart';
+import '../../data/shipglows_sources/parsers/parsed_models.dart';
 
 enum DependencyPosture {
   neverChecked,

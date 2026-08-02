@@ -170,7 +170,7 @@ export class AuditCommandService {
       });
       const turn = await this.runtime.startTurn({
         runtimeSessionId: session.runtimeSessionId,
-        message: `Run the ShipGlowz audit scope: ${input.scope}`,
+        message: `Run the ShipGlows audit scope: ${input.scope}`,
       });
       this.store.checkpointRun({
         tenantId: input.tenantId,

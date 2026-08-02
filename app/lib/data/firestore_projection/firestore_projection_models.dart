@@ -1,4 +1,4 @@
-enum ShipGlowzProjectRole { owner, viewer }
+enum ShipGlowsProjectRole { owner, viewer }
 
 enum ProjectionStatus { fresh, stale, indexing, partial, accessLost, error }
 
@@ -108,8 +108,8 @@ extension IndexedFileParseStatusWireName on IndexedFileParseStatus {
   };
 }
 
-class ShipGlowzUserProfile {
-  const ShipGlowzUserProfile({
+class ShipGlowsUserProfile {
+  const ShipGlowsUserProfile({
     required this.uid,
     required this.email,
     required this.displayName,
@@ -138,8 +138,8 @@ class ShipGlowzUserProfile {
   };
 }
 
-class ShipGlowzProjectRecord {
-  const ShipGlowzProjectRecord({
+class ShipGlowsProjectRecord {
+  const ShipGlowsProjectRecord({
     required this.projectId,
     required this.githubOwner,
     required this.githubRepo,
@@ -190,7 +190,7 @@ class ProjectMemberRecord {
   });
 
   final String uid;
-  final ShipGlowzProjectRole role;
+  final ShipGlowsProjectRole role;
   final DateTime addedAt;
 
   Map<String, Object?> toMap() => <String, Object?>{
@@ -370,7 +370,7 @@ class UserProjectRef {
   });
 
   final String projectId;
-  final ShipGlowzProjectRole role;
+  final ShipGlowsProjectRole role;
   final ProjectionStatus projectionStatus;
   final DateTime updatedAt;
 

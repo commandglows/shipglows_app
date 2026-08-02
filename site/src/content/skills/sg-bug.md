@@ -2,13 +2,13 @@
 title: "sg-bug"
 slug: "sg-bug"
 tagline: "Run a bug from report to dossier, fix, retest, verification, and ship risk without skipping gates."
-summary: "A professional bug loop executor that reads bug state and continues through the right ShipGlowz owner skills when safe."
+summary: "A professional bug loop executor that reads bug state and continues through the right ShipGlows owner skills when safe."
 category: "Build & Fix"
 audience:
   - "Founders managing bugs across multiple agent sessions"
   - "Developers who want one command to carry bug state safely"
   - "Operators using BUG-ID dossiers as durable project memory"
-problem: "ShipGlowz already has bug capture, fix, retest, verification, and shipping gates, but the operator still has to remember which command comes next and when the loop can continue safely."
+problem: "ShipGlows already has bug capture, fix, retest, verification, and shipping gates, but the operator still has to remember which command comes next and when the loop can continue safely."
 outcome: "The bug loop continues through the right owner skills when safe, or reports the blocked next command based on dossier status, severity, evidence needs, development mode, and ship risk."
 founder_angle: "This skill keeps bug work from turning into scattered chat memory. It protects speed by making the next action obvious, and it protects quality by refusing unsafe closure."
 when_to_use:
@@ -31,10 +31,10 @@ example_prompts:
   - "/sg-bug --ship BUG-2026-05-03-001"
 argument_modes:
   - argument: "no argument"
-    effect: "Summarizes actionable bug state from shipglowz_data/workflow/BUGS.md and recent dossiers."
+    effect: "Summarizes actionable bug state from shipglows_data/workflow/BUGS.md and recent dossiers."
     consequence: "Continues the highest-priority safe bug action when possible instead of editing records in the master thread."
   - argument: "BUG-ID"
-    effect: "Reads shipglowz_data/workflow/BUGS.md and shipglowz_data/workflow/bugs/BUG-ID.md, then continues based on status and severity when safe."
+    effect: "Reads shipglows_data/workflow/BUGS.md and shipglows_data/workflow/bugs/BUG-ID.md, then continues based on status and severity when safe."
     consequence: "Keeps the dossier as the source of truth."
   - argument: "--retest BUG-ID"
     effect: "Continues through sg-test --retest BUG-ID."
@@ -61,15 +61,15 @@ order: 18
 
 The professional bug model already splits work into compact trackers and detailed dossiers:
 
-- `shipglowz_data/workflow/TEST_LOG.md` records manual test runs.
-- `shipglowz_data/workflow/BUGS.md` keeps the compact bug index.
-- `shipglowz_data/workflow/bugs/BUG-ID.md` holds the full dossier.
+- `shipglows_data/workflow/TEST_LOG.md` records manual test runs.
+- `shipglows_data/workflow/BUGS.md` keeps the compact bug index.
+- `shipglows_data/workflow/bugs/BUG-ID.md` holds the full dossier.
 - `test-evidence/BUG-ID/` stores redacted larger evidence when needed.
 
 `sg-bug` sits above the phase skills and answers one question:
 
 ```text
-What should happen next for this bug, and can ShipGlowz safely continue it now?
+What should happen next for this bug, and can ShipGlows safely continue it now?
 ```
 
 It reads the bug state and continues through the owner skill when safe. It does not patch code in the master thread, mutate the dossier directly, or declare closure by itself.

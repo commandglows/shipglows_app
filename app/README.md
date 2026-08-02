@@ -1,12 +1,12 @@
-# ShipGlowz Operations Dashboard App
+# ShipGlows Operations Dashboard App
 
-Local-first Flutter app for ShipGlowz operational visibility.
+Local-first Flutter app for ShipGlows operational visibility.
 
 ## Scope (V1)
 
-- Read-only dashboard for ShipGlowz evidence sources.
+- Read-only dashboard for ShipGlows evidence sources.
 - Android and Web targets.
-- No write-back into ShipGlowz trackers or ledgers.
+- No write-back into ShipGlows trackers or ledgers.
 - No auth, no cloud sync, no backend service.
 - Legacy ContentFlow code remains in the repo only as migration/reference material.
 
@@ -14,13 +14,13 @@ Local-first Flutter app for ShipGlowz operational visibility.
 
 The app reads:
 
-- `/home/claude/shipglowz_data/PROJECTS.md`
-- `/home/claude/shipglowz_data/AUDIT_LOG.md`
-- `/home/claude/shipglowz_data/TASKS.md`
-- `/home/claude/shipglowz_data/OPERATIONS_LOG.md`
-- `/home/claude/shipglowz_data/DEPENDENCY_LOG.md`
-- `/home/claude/shipglowz/shipglowz_data/workflow/specs/*.md`
-- Project-local governance docs (`shipglowz_data/workflow/AUDIT_LOG.md`, `shipglowz_data/workflow/TASKS.md`, `CHANGELOG.md`, `shipglowz_data/business/business.md`, `shipglowz_data/business/product.md`, `shipglowz_data/technical/guidelines.md`, `shipglowz_data/technical/architecture.md`) when listed in `PROJECTS.md`
+- `/home/claude/shipglows_data/PROJECTS.md`
+- `/home/claude/shipglows_data/AUDIT_LOG.md`
+- `/home/claude/shipglows_data/TASKS.md`
+- `/home/claude/shipglows_data/OPERATIONS_LOG.md`
+- `/home/claude/shipglows_data/DEPENDENCY_LOG.md`
+- `/home/claude/shipglowz/shipglows_data/workflow/specs/*.md`
+- Project-local governance docs (`shipglows_data/workflow/AUDIT_LOG.md`, `shipglows_data/workflow/TASKS.md`, `CHANGELOG.md`, `shipglows_data/business/business.md`, `shipglows_data/business/product.md`, `shipglows_data/technical/guidelines.md`, `shipglows_data/technical/architecture.md`) when listed in `PROJECTS.md`
 
 ## Security and File Access
 
@@ -35,9 +35,9 @@ Web builds are unsupported for direct local file reads. The app surfaces an expl
 
 ## Tracker vs Ledger Model
 
-- `shipglowz_data/workflow/TASKS.md` and `shipglowz_data/workflow/AUDIT_LOG.md` remain human trackers.
+- `shipglows_data/workflow/TASKS.md` and `shipglows_data/workflow/AUDIT_LOG.md` remain human trackers.
 - `OPERATIONS_LOG.md` and `DEPENDENCY_LOG.md` are machine-readable append-only ledgers.
-- Event writes must go through `/home/claude/shipglowz/tools/append_shipglowz_event.py`.
+- Event writes must go through `/home/claude/shipglowz/tools/append_shipglows_event.py`.
 
 ## Run
 
@@ -49,12 +49,12 @@ flutter run -d chrome
 
 ## Terminal TUI
 
-The ShipGlowz terminal dashboard is maintained with the ShipGlowz skills under `/home/claude/shipglowz/tui`, not in this Flutter app repo.
+The ShipGlows terminal dashboard is maintained with the ShipGlows skills under `/home/claude/shipglowz/tui`, not in this Flutter app repo.
 
 One-time command install:
 
 ```bash
-/home/claude/shipglowz/tui/scripts/install-shipglowz-tui.sh
+/home/claude/shipglowz/tui/scripts/install-shipglows-tui.sh
 sftui
 ```
 
@@ -66,11 +66,11 @@ bun run dev
 
 - Requires Bun (OpenTUI is Bun-only for this V1).
 - Isolated dependency boundary: no OpenTUI dependency is added to this Flutter root.
-- Scope is read-only inspection of ShipGlowz sources; no write-back/actions.
+- Scope is read-only inspection of ShipGlows sources; no write-back/actions.
 
 ## Runtime Targets
 
-The default runtime is ShipGlowz:
+The default runtime is ShipGlows:
 
 ```bash
 flutter run -d chrome
@@ -84,12 +84,12 @@ flutter run -d chrome --dart-define=APP_TARGET=contentflow
 ```
 
 Do not use the legacy target as the product direction. Its modules are classified
-in `shipglowz_data/technical/legacy-contentflow-inventory.md`.
+in `shipglows_data/technical/legacy-contentflow-inventory.md`.
 
 ## Future Auth, Sync, And Backend Work
 
-ShipGlowz will likely need multi-user auth, feedback, BYOK/OpenRouter, and a
-projection database later. Those are future specs under `shipglowz_data/workflow/specs/`, not active V1 behavior.
+ShipGlows will likely need multi-user auth, feedback, BYOK/OpenRouter, and a
+projection database later. Those are future specs under `shipglows_data/workflow/specs/`, not active V1 behavior.
 
 Current data rule:
 
@@ -103,8 +103,8 @@ Current data rule:
 ## Validation
 
 ```bash
-python3 /home/claude/shipglowz/tools/append_shipglowz_event.py --help
-flutter test test/data/shipglowz_sources/source_path_policy_test.dart test/data/shipglowz_sources/source_file_reader_test.dart
+python3 /home/claude/shipglowz/tools/append_shipglows_event.py --help
+flutter test test/data/shipglows_sources/source_path_policy_test.dart test/data/shipglows_sources/source_file_reader_test.dart
 flutter analyze
 ```
 
@@ -115,4 +115,4 @@ user/project ownership. The provider is not final; Firebase/Firestore and
 Firebase Auth are candidates to be reviewed per dedicated spec. FastAPI is kept
 as legacy context and is not active in V1.
 
-See `shipglowz_data/technical/auth-sync-v2.md`.
+See `shipglows_data/technical/auth-sync-v2.md`.

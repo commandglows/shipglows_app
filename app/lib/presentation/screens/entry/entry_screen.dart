@@ -658,23 +658,23 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
       final title = isUnauthorized
           ? 'Reconnect your account'
           : isNoEntitlement
-          ? 'Account recognized without ShipGlowz entitlement'
+          ? 'Account recognized without ShipGlows entitlement'
           : isPending
           ? 'Access pending review'
           : isUnavailable
           ? 'FastAPI is unavailable'
           : isInactive
-          ? 'ShipGlowz access is inactive'
+          ? 'ShipGlows access is inactive'
           : 'FastAPI is unavailable';
       final description = isUnauthorized
           ? 'Your Clerk session reached the app, but FastAPI rejected the bootstrap request. Sign in again to refresh the bearer token.'
           : isNoEntitlement
-          ? 'Your Clerk session is active, but this account has no active ShipGlowz entitlement for product_id shipglowz_app. Open the support flow or request access to continue.'
+          ? 'Your Clerk session is active, but this account has no active ShipGlows entitlement for product_id shipglows_app. Open the support flow or request access to continue.'
           : isPending
           ? 'Your entitlement is waiting for review. This is recoverable, but protected data is not accessible yet.'
           : isUnavailable
           ? 'Your Clerk session is active, but ContentFlow cannot load product state from FastAPI right now. Use the degraded mode tools to inspect backend status, retry, or wait for the API to recover.'
-          : 'Your ShipGlowz entitlement is inactive (revoked, expired, refunded, or inactive). Contact support to restore access.';
+          : 'Your ShipGlows entitlement is inactive (revoked, expired, refunded, or inactive). Contact support to restore access.';
 
       return _card(
         eyebrow: stage == AppAccessStage.apiUnavailable

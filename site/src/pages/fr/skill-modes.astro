@@ -7,7 +7,7 @@ import { pathFor } from "../../i18n/ui";
 const locale = "fr";
 
 const masterSkills = [
-  ["shipflow <instruction>", "Commande recommandée quand vous voulez que ShipGlowz choisisse la route."],
+  ["shipglows <instruction>", "Commande recommandée quand vous voulez que ShipGlows choisisse la route."],
   ["sf-build <story, bug, or goal>", "Point d’entrée direct pour un travail produit, code, docs ou site non trivial."],
   ["sf-maintain [mode]", "Entretien récurrent du projet : bugs, docs, dépendances, checks, audits, fixes et routage de ship."],
   ["sf-deploy [target or mode]", "Confiance de release après implémentation, quand checks, push, déploiement et preuve navigateur doivent rester reliés."],
@@ -24,8 +24,8 @@ const modeTypes = [
 ---
 
 <BaseLayout
-  title="Modes de skills | Aide au lancement ShipGlowz"
-  description="Aide pratique ShipGlowz pour les skills maîtres, les skills de support et les modes d’arguments qui changent le workflow."
+  title="Modes de skills | Aide au lancement ShipGlows"
+  description="Aide pratique ShipGlows pour les skills maîtres, les skills de support et les modes d’arguments qui changent le workflow."
   locale={locale}
   canonicalPath="/fr/skill-modes"
   alternatePath="/skill-modes"
@@ -40,8 +40,8 @@ const modeTypes = [
         <p>
           Certains arguments décrivent le travail, certains changent le mode et
           d’autres sélectionnent une cible structurée. Utilisez
-          <code> shipflow &lt;instruction&gt; </code> quand vous voulez laisser
-          ShipGlowz router, puis appelez directement un skill maître quand vous
+          <code> shipglows &lt;instruction&gt; </code> quand vous voulez laisser
+          ShipGlows router, puis appelez directement un skill maître quand vous
           connaissez déjà la voie.
         </p>
       </div>
@@ -51,7 +51,7 @@ const modeTypes = [
       <div class="pricing-grid">
         <article class="price-card">
           <p class="eyebrow">Version courte</p>
-          <h2>Utilisez <code>shipflow &lt;instruction&gt;</code> si vous ne choisissez pas manuellement.</h2>
+          <h2>Utilisez <code>shipglows &lt;instruction&gt;</code> si vous ne choisissez pas manuellement.</h2>
           <p>
             Le routeur répond directement aux questions simples ou transmet le
             fil au skill sélectionné. S’il n’existe pas de route sûre, il pose
@@ -144,7 +144,7 @@ const modeTypes = [
         <p>
           <code>%Ariane update les docs internes et surfaces externes #Adhesion</code>
           signifie : Ariane structure le plan, le tag garde la perception
-          utilisateur visible, et ShipGlowz route le travail vers le bon owner.
+          utilisateur visible, et ShipGlows route le travail vers le bon owner.
         </p>
       </div>
     </section>

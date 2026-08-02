@@ -988,8 +988,8 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
           backendHealth: health,
           bootstrap: bootstrap,
           message: entitlement == null
-              ? 'No ShipGlowz entitlement snapshot was returned by the backend.'
-              : 'ShipGlowz entitlement snapshot is missing for this user.',
+              ? 'No ShipGlows entitlement snapshot was returned by the backend.'
+              : 'ShipGlows entitlement snapshot is missing for this user.',
           checkedAt: DateTime.now(),
         );
       }
@@ -1000,7 +1000,7 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
           backendHealth: health,
           bootstrap: bootstrap,
           message:
-              'ShipGlowz entitlement environment does not match this runtime.',
+              'ShipGlows entitlement environment does not match this runtime.',
           checkedAt: DateTime.now(),
         );
       }
@@ -1014,7 +1014,7 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
           bootstrap: bootstrap,
           message:
               entitlement.reason ??
-              'Unable to verify ShipGlowz entitlement snapshot from backend.',
+              'Unable to verify ShipGlows entitlement snapshot from backend.',
           checkedAt: DateTime.now(),
         );
       }
@@ -1026,7 +1026,7 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
           bootstrap: bootstrap,
           message:
               entitlement.reason ??
-              'ShipGlowz entitlement is pending human review.',
+              'ShipGlows entitlement is pending human review.',
           checkedAt: DateTime.now(),
         );
       }
@@ -1041,7 +1041,7 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
           bootstrap: bootstrap,
           message:
               entitlement.reason ??
-              'ShipGlowz entitlement is not currently active.',
+              'ShipGlows entitlement is not currently active.',
           checkedAt: DateTime.now(),
         );
       }
@@ -1052,7 +1052,7 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
           backendHealth: health,
           bootstrap: bootstrap,
           message:
-              'Active ShipGlowz entitlement could not be resolved from backend payload.',
+              'Active ShipGlows entitlement could not be resolved from backend payload.',
           checkedAt: DateTime.now(),
         );
       }
@@ -1065,7 +1065,7 @@ class AppAccessNotifier extends AsyncNotifier<AppAccessState> {
           stage: AppAccessStage.entitlementInactive,
           backendHealth: health,
           bootstrap: bootstrap,
-          message: 'ShipGlowz entitlement is not active.',
+          message: 'ShipGlows entitlement is not active.',
           checkedAt: DateTime.now(),
         );
       }

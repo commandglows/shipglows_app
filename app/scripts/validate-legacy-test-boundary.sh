@@ -6,11 +6,11 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 cd "$ROOT_DIR"
 
-echo "== ShipGlowz Legacy Test Boundary Check =="
+echo "== ShipGlows Legacy Test Boundary Check =="
 
 set +e
 matches=$(rg -n \
-  "^import ['\"]package:shipglowz_app/(providers/providers\\.dart|data/services/[^'\"]+|presentation/screens/[^'\"]+|presentation/widgets/[^'\"]+)['\"]" \
+  "^import ['\"]package:shipglows_app/(providers/providers\\.dart|data/services/[^'\"]+|presentation/screens/[^'\"]+|presentation/widgets/[^'\"]+)['\"]" \
   test \
   --glob '!test/legacy_contract.dart')
 status=$?

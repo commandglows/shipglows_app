@@ -2,15 +2,15 @@
 title: "sg-build"
 slug: "sg-build"
 tagline: "Run non-trivial work from story to spec, build, verification, closeout, and ship without making the user drive every gate."
-summary: "The master user-facing lifecycle orchestrator for carrying a story, bug, or goal through ShipGlowz's spec, readiness, implementation, verification, onboarding consideration, documentation, closure, and shipping gates."
+summary: "The master user-facing lifecycle orchestrator for carrying a story, bug, or goal through ShipGlows's spec, readiness, implementation, verification, onboarding consideration, documentation, closure, and shipping gates."
 category: "Build & Fix"
 audience:
   - "Founders who want the work handled end to end"
   - "Operators who do not want to manually chain every lifecycle skill"
-  - "Teams using ShipGlowz specs as durable chantier memory"
+  - "Teams using ShipGlows specs as durable chantier memory"
 problem: "Non-trivial work often stalls because the user has to remember when to spec, verify, update docs, close trackers, and ship."
-outcome: "You get a single high-level entrypoint that routes the work through the right ShipGlowz gates and reports the result without hiding proof gaps."
-founder_angle: "This skill is the normal launch point when the outcome matters more than the individual commands. It keeps the user in business decisions while ShipGlowz handles execution sequence, evidence, closure, and the quality bar."
+outcome: "You get a single high-level entrypoint that routes the work through the right ShipGlows gates and reports the result without hiding proof gaps."
+founder_angle: "This skill is the normal launch point when the outcome matters more than the individual commands. It keeps the user in business decisions while ShipGlows handles execution sequence, evidence, closure, and the quality bar."
 when_to_use:
   - "When you want a feature, bug fix, site update, docs change, or product improvement handled as a complete workstream"
   - "When the task may need spec, readiness, implementation, verification, docs alignment, and ship routing"
@@ -21,7 +21,7 @@ what_you_give:
   - "Any business constraint that changes scope, risk, timing, or release posture"
   - "Optional report mode only when you need detailed agent handoff evidence"
 what_you_get:
-  - "A routed ShipGlowz lifecycle instead of a pile of manual commands"
+  - "A routed ShipGlows lifecycle instead of a pile of manual commands"
   - "A route that optimizes for correctness, security, maintainability, relevant performance, and proof before speed"
   - "A clear agents status when delegated execution is requested or materially affects trust"
   - "Spec and readiness handling when the task is non-trivial"
@@ -71,7 +71,7 @@ order: 20
 
 Use `sg-build` when the useful request is the outcome, not the individual phase.
 It is designed to keep the user at the level of scope, product tradeoffs, and
-ship risk while ShipGlowz handles the execution sequence underneath.
+ship risk while ShipGlows handles the execution sequence underneath.
 When a decision matters, it asks a numbered question with why, a responsible
 recommendation, and practical options instead of forcing the user to infer the
 technical tradeoff.

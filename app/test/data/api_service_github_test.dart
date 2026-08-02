@@ -1,4 +1,4 @@
-import 'package:shipglowz_app/core/api_service_contract.dart';
+import 'package:shipglows_app/core/api_service_contract.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
