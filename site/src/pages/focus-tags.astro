@@ -1,0 +1,95 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+import { pathFor } from "../i18n/ui";
+
+const locale = "en";
+
+const families = [
+  ["Business", "Use these when you want the agent to think in offer, growth, ROI, funnel, or buyer terms."],
+  ["Content", "Use these when you want the agent to improve clarity, CTA, FAQ handling, repurposing, or discoverability."],
+  ["Governance", "Use these when you want the agent to follow the canonical source, reduce drift, and respect ownership."],
+  ["Execution", "Use these when you want tighter quality, proof, scope, and routing discipline."],
+  ["System", "Use these when the conversation is about ShipGlowz itself rather than the current project repo."]
+];
+
+const combos = [
+  ["#offer #cta #clarity", "Make the value proposition and next action obvious."],
+  ["#partner #growth #roi", "Push toward the highest-leverage business move."],
+  ["#founder #growth #clarity", "Treat the user as a business owner and optimize for useful decisions."],
+  ["#shipflow-owner #partner #no-drift", "Treat ShipGlowz as a portfolio asset and avoid drifting across scope."],
+  ["#end-user #clarity #quality", "Make the solution easier and safer for normal users."],
+  ["#faq #trust #clarity", "Answer objections directly without losing credibility."],
+  ["#canon #drift #single-source", "Repair the source of truth instead of patching duplicates."],
+  ["#shipflow #proof #contract", "Work on ShipGlowz itself and strengthen doctrine or proofability."]
+];
+---
+
+<BaseLayout
+  title="Focus Tags | ShipGlowz"
+  description="A lightweight cheatsheet for steering ShipGlowz with simple tags instead of rewriting long prompts."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section" id="business-recenter-tags">
+      <div class="section-heading">
+        <p class="eyebrow">Focus Tags</p>
+        <h1 class="page-title">Steer the AI with simple, fast tags.</h1>
+        <p>
+          When you do not want to rewrite the whole brief, use a small tag pack
+          to recenter the agent on the right business, content, or governance
+          posture. These tags are lightweight. They do not replace the normal
+          owner-skill routing.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/docs#recommended-combos">See recommended combos</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/shipglowz_data/technical/operator-guides/focus-tags-cheatsheet.md">Open the Markdown cheatsheet</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        {families.map(([title, body]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section" id="system-recenter-tags">
+      <div class="section-heading">
+        <p class="eyebrow">Quick Combos</p>
+        <h2>Start from a proven pack instead of inventing one every time.</h2>
+      </div>
+      <div class="doc-grid">
+        {combos.map(([tags, body]) => (
+          <article class="doc-card">
+            <h3><code>{tags}</code></h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Next Step</p>
+        <h2>Use tags when you want faster recentering, not heavier prompting.</h2>
+        <p>
+          For the full public reference, jump back to the docs overview or the
+          Markdown cheatsheet.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href={pathFor("/docs", locale)}>Open the docs overview</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/shipglowz_data/technical/operator-guides/focus-tags-cheatsheet.md">Open the full cheatsheet</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

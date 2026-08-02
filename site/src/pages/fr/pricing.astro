@@ -1,0 +1,75 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import { pathFor } from "../../i18n/ui";
+
+const locale = "fr";
+---
+
+<BaseLayout
+  title="Prix ShipGlowz | Hypothèse actuelle"
+  description="Hypothèse actuelle de prix et de packaging pour ShipGlowz."
+  locale={locale}
+  canonicalPath="/fr/pricing"
+  alternatePath="/pricing"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/pricing" />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Hypothèse tarifaire</p>
+        <h1 class="page-title">Le packaging reste ouvert. Le parcours d’achat doit rester simple.</h1>
+        <p>
+          ShipGlowz est actuellement positionné pour les fondateurs solo, avec
+          un usage adjacent pour petites équipes techniques et builders
+          autonomes. Cela implique un cycle de décision court, une valeur
+          lisible et une histoire produit fondée sur la preuve.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">Offre probable</p>
+          <h2>Le logiciel d’abord</h2>
+          <p>
+            La direction la plus forte aujourd’hui est un logiciel packagé avec
+            un chemin self-serve clair, pas un tunnel lourd piloté par du
+            consulting.
+          </p>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">Ce qui justifierait le paiement</p>
+          <h2>Moins d’ambiguïté dans le vrai travail de livraison</h2>
+          <p>
+            La valeur n’est pas la nouveauté abstraite de l’IA. C’est moins de
+            passages de relais faibles, moins de reconstruction de contexte, des
+            contrats d’exécution plus clairs et des opérations serveur plus
+            fluides.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">À lire ensuite</p>
+        <h2>Si le prix compte pour vous, lisez les contrats derrière l’offre.</h2>
+        <p>
+          La logique tarifaire dépend de l’audience, de la proposition de
+          valeur, du périmètre workflow et de la promesse publique déjà définis
+          dans les docs.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href={pathFor("/docs", locale)}>Parcourir les docs</a>
+          <a class="button button-secondary" href={pathFor("/docs#decision-contracts", locale)}>Voir les contrats</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

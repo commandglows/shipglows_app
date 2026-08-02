@@ -5,20 +5,20 @@ import NavBar from "../components/NavBar.astro";
 ---
 
 <BaseLayout
-  title="Reliability Guide | ContentFlow App"
-  description="Practical notes on auth and resilience behavior in ContentFlow App."
+  title="Remote MCP OAuth Tunnel | ShipGlowz Guide"
+  description="Why remote MCP OAuth login needs a local SSH callback tunnel when Codex runs on a server and the browser receives a localhost callback."
 >
   <main class="page-shell">
     <NavBar />
 
     <section class="section">
       <div class="section-heading">
-        <p class="eyebrow">Resilience Notes</p>
-        <h1 class="page-title">Reliable authentication and degraded workflows.</h1>
+        <p class="eyebrow">Remote MCP OAuth</p>
+        <h1 class="page-title">Remote agents still need a local OAuth callback path.</h1>
         <p>
-          This site keeps a practical model for operational behavior: auth entrypoints,
-          session continuity, and offline continuity paths are documented separately
-          from full external publishing channels.
+          When Codex runs on a server, MCP OAuth can fail for a simple reason:
+          the browser callback points to local `127.0.0.1`, but the login
+          process that needs that callback is running somewhere else.
         </p>
       </div>
     </section>
@@ -26,52 +26,257 @@ import NavBar from "../components/NavBar.astro";
     <section class="section">
       <div class="pricing-grid">
         <article class="price-card">
-          <p class="eyebrow">Auth entrypoints</p>
-          <h2>Web auth is the active production path</h2>
+          <p class="eyebrow">The Short Version</p>
+          <h2>The provider redirects your browser to localhost. The agent is not local.</h2>
           <p>
-            The app uses Clerk-based sign-in/sign-up and SSO callback paths for
-            session bootstrap, with explicit startup checks before entering the
-            main shell.
+            Hosted MCP providers such as Vercel or Supabase can use OAuth to
+            authorize Codex. In a remote setup, Codex starts the OAuth flow on
+            the server while your browser opens on your laptop. That split is
+            where `connection refused` and `connection reset` usually come from.
           </p>
         </article>
 
         <article class="price-card accent-card">
-          <p class="eyebrow">Operational expectation</p>
-          <h2>Do not collapse auth and publish flow</h2>
+          <p class="eyebrow">ShipGlowz Pattern</p>
+          <h2>Create a temporary SSH tunnel for the fresh callback port.</h2>
           <p>
-            The shell handles onboarding and workflow orchestration; external channel
-            publish coverage is intentionally marked as explicitly partial where
-            not yet fully closed.
+            ShipGlowz reads the callback port from the current OAuth attempt,
+            opens an SSH `-L` route for that port, lets the browser finish the
+            authorization, then closes the tunnel.
           </p>
         </article>
       </div>
     </section>
 
     <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Why It Breaks</p>
+        <h2>`127.0.0.1` means different machines depending on where you stand.</h2>
+        <p>
+          OAuth localhost callbacks are normal for command-line tools. They
+          become confusing only when the command-line tool is remote and the
+          browser is local.
+        </p>
+        <p>
+          The problem is not OAuth itself. The problem is routing: the local
+          browser needs a path back to the callback listener running on the
+          remote server.
+        </p>
+      </div>
+
       <div class="doc-grid">
         <article class="doc-card">
-          <h3>Queue behavior</h3>
+          <h3>The remote process starts OAuth</h3>
           <p>
-            Supported write actions are queued when sync is not available and replayed
-            when the connection is restored.
+            `codex mcp login vercel` or `codex mcp login supabase` runs on the
+            server because that is where the remote Codex session and its MCP
+            configuration live.
           </p>
         </article>
 
         <article class="doc-card">
-          <h3>Recovery visibility</h3>
+          <h3>The local browser receives the redirect</h3>
           <p>
-            Recovery states are not hidden. Operators can see what is pending and when
-            it is being reconciled.
+            The provider opens an authorization URL in your browser. That URL
+            eventually redirects to `http://127.0.0.1:PORT/callback`.
           </p>
         </article>
 
         <article class="doc-card">
-          <h3>Non-goals</h3>
+          <h3>The port belongs to the current attempt</h3>
           <p>
-            Some publish-adjacent loops remain in-progress and are tracked in specs
-            rather than hidden as completed.
+            The callback port is not stable. A later login attempt can use a
+            different port, so reusing an old SSH tunnel is the wrong model.
           </p>
         </article>
+
+        <article class="doc-card">
+          <h3>The fix is routing, not OAuth reimplementation</h3>
+          <p>
+            ShipGlowz does not replace the provider flow. It only creates the
+            missing route from the local browser back to the remote callback
+            listener for the duration of the login.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Mental Model</p>
+        <h2>Three moving parts explain the whole flow.</h2>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>1. Remote Codex starts the login</h3>
+          <p>
+            The MCP provider and OAuth state belong to the Codex session on the
+            server, so the login command must run there.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>2. The local browser completes authorization</h3>
+          <p>
+            The operator still approves access in the browser, using the
+            provider's official OAuth page.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>3. The SSH tunnel connects the callback</h3>
+          <p>
+            The tunnel exists only so the local `127.0.0.1:PORT/callback`
+            request can reach the remote listener for that one login attempt.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Then ShipGlowz closes the route</h3>
+          <p>
+            Once Codex verifies the OAuth status, the callback tunnel is no
+            longer useful. It should not become a permanent app tunnel.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Flow</p>
+        <h2>The tunnel exists only between callback discovery and login completion.</h2>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Local browser</h3>
+          <p>
+            The browser receives the provider callback on localhost after the
+            operator approves access.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Temporary SSH route</h3>
+          <p>
+            ShipGlowz opens a short-lived path between that localhost callback
+            and the matching port on the remote server.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Remote Codex login</h3>
+          <p>
+            The remote Codex process receives the callback and completes the
+            MCP provider login.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Cleanup</h3>
+          <p>
+            After Codex verifies the OAuth status, ShipGlowz closes the callback
+            route instead of keeping a permanent tunnel.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Operator Setup</p>
+        <h2>The menu should know the server, user, and optional SSH key.</h2>
+        <p>
+          The important operator detail is not the OAuth URL itself. It is the
+          saved SSH target. If you change servers, the local ShipGlowz menu needs
+          the new host, SSH user, and optionally the key path if your key has a
+          custom name.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Use the guided local menu</h3>
+          <p>
+            Run `urls`, then choose the server configuration entry. The same
+            saved connection is used by app tunnels and by `shipflow-mcp-login`.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Leave the key blank when SSH already knows</h3>
+          <p>
+            If `~/.ssh/config` or your SSH agent already selects the right key,
+            ShipGlowz does not need a key path. If the key has a special file
+            name and SSH cannot infer it, enter the path in the menu.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Do not type stale callback ports</h3>
+          <p>
+            The callback port is extracted from the current Codex login output.
+            Manual port reuse is fragile because each OAuth attempt can produce
+            a new callback port.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Keep provider authorization explicit</h3>
+          <p>
+            The browser approval still happens on the provider's official page.
+            The operator chooses the account and organization there.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Security Boundary</p>
+        <h2>The tunnel is a route for the callback, not a token store.</h2>
+        <p>
+          ShipGlowz should not read, persist, or transform OAuth tokens. The
+          token exchange stays between Codex and the provider. ShipGlowz's job is
+          to make the network path match the remote execution model.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Temporary by default</h3>
+          <p>
+            The OAuth tunnel should close after the login attempt. Development
+            app tunnels and MCP login tunnels are separate concerns.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>No token logging</h3>
+          <p>
+            OAuth authorization URLs are shown only because the operator needs
+            to open them. Persisted OAuth credentials remain Codex/provider
+            responsibility.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">ShipGlowz Local Setup</p>
+        <h2>Use the local tool when Codex runs remotely.</h2>
+        <p>
+          The operational command is `shipflow-mcp-login vercel`,
+          `shipflow-mcp-login supabase`, or `shipflow-mcp-login all`. If the
+          SSH target changed, configure the new server through the local menu
+          first.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/docs">Back to docs</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/local/README.md">Read local setup on GitHub</a>
+        </div>
       </div>
     </section>
   </main>

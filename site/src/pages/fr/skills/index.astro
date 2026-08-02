@@ -1,0 +1,95 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Footer from "../../../components/Footer.astro";
+import NavBar from "../../../components/NavBar.astro";
+import SkillCard from "../../../components/SkillCard.astro";
+import { pathFor } from "../../../i18n/ui";
+
+const locale = "fr";
+
+const skills = (await getCollection("skills")).sort((a, b) => a.data.order - b.data.order);
+const featuredSkills = skills.filter((skill) => skill.data.featured);
+---
+
+<BaseLayout
+  title="Skills ShipGlowz | Catalogue public des workflows"
+  description="Explorez les skills ShipGlowz, le problème qu’ils résolvent et leur place dans un workflow plus solide."
+  locale={locale}
+  canonicalPath="/fr/skills"
+  alternatePath="/skills"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/skills" />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Catalogue des skills</p>
+        <h1 class="page-title">Un skill est un mouvement de workflow public, pas seulement un prompt interne.</h1>
+        <p>
+          Les skills ShipGlowz découpent le modèle opérationnel en actions
+          réutilisables : trier un bug, cadrer une spec, vérifier la préparation,
+          auditer un système ou rechercher un marché avant de perdre du temps de
+          build. Le but n’est pas plus d’astuce de prompt. Le but est moins de
+          passages de relais faibles.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Langue des skills</p>
+        <h2>Le hub est en français ; les fiches de skills restent volontairement en anglais.</h2>
+        <p>
+          C’est normal : ces fiches décrivent des workflows destinés aux agents,
+          et les agents les exploitent plus sûrement en anglais. ShipGlowz garde
+          donc l’interface de navigation en français, tout en conservant les
+          contrats de skills dans leur langue de travail.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-secondary" href={pathFor("/skill-modes", locale)}>Ouvrir l’aide au lancement</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Skills mis en avant</p>
+        <h2>Les mouvements centraux que la plupart des fondateurs toucheront en premier.</h2>
+      </div>
+      <div class="skill-grid">
+        {featuredSkills.map((skill) => (
+          <SkillCard
+            href={`/skills/${skill.id}`}
+            title={skill.data.title}
+            category={skill.data.category}
+            tagline={skill.data.tagline}
+            summary={skill.data.summary}
+            relatedSkills={skill.data.related_skills}
+            featured={true}
+          />
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Catalogue complet</p>
+        <h2>{skills.length} pages de skills disponibles.</h2>
+      </div>
+      <div class="skill-grid">
+        {skills.map((skill) => (
+          <SkillCard
+            href={`/skills/${skill.id}`}
+            title={skill.data.title}
+            category={skill.data.category}
+            tagline={skill.data.tagline}
+            summary={skill.data.summary}
+            relatedSkills={skill.data.related_skills}
+          />
+        ))}
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

@@ -22,6 +22,7 @@ GoRouter createShipGlowzRouter() {
           return MaterialPage(
             child: ProjectDetailScreen(
               projectName: Uri.decodeComponent(project),
+              runnerProjectId: state.uri.queryParameters['runnerProjectId'],
             ),
           );
         },

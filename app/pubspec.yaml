@@ -61,6 +61,7 @@ dependencies:
   # Audio feedback
   record: ^6.2.0
   audioplayers: ^6.6.0
+  supabase_flutter: ^2.16.0
 
 dev_dependencies:
   flutter_test:

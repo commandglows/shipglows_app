@@ -6,6 +6,13 @@ class AppConfig {
     defaultValue: 'https://api.winflowz.com',
   );
 
+  static const managedRunnerBaseUrl = String.fromEnvironment(
+    'MANAGED_RUNNER_BASE_URL',
+    defaultValue: '',
+  );
+
+  static bool get managedRunnerEnabled => managedRunnerBaseUrl.trim().isNotEmpty;
+
   static const clerkPublishableKey = String.fromEnvironment(
     'CLERK_PUBLISHABLE_KEY',
     defaultValue: '',

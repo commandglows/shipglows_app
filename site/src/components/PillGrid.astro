@@ -1,0 +1,12 @@
+---
+interface Props {
+  items: string[];
+  class?: string;
+}
+
+const { items, class: className = "pill-grid" } = Astro.props;
+---
+
+<div class={className}>
+  {items.map((pill) => <span class="pill">{pill}</span>)}
+</div>

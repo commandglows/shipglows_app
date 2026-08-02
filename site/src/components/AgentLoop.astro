@@ -1,0 +1,17 @@
+---
+import { homeCopy, type Locale } from "../i18n/ui";
+import SectionHeading from "./SectionHeading.astro";
+import LoopGrid from "./LoopGrid.astro";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = "en" } = Astro.props;
+const copy = homeCopy[locale].agentLoop;
+---
+
+<section class="section">
+  <SectionHeading eyebrow={copy.eyebrow} title={copy.title} body={copy.body} />
+  <LoopGrid items={copy.items} />
+</section>

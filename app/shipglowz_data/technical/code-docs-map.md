@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "0.6.0"
 project: "shipglowz_app"
 created: "2026-05-08"
-updated: "2026-05-30"
+updated: "2026-08-02"
 status: draft
 source_skill: sf-docs
 scope: "code-docs-map"
@@ -50,10 +50,13 @@ This map links code areas to their primary technical documentation, validation c
 
 | Code area | Current role | Primary doc | Validation | Update trigger |
 | --- | --- | --- | --- | --- |
-| `lib/main.dart` | Runtime target switch | `shipglowz_data/technical/runtime-boundary.md` | `rg -n "APP_TARGET|LegacyShipGlowzApp|ShipGlowzApp" lib test` | Any change to app boot, target names, or provider overrides |
+| `lib/main.dart` | Runtime target switch and optional public Supabase bootstrap | `shipglowz_data/technical/runtime-boundary.md` | `flutter analyze && flutter test test/shipglowz/auth/auth_provider_test.dart` | Any change to app boot, target names, public auth configuration, or provider overrides |
 | `lib/shipglowz/` | Active ShipGlowz UI runtime | `shipglowz_data/technical/runtime-boundary.md` | `flutter test test/widget_test.dart` | Any dashboard route, screen, or provider behavior change |
+| `lib/shipglowz/auth/**` + `test/shipglowz/auth/**` | Provider-neutral identity/session adapter; Supabase is optional first implementation | `shipglowz_data/technical/managed-runner-foundation.md` and `shipglowz_data/technical/runtime-boundary.md` | `flutter analyze && flutter test test/shipglowz/auth/auth_provider_test.dart` | Any authentication provider, session refresh, compile-time configuration, identity mapping, token use, or platform auth behavior change |
+| `lib/shipglowz/data/managed_runner_api.dart` + `lib/shipglowz/providers/managed_runner_provider.dart` + `lib/shipglowz/providers/managed_conversation_provider.dart` + `lib/shipglowz/providers/managed_project_identity_provider.dart` + `lib/shipglowz/presentation/widgets/managed_conversation_panel.dart` + `lib/shipglowz/presentation/screens/project_detail_screen.dart` + `lib/shipglowz/router.dart` + matching tests | Typed Flutter client and first project-detail conversation surface for the managed runner: authenticated commands, durable idempotency headers, approval decisions, semantic event state, authenticated cursor/SSE parsing, and fail-closed opaque project identity routing resolved from the authenticated project projection | `shipglowz_data/technical/managed-runner-foundation.md` and `shipglowz_data/workflow/specs/shipglowz-managed-codex-cockpit-mvp.md` | `flutter analyze && flutter test test/shipglowz/data/managed_runner_api_test.dart test/shipglowz/providers/managed_conversation_provider_test.dart test/shipglowz/providers/managed_project_identity_provider_test.dart` | Any runner API path, conversation state/action, approval UX, auth-token attachment, SSE resume behavior, or project identity mapping change |
 | `lib/data/shipglowz_sources/` | Active Markdown/source readers | `shipglowz_data/technical/markdown-source-of-truth.md` | `flutter test test/data/shipglowz_sources` | Any parser, allowlist, diagnostics, source file rule, or operational record grammar change |
 | `lib/domain/project_health/` | Active project health model | `shipglowz_data/technical/markdown-source-of-truth.md` | `flutter test test/domain/project_health` | Any project posture, next-command, or health scoring change |
+| `runner/src/` + `runner/test/` | Managed TypeScript control-plane foundation: neutral agent contracts, loopback API bootstrap, JWKS-backed Supabase auth, tenant-scoped canonical project identity resolution, GitHub App repository revalidation, secret-safe Git mirrors/worktrees, durable projections and async idempotency for conversation/audit/fix/approval commands, Codex app-server adapter, conversation command service, audit command, isolated GitHub/worktree fix executor, approval decision service, cleanup worker, cursor-based SSE replay, tenant-scoped live fan-out, Origin policy, run admission and timeout reconciliation | `shipglowz_data/technical/managed-runner-foundation.md` | `cd ../runner && npm test && npm run typecheck && npm run lint && npm run audit` | Any runtime adapter, API/event schema, identity-directory binding, auth/access rule, GitHub App policy, workspace capability, persistence, secret/redaction, or execution-provider change |
 | `/home/claude/shipglowz/tui` | ShipGlowz-owned terminal dashboard (Bun/OpenTUI), read-only V1 | `/home/claude/shipglowz/shipglowz_data/technical/terminal-tui.md` | `cd /home/claude/shipglowz/tui && bun run typecheck && bun test` | Any source policy, reader/parser, operational record grammar, view-model, OpenTUI lifecycle, or keyboard navigation change |
 | Operational record grammar | Shared task/audit/spec source-line contract | `/home/claude/shipglowz/skills/references/operational-record-format.md` and `shipglowz_data/technical/markdown-source-of-truth.md` | `python3 /home/claude/shipglowz/tools/shipglowz_metadata_lint.py /home/claude/shipglowz/skills/references/operational-record-format.md shipglowz_data/technical/markdown-source-of-truth.md shipglowz_data/technical/code-docs-map.md` | Any change to traffic markers, required fields, escaping, dedupe, diagnostics, legacy compatibility, or writer obligations |
 | Operational record migration + web-reader contract | Live canonicalization and shared web-read model for future projections | `shipglowz_data/technical/operational-record-web-reader-contract.md` | `python3 scripts/migrate_operational_records.py --dry-run` and `python3 scripts/migrate_operational_records.py --write --check-only` | Any change to live migration gates, zero-unmapped/duplicate policy, legacy-table removal behavior, or `scripts/migrate_operational_records.py` |
@@ -89,7 +92,7 @@ This map links code areas to their primary technical documentation, validation c
 
 ## Non-Coverage
 
-- Firebase, Firestore, Firebase Auth, FastAPI, terminal web, agent runner, BYOK OpenRouter, and feedback implementation are not covered by active technical docs yet because they are future specs.
+- Firebase, Firestore, terminal web, BYOK OpenRouter, and feedback implementation are not covered by active technical docs yet because they are future specs. The managed runner foundation is documented separately; no live provider or terminal capability is active yet.
 - Existing ContentFlow specs are not active ShipGlowz implementation contracts until classified.
 
 ## Invariants

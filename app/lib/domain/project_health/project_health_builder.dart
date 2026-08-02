@@ -81,6 +81,11 @@ class ProjectHealthBuilder {
           latestAuditDate: latestAudit,
           recentDependencyEvents: dependencyEvents.take(3).toList(),
           diagnostics: relatedDiagnostics,
+          health: _buildHealthMatrix(
+            posture: posture,
+            message: message,
+            dependencyEvents: dependencyEvents,
+          ),
         ),
       );
     }
@@ -186,6 +191,32 @@ class ProjectHealthBuilder {
       case DependencyPosture.healthy:
         return '/sf-verify ShipGlowz Operations Dashboard App';
     }
+  }
+
+  ProjectHealthMatrix _buildHealthMatrix({
+    required DependencyPosture posture,
+    required String message,
+    required List<LedgerEvent> dependencyEvents,
+  }) {
+    final latest = dependencyEvents.isEmpty ? null : dependencyEvents.first;
+    final status = switch (posture) {
+      DependencyPosture.neverChecked => HealthStatus.notReported,
+      DependencyPosture.stale => HealthStatus.stale,
+      DependencyPosture.riskOpen => HealthStatus.warning,
+      DependencyPosture.migrationRequired => HealthStatus.critical,
+      DependencyPosture.healthy => HealthStatus.healthy,
+      DependencyPosture.sourceGap => HealthStatus.unknown,
+    };
+    return ProjectHealthMatrix.fromDimensions(<ProjectHealthDimension>[
+      ProjectHealthDimension(
+        dimension: HealthDimension.tech,
+        status: status,
+        summary: message,
+        producer: 'shipglowz.dependency-ledger',
+        evidenceCount: dependencyEvents.length,
+        checkedAt: latest?.finishedAt,
+      ),
+    ]);
   }
 
   int _countActiveChantiers(List<SpecChantier> specs, String projectKey) {

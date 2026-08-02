@@ -36,6 +36,8 @@
 
 ## Current Active Backlog
 
+🔴 [shipglowz_app] task: Build the managed multi-agent Cockpit MVP with a private runner, provider-neutral contracts and operator-safe execution boundaries | status: in_progress | area: managed-agent-cockpit | id: managed-agent-cockpit-mvp
+
 
 ## Historical Completed Work
 

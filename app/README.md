@@ -1,11 +1,11 @@
 # ShipGlowz Operations Dashboard App
 
-Local-first Flutter desktop app for ShipGlowz operational visibility.
+Local-first Flutter app for ShipGlowz operational visibility.
 
 ## Scope (V1)
 
 - Read-only dashboard for ShipGlowz evidence sources.
-- Linux desktop target (`flutter run -d linux`).
+- Android and Web targets.
 - No write-back into ShipGlowz trackers or ledgers.
 - No auth, no cloud sync, no backend service.
 - Legacy ContentFlow code remains in the repo only as migration/reference material.
@@ -42,9 +42,9 @@ Web builds are unsupported for direct local file reads. The app surfaces an expl
 ## Run
 
 ```bash
-cd /home/claude/shipglowz_app
+cd /home/claude/shipglowz_app/app
 flutter pub get
-flutter run -d linux
+flutter run -d chrome
 ```
 
 ## Terminal TUI
@@ -73,14 +73,14 @@ bun run dev
 The default runtime is ShipGlowz:
 
 ```bash
-flutter run -d linux
+flutter run -d chrome
 ```
 
 The repository still exposes the old ContentFlow runtime for migration audit:
 
 ```bash
-flutter run -d linux --dart-define=APP_TARGET=legacy
-flutter run -d linux --dart-define=APP_TARGET=contentflow
+flutter run -d chrome --dart-define=APP_TARGET=legacy
+flutter run -d chrome --dart-define=APP_TARGET=contentflow
 ```
 
 Do not use the legacy target as the product direction. Its modules are classified

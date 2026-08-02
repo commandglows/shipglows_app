@@ -1,7 +1,8 @@
 import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
 
 const skills = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/skills" }),
   schema: z.object({
     title: z.string(),
     tagline: z.string(),
@@ -39,14 +40,21 @@ const skills = defineCollection({
 });
 
 const articles = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/articles" }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    date: z.string(),
-    category: z.string(),
-    excerpt: z.string(),
-    keywords: z.array(z.string()).default([])
+    summary: z.string(),
+    publishDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
+    locale: z.enum(["en", "fr"]),
+    articleKey: z.string(),
+    slug: z.string(),
+    alternateSlug: z.string(),
+    tags: z.array(z.string()).default([]),
+    featured: z.boolean().default(false),
+    draft: z.boolean().default(false),
+    readingTime: z.string()
   })
 });
 

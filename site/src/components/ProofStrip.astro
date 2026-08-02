@@ -1,19 +1,17 @@
-<section class="section">
-  <div class="section-heading">
-    <p class="eyebrow">Trust by Design</p>
-    <h2>ContentFlow App earns trust through visible operations.</h2>
-    <p>
-      The app exposes workflow surfaces and status states in-app, so teams can
-      see what is queued, what is ready, and what is blocked.
-    </p>
-  </div>
+---
+import { sharedHomeSections, type Locale } from "../i18n/ui";
+import SectionHeading from "./SectionHeading.astro";
+import PillGrid from "./PillGrid.astro";
 
-  <div class="pill-grid">
-    <span class="pill">Clerk-authenticated entry points</span>
-    <span class="pill">Workspace + active project model</span>
-    <span class="pill">Offline cache + retry queue</span>
-    <span class="pill">Feedback capture and admin review</span>
-    <span class="pill">Diagnostics for uptime and activity</span>
-    <span class="pill">Documented non-goals (no full autonomous publish flow)</span>
-  </div>
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = "en" } = Astro.props;
+const copy = sharedHomeSections[locale].proof;
+---
+
+<section class="section">
+  <SectionHeading eyebrow={copy.eyebrow} title={copy.title} body={copy.body} />
+  <PillGrid items={copy.pills} />
 </section>

@@ -1,31 +1,30 @@
 ---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
 import Footer from "../../components/Footer.astro";
 import NavBar from "../../components/NavBar.astro";
 import SkillCard from "../../components/SkillCard.astro";
 import SkillSection from "../../components/SkillSection.astro";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import type { Workflow } from "../../data/workflows";
-import { workflowCatalog } from "../../data/workflows";
 
-export function getStaticPaths() {
-  return workflowCatalog.map(({ slug }) => ({
-    params: { slug },
-    props: { slug }
+export async function getStaticPaths() {
+  const skills = await getCollection("skills");
+
+  return skills.map((skill) => ({
+    params: { slug: skill.id },
+    props: { skill }
   }));
 }
 
-const slug = Astro.params.slug!;
-const workflow = workflowCatalog.find((item) => item.slug === slug);
-
-if (!workflow) {
-  throw new Error(`Unknown workflow: ${slug}`);
-}
-const data = workflow as Workflow;
+const { skill } = Astro.props;
+const allSkills = await getCollection("skills");
+const relatedSkills = skill.data.related_skills
+  .map((relatedSlug: string) => allSkills.find((entry) => entry.id === relatedSlug))
+  .filter(Boolean);
 ---
 
 <BaseLayout
-  title={`${data.title} | ContentFlow Workflows`}
-  description={data.summary}
+  title={`${skill.data.title} | ShipGlowz Skills`}
+  description={skill.data.summary}
 >
   <main class="page-shell">
     <NavBar />
@@ -34,22 +33,23 @@ const data = workflow as Workflow;
       <div class="skill-hero">
         <div class="skill-hero-copy">
           <div class="skill-card-head">
-            <span class="skill-chip">{data.category}</span>
+            <span class="skill-chip">{skill.data.category}</span>
+            {skill.data.featured && <span class="skill-chip skill-chip-accent">Featured</span>}
           </div>
-          <p class="eyebrow">Workflow Detail</p>
-          <h1 class="page-title">{data.title}</h1>
-          <p class="skill-tagline skill-tagline-large">{data.tagline}</p>
-          <p class="hero-text">{data.summary}</p>
+          <p class="eyebrow">Skill Detail</p>
+          <h1 class="page-title">{skill.data.title}</h1>
+          <p class="skill-tagline skill-tagline-large">{skill.data.tagline}</p>
+          <p class="hero-text">{skill.data.summary}</p>
           <div class="hero-actions">
-            <a class="button button-primary" href="/skills">Back to workflows</a>
-            <a class="button button-secondary" href="/docs">Read docs</a>
+            <a class="button button-primary" href="https://github.com/dianedef/ShipGlowz/tree/main/skills">Browse skills on GitHub</a>
+            <a class="button button-secondary" href="/skills">Back to the hub</a>
           </div>
         </div>
 
         <aside class="skill-side-panel">
-          <p class="eyebrow">Who this is for</p>
+          <p class="eyebrow">Who This Is For</p>
           <ul class="skill-list">
-            {data.related.map((item: string) => <li>{item}</li>)}
+            {skill.data.audience.map((item: string) => <li>{item}</li>)}
           </ul>
         </aside>
       </div>
@@ -59,59 +59,107 @@ const data = workflow as Workflow;
       <div class="split-grid">
         <article class="panel">
           <p class="eyebrow">Problem</p>
-          <h2>What this solves</h2>
-          <p>{data.problem}</p>
+          <h2>What problem this solves</h2>
+          <p>{skill.data.problem}</p>
         </article>
         <article class="panel accent-card">
           <p class="eyebrow">Outcome</p>
           <h2>What changes when it works</h2>
-          <p>{data.outcome}</p>
+          <p>{skill.data.outcome}</p>
         </article>
       </div>
     </section>
 
     <section class="section">
       <div class="cta-panel">
-        <p class="eyebrow">Why it matters</p>
-        <h2>Operational value</h2>
-        <p>{data.founder_angle}</p>
+        <p class="eyebrow">Why It Matters</p>
+        <h2>What this changes for a solo founder</h2>
+        <p>{skill.data.founder_angle}</p>
       </div>
     </section>
 
     <section class="section skill-detail-grid">
-      <SkillSection title="When to use it" items={data.when_to_use} />
-      <SkillSection title="What you give it" items={data.what_you_give} />
-      <SkillSection title="What you get back" items={data.what_you_get} />
-      <SkillSection title="Typical examples" items={data.examples} />
-      <SkillSection title="Limits" items={data.limits} />
+      <SkillSection title="When to use it" items={skill.data.when_to_use} />
+      <SkillSection title="What you give it" items={skill.data.what_you_give} />
+      <SkillSection title="What you get back" items={skill.data.what_you_get} />
+      <SkillSection title="Typical examples" items={skill.data.example_prompts} />
+      <SkillSection title="Limits" items={skill.data.limits} />
     </section>
 
     {
-      data.related.length > 0 && (
+      skill.data.argument_modes.length > 0 && (
         <section class="section">
           <div class="section-heading">
-            <p class="eyebrow">Related workstreams</p>
-            <h2>See adjacent workflows.</h2>
+            <p class="eyebrow">Arguments</p>
+            <h2>Some arguments change the workflow, not just the wording.</h2>
+            <p>
+              These are the argument switches documented for this skill. For
+              the general rule behind skill arguments, read the skill modes
+              tutorial.
+            </p>
           </div>
-        <div class="skill-grid">
-            {data.related.map((relatedSlug) => {
-  const related = workflowCatalog.find((item) => item.slug === relatedSlug);
-            if (!related) return null;
-              return (
-                <SkillCard
-                  href={`/skills/${relatedSlug}`}
-                  title={related.title}
-                  category={related.category}
-                  tagline={related.tagline}
-                  summary={related.summary}
-                  relatedSkills={related.related}
-                />
-              );
-            })}
+
+          <div class="argument-grid">
+            {skill.data.argument_modes.map((mode) => (
+              <article class="argument-card">
+                <h3><code>{mode.argument}</code></h3>
+                <p>{mode.effect}</p>
+                <div class="argument-consequence">
+                  <span>Consequence</span>
+                  <p>{mode.consequence}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div class="hero-actions">
+            <a class="button button-secondary" href="/skill-modes">Read the launch cheatsheet</a>
           </div>
         </section>
       )
     }
+
+    {
+      relatedSkills.length > 0 && (
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">Related Skills</p>
+            <h2>See the rest of the loop around this move.</h2>
+          </div>
+          <div class="skill-grid">
+            {relatedSkills.map((relatedSkill) => (
+              <SkillCard
+                href={`/skills/${relatedSkill!.id}`}
+                title={relatedSkill!.data.title}
+                category={relatedSkill!.data.category}
+                tagline={relatedSkill!.data.tagline}
+                summary={relatedSkill!.data.summary}
+                relatedSkills={relatedSkill!.data.related_skills}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <section class="section">
+      <div class="docs-panel">
+        <div>
+          <p class="eyebrow">Go Deeper</p>
+          <h2>This public page explains the move. The repository explains the execution contract.</h2>
+          <p>
+            Use the public catalog for education and workflow selection. Move
+            to the docs and GitHub when you want the operator-grade execution
+            details behind the skill system.
+          </p>
+        </div>
+        <div class="docs-links">
+          <a class="docs-link" href="/docs">Documentation Overview</a>
+          <a class="docs-link" href="https://github.com/dianedef/ShipGlowz/tree/main/skills">Open skills on GitHub</a>
+          <a class="docs-link" href="/skills">Return to the skills hub</a>
+        </div>
+      </div>
+    </section>
   </main>
   <Footer />
 </BaseLayout>

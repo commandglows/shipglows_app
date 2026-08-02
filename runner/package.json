@@ -1,0 +1,30 @@
+{
+  "name": "@shipglowz/managed-runner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0 <25"
+  },
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "test": "tsx --test test/**/*.test.ts",
+    "smoke:providers": "tsx scripts/provider-smoke.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test scripts",
+    "audit": "npm audit --audit-level=high"
+  },
+  "dependencies": {
+    "@fastify/type-provider-typebox": "6.1.0",
+    "fastify": "5.10.0",
+    "jose": "^6.2.7",
+    "typebox": "1.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "eslint": "10.7.0",
+    "tsx": "4.23.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.63.0"
+  }
+}

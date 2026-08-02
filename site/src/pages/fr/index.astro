@@ -1,0 +1,53 @@
+---
+import CallToAction from "../../components/CallToAction.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DocsCta from "../../components/DocsCta.astro";
+import FaqSection from "../../components/FaqSection.astro";
+import FeatureGrid from "../../components/FeatureGrid.astro";
+import Footer from "../../components/Footer.astro";
+import Hero from "../../components/Hero.astro";
+import AgentLoop from "../../components/AgentLoop.astro";
+import NavBar from "../../components/NavBar.astro";
+import PricingHypothesis from "../../components/PricingHypothesis.astro";
+import ProductSurface from "../../components/ProductSurface.astro";
+import ProofStrip from "../../components/ProofStrip.astro";
+import RoleMap from "../../components/RoleMap.astro";
+import { homeCopy, pathFor } from "../../i18n/ui";
+
+const locale = "fr";
+const copy = homeCopy[locale];
+---
+
+<BaseLayout
+  title={copy.title}
+  description={copy.description}
+  locale={locale}
+  canonicalPath="/fr/"
+  alternatePath="/"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/" />
+    <Hero locale={locale} />
+    <FeatureGrid locale={locale} />
+    <AgentLoop locale={locale} />
+    <ProductSurface locale={locale} />
+    <RoleMap locale={locale} />
+    <ProofStrip locale={locale} />
+    <PricingHypothesis locale={locale} />
+    <FaqSection locale={locale} />
+    <DocsCta locale={locale} />
+    <section class="section">
+      <div class="doc-grid">
+        {copy.ctaCards.map(([title, body, action, href]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p>{body}</p>
+            <a class="doc-action" href={pathFor(href, locale)}>{action}</a>
+          </article>
+        ))}
+      </div>
+    </section>
+    <CallToAction locale={locale} />
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

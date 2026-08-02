@@ -47,7 +47,7 @@ The repository still contains a legacy ContentFlow runtime. Treat it as migratio
 - Active product: ShipGlowz.
 - Active default runtime: `APP_TARGET=shipglowz`.
 - Temporary legacy runtimes: `APP_TARGET=legacy` and `APP_TARGET=contentflow`.
-- Current V1 mode: local-first, read-oriented, Linux desktop target.
+- Current V1 mode: local-first, read-oriented, with Android and Web targets.
 - Current validation loop: push to Git, let Vercel build the Flutter web app, then validate the served web version.
 - Source of truth: Markdown and repository files.
 - Future database role: projection, index, cache, or sync layer unless a later reviewed spec supersedes this.
@@ -69,7 +69,8 @@ The repository still contains a legacy ContentFlow runtime. Treat it as migratio
 - Flutter / Dart
 - Riverpod
 - GoRouter
-- ShipGlowz terminal TUI lives in `/home/claude/shipglowz/tui`; this Flutter app does not own the Bun/OpenTUI package.
+- The existing ShipGlowz read-only terminal TUI lives in `/home/claude/shipglowz/tui`; this Flutter app does not own the Bun/OpenTUI package.
+- The planned authenticated operator workspace—terminal rendering, tmux attachment, Neovim access, and bounded file operations—belongs to this repository's Flutter `app/` plus managed `runner/`, and must remain separate from the read-only TUI and ordinary customer permissions.
 - Vercel builds and serves the Flutter web output
 - Shared preferences for local settings
 - Markdown/source parsers under `lib/data/shipglowz_sources/`
@@ -80,7 +81,7 @@ Do not infer that FastAPI, Clerk, Supabase, Firebase, Firestore, or OpenRouter a
 
 ```bash
 flutter pub get
-flutter run -d linux
+flutter run -d chrome
 flutter test
 flutter analyze
 ```
@@ -103,7 +104,7 @@ bun test
 
 ## ARM64 Android Release Guardrail
 
-On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: no `flutter build apk --release`, `flutter build appbundle --release`, `./gradlew assembleRelease`, or `./gradlew bundleRelease`. Route APK/AAB release builds to a Linux x64 CI runner. Local Flutter work is limited to `flutter analyze`, `flutter test`, desktop runs, and web builds when explicitly needed.
+On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: no `flutter build apk --release`, `flutter build appbundle --release`, `./gradlew assembleRelease`, or `./gradlew bundleRelease`. Route APK/AAB release builds to a Linux x64 CI runner. Local Flutter work is limited to `flutter analyze`, `flutter test`, development runs, and web builds when explicitly needed.
 
 ## Active App Structure
 
@@ -143,7 +144,7 @@ Use `shipglowz_data/technical/legacy-contentflow-inventory.md` before moving or 
 - Firebase Auth, Clerk, or another auth provider.
 - BYOK/OpenRouter.
 - Text feedback.
-- Terminal access from web UI.
+- Terminal/tmux/Neovim operator access from Flutter Web, Android, or Windows; this is now part of the managed Cockpit chantier but still requires an amended ready spec before implementation.
 - Agent runner/orchestration from the interface.
 - FastAPI/local service runner.
 

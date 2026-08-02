@@ -1,18 +1,28 @@
+---
+import { pathFor, sharedHomeSections, type Locale } from "../i18n/ui";
+import SectionHeading from "./SectionHeading.astro";
+import ItemCard from "./ItemCard.astro";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = "en" } = Astro.props;
+const copy = sharedHomeSections[locale].docs;
+---
+
 <section class="section" id="docs-cta">
   <div class="docs-panel">
     <div>
-      <p class="eyebrow">Documentation Entry</p>
-      <h2>Start with the docs that actually move the work.</h2>
-      <p>
-        If you want to understand the app fast, start with the business,
-        product, and app workflows documented in this repository.
-      </p>
+      <SectionHeading eyebrow={copy.eyebrow} title={copy.title} body={copy.body} class="docs-panel-heading" />
     </div>
 
     <div class="docs-links">
-      <a class="docs-link" href="/docs">Documentation overview</a>
-      <a class="docs-link" href="/docs#artifact-corpus">App contracts</a>
-      <a class="docs-link" href="/docs#decision-contracts">Business and positioning</a>
+      {copy.links.map(([label, href]) => (
+        <ItemCard class="docs-link-card">
+          <a class="docs-link" href={pathFor(href, locale)}>{label}</a>
+        </ItemCard>
+      ))}
     </div>
   </div>
 </section>

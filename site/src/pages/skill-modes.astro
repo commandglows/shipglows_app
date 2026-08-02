@@ -1,57 +1,164 @@
 ---
+import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Footer from "../components/Footer.astro";
 import NavBar from "../components/NavBar.astro";
 
-const workflows = [
+const masterSkillCheatsheet = [
   {
-    command: "entry",
-    when: "Start with authentication, workspace selection, and onboarding checks.",
-    modes: "Used when a user opens the app and expects consistent workspace context."
+    command: "shipflow <instruction>",
+    when: "Recommended non-technical first command when you want ShipGlowz to choose the route.",
+    modes:
+      "Answers pure conversation directly; routes feature/code/docs to sf-build, maintenance to sf-maintain, bugs to sf-bug, release/deploy/prod proof to sf-deploy, content to sf-content, marketing study/GTM/copy work to 009-sg-marketing, design to sf-design, customer experience to sf-customer, local-to-cloud sync to sf-local-cloud-sync, internal skill maintenance to the internal 900 core workflow, and obvious specialist audits to sf-audit-*. Asks one numbered question when ambiguous."
   },
   {
-    command: "planning",
-    when: "Move through ideas, personas, and content angles.",
-    modes: "Use this lane for feed structuring and campaign preparation."
+    command: "sf-build <story, bug, or goal>",
+    when: "Direct entrypoint for non-trivial product, code, docs, or site work.",
+    modes:
+      "Use the task text as the story. Add report=agent, handoff, verbose, or full-report only when a detailed agent handoff is needed."
   },
   {
-    command: "editor",
-    when: "Create, refine, and review draft states.",
-    modes: "Status transitions keep editorial decisions explicit and reversible."
+    command: "sf-maintain [mode]",
+    when: "Recurring project upkeep across bugs, docs, dependencies, checks, audits, fixes, and ship routing.",
+    modes:
+      "no argument/full runs the lifecycle; quick is read-only triage; security, deps, docs, and audits focus a lane; no-ship stops before release; global starts from the workspace dashboard."
   },
   {
-    command: "scheduling",
-    when: "Prepare drip plans and calendar-based release timing.",
-    modes: "Queue and reconcile publication prep events so operators keep timing control."
+    command: "sf-deploy [target or mode]",
+    when: "Release confidence after implementation when checks, push, deployment truth, browser proof, and verification must stay connected.",
+    modes:
+      "no argument runs the bounded release loop; skip-check skips only the pre-ship check phase; --preview and --prod bias the environment; no-changelog skips release notes."
   },
   {
-    command: "sync",
-    when: "Handle degraded mode behavior and reconnect states.",
-    modes: "Track offline reads, queued writes, retries, and reconciliation status."
+    command: "sf-bug [BUG-ID, summary, or mode]",
+    when: "Bug-loop lifecycle execution from observed failure to dossier, fix, retest, verification, and ship risk.",
+    modes:
+      "no argument opens bug dashboard triage; BUG-ID reads the dossier; --fix, --retest, --verify, --ship, and --close select a specific lifecycle phase while owner skills keep their gates."
   },
   {
-    command: "diagnostics",
-    when: "Check uptime, performance, and activity before changing flow.",
-    modes: "Use for decision confidence, not just visual confirmation."
+    command: "sf-content [goal, source, file, or mode]",
+    when: "Content management across strategy, repurposing, drafting, enrichment, audits, docs, validation, and ship routing.",
+    modes:
+      "plan, repurpose, draft, enrich, audit, seo, editorial, apply, and ship select the content lifecycle lane while content map and editorial gates keep public surfaces safe. Add score, quality gate, or grille projet when the content needs project-aware rubric scoring."
+  },
+  {
+    command: "009-sg-marketing <mode> <target>",
+    when: "Use when the unmet need is market evidence, GTM readiness, copy clarity, or persuasion—not a broader content lifecycle.",
+    modes:
+      "market, gtm, copy, and copywriting select one bounded marketing playbook; help lists the grammar without silently choosing a mode."
+  },
+  {
+    command: "sf-design <design question or goal>",
+    when: "Design lifecycle across UI/UX, tokens, playgrounds, component and accessibility audits, implementation, browser proof, and ship routing.",
+    modes:
+      "system, playground, audit ui|tokens|components|a11y, redesign, and migration select explicit bounded design playbooks; natural-language design requests route to the safest mode."
+  },
+  {
+    command: "sf-customer <feature, flow, or audit target>",
+    when: "End-user experience review for UX/UI clarity, friction, trust, first-success paths, setup sequencing, recoverable states, docs impact, and proof routing.",
+    modes:
+      "Use after or alongside feature work when users need context, why/how guidance, permission or integration setup, skipped/blocked recovery, and value proof."
+  },
+  {
+    command: "sf-local-cloud-sync <project, feature, or data domains>",
+    when: "Local-to-cloud data sync contract for local data promotion, account association, merge policy, sync UX, and security.",
+    modes:
+      "Use before account-backed sync, backup, reinstall recovery, or multi-device claims when local data, cloud data, sensitive content, or conflicts must be handled safely."
+  },
+  {
+    command: "sf-product-entitlements <project or feature>",
+    when: "Product access and entitlement contract for premium gates, provider events, support access flows, and backend authorization.",
+    modes:
+      "Use before adding paid plans, activation codes, refunds, revokes, product-local access mirrors, or entitlement-gated sync."
+  },
+];
+
+const supportSkillCheatsheet = [
+  {
+    command: "sf-spec -> sf-ready -> sf-start -> sf-verify -> sf-end",
+    when: "Use the manual lifecycle when you want explicit control over each gate instead of the sf-build master flow."
+  },
+  {
+    command: "sf-ship [mode]",
+    when: "Use after work is already ready locally. Modes include skip-check, end la tache/end/fin/close task, and all-dirty/ship-all/tout-dirty."
+  },
+  {
+    command: "sf-browser / sf-auth-debug / sf-test / sf-prod",
+    when: "Choose by proof type: non-auth browser evidence, auth/session diagnosis, checklist-first manual QA, or live deployment truth."
+  },
+  {
+    command: "sf-check / sf-docs / sf-audit* / sf-deps / sf-migrate",
+    when: "Use focused owner skills when you need one lane: checks, docs, audit, dependency posture, or framework migration."
+  },
+  {
+    command: "sf-github-hygiene [mode]",
+    when: "Use when the problem is git/GitHub hygiene: sync drift, stale branches, PR drift, or Dependabot backlog triage."
+  },
+  {
+    command: "sf-platform-parity <project, feature, or spec>",
+    when: "Use when platform claims, implementations, or QA proof may drift across web, mobile, desktop, or native surfaces."
+  },
+  {
+    command: "sf-status / sf-help / sf-model / sf-resume",
+    when: "Use support skills for orientation, command choice, model routing, and clean context transfer."
   }
 ];
+
+const runtimeFamilies = [
+  {
+    title: "Lifecycle/master",
+    use: "Carry a work item across several gates.",
+    examples: "shipflow, sf-build, sf-maintain, sf-deploy, sf-design, sf-content, sf-customer"
+  },
+  {
+    title: "Data trust/source",
+    use: "Frame local-first user data becoming account-backed cloud data.",
+    examples: "sf-local-cloud-sync"
+  },
+  {
+    title: "Audit/source",
+    use: "Expose risk or drift that may need a chantier.",
+    examples: "sf-audit*, sf-deps, sf-perf, sf-platform-parity"
+  },
+  {
+    title: "Bug/proof",
+    use: "Diagnose failures, prove behavior, or validate deployment truth.",
+    examples: "sf-bug, sf-fix, sf-test, sf-browser, sf-auth-debug, sf-prod, sf-check, sf-migrate"
+  },
+  {
+    title: "Content/docs/support",
+    use: "Keep public content, docs, scaffolding, changelogs, skill maintenance, and git/GitHub hygiene coherent.",
+    examples: "sf-content repurpose, sf-docs, sf-redact, sf-enrich, sf-changelog, sf-scaffold, sf-init, sf-github-hygiene"
+  },
+  {
+    title: "Research/pilotage/helper",
+    use: "Clarify information, prioritize, summarize, route, or preserve context.",
+    examples: "009-sg-marketing, sf-research, sf-veille, sf-backlog, sf-priorities, sf-review, sf-tasks, sf-context, sf-model, sf-help, sf-status, sf-resume, sf-explore, name"
+  }
+];
+
+const skillsWithModes = (await getCollection("skills"))
+  .filter((skill) => skill.data.argument_modes.length > 0)
+  .sort((a, b) => a.data.order - b.data.order);
 ---
 
 <BaseLayout
-  title="ContentFlow Workflow | Operating map"
-  description="How ContentFlow App workflows are organized and when to use each surface."
+  title="Skill Modes | ShipGlowz launch cheatsheet"
+  description="A practical ShipGlowz cheatsheet for master skills, supporting skills, and the argument modes that change workflow behavior."
 >
   <main class="page-shell">
     <NavBar />
 
     <section class="section">
       <div class="section-heading">
-        <p class="eyebrow">Workflow Cheatsheet</p>
-        <h1 class="page-title">ContentFlow workflow map.</h1>
+        <p class="eyebrow">Skill Launch Cheatsheet</p>
+        <h1 class="page-title">Skill launch cheatsheet.</h1>
         <p>
-          The app is organized into operational surfaces, each optimized for one
-          job. Use this as a quick map when explaining the product or training
-          new operators.
+          ShipGlowz skills are not all simple free-text commands. Some arguments
+          describe the work, some switch modes, and some select a structured
+          target. Start with <code>shipflow &lt;instruction&gt;</code> when you
+          want routing handled, then use direct master or owner skills when you
+          already know the lane.
         </p>
       </div>
     </section>
@@ -59,20 +166,22 @@ const workflows = [
     <section class="section">
       <div class="pricing-grid">
         <article class="price-card">
-          <p class="eyebrow">Short version</p>
-          <h2>Start with Entry, then Planning, then Review.</h2>
+          <p class="eyebrow">The Short Version</p>
+          <h2>Use <code>shipflow &lt;instruction&gt;</code> when you are not choosing manually.</h2>
           <p>
-            If you need a single orientation sequence, this covers the most common
-            path before going into scheduling and diagnostics.
+            The router answers pure questions directly or hands the main thread
+            to the selected skill. Direct master skills still matter when you
+            already know the exact lifecycle you want handled. It asks one
+            numbered decision question when no context-safe route is available.
           </p>
         </article>
 
         <article class="price-card accent-card">
-          <p class="eyebrow">Execution rule</p>
-          <h2>If no mode fits, keep humans in control.</h2>
+          <p class="eyebrow">Why It Matters</p>
+          <h2>Call modes on purpose.</h2>
           <p>
-            Workflows are designed for explicit transitions, not hidden automation.
-            Ambiguous actions should remain visible and reversible.
+            The point is not to memorize syntax. The point is to recognize when
+            a skill exposes distinct workflows behind one command name.
           </p>
         </article>
       </div>
@@ -80,12 +189,42 @@ const workflows = [
 
     <section class="section">
       <div class="section-heading">
-        <p class="eyebrow">Primary Workflows</p>
-        <h2>Choose by outcome, not by feature name.</h2>
+        <p class="eyebrow">Runtime Families</p>
+        <h2>The right route depends on the role the skill plays.</h2>
+        <p>
+          Public categories make the catalog easier to browse. Runtime families
+          explain how ShipGlowz routes work: lifecycle owners carry work, source
+          skills expose future chantiers, proof skills validate behavior, and
+          helpers keep orientation clean without owning closure. Routing should
+          preserve quality and proof first; shortest path is not the default
+          objective.
+        </p>
       </div>
+
+      <div class="doc-grid">
+        {
+          runtimeFamilies.map((family) => (
+            <article class="doc-card">
+              <h3>{family.title}</h3>
+              <p>{family.use}</p>
+              <p>
+                <strong>Examples:</strong> {family.examples}
+              </p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Primary And Master Skills</p>
+        <h2>Launch these when you want ShipGlowz to carry the work across multiple gates.</h2>
+      </div>
+
       <div class="role-list">
         {
-          workflows.map((item) => (
+          masterSkillCheatsheet.map((item) => (
             <div class="role-row">
               <code>{item.command}</code>
               <span>
@@ -100,17 +239,224 @@ const workflows = [
     </section>
 
     <section class="section">
-      <div class="cta-panel">
-        <p class="eyebrow">Where to go next</p>
-        <h2>Read one workflow page for each route.</h2>
+      <div class="section-heading">
+        <p class="eyebrow">Supporting Skills</p>
+        <h2>Use these when you want one specific owner skill instead of a master lifecycle.</h2>
+      </div>
+
+      <div class="role-list">
+        {
+          supportSkillCheatsheet.map((item) => (
+            <div class="role-row">
+              <code>{item.command}</code>
+              <span>{item.when}</span>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Documented Mode Switches</p>
+        <h2>These public skill pages expose explicit argument modes.</h2>
         <p>
-          Open any route below for a concise breakdown of user expectations and
-          current scope.
+          If a skill is not listed here, treat its argument as a target or task
+          description unless the skill file says otherwise.
+        </p>
+      </div>
+
+      <div class="argument-grid">
+        {
+          skillsWithModes.map((skill) => (
+            <article class="argument-card">
+              <h3>
+                <code>{skill.data.title}</code>
+              </h3>
+              <p>{skill.data.summary}</p>
+              <div class="argument-consequence">
+                <span>Modes</span>
+                <p>{skill.data.argument_modes.map((mode) => mode.argument).join(" / ")}</p>
+              </div>
+              <a class="doc-action" href={`/skills/${skill.slug}`}>
+                Open skill page
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>1. Mode keyword</h3>
+          <p>
+            A specific word acts as a switch. The skill recognizes it and
+            enters a specialized workflow instead of treating it as ordinary
+            task text.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>2. Structured input</h3>
+          <p>
+            The argument has a recognizable shape. The skill parses that shape
+            and derives a target from it, such as a package and a version.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>3. Free-form task</h3>
+          <p>
+            If no special keyword or input pattern matches, the argument is
+            usually treated as the actual work description or content focus.
+          </p>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Example: sf-docs</p>
+        <h2>Some words do not mean “topic.” They mean “enter a different mode.”</h2>
+        <p>
+          The documentation skill is a clear example. Certain arguments are not
+          content scopes. They are direct mode switches.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3><code>sf-docs metadata</code></h3>
+          <p>
+            This switches to the frontmatter and metadata workflow. The skill
+            reads migration doctrine, classifies files, and validates the
+            result against the metadata rules.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3><code>sf-docs migrate-frontmatter</code></h3>
+          <p>
+            This is another explicit trigger for the same family of metadata
+            work. It does not mean “write docs about frontmatter.” It means
+            “run the frontmatter migration workflow.”
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3><code>sf-docs readme</code></h3>
+          <p>
+            Here the argument acts more like a target surface. The skill is now
+            being steered toward a documentation area rather than a dedicated
+            metadata mode.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Example: sf-migrate</p>
+        <h2>The shape of the argument can change the route too.</h2>
+        <p>
+          The migration skill does not only react to keywords. It also reacts
+          to how the argument is structured.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3><code>sf-migrate astro@5</code></h3>
+          <p>
+            A structured target. The skill interprets this as “migrate Astro to
+            version 5” and builds the upgrade workflow around that exact goal.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3><code>sf-migrate astro</code></h3>
+          <p>
+            A package target without version. The skill treats it as a request
+            to resolve the latest version first, then confirm the path.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3><code>sf-migrate</code></h3>
+          <p>
+            No argument means discovery mode. The skill looks for possible
+            upgrades and asks which migration you actually want to run.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">How To Read A Skill</p>
+        <h2>Look for the mode rules before you guess what the command means.</h2>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Check <code>argument-hint</code></h3>
+          <p>
+            This tells you whether the skill expects a free-form task, a target
+            surface, a package pattern, or a small set of known trigger words.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Find the mode-detection section</h3>
+          <p>
+            If the file contains lines such as “If $ARGUMENTS is ...”, you are
+            looking at an explicit routing layer rather than a loose prompt.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Do not assume consistency by name alone</h3>
+          <p>
+            Two skills can both accept one argument and still interpret it in
+            completely different ways. The contract lives in the skill file.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Shell Shortcuts</p>
+        <h2>Keep terminal cleanup fast when you work inside tmux.</h2>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3><code>ch</code></h3>
+          <p>
+            Expands to <code>clear; tmux clear-history</code>. It clears the
+            current shell screen and the current tmux pane scrollback.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Next Step</p>
+        <h2>If a skill feels ambiguous, read it like an interface definition.</h2>
+        <p>
+          Start with the mode rules, not with your intuition. That is the
+          fastest way to understand what the skill will actually do once
+          execution starts.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="/skills">Open workflows hub</a>
-          <a class="button button-secondary" href="/faq">Read FAQ</a>
-          <a class="button button-secondary" href="/docs">Read docs</a>
+          <a class="button button-primary" href="/skills">Browse public skill pages</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/shipglowz_data/technical/operator-guides/skill-launch-cheatsheet.md">Open Markdown reference</a>
+          <a class="button button-secondary" href="/faq">Open the FAQ</a>
         </div>
       </div>
     </section>

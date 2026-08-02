@@ -1,15 +1,22 @@
+---
+import { pathFor, sharedHomeSections, type Locale } from "../i18n/ui";
+import SectionHeading from "./SectionHeading.astro";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = "en" } = Astro.props;
+const copy = sharedHomeSections[locale].cta;
+---
+
 <section class="section">
   <div class="cta-panel">
-    <p class="eyebrow">Start Here</p>
-    <h2>If continuity and review quality matter, ContentFlow App is built for you.</h2>
-    <p>
-      Start with the app workflows and product docs. The goal is consistent
-      operator execution, including degraded-mode continuity, from idea to
-      publish-ready planning.
-    </p>
+    <SectionHeading eyebrow={copy.eyebrow} title={copy.title} body={copy.body} class="cta-panel-heading" />
     <div class="hero-actions">
-      <a class="button button-primary" href="https://github.com/dianedef/contentflow_app">Open the repository</a>
-      <a class="button button-secondary" href="/docs">Read The Docs</a>
+      {copy.actions.map(([label, href, className]) => (
+        <a class={className} href={pathFor(href, locale)}>{label}</a>
+      ))}
     </div>
   </div>
 </section>

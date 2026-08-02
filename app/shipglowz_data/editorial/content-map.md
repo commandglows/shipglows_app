@@ -1,10 +1,10 @@
 ---
 artifact: content_map
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "0.2.0"
 project: "shipglowz_app"
 created: "2026-04-26"
-updated: "2026-05-30"
+updated: "2026-08-02"
 status: "draft"
 source_skill: sf-docs
 scope: content_map
@@ -32,8 +32,9 @@ content_surfaces:
   - "ShipGlowz Markdown/source readers"
   - "Project technical governance shipglowz_data"
   - "Specs and exploration reports"
+  - "Canonical ShipGlowz public site under site/"
   - "Legacy ContentFlow runtime retained for classification"
-next_review: "2026-06-08"
+next_review: "2026-09-02"
 next_step: "/sf-docs update"
 ---
 
@@ -124,7 +125,11 @@ Markdown and repository files are the source of truth. Future database work is a
 
 ## Public And Editorial Surfaces
 
-This repository currently has no separate marketing site, blog, pricing page, or public content collection. `README.md` is the main public-facing documentation surface. If public pages are added, run `/sf-docs editorial`.
+`site/` is the only canonical source for the ShipGlowz public website. It owns the landing page, public documentation, FAQ, pricing hypothesis, contact and trust pages, install guidance, bilingual routes, blog articles, and public skill discovery.
+
+The former `/home/claude/shipglowz/shipglowz-site` source was moved into this repository on 2026-08-02. It is not a second authority and must not be recreated. The Vercel project metadata travels with `site/`; deployment configuration never changes source ownership by itself.
+
+Public claims must remain aligned with reviewed ShipGlowz business, product, GTM, and brand contracts. Roadmap capabilities must be labeled as in development rather than shipped behavior.
 
 ## Security-Sensitive Surfaces
 

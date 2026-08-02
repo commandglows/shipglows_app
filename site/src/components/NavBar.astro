@@ -1,21 +1,61 @@
+---
+import { alternatePath, navCopy, pathFor, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale?: Locale;
+  currentPath?: string;
+  alternateHref?: string;
+}
+
+const { locale = "en", currentPath = "/", alternateHref } = Astro.props;
+const copy = navCopy[locale];
+const otherLocale = locale === "fr" ? "en" : "fr";
+const localeSwitchHref = alternateHref ?? alternatePath(currentPath, otherLocale);
+---
+
 <header class="topbar">
-  <a class="brand" href="/">
-    <span class="brand-mark">CF</span>
-    <span>ContentFlow App</span>
+  <a class="brand" href={pathFor("/", locale)}>
+    <span class="brand-mark">SF</span>
+    <span>ShipGlowz</span>
   </a>
 
-  <nav class="topnav" aria-label="Primary">
-    <a href="/skills">Workflows</a>
-    <a href="/about">About</a>
-    <a href="/faq">FAQ</a>
-    <a href="/why-not-just-prompts">Why this app?</a>
-    <a href="/#how-it-works">How it works</a>
-    <a href="/pricing">Pricing</a>
-    <a href="/docs">Docs</a>
-    <a href="/contact">Contact</a>
-  </nav>
+  <div class="topbar-desktop">
+    <nav class="topnav" aria-label={copy.aria}>
+      {copy.links.map(([label, href]) => <a href={pathFor(href, locale)}>{label}</a>)}
+    </nav>
 
-  <a class="button button-secondary topbar-cta" href="https://github.com/dianedef/contentflow_app">
-    GitHub
-  </a>
+    <a class="button button-secondary topbar-cta" href="https://github.com/dianedef/ShipGlowz">
+      {copy.github}
+    </a>
+    <a class="language-link" href={localeSwitchHref} hreflang={otherLocale}>
+      {copy.language}
+    </a>
+  </div>
+
+  <details class="mobile-nav">
+    <summary class="mobile-nav-toggle">
+      <span class="mobile-nav-toggle-label">{copy.mobileToggle}</span>
+      <span class="sr-only mobile-nav-state mobile-nav-state-open">{copy.mobileOpen}</span>
+      <span class="sr-only mobile-nav-state mobile-nav-state-close">{copy.mobileClose}</span>
+      <span class="mobile-nav-toggle-icon" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </summary>
+
+    <nav class="mobile-nav-panel" aria-label={copy.aria}>
+      <div class="mobile-nav-links">
+        {copy.links.map(([label, href]) => <a href={pathFor(href, locale)}>{label}</a>)}
+      </div>
+      <div class="mobile-nav-meta">
+        <a class="button button-secondary mobile-nav-cta" href="https://github.com/dianedef/ShipGlowz">
+          {copy.github}
+        </a>
+        <a class="language-link mobile-nav-language" href={localeSwitchHref} hreflang={otherLocale}>
+          {copy.language}
+        </a>
+      </div>
+    </nav>
+  </details>
 </header>

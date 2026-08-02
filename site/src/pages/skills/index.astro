@@ -1,80 +1,302 @@
 ---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
 import Footer from "../../components/Footer.astro";
 import NavBar from "../../components/NavBar.astro";
 import SkillCard from "../../components/SkillCard.astro";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { workflowCatalog } from "../../data/workflows";
 
-const workflows = workflowCatalog.map((item) => ({
-  slug: item.slug,
-  title: item.title,
-  category: item.category,
-  tagline: item.tagline,
-  summary: item.summary,
-  related: item.related,
+const categoryOrder = [
+  "Plan & Decide",
+  "Build & Fix",
+  "Audit & Improve",
+  "Research & Grow",
+  "Operate & Ship",
+  "Meta & Setup"
+] as const;
+
+const categoryCopy: Record<(typeof categoryOrder)[number], string> = {
+  "Plan & Decide":
+    "Frame the work before you touch files: clarify scope, prioritize, and decide the execution path.",
+  "Build & Fix":
+    "Execute concrete changes: implement features, debug failures, and repair broken flows.",
+  "Audit & Improve":
+    "Inspect quality and risk across code, UX, copy, SEO, accessibility, and delivery posture.",
+  "Research & Grow":
+    "Produce content and market intelligence that helps you choose, publish, and compound growth.",
+  "Operate & Ship":
+    "Keep delivery reliable with checks, docs, migrations, release routines, and production validation.",
+  "Meta & Setup":
+    "Maintain the ShipGlowz system itself: setup, orientation, meta tooling, and operator guidance."
+};
+
+const runtimeFamilies = [
+  {
+    title: "Lifecycle and master",
+    skills: "shipflow, sf-build, sf-maintain, sf-deploy, sf-design, sf-content, sf-customer, plus the manual spec -> ready -> start -> verify -> end -> ship path",
+    role:
+      "Use these when the work should move across several gates instead of staying inside one specialist lane."
+  },
+  {
+    title: "Data, access, and activation",
+    skills: "sf-local-cloud-sync, sf-product-entitlements",
+    role:
+      "Use these when local data, cloud sync, product access, entitlement ledgers, premium gates, or backend authorization boundaries must be explicit before implementation."
+  },
+  {
+    title: "Audit and source",
+    skills: "sf-audit*, sf-deps, sf-perf",
+    role:
+      "Use these to expose quality, security, performance, SEO, copy, design, dependency, or GTM risk and decide whether a durable chantier is needed."
+  },
+  {
+    title: "Bug and proof",
+    skills: "sf-bug, sf-fix, sf-test, sf-browser, sf-auth-debug, sf-prod, sf-check, sf-migrate",
+    role:
+      "Use these when the next move depends on a failure, validation evidence, deployed truth, or migration risk."
+  },
+  {
+    title: "Content, docs, and support",
+    skills: "sf-content repurpose, sf-docs, sf-redact, sf-enrich, sf-changelog, sf-scaffold, sf-init",
+    role:
+      "Use these to keep public content, documentation, scaffolding, skill contracts, and governance surfaces coherent with shipped behavior."
+  },
+  {
+    title: "Research, pilotage, and helpers",
+    skills: "009-sg-marketing, sf-research, sf-veille, sf-backlog, sf-priorities, sf-review, sf-tasks, sf-context, sf-model, sf-help, sf-status, sf-resume, sf-explore, name",
+    role:
+      "Use these to clarify information, order work, preserve context, or route the next move without pretending to own the whole lifecycle."
+  }
+];
+
+const skills = (await getCollection("skills")).sort((a, b) => a.data.order - b.data.order);
+const featuredSkills = skills.filter((skill) => skill.data.featured);
+const groupedSkills = categoryOrder.map((category) => ({
+  category,
+  skills: skills.filter((skill) => skill.data.category === category)
 }));
 ---
 
 <BaseLayout
-  title="ContentFlow Workflows | Public feature catalog"
-  description="Explore ContentFlow App operational workflows: onboarding, planning, review, scheduling, and resilience."
+  title="ShipGlowz Skills | Public workflow catalog"
+  description="Explore every ShipGlowz skill, what problem it solves, and how it fits into a stronger solo-founder workflow."
 >
   <main class="page-shell">
     <NavBar />
 
     <section class="section">
       <div class="section-heading">
-        <p class="eyebrow">Workflow Catalog</p>
-        <h1 class="page-title">Feature pages for the operator surface.</h1>
+        <p class="eyebrow">Skills Catalog</p>
+        <h1 class="page-title">A skill is a public workflow move, not just an internal prompt.</h1>
         <p>
-          These workflows are practical surfaces, not generic prompts. Each page
-          explains what is shipped, what matters for users, and what remains out
-          of scope.
+          ShipGlowz skills break the operating model into reusable actions:
+          triage a bug, shape a spec, verify readiness, audit a system, or
+          research a market before you waste build time. The point is not more
+          prompt cleverness. The point is fewer weak handoffs.
         </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">How To Read This</p>
+        <h2>Use the hub to find the right move for the problem in front of you.</h2>
+        <p>
+          Some skills help you frame work before code starts. Others audit
+          quality, sharpen documentation, or reduce wasted effort in research,
+          GTM, and operations. Start with the pain point, then follow the
+          related-skill links to see the full loop. Their descriptions also
+          follow a discovery-agent discipline, so routing words stay compact
+          enough for Codex and Claude Code to see them.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-secondary" href="/skill-modes">Open the launch cheatsheet</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Skill Language</p>
+        <h2>Skill contracts stay in English on purpose.</h2>
+        <p>
+          ShipGlowz can localize the public navigation, but the skill pages keep
+          their operational language in English because the agents that consume
+          these contracts follow them more reliably that way.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Current Runtime Taxonomy</p>
+        <h2>The public categories help browsing. The runtime families explain routing.</h2>
+        <p>
+          ShipGlowz now keeps skill discovery descriptions compact, so the
+          runtime can select skills without carrying long summaries. The
+          important distinction is whether a skill owns a lifecycle, exposes
+          risk, proves behavior, supports content or docs, or simply helps route
+          the next move.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        {
+          runtimeFamilies.map((family) => (
+            <article class="doc-card">
+              <h3>{family.title}</h3>
+              <p>{family.role}</p>
+              <p>
+                <strong>Includes:</strong> {family.skills}
+              </p>
+            </article>
+          ))
+        }
       </div>
     </section>
 
     <section class="section">
       <div class="doc-grid">
         <article class="doc-card">
-          <h3>Start with Entry</h3>
+          <h3>Start with the primary router</h3>
           <p>
-            New session flow first: authentication, project selection, and
-            workspace continuity define every other action in the app.
+            Use `shipflow <instruction>` when you do not want to choose a skill
+            manually. It answers simple questions directly or hands the current
+            thread to `sf-build`, `sf-maintain`, `sf-deploy`, `sf-bug`,
+            `sf-content`, `sf-design`, `009-sg-marketing`, `sf-customer`, or an obvious audit specialist.
+            If the route is not context-safe, it asks one numbered decision
+            question instead of guessing.
           </p>
-          <a class="doc-action" href="/skills/entry">Open entry workflow</a>
+          <a class="doc-action" href="/skills/shipflow">Open shipflow</a>
         </article>
 
         <article class="doc-card">
-          <h3>Keep review in the loop</h3>
+          <h3>Arguments can change scope</h3>
           <p>
-            Planning and scheduling are useful only when status transitions are
-            explicit and auditable.
+            Some skill pages include an Arguments section that lists exact
+            keywords and the consequences of using them, such as shipping only
+            current-session changes or every dirty file in a repo.
           </p>
-          <a class="doc-action" href="/skill-modes">See workflow map</a>
+          <a class="doc-action" href="/skills/sg-ship">See sf-ship arguments</a>
         </article>
       </div>
     </section>
 
     <section class="section">
       <div class="section-heading">
-        <p class="eyebrow">Available Workflows</p>
-        <h2>Each card maps to one core operating surface.</h2>
+        <p class="eyebrow">Browser Evidence</p>
+        <h2>Use the right browser skill for the kind of proof you need.</h2>
+        <p>
+          Browser evidence is not one workflow. A public page check, an auth
+          callback failure, a manual user-flow test, and a deployment health
+          check each need a different level of proof.
+        </p>
+      </div>
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>General page proof</h3>
+          <p>
+            Use `sf-browser` when you need a real browser to inspect one
+            non-auth objective: visible state, layout, screenshot, console, or
+            network signal.
+          </p>
+          <a class="doc-action" href="/skills/sg-browser">Open sf-browser</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Auth flow diagnosis</h3>
+          <p>
+            Use `sf-auth-debug` when the risk is login, OAuth, cookies,
+            callbacks, sessions, tenants, providers, or protected routes.
+          </p>
+          <a class="doc-action" href="/skills/sg-auth-debug">Open sf-auth-debug</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Manual user-flow proof</h3>
+          <p>
+            Use `sf-test` when the work needs a guided scenario, structured
+            user response, test log, retest, or bug dossier.
+          </p>
+          <a class="doc-action" href="/skills/sg-test">Open sf-test</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Deployment truth first</h3>
+          <p>
+            Use `sf-prod` when the preview or production URL, deployment state,
+            build logs, runtime logs, or live readiness are still uncertain.
+          </p>
+          <a class="doc-action" href="/skills/sg-prod">Open sf-prod</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Featured Skills</p>
+        <h2>The core moves most founders will touch first.</h2>
       </div>
       <div class="skill-grid">
         {
-          workflows.map((workflow) => (
+          featuredSkills.map((skill) => (
             <SkillCard
-              href={`/skills/${workflow.slug}`}
-              title={workflow.title}
-              category={workflow.category}
-              tagline={workflow.tagline}
-              summary={workflow.summary}
-              relatedSkills={workflow.related}
-              featured={workflow.slug === "planning"}
+              href={`/skills/${skill.id}`}
+              title={skill.data.title}
+              category={skill.data.category}
+              tagline={skill.data.tagline}
+              summary={skill.data.summary}
+              relatedSkills={skill.data.related_skills}
+              featured={true}
             />
           ))
         }
+      </div>
+    </section>
+
+    {
+      groupedSkills.map(
+        ({ category, skills: categorySkills }) =>
+          categorySkills.length > 0 && (
+            <section class="section">
+              <div class="section-heading">
+                <p class="eyebrow">{category}</p>
+                <h2>{categorySkills.length} public pages in this category.</h2>
+                <p>{categoryCopy[category]}</p>
+              </div>
+              <div class="skill-grid">
+                {
+                  categorySkills.map((skill) => (
+                    <SkillCard
+                      href={`/skills/${skill.id}`}
+                      title={skill.data.title}
+                      category={skill.data.category}
+                      tagline={skill.data.tagline}
+                      summary={skill.data.summary}
+                      relatedSkills={skill.data.related_skills}
+                    />
+                  ))
+                }
+              </div>
+            </section>
+          )
+      )
+    }
+
+    <section class="section">
+      <div class="docs-panel">
+        <div>
+          <p class="eyebrow">Need The Internal Contracts?</p>
+          <h2>The public skill pages explain the workflow. The docs explain the machinery behind it.</h2>
+          <p>
+            If you want the execution doctrine, not just the public outcome,
+            move next to the docs and the repository contracts.
+          </p>
+        </div>
+        <div class="docs-links">
+          <a class="docs-link" href="/docs">Documentation Overview</a>
+          <a class="docs-link" href="https://github.com/dianedef/ShipGlowz/tree/main/skills">Skills on GitHub</a>
+          <a class="docs-link" href="/docs#execution-logic">Workflow doctrine</a>
+        </div>
       </div>
     </section>
   </main>

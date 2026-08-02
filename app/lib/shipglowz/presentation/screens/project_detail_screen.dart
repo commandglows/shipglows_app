@@ -4,17 +4,27 @@ import 'package:intl/intl.dart';
 
 import '../../../domain/project_health/project_health_models.dart';
 import '../../providers/dashboard_provider.dart';
+import '../../providers/managed_project_identity_provider.dart';
 import '../widgets/dependency_posture_chip.dart';
+import '../widgets/managed_conversation_panel.dart';
 import '../widgets/shipglowz_scaffold.dart';
 
 class ProjectDetailScreen extends ConsumerWidget {
-  const ProjectDetailScreen({required this.projectName, super.key});
+  const ProjectDetailScreen({
+    required this.projectName,
+    this.runnerProjectId,
+    super.key,
+  });
 
   final String projectName;
+  final String? runnerProjectId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(dashboardProvider);
+    final resolvedRunnerProjectId =
+        runnerProjectId ??
+        ref.watch(managedRunnerProjectIdProvider(projectName));
     return ShipGlowzScaffold(
       title: projectName,
       body: dashboard.when(
@@ -31,7 +41,10 @@ class ProjectDetailScreen extends ConsumerWidget {
           if (project == null) {
             return const Center(child: Text('Project not found.'));
           }
-          return _ProjectDetailBody(project: project);
+          return _ProjectDetailBody(
+            project: project,
+            runnerProjectId: resolvedRunnerProjectId,
+          );
         },
       ),
     );
@@ -39,9 +52,10 @@ class ProjectDetailScreen extends ConsumerWidget {
 }
 
 class _ProjectDetailBody extends StatelessWidget {
-  const _ProjectDetailBody({required this.project});
+  const _ProjectDetailBody({required this.project, this.runnerProjectId});
 
   final ProjectHealth project;
+  final String? runnerProjectId;
 
   @override
   Widget build(BuildContext context) {
@@ -112,15 +126,17 @@ class _ProjectDetailBody extends StatelessWidget {
                   ),
                   child: SelectableText(
                     'Recommended next command: ${project.nextCommand}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'monospace',
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(fontFamily: 'monospace'),
                   ),
                 ),
               ],
             ),
           ),
         ),
+        const SizedBox(height: 12),
+        ManagedConversationPanel(projectId: runnerProjectId),
         const SizedBox(height: 12),
         Card(
           child: Padding(
@@ -150,9 +166,8 @@ class _ProjectDetailBody extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'Event: ${event.eventId} · Next: ${event.nextStep}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -190,10 +205,7 @@ class _ProjectDetailBody extends StatelessWidget {
                       children: [
                         const Padding(
                           padding: EdgeInsets.only(top: 2),
-                          child: Icon(
-                            Icons.warning_amber_outlined,
-                            size: 18,
-                          ),
+                          child: Icon(Icons.warning_amber_outlined, size: 18),
                         ),
                         const SizedBox(width: 10),
                         Expanded(

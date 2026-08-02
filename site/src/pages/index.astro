@@ -6,61 +6,48 @@ import FaqSection from "../components/FaqSection.astro";
 import FeatureGrid from "../components/FeatureGrid.astro";
 import Footer from "../components/Footer.astro";
 import Hero from "../components/Hero.astro";
+import AgentLoop from "../components/AgentLoop.astro";
 import NavBar from "../components/NavBar.astro";
 import PricingHypothesis from "../components/PricingHypothesis.astro";
 import ProductSurface from "../components/ProductSurface.astro";
 import ProofStrip from "../components/ProofStrip.astro";
 import RoleMap from "../components/RoleMap.astro";
+import { homeCopy, pathFor } from "../i18n/ui";
+
+const locale = "en";
+const copy = homeCopy[locale];
 ---
 
 <BaseLayout
-  title="ContentFlow App | Human-led content operations"
-  description="ContentFlow App turns idea, review, and scheduling workflows into a resilient operator experience with offline continuity."
+  title={copy.title}
+  description={copy.description}
+  locale={locale}
+  canonicalPath="/"
+  alternatePath="/fr/"
 >
   <main class="page-shell">
-    <NavBar />
-    <Hero />
-    <FeatureGrid />
-    <ProductSurface />
-    <RoleMap />
-    <ProofStrip />
-    <PricingHypothesis />
-    <FaqSection />
-    <DocsCta />
+    <NavBar locale={locale} currentPath="/" />
+    <Hero locale={locale} />
+    <FeatureGrid locale={locale} />
+    <AgentLoop locale={locale} />
+    <ProductSurface locale={locale} />
+    <RoleMap locale={locale} />
+    <ProofStrip locale={locale} />
+    <PricingHypothesis locale={locale} />
+    <FaqSection locale={locale} />
+    <DocsCta locale={locale} />
     <section class="section">
       <div class="doc-grid">
-        <article class="doc-card">
-          <h3>Read the latest operator article</h3>
-          <p>
-            See how we turn Codex conversation history into cleaner sessions,
-            clearer titles, and durable follow-ups.
-          </p>
-          <a class="doc-action" href="/articles">Browse articles</a>
-        </article>
+        {copy.ctaCards.map(([title, body, action, href]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p>{body}</p>
+            <a class="doc-action" href={pathFor(href, locale)}>{action}</a>
+          </article>
+        ))}
       </div>
     </section>
-    <section class="section">
-      <div class="doc-grid">
-        <article class="doc-card">
-          <h3>Understand how the app stays useful when sync is degraded</h3>
-          <p>
-            The app keeps workspace state, queue status, and retry paths explicit so
-            operators can continue even when backend services are degraded.
-          </p>
-          <a class="doc-action" href="/skill-modes">Read the workflow overview</a>
-        </article>
-
-        <article class="doc-card">
-          <h3>Start with the direct questions</h3>
-          <p>
-            If you want quick answers, the FAQ covers what the app does,
-            how continuity works, and what is out of scope for this release.
-          </p>
-          <a class="doc-action" href="/faq">Open the FAQ</a>
-        </article>
-      </div>
-    </section>
-    <CallToAction />
+    <CallToAction locale={locale} />
   </main>
-  <Footer />
+  <Footer locale={locale} />
 </BaseLayout>

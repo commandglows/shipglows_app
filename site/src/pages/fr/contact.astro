@@ -1,0 +1,54 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+
+const locale = "fr";
+---
+
+<BaseLayout
+  title="Contact ShipGlowz"
+  description="Comment prendre contact à propos de ShipGlowz."
+  locale={locale}
+  canonicalPath="/fr/contact"
+  alternatePath="/contact"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/contact" />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Contact</p>
+        <h1 class="page-title">Si ShipGlowz correspond à votre douleur, la prochaine étape est une conversation concrète.</h1>
+        <p>
+          ShipGlowz vise les builders qui ressentent déjà le coût du contexte
+          perdu, des passages de relais faibles et des boucles agent fragiles.
+          Commencez par les docs, puis arrivez avec le workflow ou le problème
+          de livraison que vous voulez rendre plus solide.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="contact-grid">
+        <article class="doc-card">
+          <h3>Meilleure façon d’évaluer l’ajustement</h3>
+          <p>
+            Apportez un vrai problème de workflow : reconstruction répétée du
+            contexte, passages de relais faibles, dérive entre docs et
+            implémentation ou opérations serveur désordonnées.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Avant de prendre contact</h3>
+          <p>
+            Lisez l’entrée documentation, la doctrine de workflow et le cadrage
+            produit. La conversation sera plus rapide et plus précise.
+          </p>
+        </article>
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

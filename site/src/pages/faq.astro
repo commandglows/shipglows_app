@@ -5,31 +5,77 @@ import NavBar from "../components/NavBar.astro";
 
 const items = [
   {
-    q: "What is ContentFlow App’s core outcome?",
-    a: "A reliable, human-led workflow for planning, drafting support, review, and scheduling with continuity during unstable backends."
+    q: "Is ShipGlowz a server tool or an AI workflow framework?",
+    a: "Both. It handles real server-delivery work while giving agents a stronger execution frame through context, contracts, and verification."
   },
   {
-    q: "Do I need external AI infrastructure to use the app?",
-    a: "No. The app is an operator shell for workflow and content orchestration. AI-assisted flow can exist upstream; this surface focuses on execution consistency."
+    q: "Do all skills work like free-text prompts?",
+    a: "No. Some skills treat the argument as plain task text, but others use it as a mode switch or a structured input. That is why reading the skill contract matters."
   },
   {
-    q: "Why degraded mode exists?",
-    a: "Some API paths are not always available. Degraded mode keeps read paths and queueable actions available so work can continue safely."
+    q: "Do ShipGlowz skills work with both Codex and Claude Code?",
+    a: "Yes. ShipGlowz maintains skill metadata for both discovery models: Codex starts from each skill name, description, and path, while Claude Code relies on description and optional when_to_use metadata with a 1536-character per-skill listing cap. ShipGlowz treats the stricter shared budget as the rule: descriptions are front-loaded, audited, and kept within the roughly 2% or 8000-character Codex baseline. The current audit target is zero hard violations and zero warnings while keeping discovery text under the shared budget.",
+    links: [
+      ["Codex skills documentation", "https://developers.openai.com/codex/skills"],
+      ["Claude Code skills documentation", "https://code.claude.com/docs/en/skills"]
+    ]
   },
   {
-    q: "Can the app replace a full CMS?",
-    a: "No. It is positioned as an execution surface for content teams, not a complete channel-management or CMS replacement."
+    q: "How do I install ShipGlowz in Codex?",
+    a: "Add the ShipGlowz marketplace source with `codex plugin marketplace add dianedef/ShipGlowz --ref main --sparse .agents/plugins --sparse plugins/shipflow`, restart Codex, open the plugin directory, install `shipglowz` from the ShipGlowz marketplace, then start with `$shipglowz help me choose the right workflow`."
   },
   {
-    q: "Where is the product promise documented?",
-    a: "Use the docs page for business, product, branding, GTM, architecture, and workflow contracts."
+    q: "What is a skill mode?",
+    a: "A skill mode is a specialized workflow triggered by a specific argument pattern or keyword. For example, a docs skill may switch into metadata migration mode instead of normal documentation-writing mode."
+  },
+  {
+    q: "When should I use sf-browser instead of sf-auth-debug, sf-test, or sf-prod?",
+    a: "Use sf-browser for one narrow non-auth browser check: visible state, layout, screenshot, console, or network evidence. Use sf-auth-debug for login, OAuth, cookies, sessions, callbacks, tenants, providers, or protected routes. Use sf-test for guided manual QA, checklist-first manual proof, and durable test or bug records. Use sf-prod first when the deployment URL, runtime logs, or live deploy state are still uncertain.",
+    links: [
+      ["sf-browser", "/skills/sg-browser"],
+      ["sf-auth-debug", "/skills/sg-auth-debug"],
+      ["sf-test", "/skills/sg-test"],
+      ["sf-prod", "/skills/sg-prod"]
+    ]
+  },
+  {
+    q: "Why not just prompt agents harder?",
+    a: "Because stronger prompting does not remove weak handoffs, stale docs, ambiguous task framing, or drift between product intent and implementation."
+  },
+  {
+    q: "Does ShipGlowz choose the fastest path by default?",
+    a: "No. ShipGlowz is designed to choose the smallest professional path, not the shortest fragile path. Speed, cost, and convenience only decide when the options are already equivalent on correctness, security, maintainability, relevant performance, and proof."
+  },
+  {
+    q: "Do I need every ShipGlowz document before I can use it?",
+    a: "No. The framework still helps on smaller work. But the more expensive or ambiguous the work becomes, the more the context layer and decision contracts start to pay off."
+  },
+  {
+    q: "Does every Markdown file need ShipGlowz frontmatter?",
+    a: "No. ShipGlowz targets explicit active artifacts, not every Markdown file in a repo. Some files can be officialized later, but that should be a conscious doctrine decision."
+  },
+  {
+    q: "Is sf-migrate the skill for metadata migration?",
+    a: "No. sf-migrate is for framework or dependency upgrades. Metadata and frontmatter migration belongs to the documentation workflow instead."
+  },
+  {
+    q: "Where can I see the status of a spec-first chantier?",
+    a: "Open the spec. For spec-first work, the spec carries Skill Run History and Current Chantier Flow, including the lifecycle skills that ran, their result, and the next command."
+  },
+  {
+    q: "Does a direct sf-fix need a bug record?",
+    a: "Usually yes. A direct fix can stay fast, but if it changes real behavior it should create or reuse a BUG-ID, keep a compact shipglowz_data/workflow/BUGS.md pointer, and record the detail in shipglowz_data/workflow/bugs/BUG-ID.md. Only narrow copy-only, cosmetic-only, or duplicate cases should skip that, and the exception has to be stated."
+  },
+  {
+    q: "Do TASKS.md, AUDIT_LOG.md, or PROJECTS.md store the chantier history?",
+    a: "No. Those files stay operational trackers. The durable per-chantier flow belongs in the relevant spec so the workstream can be understood without reading chat history."
   }
 ];
 ---
 
 <BaseLayout
-  title="ContentFlow App FAQ | Workflow and reliability"
-  description="Answers about ContentFlow App capabilities, scope, and reliability behavior."
+  title="ShipGlowz FAQ | Direct answers about workflow, docs, and skills"
+  description="Direct answers to the most common ShipGlowz questions: what it is, how skills work, and why the framework is structured the way it is."
 >
   <main class="page-shell">
     <NavBar />
@@ -37,10 +83,11 @@ const items = [
     <section class="section">
       <div class="section-heading">
         <p class="eyebrow">FAQ</p>
-        <h1 class="page-title">Common questions without fluff.</h1>
+        <h1 class="page-title">The common questions, without the soft-focus version.</h1>
         <p>
-          This page focuses on practical fit, scope, and operational constraints for
-          using the app day to day.
+          ShipGlowz mixes product workflow, documentation discipline, and server
+          delivery. That combination raises the same questions repeatedly. This
+          page answers them directly.
         </p>
       </div>
     </section>
@@ -52,6 +99,18 @@ const items = [
             <details class="faq-item">
               <summary>{item.q}</summary>
               <p>{item.a}</p>
+              {
+                "links" in item && (
+                  <p>
+                    {item.links.map(([label, href], index) => (
+                      <>
+                        <a href={href}>{label}</a>
+                        {index < item.links.length - 1 ? " · " : ""}
+                      </>
+                    ))}
+                  </p>
+                )
+              }
             </details>
           ))
         }
@@ -61,15 +120,42 @@ const items = [
     <section class="section">
       <div class="doc-grid">
         <article class="doc-card">
-          <h3>Want the workflow map?</h3>
-          <p>Open the workflow overview to see how operations are structured.</p>
-          <a class="doc-action" href="/skill-modes">Read workflow overview</a>
+          <h3>Want the detailed version?</h3>
+          <p>
+            If your question is really about how skills interpret arguments,
+            start with the launch cheatsheet for master skills, supporting
+            skills, and mode detection.
+          </p>
+          <a class="doc-action" href="/skill-modes">Read the launch cheatsheet</a>
         </article>
 
         <article class="doc-card">
-          <h3>Want all contracts?</h3>
-          <p>See docs for business/product scope and technical governance.</p>
-          <a class="doc-action" href="/docs">Open docs</a>
+          <h3>Want the install path?</h3>
+          <p>
+            If the question is really how to add ShipGlowz to Codex, the install
+            page gives the marketplace command and the first-run path.
+          </p>
+          <a class="doc-action" href="/install">Open install instructions</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Want the structural version?</h3>
+          <p>
+            If your question is really about documentation roles, context
+            routing, and contracts, the docs overview is the better entrypoint.
+          </p>
+          <a class="doc-action" href="/docs">Open the docs overview</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Want a faster way to steer the AI?</h3>
+          <p>
+            Use simple fast tags like <code>#partner</code>,
+            <code>#growth</code>, <code>#clarity</code>, or
+            <code>#shipflow</code> instead of rewriting a long corrective
+            prompt.
+          </p>
+          <a class="doc-action" href="/docs#recommended-combos">Open the focus-tags cheatsheet</a>
         </article>
       </div>
     </section>

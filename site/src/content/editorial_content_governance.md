@@ -6,7 +6,7 @@ Le Reader n’est plus seulement “celui qui lit le code” : il       devient 
   zspaces séparés, c’est lui qui garde la vue transversale pour
   dire où la doc technique doit être mise à jour.
 
-  Ajouts dans specs/sf-build-autonomous-master-skill.md :
+  Ajouts dans specs/sg-build-autonomous-master-skill.md :
 
   - Reader charge le corpus documentaire : specs, docs projet,
     README, guides techniques, workflow docs, contrats internes.

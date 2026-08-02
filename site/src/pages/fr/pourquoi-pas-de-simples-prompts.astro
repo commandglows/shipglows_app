@@ -1,0 +1,118 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import { pathFor } from "../../i18n/ui";
+
+const locale = "fr";
+---
+
+<BaseLayout
+  title="Pourquoi pas de simples prompts ? | ShipGlowz"
+  description="Pourquoi ShipGlowz va plus loin que le fait de mieux prompter."
+  locale={locale}
+  canonicalPath="/fr/pourquoi-pas-de-simples-prompts"
+  alternatePath="/why-not-just-prompts"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/why-not-just-prompts" />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Pourquoi pas de simples prompts ?</p>
+        <h1 class="page-title">Parce que de meilleurs prompts ne suppriment pas les passages de relais faibles.</h1>
+        <p>
+          Mieux prompter aide à la marge. Cela ne résout pas le mode d’échec
+          profond : perte de contexte, réexplication répétée, cadrage ambigu et
+          dérive entre intention produit, docs, code et opérations serveur.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">Ce que les prompts peuvent faire</p>
+          <h2>Améliorer une interaction</h2>
+          <p>
+            De meilleurs prompts peuvent clarifier une requête, améliorer la
+            précision locale et aider le modèle à produire une meilleure réponse
+            immédiate.
+          </p>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">Ce que les prompts ne résolvent pas</p>
+          <h2>Le modèle opérationnel autour de l’interaction</h2>
+          <p>
+            Ils ne créent pas une couche de contexte persistante, une carte
+            documentaire par rôle, un workflow spec-first, une porte de
+            vérification ou un contrat qualité empêchant le chemin le plus
+            rapide de battre le bon chemin.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>ShipGlowz ajoute une structure autour du prompt</h3>
+          <p>
+            Il route les agents avec le contrat de point d’entrée et le contexte
+            opérationnel, définit les contrats produit et business, puis fait
+            passer le travail non trivial par sf-spec, sf-ready, sf-start et
+            sf-verify.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Il donne aux agents un niveau d’exigence</h3>
+          <p>
+            ShipGlowz demande d’optimiser la correction, la sécurité, la
+            maintenabilité, la performance pertinente et la preuve avant la
+            vitesse, le coût ou la commodité.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Il couvre aussi la réalité runtime</h3>
+          <p>
+            Livrer réellement inclut environnements, processus, ports, chemins
+            de publication et contrôles opérationnels. ShipGlowz garde cette
+            couche dans le même cadre.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Les tags sont plus légers qu’un reprompt complet</h3>
+          <p>
+            Communiquez avec l’IA via des tags simples et rapides comme
+            <code>#offer</code>, <code>#clarity</code> ou
+            <code>#shipflow</code> quand vous devez recentrer le travail sans
+            réécrire tout le brief.
+          </p>
+          <a class="doc-action" href={pathFor("/docs#recommended-combos", locale)}>Ouvrir la cheatsheet tags</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Version courte</p>
+        <h2>ShipGlowz n’est pas anti-prompt. C’est ce qui vient après le prompt.</h2>
+        <p>
+          Le but est de rendre toute la boucle de livraison plus fiable :
+          contexte, exécution, vérification et opérations serveur ensemble.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href={pathFor("/about", locale)}>Lire pourquoi ShipGlowz existe</a>
+          <a class="button button-secondary" href={pathFor("/docs", locale)}>Voir la structure des docs</a>
+          <a class="button button-secondary" href={pathFor("/skill-modes", locale)}>Ouvrir l’aide au lancement</a>
+          <a class="button button-secondary" href={pathFor("/faq", locale)}>Ouvrir la FAQ</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

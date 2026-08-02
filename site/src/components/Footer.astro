@@ -1,14 +1,20 @@
+---
+import { footerCopy, pathFor, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = "en" } = Astro.props;
+const copy = footerCopy[locale];
+---
+
 <footer class="site-footer">
   <div>
-    <strong>ContentFlow App</strong>
-    <p>
-      Built for creators and operators who need continuity, clarity, and reliable
-      human-in-the-loop execution.
-    </p>
+    <strong>ShipGlowz</strong>
+    <p>{copy.body}</p>
   </div>
   <div class="footer-links">
-    <a href="/skills">Workflows</a>
-    <a href="https://github.com/dianedef/contentflow_app">GitHub</a>
-    <a href="/#how-it-works">How it works</a>
+    {copy.links.map(([label, href]) => <a href={pathFor(href, locale)}>{label}</a>)}
   </div>
 </footer>

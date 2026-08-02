@@ -1,0 +1,75 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+
+const locale = "fr";
+---
+
+<BaseLayout
+  title="À propos de ShipGlowz | Pourquoi il existe"
+  description="Pourquoi ShipGlowz existe, à qui il s’adresse et ce qu’il ne cherche pas à devenir."
+  locale={locale}
+  canonicalPath="/fr/about"
+  alternatePath="/about"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/about" />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">À propos de ShipGlowz</p>
+        <h1 class="page-title">ShipGlowz existe parce que la perte de contexte casse encore la livraison assistée par IA.</h1>
+        <p>
+          Le produit n’est pas né d’une ambition générique d’ajouter de l’IA au
+          développement. Il répond à une douleur opérationnelle répétée :
+          fondateurs et builders perdent le contexte, les passages de relais
+          entre agents s’affaiblissent, et le travail dérive entre intention
+          produit, docs, code et changements runtime.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">Pour qui</p>
+          <h2>Les fondateurs solo d’abord, avec un vrai usage pour les petites équipes techniques</h2>
+          <p>
+            ShipGlowz est conçu pour des personnes qui livrent déjà de vrais
+            produits et veulent une manière plus claire et fiable de travailler
+            avec des agents sans transformer chaque fil en reconstruction de
+            contexte.
+          </p>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">Ce que ça résout</p>
+          <h2>Ambiguïté, passages de relais faibles et boucles fragiles</h2>
+          <p>
+            Le produit réduit l’ambiguïté avant le code, renforce les passages
+            de relais par des contrats explicites et rapproche la vérification
+            de la promesse réelle du travail.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        {[
+          ["Ce que ShipGlowz n’est pas", "Pas un assistant de code de plus. Pas seulement un script serveur PM2 avec quelques helpers. Pas un paquet de prompts. Pas un PaaS ou gestionnaire de plateforme généraliste."],
+          ["Pourquoi les docs comptent autant", "ShipGlowz traite business, produit, GTM, marque, architecture et règles techniques comme des contrats de décision parce qu’ils façonnent ce que les agents construisent, vérifient et revendiquent publiquement."],
+          ["Pourquoi les choix d’outillage restent pragmatiques", "ShipGlowz choisit le mécanisme qui réduit la friction sur le vrai chemin vers la livraison, plutôt qu’une abstraction plus élégante mais plus coûteuse à exploiter."],
+          ["Pourquoi les corrections rapides restent tracées", "Une correction directe ne doit pas disparaître dans la mémoire du chat. Quand sf-fix change un comportement réel, ShipGlowz attend un BUG-ID, un pointeur compact et un dossier de bug exploitable."]
+        ].map(([title, body]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

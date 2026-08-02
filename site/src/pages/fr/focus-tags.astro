@@ -1,0 +1,100 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import { pathFor } from "../../i18n/ui";
+
+const locale = "fr";
+
+const families = [
+  ["Business", "À utiliser quand vous voulez que l’agent pense en offre, croissance, ROI, funnel ou décisionnaire."],
+  ["Contenu", "À utiliser quand vous voulez améliorer la clarté, le CTA, les FAQ, le repurposing ou la découvrabilité."],
+  ["Gouvernance", "À utiliser quand vous voulez la source canonique, moins de dérive et plus de respect de l’ownership."],
+  ["Exécution", "À utiliser quand vous voulez plus de qualité, de preuve, de scope et de discipline de routage."],
+  ["Système", "À utiliser quand la conversation porte sur ShipGlowz lui-même et non sur le projet courant."]
+];
+
+const combos = [
+  ["#offer #cta #clarity", "Rendre la proposition de valeur et l’action suivante évidentes."],
+  ["#partner #growth #roi", "Pousser vers le mouvement business le plus utile."],
+  ["#founder #growth #clarity", "Traiter l’utilisateur comme un owner business et optimiser les décisions utiles."],
+  ["#shipflow-owner #partner #no-drift", "Traiter ShipGlowz comme un actif de portefeuille et éviter la dérive de scope."],
+  ["#end-user #clarity #quality", "Rendre la solution plus simple et plus sûre pour un utilisateur normal."],
+  ["#faq #trust #clarity", "Répondre directement aux objections sans perdre en crédibilité."],
+  ["#canon #drift #single-source", "Réparer la source de vérité au lieu de patcher des doublons."],
+  ["#shipflow #proof #contract", "Travailler sur ShipGlowz lui-même et renforcer la doctrine ou la preuve."]
+];
+---
+
+<BaseLayout
+  title="Tags de recentrage | ShipGlowz"
+  description="Une cheatsheet légère pour guider ShipGlowz avec des tags simples au lieu de réécrire de longs prompts."
+  locale={locale}
+  canonicalPath="/fr/focus-tags"
+  alternatePath="/focus-tags"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/focus-tags" />
+
+    <section class="section" id="business-recenter-tags">
+      <div class="section-heading">
+        <p class="eyebrow">Tags de recentrage</p>
+        <h1 class="page-title">Guidez l’IA avec des tags simples et rapides.</h1>
+        <p>
+          Quand vous ne voulez pas réécrire tout le brief, utilisez un petit
+          pack de tags pour remettre l’agent dans la bonne posture business,
+          contenu ou gouvernance. Ces tags sont légers. Ils ne remplacent pas
+          le routage normal par owner skill. Ils ne remplacent pas non plus les
+          profils nommés : <code>%Ariane</code> active un profil, alors que
+          <code>#Adhesion</code> reste un tag de focus.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href={pathFor("/docs", locale)}>Voir les combos recommandés</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/shipglowz_data/technical/operator-guides/focus-tags-cheatsheet.md">Ouvrir la cheatsheet Markdown</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        {families.map(([title, body]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section" id="system-recenter-tags">
+      <div class="section-heading">
+        <p class="eyebrow">Combinaisons rapides</p>
+        <h2>Partez d’un pack éprouvé plutôt que d’en inventer un à chaque fois.</h2>
+      </div>
+      <div class="doc-grid">
+        {combos.map(([tags, body]) => (
+          <article class="doc-card">
+            <h3><code>{tags}</code></h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Étape suivante</p>
+        <h2>Utilisez les tags pour recentrer plus vite, pas pour écrire des prompts plus longs.</h2>
+        <p>
+          Pour la référence publique complète, retournez à la vue docs ou à la
+          cheatsheet Markdown.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href={pathFor("/docs", locale)}>Ouvrir la vue docs</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/shipglowz_data/technical/operator-guides/focus-tags-cheatsheet.md">Ouvrir la cheatsheet complète</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

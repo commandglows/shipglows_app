@@ -3,35 +3,81 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Footer from "../components/Footer.astro";
 import NavBar from "../components/NavBar.astro";
 
-const docsMap = [
-  ["AGENT.md", "entrypoint and operator context."],
-  ["shipglowz_data/business/business.md", "for whom the product is built."],
-  ["shipglowz_data/business/product.md", "scope, workflows, and non-goals."],
-  ["shipglowz_data/business/branding.md", "tone, terms, and positioning."],
-  ["shipglowz_data/business/gtm.md", "public framing and objection handling."],
-  ["shipglowz_data/editorial/content-map.md", "how content should be categorized and reused."],
-  ["shipglowz_data/technical/context.md", "technical context map."],
-  ["shipglowz_data/technical/context-function-tree.md", "function-tree and structural dependencies."],
-  ["shipglowz_data/technical/architecture.md", "architecture and boundaries."],
-  ["shipglowz_data/technical/guidelines.md", "engineering conventions and safeguards."],
-  ["shipglowz_data/workflow/TASKS.md", "operational task tracker."],
-  ["shipglowz_data/workflow/AUDIT_LOG.md", "history and audit trail."],
-  ["shipglowz_data/workflow/specs/SPEC-offline-sync-v2.md", "degraded mode guarantees."],
-  ["shipglowz_data/workflow/specs/PRD-lifetime-deal-early-bird-payg.md", "pricing context and open assumptions."]
+const coreDocs = [
+  ["AGENT.md (compat)", "Where a fresh agent should look first depending on the task."],
+  ["shipglowz_data/technical/context.md", "How to orient quickly in the repo, identify hotspots, and route edits."],
+  ["shipglowz_data/technical/context-function-tree.md", "How to navigate large procedural shell files without re-reading everything."],
+  ["shipglowz_data/technical/terminal-tui.md", "How the optional terminal cockpit stays read-only, local, and separate from skill execution."],
+  ["shipglowz_data/editorial/content-map.md", "Where content lives: docs, landing pages, semantic clusters, public surfaces, and repurposing destinations."],
+  ["shipglowz_data/editorial/README.md", "How public content, claims, page intent, and Astro content schema boundaries stay aligned."],
+  ["skills/references/decision-quality-contract.md", "Why ShipGlowz chooses correctness, security, maintainability, relevant performance, and proof before speed or convenience."],
+  ["shipglowz_data/technical/operator-guides/skill-launch-cheatsheet.md", "Markdown reference for master skills, supporting skills, and argument modes."],
+  ["shipglowz_data/technical/operator-guides/focus-tags-cheatsheet.md", "Public cheatsheet for lightweight recentering tags across business, content, governance, execution, and system focus."],
+  ["README.md (compat)", "Public overview, positioning, onboarding, and high-level framework story."],
+  ["shipglowz_data/workflow/playbooks/spec-driven-workflow.md", "The execution doctrine behind sf-spec, sf-ready, sf-start, and sf-verify."]
 ];
 
-const featureDocs = [
-  "entry and authentication flow under Clerk web auth",
-  "workspace selection and project continuity",
-  "degraded mode and queued operations",
-  "review/status transitions, scheduling, and diagnostics",
-  "feedback capture and admin moderation path"
+const layoutMap = [
+  ["BUSINESS.md", "shipglowz_data/business/business.md"],
+  ["PRODUCT.md", "shipglowz_data/business/product.md"],
+  ["BRANDING.md", "shipglowz_data/branding/branding.md"],
+  ["GTM.md", "shipglowz_data/business/gtm.md"],
+  ["CONTENT_MAP.md", "shipglowz_data/editorial/content-map.md"],
+  ["CONTEXT.md", "shipglowz_data/technical/context.md"],
+  ["CONTEXT-FUNCTION-TREE.md", "shipglowz_data/technical/context-function-tree.md"],
+  ["ARCHITECTURE.md", "shipglowz_data/technical/architecture.md"],
+  ["GUIDELINES.md", "shipglowz_data/technical/guidelines.md"],
+  ["TASKS.md", "shipglowz_data/workflow/TASKS.md"],
+  ["AUDIT_LOG.md", "shipglowz_data/workflow/AUDIT_LOG.md"],
+  ["specs/*.md", "shipglowz_data/workflow/specs/*.md"]
 ];
+
+const decisionDocs = [
+  ["shipglowz_data/business/business.md", "For whom the product exists, what value it creates, and what model it may support."],
+  ["shipglowz_data/business/product.md", "What the product does, which workflows matter, and which non-goals should stay out."],
+  ["shipglowz_data/branding/branding.md", "How the product should sound, what it can claim, and how trust is earned."],
+  ["shipglowz_data/business/gtm.md", "How the product is presented publicly, which objections matter, and what proof supports it."],
+  ["skills/references/decision-quality-contract.md", "The default quality bar for routing, model choice, implementation, fixes, and verification."],
+  ["shipglowz_data/technical/architecture.md", "How the system is organized, where boundaries sit, and which invariants hold."],
+  ["shipglowz_data/technical/guidelines.md", "How contributors should work inside the repo and which technical rules stay stable."]
+];
+
+const focusTagCombos = [
+  ["Make the offer clearer", "#offer #cta #clarity", "Use when the page or message explains too much but still does not make the value proposition or next action obvious."],
+  ["Push growth over local optimization", "#partner #growth #roi", "Use when the agent should choose the highest-leverage move instead of the easiest technical move."],
+  ["Recenter on the founder", "#founder #growth #clarity", "Use when the user is acting as a business owner and the answer should optimize for useful decisions, growth, and clarity."],
+  ["Recenter on the ShipGlowz owner", "#shipflow-owner #partner #no-drift", "Use when the conversation is about ShipGlowz itself or adjacent assets and needs portfolio-level arbitration."],
+  ["Improve onboarding and usability", "#end-user #clarity #quality", "Use when the solution works technically but still feels too hard for a normal user."],
+  ["Fix objection-heavy copy", "#faq #trust #clarity", "Use when the message needs to answer doubts directly and earn credibility."],
+  ["Repair doc drift at the right layer", "#canon #drift #single-source", "Use when code, docs, or public surfaces are out of sync and the source of truth matters more than local patching."],
+  ["Work on ShipGlowz itself", "#shipflow #proof #contract", "Use when the target is the internal ShipGlowz system and the output should strengthen doctrine, proof, or internal execution quality."]
+];
+
+const projectDataPolicy = [
+  [
+    "Project-local corpus",
+    "In adopted project repos, canonical ShipGlowz Markdown lives in `shipglowz_data/` "
+      + "under categories like `business`, `technical`, `editorial`, `workflow`, and `research`."
+  ],
+  [
+    "Root compatibility",
+    "Compatibility entrypoints remain at repository root: `README.md`, `AGENT.md`, `AGENTS.md` as a symlink, optional `CLAUDE.md`, and optional public `CHANGELOG.md`."
+  ],
+  [
+    "Path resolution",
+    "Use `skills/references/canonical-paths.md` for ownership-based resolution before creating or moving project docs."
+  ]
+];
+
+const coreDocsPath = "/docs#artifact-corpus";
+const decisionDocsPath = "/docs#decision-contracts";
+const executionPath = "/docs#execution-logic";
+const editorialPath = "/docs#editorial-governance";
 ---
 
 <BaseLayout
-  title="ContentFlow App Docs | Navigation and contracts"
-  description="Navigation for ContentFlow App governance docs and workflow contracts."
+  title="ShipGlowz Docs | Navigation and contracts"
+  description="Documentation entrypoint for ShipGlowz: context layer, workflow doctrine, and decision contracts."
 >
   <main class="page-shell">
     <NavBar />
@@ -39,26 +85,27 @@ const featureDocs = [
     <section class="section" id="artifact-corpus">
       <div class="section-heading">
         <p class="eyebrow">Docs Overview</p>
-        <h1 class="page-title">A practical contract map for operators and contributors.</h1>
+        <h1 class="page-title">The docs are built for fast agent navigation, not for encyclopedic sprawl.</h1>
         <p>
-          The documentation is organized around two goals: clarity for users and
-          stable execution behavior for operators.
+          ShipGlowz documentation is structured so a fresh agent can find the
+          right context, understand the decision surface, and execute against
+          explicit contracts instead of guessing from chat history.
         </p>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="editorial-governance">
       <div class="cta-panel">
-        <p class="eyebrow">Core Promise</p>
-        <h2>Focus on shipping consistency before feature breadth.</h2>
+        <p class="eyebrow">Public Skill Pages</p>
+        <h2>The docs explain the contracts. The skills hub explains the workflow in public language.</h2>
         <p>
-          ContentFlow App is the authenticated execution layer for content work. The
-          documentation keeps product promises aligned with reality and visible to
-          users.
+          If you are evaluating ShipGlowz from the outside, start with the
+          skills hub. It shows the concrete workflow moves behind the framework
+          without requiring you to read internal execution contracts first.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="/skills">Browse workflows</a>
-          <a class="button button-secondary" href="/faq">Read operational FAQ</a>
+          <a class="button button-primary" href="/skills">Open the skills hub</a>
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/tree/main/skills">Browse skill files on GitHub</a>
         </div>
       </div>
     </section>
@@ -66,45 +113,347 @@ const featureDocs = [
     <section class="section">
       <div class="doc-grid">
         <article class="doc-card">
-          <h3>Primary feature surfaces</h3>
-          <ul class="check-list">
-            {
-              featureDocs.map((feature) => <li>{feature}</li>)
-            }
-          </ul>
+          <h3>Quality is a contract, not a mood</h3>
+          <p>
+            ShipGlowz now carries an explicit decision-quality contract. Agents
+            should prefer bounded professional work over shortcuts, and treat
+            speed or cost as tie-breakers only after correctness, security,
+            maintainability, relevant performance, and proof are already safe.
+          </p>
+          <a class="doc-action" href={decisionDocsPath}>
+            Read the decision contracts
+          </a>
         </article>
 
         <article class="doc-card">
-          <h3>What this docs set is for</h3>
+          <h3>Skill launch cheatsheet</h3>
           <p>
-            These files define what the app says, what it should not say, and which
-            workflows are considered in-scope for this stage.
+            The public mode page now shows which master skill to launch first,
+            which focused skills own narrower proof lanes, and which arguments
+            switch a workflow instead of describing the task. The Markdown
+            reference lives in <code>shipglowz_data/technical/operator-guides/skill-launch-cheatsheet.md</code>.
+          </p>
+          <a class="doc-action" href="/skill-modes">Open the cheatsheet</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Founder and owner tags</h3>
+          <p>
+            ShipGlowz now distinguishes the user-as-founder perspective from the
+            ShipGlowz-owner perspective. Use <code>#founder</code> when the
+            conversation should optimize for business decisions, growth, and
+            clarity. Use <code>#shipflow-owner</code> when the conversation is
+            about ShipGlowz itself or adjacent assets and needs portfolio-level
+            arbitration.
+          </p>
+          <a class="doc-action" href="/focus-tags">
+            Open the tag cheatsheet
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Named profiles change posture, not ownership</h3>
+          <p>
+          ShipGlowz also supports named profiles such as
+          <code>%Victoire</code>, <code>%Prudence</code>,
+          <code>%Ariane</code>, <code>%Adhesion</code>, and
+          <code>%SEO-specialist</code>. They change how
+          the turn is arbitrated, but the router still picks the owner skill
+          and focus tags still stay separate.
+          </p>
+          <a class="doc-action" href="/skill-modes">
+            See profile and launch guidance
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Focus tags for fast recentering</h3>
+          <p>
+            If a conversation starts drifting, ShipGlowz now supports lightweight
+            focus tags such as <code>#partner</code>, <code>#offer</code>,
+            <code>#growth</code>, <code>#clarity</code>,
+            <code>#founder</code>, <code>#shipflow-owner</code>,
+            <code>#pitch</code>, <code>#portfolio</code>,
+            <code>#canon</code>, <code>#quality</code>, <code>#ship</code>,
+            and <code>#shipflow</code> so you can pull the agent back to the
+            right contract without launching a whole new workflow.
+          </p>
+          <a class="doc-action" href="/docs#recommended-combos">
+            See recommended tag combos
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Install the Codex plugin cleanly</h3>
+          <p>
+            If you want the shortest user path, the install page shows the
+            marketplace command, the plugin-directory step, and the first
+            command to run once ShipGlowz is installed.
+          </p>
+          <a class="doc-action" href="/install">
+            Open install instructions
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Questions that come up repeatedly</h3>
+          <p>
+            If you want the direct version first, the FAQ page covers the most
+            common questions about documentation scope, skills, and framework
+            behavior.
+          </p>
+          <a class="doc-action" href="/faq">Open the FAQ</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>The blog now has a declared runtime surface</h3>
+          <p>
+            ShipGlowz now exposes a real indexed blog backed by an Astro
+            collection, not just a few isolated long-form pages. That gives
+            repurposing and editorial work a proper publishing target.
+          </p>
+          <a class="doc-action" href="/blog">Open the blog</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Public content stays tied to product truth</h3>
+          <p>
+            ShipGlowz separates the content map from the governance layer that
+            checks public content, claims, page intent, and Astro content
+            schema boundaries before public copy drifts from delivered behavior.
+          </p>
+          <a class="doc-action" href={editorialPath}>
+            Browse editorial governance
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Private data is versioned separately</h3>
+          <p>
+            ShipGlowz keeps durable private operator data out of the public
+            framework repository. The working tree under
+            <code>~/.shipglowz/private/data/</code> is intended to be a
+            separate Git repository for versioned private memory, while
+            ephemeral review queues should stay in different private paths.
+          </p>
+          <a class="doc-action" href="/blog/shipglowz-private-data-repo">
+            Read the explanation
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Platform support needs parity proof</h3>
+          <p>
+            <code>sf-platform-parity</code> checks product and technical parity across
+            supported surfaces before public docs claim platform support,
+            especially for Flutter and shared-code products.
+          </p>
+          <a class="doc-action" href="/skills/sg-platform-parity">
+            Open sf-platform-parity
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Specs are chantier registries</h3>
+          <p>
+            For spec-first work, the spec now carries the durable skill-run
+            history: which lifecycle skills ran, which model was used, what
+            result was recorded, and which command should happen next.
+          </p>
+          <a class="doc-action" href={executionPath}>
+            Read the workflow doctrine
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Terminal cockpit for small screens</h3>
+          <p>
+            The ShipGlowz TUI is an optional read-only dashboard installed by the
+            main ShipGlowz setup. Operators can launch <code>tui</code> from a
+            terminal to scan projects, specs, tasks, audits, and diagnostics
+            without opening the Flutter app or giving the dashboard write
+            powers.
+          </p>
+          <a class="doc-action" href="/docs#terminal-tui">
+            Read the TUI boundary
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Direct fixes still leave bug memory</h3>
+          <p>
+            `sf-fix` can patch a local bug quickly, but the default is still a
+            durable `BUG-ID`, compact `shipglowz_data/workflow/BUGS.md` pointer, and detailed
+            `shipglowz_data/workflow/bugs/BUG-ID.md` dossier unless the issue is a narrow minor
+            exception.
+          </p>
+          <a class="doc-action" href="/skills/sg-fix">Open sf-fix</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Skills stay readable by agents</h3>
+          <p>
+            ShipGlowz audits skill discovery metadata so the catalog remains
+            usable by Codex and Claude Code. The public proof keeps the
+            discovery budget visible instead of letting the skill catalog drift
+            into unreadable prompt inventory.
+          </p>
+          <a class="doc-action" href="/faq">Read the compatibility FAQ</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="recommended-combos">
+      <div class="section-heading">
+        <p class="eyebrow">Recommended Combos</p>
+        <h2>Start with a small tag pack when one tag is not enough.</h2>
+        <p>
+          These combinations are the fastest way to steer the agent toward the
+          right business, content, or governance posture without writing a long
+          correction message.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/shipglowz_data/technical/operator-guides/focus-tags-cheatsheet.md">
+            Open the full cheatsheet
+          </a>
+        </div>
+      </div>
+
+      <div class="doc-grid">
+        {focusTagCombos.map(([title, tags, body]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p><code>{tags}</code></p>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section" id="terminal-tui">
+      <div class="section-heading">
+        <p class="eyebrow">Terminal TUI</p>
+        <h2>A compact ShipGlowz dashboard for operators who live in the terminal.</h2>
+        <p>
+          The TUI is built for quick orientation on remote shells and phone-sized
+          terminals. It reads the same ShipGlowz Markdown sources as the rest of
+          the workflow and keeps execution inside the skills layer.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Install once, launch with <code>tui</code></h3>
+          <p>
+            The installer provisions the TUI for configured users. After
+            <code>sudo ./cli/install.sh</code> and a fresh shell, the daily command is
+            <code>tui</code>. Longer aliases remain available as
+            <code>sftui</code>, <code>sf-tui</code>, and
+            <code>shipflow-tui</code>.
           </p>
         </article>
 
         <article class="doc-card">
-          <h3>Public articles</h3>
+          <h3>Read-only by design</h3>
           <p>
-            Narrative guides like Codex session triage show how the tooling fits
-            into real operator habits, not just the abstract workflow map.
+            V1 can navigate projects, specs, tasks, audits, and diagnostics. It
+            does not write Markdown, run shell commands, manage auth, or store
+            cloud credentials. That boundary keeps the dashboard useful without
+            turning it into an unsafe action surface.
           </p>
-          <a class="doc-action" href="/articles">Read articles</a>
         </article>
+
+        <article class="doc-card">
+          <h3>Different from Gum and Flutter</h3>
+          <p>
+            Gum remains useful for one-shot shell prompts. The Flutter app stays
+            a separate product surface. The terminal TUI is the persistent local
+            cockpit between those two: faster than opening a full app, but still
+            intentionally narrower than a write-capable workflow.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="governance-layout">
+      <div class="section-heading">
+        <p class="eyebrow">Governance Layout</p>
+        <h2>ShipGlowz project artifacts live under <code>shipglowz_data/</code>.</h2>
+        <p>
+          Root Markdown files are intentionally narrow. Business, product, GTM,
+          technical context, content maps, specs, bug records, research, reviews,
+          audits, and verification reports belong in the project-local
+          <code>shipglowz_data/</code> corpus where skills and the linter can
+          find them consistently.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Allowed at the root</h3>
+          <p>
+            Keep <code>README.md</code>, <code>AGENT.md</code>,
+            <code>AGENTS.md</code> as a symlink to <code>AGENT.md</code>,
+            optional <code>CLAUDE.md</code>, and optional public
+            <code>CHANGELOG.md</code>. Other ShipGlowz governance docs should
+            move into <code>shipglowz_data/</code>.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Legacy files are migration sources</h3>
+          <p>
+            A root <code>BUSINESS.md</code>, <code>CONTENT_MAP.md</code>,
+            <code>CONTEXT.md</code>, <code>GUIDELINES.md</code>,
+            <code>TASKS.md</code>, or <code>AUDIT_LOG.md</code> is not
+            compliant just because it exists or has valid metadata. It should
+            be migrated to the canonical path and then linted there.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>The skill route is explicit</h3>
+          <p>
+            Use <code>sf-docs migrate-layout</code> to inventory root legacy
+            files, detect collisions, move safe artifacts, update references,
+            and run ShipGlowz metadata compliance checks.
+          </p>
+          <a class="doc-action" href="/skills/sg-docs">Open sf-docs</a>
+        </article>
+      </div>
+
+      <div class="role-list layout-map" aria-label="Legacy file mapping">
+        {
+          layoutMap.map(([legacy, canonical]) => (
+            <div class="role-row">
+              <code>{legacy}</code>
+              <span>{canonical}</span>
+            </div>
+          ))
+        }
       </div>
     </section>
 
     <section class="section">
       <div class="section-heading">
-        <p class="eyebrow">Artifact Corpus</p>
-        <h2>Corporate memory with explicit responsibilities.</h2>
+        <p class="eyebrow">Location Doctrine</p>
+        <h2>Documentation placement is a live contract.</h2>
+        <p>
+          We avoid doc drift by separating root discovery files from project-owned
+          governance documents. This keeps each repository clean and easier to
+          onboard for both agents and operators.
+        </p>
       </div>
+
       <div class="doc-grid">
         {
-          docsMap.map(([name, body]) => (
+          projectDataPolicy.map(([name, body]) => (
             <article class="doc-card">
               <h3>{name}</h3>
               <p>{body}</p>
-              <a class="doc-action" href="#artifact-corpus">Read this contract</a>
+              <a class="doc-action" href={coreDocsPath}>
+                Read canonical-path rules
+              </a>
             </article>
           ))
         }
@@ -112,16 +461,204 @@ const featureDocs = [
     </section>
 
     <section class="section">
-      <div class="cta-panel">
-        <p class="eyebrow">Decision Rule</p>
-        <h2>Reliability and review clarity come first.</h2>
+      <div class="section-heading">
+        <p class="eyebrow">Core Navigation</p>
+        <h2>Start here when you need orientation.</h2>
+      </div>
+
+      <div class="doc-grid">
+        {
+          coreDocs.map(([name, body]) => (
+            <article class="doc-card">
+              <h3>{name}</h3>
+              <p>{body}</p>
+              <a class="doc-action" href={coreDocsPath}>
+                Open in docs policy
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section" id="decision-contracts">
+      <div class="section-heading">
+        <p class="eyebrow">Decision Contracts</p>
+        <h2>Each document has one explicit role.</h2>
         <p>
-          Prefer shipping workflows that improve continuity and operator visibility
-          over adding automation where decisions become opaque.
+          Business, product, brand, GTM, architecture, and guidelines are kept
+          separate on purpose. That separation avoids duplicate logic, stale
+          context, and conflicting contracts.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        {
+          decisionDocs.map(([name, body]) => (
+            <article class="doc-card">
+              <h3>{name}</h3>
+              <p>{body}</p>
+              <a class="doc-action" href={decisionDocsPath}>
+                Open in docs policy
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section" id="execution-logic">
+      <div class="section-heading">
+        <p class="eyebrow">Remote Agent Access</p>
+        <h2>OAuth callbacks still need a local path when the agent runs on a server.</h2>
+        <p>
+          Hosted MCP providers can ask Codex to complete an OAuth flow. When
+          Codex runs remotely, the browser callback still lands on local
+          `127.0.0.1`. ShipGlowz documents that boundary so operators understand
+          why a temporary SSH callback tunnel is part of the login workflow.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>The callback is local to the browser</h3>
+          <p>
+            The provider redirects the browser to a localhost callback URL. If
+            Codex is running on a server, that localhost address is otherwise
+            the wrong machine.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>ShipGlowz opens a temporary SSH path</h3>
+          <p>
+            The local tooling captures the fresh callback port, opens an SSH
+            `-L` tunnel for that port, and closes it after the login flow. The
+            app tunnels used for development remain separate.
+          </p>
+          <a class="doc-action" href="/remote-mcp-oauth-tunnel">Read the dedicated guide</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Tokens stay with Codex and the provider</h3>
+          <p>
+            The tunnel does not replace OAuth and does not make ShipGlowz a token
+            store. It only gives the local browser a route back to the remote
+            Codex process during authorization.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Pragmatic Tooling</p>
+        <h2>ShipGlowz chooses the runtime that creates the least friction in the real environments it touches.</h2>
+        <p>
+          For small tooling such as the metadata linter, the question is not
+          which language looks the cleanest in isolation. The question is which
+          runtime is most likely to already exist on dev machines, Linux
+          servers, CI workers, and VPS targets.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Why Python is the pragmatic choice here</h3>
+          <p>
+            The linter uses the Python standard library only. That keeps it
+            dependency-free, coherent with the repo, and more likely to run
+            without extra setup than a Ruby-based equivalent on the targets
+            ShipGlowz cares about.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>What “lighter” really means</h3>
+          <p>
+            Installing Ruby just for a linter is rarely lighter in practice.
+            If ShipGlowz ever needed an even smaller runtime surface, the real
+            alternatives would be Bash for very simple rules, Node in a JS-heavy
+            repo, or a Go binary for zero external runtime at a much higher
+            implementation cost.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Tracking Discipline</p>
+        <h2>Project-local trackers own the backlog.</h2>
+        <p>
+          ShipGlowz treats project tracking as local-first. Each repository keeps
+          its active workflow state in its own <code>shipglowz_data/</code> corpus,
+          while old central files are migration evidence rather than active truth.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>One project, one active tracker</h3>
+          <p>
+            <code>shipglowz_data/workflow/TASKS.md</code> is the operational
+            tracker for one repository. Portfolio views are derived from local
+            project corpora instead of maintained in a separate central tracker.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Historical done work is not active backlog</h3>
+          <p>
+            If a legacy central archive contains completed work, that history
+            can be imported as useful context. It should not be copied
+            mechanically into a local backlog as if it were still active work.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>When a local task tracker is created later</h3>
+          <p>
+            ShipGlowz re-reads legacy project history only as migration evidence,
+            then separates active backlog from historical completed context. The
+            local tracker should stay cleaner and more project-shaped than any
+            old archive it was derived from.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>The chantier history lives in the spec</h3>
+          <p>
+            <code>shipglowz_data/workflow/TASKS.md</code> and
+            <code>shipglowz_data/workflow/AUDIT_LOG.md</code> remain operational
+            trackers. A spec-first chantier records its own flow in the spec through
+            <code>Skill Run History</code> and <code>Current Chantier Flow</code>.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Precision in language matters</h3>
+          <p>
+            ShipGlowz should not say “the tracker did not exist” without naming
+            which level it means: the master tracker, the project section inside
+            it, or <code>shipglowz_data/workflow/TASKS.md</code>.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Execution Logic</p>
+        <h2>Use the docs as product contracts, not as passive notes.</h2>
+        <p>
+          The context layer tells the agent where to start. The decision
+          contracts tell it what matters. The workflow doctrine tells it how to
+          move from ambiguity reduction to verified delivery.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="/pricing">Check pricing direction</a>
-          <a class="button button-secondary" href="https://github.com/dianedef/contentflow_app">Open repository</a>
+          <a class="button button-primary" href={coreDocsPath}>Start with AGENT.md</a>
+          <a class="button button-secondary" href={executionPath}>Read the workflow doctrine</a>
         </div>
       </div>
     </section>

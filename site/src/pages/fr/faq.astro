@@ -1,0 +1,101 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import { pathFor } from "../../i18n/ui";
+
+const locale = "fr";
+
+const items = [
+  ["ShipGlowz est-il un outil serveur ou un framework de workflow IA ?", "Les deux. Il gère du vrai travail de livraison serveur tout en donnant aux agents un cadre d’exécution plus solide par le contexte, les contrats et la vérification."],
+  ["Tous les skills fonctionnent-ils comme des prompts libres ?", "Non. Certains skills traitent l’argument comme un texte de tâche, mais d’autres l’utilisent comme un commutateur de mode ou une entrée structurée. C’est pour cela que le contrat du skill compte."],
+  ["Les skills ShipGlowz fonctionnent-ils avec Codex et Claude Code ?", "Oui. ShipGlowz maintient les métadonnées de skills pour les deux modèles de découverte. Les descriptions restent compactes, front-loadées et auditées pour rester lisibles par les deux environnements."],
+  ["Comment installer ShipGlowz dans Codex ?", "Ajoutez la source marketplace ShipGlowz avec `codex plugin marketplace add dianedef/ShipGlowz --ref main --sparse .agents/plugins --sparse plugins/shipflow`, redémarrez Codex, ouvrez le répertoire des plugins, installez `shipflow` depuis la marketplace ShipGlowz, puis commencez avec `$shipglowz help me choose the right workflow`."],
+  ["Qu’est-ce qu’un mode de skill ?", "Un mode de skill est un workflow spécialisé déclenché par un motif d’argument ou un mot-clé précis. Par exemple, un skill de docs peut entrer en mode migration de métadonnées au lieu d’écrire de la documentation classique."],
+  ["Pourquoi ne pas simplement mieux prompter les agents ?", "Parce qu’un prompt plus fort ne supprime pas les passages de relais faibles, les docs périmées, le cadrage ambigu ou la dérive entre intention produit et implémentation."],
+  ["ShipGlowz choisit-il le chemin le plus rapide par défaut ?", "Non. ShipGlowz choisit le plus petit chemin professionnel, pas le chemin fragile le plus court. Vitesse, coût et commodité ne départagent que des options déjà équivalentes en correction, sécurité, maintenabilité, performance pertinente et preuve."],
+  ["Faut-il tous les documents ShipGlowz pour l’utiliser ?", "Non. Le framework aide aussi sur de petits travaux. Mais plus le travail devient coûteux ou ambigu, plus la couche de contexte et les contrats de décision deviennent utiles."],
+  ["Tous les fichiers Markdown ont-ils besoin du frontmatter ShipGlowz ?", "Non. ShipGlowz cible les artefacts actifs explicites, pas chaque fichier Markdown d’un dépôt."],
+  ["Où voir l’état d’un chantier spec-first ?", "Dans la spec. Pour un travail spec-first, la spec porte l’historique des runs de skills et l’état courant du flux de chantier."],
+  ["Une correction directe avec sf-fix doit-elle créer un dossier de bug ?", "Souvent oui. Une correction directe peut rester rapide, mais si elle change un vrai comportement, elle doit créer ou réutiliser un BUG-ID et garder une trace compacte du diagnostic, de la correction et du retest."]
+];
+---
+
+<BaseLayout
+  title="FAQ ShipGlowz | Réponses directes sur le workflow, les docs et les skills"
+  description="Réponses directes aux questions fréquentes sur ShipGlowz : ce que c’est, comment les skills fonctionnent et pourquoi le framework est structuré ainsi."
+  locale={locale}
+  canonicalPath="/fr/faq"
+  alternatePath="/faq"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/faq" />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h1 class="page-title">Les questions fréquentes, sans version floue.</h1>
+        <p>
+          ShipGlowz mélange workflow produit, discipline documentaire et
+          livraison serveur. Cette combinaison soulève souvent les mêmes
+          questions. Cette page y répond directement.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="faq-list">
+        {items.map(([q, a]) => (
+          <details class="faq-item">
+            <summary>{q}</summary>
+            <p>{a}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Vous voulez la version détaillée ?</h3>
+          <p>
+            Si votre question porte sur la façon dont les skills interprètent
+            les arguments, commencez par l’aide au lancement.
+          </p>
+          <a class="doc-action" href={pathFor("/skill-modes", locale)}>Lire l’aide au lancement</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Vous voulez le chemin d’installation ?</h3>
+          <p>
+            Si la vraie question est comment ajouter ShipGlowz à Codex, la page
+            d’installation donne la commande marketplace et le premier parcours.
+          </p>
+          <a class="doc-action" href={pathFor("/install", locale)}>Voir l’installation</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Vous voulez la version structurelle ?</h3>
+          <p>
+            Si votre question porte sur les rôles documentaires, le routage de
+            contexte et les contrats, la vue d’ensemble des docs est la
+            meilleure entrée.
+          </p>
+          <a class="doc-action" href={pathFor("/docs", locale)}>Ouvrir la vue d’ensemble</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Vous voulez recentrer l’IA plus vite ?</h3>
+          <p>
+            Utilisez des tags simples et rapides comme <code>#partner</code>,
+            <code>#growth</code>, <code>#clarity</code> ou
+            <code>#shipflow</code> au lieu de réécrire un long prompt
+            correctif.
+          </p>
+          <a class="doc-action" href={pathFor("/docs#recommended-combos", locale)}>Ouvrir la cheatsheet tags</a>
+        </article>
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

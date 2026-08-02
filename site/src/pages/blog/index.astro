@@ -1,0 +1,101 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+
+const articles = (await getCollection("articles", ({ data }) => data.locale === "en" && !data.draft))
+  .sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
+
+const featured = articles.find((article) => article.data.featured) ?? articles[0];
+const rest = articles.filter((article) => article.id !== featured?.id);
+---
+
+<BaseLayout
+  title="ShipGlowz Blog | Editorial articles on runtime, workflows, and delivery"
+  description="Long-form ShipGlowz articles about runtime choices, workflow discipline, delivery operations, and AI-assisted execution."
+  canonicalPath="/blog"
+  alternatePath="/fr/blog"
+>
+  <main class="page-shell">
+    <NavBar currentPath="/blog" />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">ShipGlowz Blog</p>
+        <h1 class="page-title">Long-form editorial pages for the decisions behind the framework.</h1>
+        <p>
+          The docs explain the contracts. The skills explain the workflow moves.
+          The blog is where ShipGlowz can argue a position in detail when the
+          answer needs more than a card or a FAQ entry.
+        </p>
+      </div>
+    </section>
+
+    {
+      featured && (
+        <section class="section">
+          <article class="cta-panel">
+            <p class="eyebrow">Featured Article</p>
+            <h2>{featured.data.title}</h2>
+            <p>{featured.data.summary}</p>
+            <p class="meta-line">
+              <span>{featured.data.publishDate.toISOString().slice(0, 10)}</span>
+              <span>{featured.data.readingTime}</span>
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href={`/blog/${featured.data.slug}`}>
+                Read the article
+              </a>
+            </div>
+          </article>
+        </section>
+      )
+    }
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">All Articles</p>
+        <h2>Focused pieces for questions that need a stronger argument.</h2>
+      </div>
+
+      <div class="doc-grid">
+        {
+          rest.map((article) => (
+            <article class="doc-card">
+              <p class="eyebrow">{article.data.publishDate.toISOString().slice(0, 10)}</p>
+              <h3>{article.data.title}</h3>
+              <p>{article.data.summary}</p>
+              <p class="meta-line">
+                <span>{article.data.readingTime}</span>
+                <span>{article.data.tags.join(" / ")}</span>
+              </p>
+              <a class="doc-action" href={`/blog/${article.data.slug}`}>
+                Open article
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="docs-panel">
+        <div>
+          <p class="eyebrow">Other Editorial Surfaces</p>
+          <h2>The blog is indexed. Some long-form pages still live as standalone routes.</h2>
+          <p>
+            Existing explanatory pages such as “Why not just prompts?” remain valid
+            standalone surfaces when they own a narrow route intent.
+          </p>
+        </div>
+        <div class="docs-links">
+          <a class="docs-link" href="/why-not-just-prompts">Why not just prompts?</a>
+          <a class="docs-link" href="/remote-mcp-oauth-tunnel">Remote MCP OAuth tunnel</a>
+          <a class="docs-link" href="/docs">Documentation overview</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

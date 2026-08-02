@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "0.3.0"
 project: "shipglowz_app"
 created: "2026-05-08"
-updated: "2026-05-08"
+updated: "2026-08-01"
 status: draft
 source_skill: sf-docs
 scope: "runtime-boundary"
@@ -18,12 +18,16 @@ linked_systems:
   - "lib/shipglowz/app.dart"
   - "lib/router.dart"
   - "lib/providers/providers.dart"
+  - "runner/src/main.ts"
+  - "runner/src/app.ts"
+  - "lib/shipglowz/auth/**"
 depends_on:
   - "shipglowz_data/workflow/specs/shipglowz-legacy-contentflow-fusion.md@0.1.0"
 supersedes: []
 evidence:
   - "lib/main.dart defaults APP_TARGET to shipglowz."
   - "LegacyShipGlowzApp is only selected for APP_TARGET=legacy or APP_TARGET=contentflow."
+  - "Managed Cockpit auth bootstrap is disabled without both public Supabase build values."
 next_review: "2026-06-08"
 next_step: "/sf-docs technical audit"
 ---
@@ -45,7 +49,8 @@ This document defines which runtime is active and which runtime is legacy while 
 
 ## Entrypoints
 
-- Default runtime: `flutter run -d linux` launches `shipglowz.ShipGlowzApp`.
+- Default runtime: `flutter run` launches `shipglowz.ShipGlowzApp` on a supported Android or Web device.
+- Managed control-plane bootstrap: `runner/src/main.ts` starts a loopback-only Fastify service. It exposes only the versioned ShipGlowz API boundary; it never exposes a raw Codex, PTY, tmux, SSH, or filesystem transport.
 - Active target: `APP_TARGET=shipglowz`.
 - Legacy targets: `APP_TARGET=legacy` and `APP_TARGET=contentflow`.
 
@@ -58,6 +63,8 @@ This document defines which runtime is active and which runtime is legacy while 
 - Active runtime code in `lib/shipglowz/` must not import legacy runtime modules (`lib/router.dart`, `lib/providers/providers.dart`, `lib/data/services/**`, `lib/presentation/**`, `web_auth/**`) without an explicit migration or compatibility spec.
 - Legacy tests should import those legacy modules only through `test/legacy_contract.dart` unless a migration spec explicitly allows direct imports in place.
 - Auth, feedback, BYOK, pipeline, terminal, and agent runner features cannot be activated by runtime naming alone.
+- `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` are optional public build configuration. If either is absent or the URL is invalid, `lib/main.dart` injects a disabled ShipGlowz auth adapter and the read-only local dashboard remains available. Privileged Supabase keys are never Flutter build values.
+- The managed runner owns neutral `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker`, and `ModelGateway` contracts. Flutter must consume only normalized ShipGlowz API/event types, never a runtime wire protocol.
 
 ## Runtime Selection
 

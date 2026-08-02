@@ -1,0 +1,18 @@
+---
+interface Props {
+  items: [string, string, string][];
+  class?: string;
+}
+
+const { items, class: className = "card-grid" } = Astro.props;
+---
+
+<div class={className}>
+  {items.map(([step, title, body]) => (
+    <article class="card loop-card">
+      <span>{step}</span>
+      <h3>{title}</h3>
+      <p>{body}</p>
+    </article>
+  ))}
+</div>

@@ -1,39 +1,17 @@
 ---
-const docs = [
-  ["AGENT.md", "entrypoint for operators and automation"],
-  ["shipglowz_data/*", "project-local governance corpus for adopted repos"],
-  ["shipglowz_data/business/business.md", "who it is for and what value it carries"],
-  ["shipglowz_data/business/product.md", "workflow scope, targets, and non-goals"],
-  ["shipglowz_data/business/branding.md", "product voice and communication rules"],
-  ["shipglowz_data/business/gtm.md", "public positioning and objection handling"],
-  ["shipglowz_data/editorial/content-map.md", "content strategy and repurposing map"],
-  ["shipglowz_data/technical/architecture.md", "operating architecture and boundaries"],
-  ["shipglowz_data/technical/context.md", "technical context and repository map"],
-  ["shipglowz_data/technical/context-function-tree.md", "large file and dependency relationships"],
-  ["shipglowz_data/technical/guidelines.md", "execution conventions and safeguards"],
-  ["shipglowz_data/technical/README.md", "technical onboarding for contributors"]
-];
+import { roleMapCopy, type Locale } from "../i18n/ui";
+import SectionHeading from "./SectionHeading.astro";
+import RoleList from "./RoleList.astro";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = "en" } = Astro.props;
+const copy = roleMapCopy[locale];
 ---
 
 <section class="section">
-  <div class="section-heading">
-    <p class="eyebrow">Repository Map</p>
-    <h2>Every document has one job.</h2>
-    <p>
-      ContentFlow App documentation is designed for quick operator orientation:
-      concise context, explicit scope, and separate layers for business,
-      technical, and workflow truth.
-    </p>
-  </div>
-
-  <div class="role-list">
-    {
-      docs.map(([name, role]) => (
-        <div class="role-row">
-          <code>{name}</code>
-          <span>{role}</span>
-        </div>
-      ))
-    }
-  </div>
+  <SectionHeading eyebrow={copy.eyebrow} title={copy.title} body={copy.body} />
+  <RoleList items={copy.docs} />
 </section>

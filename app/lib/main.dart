@@ -10,6 +10,9 @@ import 'providers/providers.dart';
 import 'presentation/theme/app_theme.dart';
 import 'router.dart';
 import 'shipglowz/app.dart' as shipglowz;
+import 'shipglowz/auth/auth_provider.dart';
+import 'shipglowz/auth/supabase_bootstrap.dart';
+import 'shipglowz/providers/auth_provider.dart';
 
 const _appTarget = String.fromEnvironment(
   'APP_TARGET',
@@ -19,11 +22,15 @@ const _appTarget = String.fromEnvironment(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPreferences = await SharedPreferences.getInstance();
+  final authProvider = await bootstrapShipGlowzAuth(
+    const SupabaseBootstrapConfiguration.fromEnvironment(),
+  );
 
   runApp(
     buildRootApp(
       sharedPreferences: sharedPreferences,
       diagnostics: AppDiagnostics(),
+      authProvider: authProvider,
     ),
   );
 }
@@ -32,6 +39,7 @@ Widget buildRootApp({
   required SharedPreferences sharedPreferences,
   required AppDiagnostics diagnostics,
   String appTarget = _appTarget,
+  ShipGlowzAuthProvider authProvider = const DisabledShipGlowzAuthProvider(),
 }) {
   final normalizedTarget = appTarget.trim().toLowerCase();
   final app = switch (normalizedTarget) {
@@ -43,6 +51,7 @@ Widget buildRootApp({
     overrides: [
       sharedPrefsProvider.overrideWithValue(sharedPreferences),
       appDiagnosticsProvider.overrideWithValue(diagnostics),
+      shipGlowzAuthProvider.overrideWithValue(authProvider),
     ],
     child: app,
   );

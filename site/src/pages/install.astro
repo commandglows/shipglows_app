@@ -1,0 +1,168 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/Footer.astro";
+import NavBar from "../components/NavBar.astro";
+
+const installCommand =
+  "codex plugin marketplace add dianedef/ShipGlowz --ref main --sparse .agents/plugins --sparse plugins/shipflow";
+---
+
+<BaseLayout
+  title="Install ShipGlowz for Codex"
+  description="Add ShipGlowz to Codex in a few minutes: marketplace command, plugin install path, and the first useful workflow command."
+>
+  <main class="page-shell">
+    <NavBar />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Install ShipGlowz</p>
+        <h1 class="page-title">Install ShipGlowz once. Stop losing time on the first move.</h1>
+        <p>
+          ShipGlowz is the shortest serious path from “I have work to do” to
+          “the right workflow is actually running.” You install one Codex
+          plugin named <code>shipflow</code>, add the marketplace source once,
+          and start with one plain instruction instead of memorizing a long
+          command catalog.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#install-steps">Install ShipGlowz now</a>
+          <a class="button button-secondary" href="/skills/shipflow">See what the router does</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Who this is for</h3>
+          <p>
+            Founders, operators, and builders who want Codex to route real work
+            more cleanly without starting every thread from scratch.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>What changes after install</h3>
+          <p>
+            You get one public entrypoint that can answer directly, choose the
+            right ShipGlowz workflow, or ask one bounded clarification when the
+            route is genuinely ambiguous.
+          </p>
+          <p>
+            You can also steer the AI with simple fast tags like
+            <code>#offer</code>, <code>#clarity</code>, or
+            <code>#shipflow</code> instead of rewriting the whole instruction.
+          </p>
+          <a class="doc-action" href="/docs#recommended-combos">Open the focus-tags cheatsheet</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>What this is not</h3>
+          <p>
+            Not a pile of disconnected prompts, and not a claim that the plugin
+            already contains every private reference. It is the clean public
+            starting layer.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="install-steps">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>1. Add the marketplace source</h3>
+          <p>
+            This tells Codex where the ShipGlowz plugin marketplace lives in the
+            public repository.
+          </p>
+          <pre><code>{installCommand}</code></pre>
+        </article>
+
+        <article class="doc-card">
+          <h3>2. Restart Codex</h3>
+          <p>
+            Restart Codex so the new marketplace source is loaded into the
+            plugin directory.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>3. Install the plugin</h3>
+          <p>
+            Open the plugin directory, choose the <code>ShipGlowz</code>
+            marketplace, then install the <code>shipflow</code> plugin.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>4. Start with one plain instruction</h3>
+          <p>
+            The fastest first-success command is:
+          </p>
+          <pre><code>$shipglowz help me choose the right workflow</code></pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">First-run outcome</p>
+        <h2>You do not need to decide between build, bug, deploy, content, or docs first.</h2>
+        <p>
+          The public plugin is intentionally lightweight, but it already gives
+          you the part that matters first: a visible routing layer. ShipGlowz
+          can answer a simple question, choose the right workflow move, and
+          keep the handoff visible in the main thread. When a workflow needs
+          the fuller corpus, ShipGlowz can route you there explicitly instead of
+          pretending the plugin is something it is not.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/skills/shipflow">Open the shipflow skill page</a>
+          <a class="button button-secondary" href="/skill-modes">Read the workflow cheatsheet</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>What happens in the first five minutes</h3>
+          <p>
+            Install the plugin, run one plain request, and let ShipGlowz decide
+            whether the next move is a build flow, bug loop, maintenance pass,
+            release path, content workflow, design route, or a direct answer.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>If you need the full corpus</h3>
+          <p>
+            Some workflows still need the optional complete ShipGlowz source tree.
+            The plugin can route you there explicitly when that happens.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>If you want the pack roadmap</h3>
+          <p>
+            ShipGlowz keeps one public plugin first. Internal packs remain
+            packaging infrastructure until they are genuinely portable and ready
+            for public installation.
+          </p>
+          <a class="doc-action" href="/docs">Open the docs overview</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>If you are still evaluating</h3>
+          <p>
+            Read the public skill page first. It explains what the `shipflow`
+            entrypoint actually does before you commit to the wider framework.
+          </p>
+          <a class="doc-action" href="/skills/shipflow">Open the shipflow page</a>
+        </article>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

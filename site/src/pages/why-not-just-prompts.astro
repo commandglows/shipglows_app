@@ -5,19 +5,21 @@ import NavBar from "../components/NavBar.astro";
 ---
 
 <BaseLayout
-  title="Why not just prompts? | ContentFlow App"
-  description="Why an operator app is more reliable than prompting alone."
+  title="Why not just prompts? | ShipGlowz"
+  description="Why ShipGlowz goes beyond prompting harder."
 >
   <main class="page-shell">
     <NavBar />
 
     <section class="section">
       <div class="section-heading">
-        <p class="eyebrow">Why not only prompts?</p>
-        <h1 class="page-title">Prompts help ask questions. Workflow keeps momentum.</h1>
+        <p class="eyebrow">Why Not Just Prompts?</p>
+        <h1 class="page-title">Because stronger prompts do not remove weak handoffs.</h1>
         <p>
-          Better prompts can improve one interaction. They do not replace the need
-          for resilient states, queued action paths, and review gates.
+          Prompting harder helps at the margin. It does not solve the deeper
+          failure mode: context loss, repeated re-explanation, ambiguous task
+          framing, and drift between product intent, docs, code, and server
+          operations.
         </p>
       </div>
     </section>
@@ -25,20 +27,22 @@ import NavBar from "../components/NavBar.astro";
     <section class="section">
       <div class="pricing-grid">
         <article class="price-card">
-          <p class="eyebrow">What prompts do well</p>
-          <h2>Increase immediate output quality</h2>
+          <p class="eyebrow">What prompts can do</p>
+          <h2>Improve one interaction</h2>
           <p>
-            They help generate better first drafts, clearer ideas, and sharper
-            suggestions per interaction.
+            Better prompts can sharpen a single request, improve local clarity,
+            and help the model produce a better immediate answer.
           </p>
         </article>
 
         <article class="price-card accent-card">
           <p class="eyebrow">What prompts do not solve</p>
-          <h2>Operational continuity under load</h2>
+          <h2>The operating model around the interaction</h2>
           <p>
-            They do not preserve workspace context, queue states, or explicit
-            recovery paths when upstream services temporarily fail.
+            They do not create a persistent context layer, a role-based
+            documentation map, a spec-first workflow, a verification gate, or a
+            decision-quality contract that prevents the fastest path from
+            outranking the right one.
           </p>
         </article>
       </div>
@@ -47,19 +51,42 @@ import NavBar from "../components/NavBar.astro";
     <section class="section">
       <div class="doc-grid">
         <article class="doc-card">
-          <h3>Human-in-the-loop is non-negotiable</h3>
+          <h3>ShipGlowz adds structure around the prompt</h3>
           <p>
-            ContentFlow App keeps publish-ready preparation explicit: review,
-            status transitions, scheduling, and final validation remain operator-driven.
+            It routes agents with the entrypoint contract and the operational context,
+            defines product and business contracts, and moves non-trivial work
+            through `sf-spec`, `sf-ready`, `sf-start`, and `sf-verify`.
           </p>
         </article>
 
         <article class="doc-card">
-          <h3>Resilience is part of the product</h3>
+          <h3>It gives agents a quality bar</h3>
           <p>
-            Degraded mode is built into the workflow because backend availability
-            is not guaranteed, and continuity is how teams actually win over time.
+            ShipGlowz tells agents to optimize for correctness, security,
+            maintainability, relevant performance, and proof before speed, cost,
+            or convenience. A small change is welcome only when it is also the
+            complete professional change.
           </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>It also covers the runtime reality</h3>
+          <p>
+            Real shipping work includes environments, processes, ports,
+            publishing paths, and operational checks. ShipGlowz keeps that layer
+            in the same frame instead of pretending the prompt is the whole job.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Tags are lighter than reprompting from scratch</h3>
+          <p>
+            Communicate with the AI through simple fast tags like
+            <code>#offer</code>, <code>#clarity</code>, or
+            <code>#shipflow</code> when you need to recenter the work without
+            rewriting the whole brief.
+          </p>
+          <a class="doc-action" href="/docs#recommended-combos">Open the focus-tags cheatsheet</a>
         </article>
       </div>
     </section>
@@ -67,14 +94,15 @@ import NavBar from "../components/NavBar.astro";
     <section class="section">
       <div class="cta-panel">
         <p class="eyebrow">Short Version</p>
-        <h2>Prompts are a tool. Workflow is the operating model.</h2>
+        <h2>ShipGlowz is not anti-prompt. It is what comes after the prompt.</h2>
         <p>
-          ContentFlow App adds the operator surface your team needs after prompts:
-          clear state, recovery, and reliable action execution.
+          The goal is to make the whole delivery loop more reliable: context,
+          execution, verification, and server operations together.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="/about">Read why it exists</a>
-          <a class="button button-secondary" href="/skills">See workflows</a>
+          <a class="button button-primary" href="/about">Read why ShipGlowz exists</a>
+          <a class="button button-secondary" href="/docs">See the docs structure</a>
+          <a class="button button-secondary" href="/skill-modes">Open the launch cheatsheet</a>
           <a class="button button-secondary" href="/faq">Open the FAQ</a>
         </div>
       </div>

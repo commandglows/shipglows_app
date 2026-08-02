@@ -29,8 +29,8 @@ limits:
   - "It improves organization, not the quality of the underlying work"
   - "It is useful because of repetition, not because it changes execution logic"
 related_skills:
-  - "sf-help"
-  - "sf-resume"
+  - "sg-help"
+  - "sg-resume"
 featured: false
 order: 600
 ---

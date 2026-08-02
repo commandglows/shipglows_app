@@ -52,7 +52,8 @@ Keep this repository aligned with ShipGlowz as the active product while preservi
    - `lib/shipglowz/**`
    - `lib/data/shipglowz_sources/**`
    - `lib/domain/project_health/**`
-   - terminal TUI work belongs in `/home/claude/shipglowz/tui`, not this Flutter app repo
+   - the existing read-only terminal TUI belongs in `/home/claude/shipglowz/tui`
+   - the future authenticated Flutter operator workspace (terminal/tmux/Neovim) belongs in this repo's `app/` and `runner/`, behind a dedicated high-risk spec and capability boundary
 
 2. Legacy reuse requires classification:
    - Check `shipglowz_data/technical/legacy-contentflow-inventory.md`.
@@ -67,7 +68,7 @@ Keep this repository aligned with ShipGlowz as the active product while preservi
    - Do not make a database canonical by accident.
    - Do not write user/project state only to a projection layer.
    - Do not store service-role keys or BYOK secrets in client-side code.
-   - Do not add terminal write-back, shell execution, auth, cloud, or secrets handling from this app repo.
+   - Do not add terminal write-back, shell execution, auth, cloud, or secrets handling without the dedicated managed Cockpit/operator-workspace spec, server-side authorization, and isolation gates.
    - Terminal TUI file reads are governed by `/home/claude/shipglowz/tui/src/sources/sourcePolicy.ts`.
 
 ## Validation References

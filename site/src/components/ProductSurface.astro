@@ -1,33 +1,25 @@
+---
+import { sharedHomeSections, type Locale } from "../i18n/ui";
+import SectionHeading from "./SectionHeading.astro";
+import ItemCard from "./ItemCard.astro";
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = "en" } = Astro.props;
+const copy = sharedHomeSections[locale].product;
+---
+
 <section class="section" id="how-it-works">
-  <div class="section-heading">
-    <p class="eyebrow">What ContentFlow App Is</p>
-    <h2>A practical content operations interface, not a generic AI assistant.</h2>
-    <p>
-      The app connects planning, ideation, review, and scheduling around a
-      consistent workspace model. It is designed for human decisions with
-      continuity when backend services are degraded.
-    </p>
-  </div>
-
+  <SectionHeading eyebrow={copy.eyebrow} title={copy.title} body={copy.body} />
   <div class="split-grid">
-    <article class="panel">
-      <h3>Execution flow for operators</h3>
-      <ul class="check-list">
-        <li>authenticate into a workspace and resume activity immediately</li>
-        <li>move through feed, editor, personas, ideas, and campaigns</li>
-        <li>validate transitions with readable status and history</li>
-        <li>leave clear evidence for review and handoff</li>
-      </ul>
-    </article>
-
-    <article class="panel">
-      <h3>Continuity for unstable networks</h3>
-      <ul class="check-list">
-        <li>local cache supports read paths even when API sync is down</li>
-        <li>outbound operations are queued as retryable actions</li>
-        <li>reconciliation state is visible when connectivity returns</li>
-        <li>diagnostics screens expose sync, uptime, and activity truthfully</li>
-      </ul>
-    </article>
+    {copy.panels.map(([title, items]) => (
+      <ItemCard {title}>
+        <ul class="check-list">
+          {items.map((item) => <li>{item}</li>)}
+        </ul>
+      </ItemCard>
+    ))}
   </div>
 </section>

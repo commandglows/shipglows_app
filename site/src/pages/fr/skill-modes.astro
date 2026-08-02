@@ -1,0 +1,168 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import { pathFor } from "../../i18n/ui";
+
+const locale = "fr";
+
+const masterSkills = [
+  ["shipflow <instruction>", "Commande recommandée quand vous voulez que ShipGlowz choisisse la route."],
+  ["sf-build <story, bug, or goal>", "Point d’entrée direct pour un travail produit, code, docs ou site non trivial."],
+  ["sf-maintain [mode]", "Entretien récurrent du projet : bugs, docs, dépendances, checks, audits, fixes et routage de ship."],
+  ["sf-deploy [target or mode]", "Confiance de release après implémentation, quand checks, push, déploiement et preuve navigateur doivent rester reliés."],
+  ["sf-bug [BUG-ID, summary, or mode]", "Cycle bug complet depuis l’échec observé jusqu’au dossier, fix, retest, vérification et risque de ship."],
+  ["sf-content [goal, source, file, or mode]", "Gestion de contenu : stratégie, repurposing, rédaction, enrichissement, audits, docs, validation et routage de ship."],
+  ["sf-design <design question or goal>", "Cycle design pour UX/UI, tokens, playgrounds, audits composants et accessibilité, implémentation et preuve navigateur."]
+];
+
+const modeTypes = [
+  ["1. Mot-clé de mode", "Un mot précis agit comme commutateur. Le skill entre dans un workflow spécialisé au lieu de traiter l’argument comme du texte ordinaire."],
+  ["2. Entrée structurée", "L’argument a une forme reconnaissable. Le skill analyse cette forme et en déduit une cible, comme un package et une version."],
+  ["3. Tâche libre", "Si aucun mot-clé ou motif spécial ne correspond, l’argument est généralement traité comme la description du travail."]
+];
+---
+
+<BaseLayout
+  title="Modes de skills | Aide au lancement ShipGlowz"
+  description="Aide pratique ShipGlowz pour les skills maîtres, les skills de support et les modes d’arguments qui changent le workflow."
+  locale={locale}
+  canonicalPath="/fr/skill-modes"
+  alternatePath="/skill-modes"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/skill-modes" />
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Aide au lancement des skills</p>
+        <h1 class="page-title">Les arguments de skills ne sont pas tous du texte libre.</h1>
+        <p>
+          Certains arguments décrivent le travail, certains changent le mode et
+          d’autres sélectionnent une cible structurée. Utilisez
+          <code> shipflow &lt;instruction&gt; </code> quand vous voulez laisser
+          ShipGlowz router, puis appelez directement un skill maître quand vous
+          connaissez déjà la voie.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="pricing-grid">
+        <article class="price-card">
+          <p class="eyebrow">Version courte</p>
+          <h2>Utilisez <code>shipflow &lt;instruction&gt;</code> si vous ne choisissez pas manuellement.</h2>
+          <p>
+            Le routeur répond directement aux questions simples ou transmet le
+            fil au skill sélectionné. S’il n’existe pas de route sûre, il pose
+            une question de décision numérotée au lieu de deviner.
+          </p>
+        </article>
+
+        <article class="price-card accent-card">
+          <p class="eyebrow">Pourquoi c’est important</p>
+          <h2>Appelez les modes volontairement.</h2>
+          <p>
+            L’objectif n’est pas de mémoriser une syntaxe. L’objectif est de
+            reconnaître quand un skill expose plusieurs workflows derrière un
+            seul nom de commande.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Skills maîtres</p>
+        <h2>Lancez-les quand vous voulez porter le travail à travers plusieurs portes.</h2>
+      </div>
+      <div class="role-list">
+        {masterSkills.map(([command, body]) => (
+          <div class="role-row">
+            <code>{command}</code>
+            <span>{body}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        {modeTypes.map(([title, body]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Profils nommés</p>
+        <h2>Un profil nommé change la posture de décision sans remplacer le skill.</h2>
+        <p>
+          Gardez trois couches séparées : le skill exécute, le profil arbitre
+          la posture du tour, et les tags recentrent l’attention.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Syntaxe canonique</h3>
+          <p>
+            Utilisez <code>%&lt;Profil&gt;</code> pour activer un profil nommé.
+            Exemples : <code>%Victoire</code>, <code>%Prudence</code>,
+            <code>%Ariane</code>, <code>%Adhesion</code>.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Ce que change un profil</h3>
+          <p>
+            <code>%Victoire</code> pousse la priorisation growth,
+            <code>%Prudence</code> remonte les risques,
+            <code>%Ariane</code> structure les phases et
+            <code>%Adhesion</code> regarde la confiance, la clarté et la
+            friction côté utilisateur final.
+          </p>
+        </article>
+
+        <article class="doc-card">
+          <h3>Ce que ça ne change pas</h3>
+          <p>
+            Le routeur choisit toujours le skill owner. Un tag comme
+            <code>#growth</code> ou <code>#Adhesion</code> reste un focus tag,
+            pas une activation de profil nommé.
+          </p>
+        </article>
+      </div>
+
+      <div class="cta-panel">
+        <p class="eyebrow">Exemple</p>
+        <h2>Combinez profil nommé et tags sans mélanger leurs rôles.</h2>
+        <p>
+          <code>%Ariane update les docs internes et surfaces externes #Adhesion</code>
+          signifie : Ariane structure le plan, le tag garde la perception
+          utilisateur visible, et ShipGlowz route le travail vers le bon owner.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Catalogue</p>
+        <h2>Quand vous connaissez la voie, ouvrez le hub des skills.</h2>
+        <p>
+          Les pages de skills expliquent le problème, le résultat attendu, les
+          limites et les modes d’arguments documentés.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href={pathFor("/skills", locale)}>Ouvrir le hub des skills</a>
+          <a class="button button-secondary" href={pathFor("/docs", locale)}>Revenir aux docs</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

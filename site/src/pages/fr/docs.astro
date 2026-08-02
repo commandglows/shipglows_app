@@ -1,0 +1,259 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Footer from "../../components/Footer.astro";
+import NavBar from "../../components/NavBar.astro";
+import { pathFor } from "../../i18n/ui";
+
+const locale = "fr";
+
+const coreDocs = [
+  ["AGENT.md (compat)", "Où un nouvel agent doit regarder en premier selon la tâche."],
+  ["shipglowz_data/technical/context.md", "Comment s’orienter vite dans le dépôt, repérer les zones sensibles et router les modifications."],
+  ["shipglowz_data/technical/context-function-tree.md", "Comment naviguer dans de grands fichiers shell procéduraux sans tout relire."],
+  ["shipglowz_data/editorial/content-map.md", "Où vit le contenu : docs, landing pages, clusters sémantiques, surfaces publiques et destinations de repurposing."],
+  ["skills/references/decision-quality-contract.md", "Pourquoi ShipGlowz choisit correction, sécurité, maintenabilité, performance pertinente et preuve avant vitesse ou commodité."],
+  ["shipglowz_data/technical/operator-guides/skill-launch-cheatsheet.md", "Référence Markdown pour les skills maîtres, les skills de support et les modes d’arguments."],
+  ["shipglowz_data/technical/operator-guides/focus-tags-cheatsheet.md", "Cheatsheet publique pour les tags de recentrage légers couvrant le business, le contenu, la gouvernance, l’exécution et le système."],
+  ["README.md (compat)", "Vue d’ensemble publique, positionnement, onboarding et histoire framework de haut niveau."],
+  ["shipglowz_data/workflow/playbooks/spec-driven-workflow.md", "Doctrine d’exécution derrière sf-spec, sf-ready, sf-start et sf-verify."]
+];
+
+const decisionDocs = [
+  ["shipglowz_data/business/business.md", "Pour qui le produit existe, quelle valeur il crée et quel modèle il peut soutenir."],
+  ["shipglowz_data/business/product.md", "Ce que fait le produit, quels workflows comptent et quels non-objectifs doivent rester dehors."],
+  ["shipglowz_data/branding/branding.md", "Comment le produit doit parler, ce qu’il peut revendiquer et comment la confiance se gagne."],
+  ["shipglowz_data/business/gtm.md", "Comment le produit est présenté publiquement, quelles objections comptent et quelles preuves le soutiennent."],
+  ["shipglowz_data/technical/architecture.md", "Comment le système est organisé, où sont les frontières et quels invariants tiennent."],
+  ["shipglowz_data/technical/guidelines.md", "Comment contribuer dans le dépôt et quelles règles techniques restent stables."]
+];
+
+const focusTagCombos = [
+  ["Rendre l’offre plus claire", "#offer #cta #clarity", "À utiliser quand la page ou le message explique trop de choses sans rendre la proposition de valeur ou l’action suivante évidente."],
+  ["Pousser la croissance plutôt que l’optimisation locale", "#partner #growth #roi", "À utiliser quand l’agent doit choisir le mouvement le plus utile au business plutôt que la modification technique la plus facile."],
+  ["Recentrer sur le founder", "#founder #growth #clarity", "À utiliser quand l’utilisateur agit comme propriétaire business et que la réponse doit optimiser les décisions utiles, la croissance et la clarté."],
+  ["Recentrer sur l’owner ShipGlowz", "#shipflow-owner #partner #no-drift", "À utiliser quand la conversation concerne ShipGlowz lui-même ou des actifs adjacents et demande un arbitrage au niveau portefeuille."],
+  ["Améliorer l’onboarding et l’utilisabilité", "#end-user #clarity #quality", "À utiliser quand la solution marche techniquement mais reste trop difficile pour un utilisateur normal."],
+  ["Réparer un copy chargé en objections", "#faq #trust #clarity", "À utiliser quand le message doit répondre aux doutes plus directement et gagner en crédibilité."],
+  ["Corriger la dérive documentaire au bon niveau", "#canon #drift #single-source", "À utiliser quand code, docs ou surfaces publiques divergent et qu’il faut réparer la source de vérité avant de patcher ailleurs."],
+  ["Travailler sur ShipGlowz lui-même", "#shipflow #proof #contract", "À utiliser quand la cible est le système interne ShipGlowz et que la sortie doit renforcer la doctrine, la preuve ou la qualité d’exécution."]
+];
+---
+
+<BaseLayout
+  title="Docs ShipGlowz | Navigation et contrats"
+  description="Point d’entrée documentaire de ShipGlowz : couche de contexte, doctrine de workflow et contrats de décision."
+  locale={locale}
+  canonicalPath="/fr/docs"
+  alternatePath="/docs"
+>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath="/docs" />
+
+    <section class="section" id="artifact-corpus">
+      <div class="section-heading">
+        <p class="eyebrow">Vue d’ensemble des docs</p>
+        <h1 class="page-title">Les docs sont conçues pour l’orientation rapide des agents, pas pour l’accumulation encyclopédique.</h1>
+        <p>
+          La documentation ShipGlowz est structurée pour qu’un nouvel agent
+          trouve le bon contexte, comprenne la surface de décision et exécute
+          face à des contrats explicites plutôt que deviner depuis l’historique
+          du chat.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>La qualité est un contrat, pas une humeur</h3>
+          <p>
+            ShipGlowz porte un contrat explicite de qualité de décision. Les
+            agents doivent préférer un travail professionnel borné aux
+            raccourcis, et traiter vitesse ou coût comme des critères de départage.
+          </p>
+          <a class="doc-action" href="#decision-contracts">Lire les contrats de décision</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Aide au lancement des skills</h3>
+          <p>
+            La page de modes explique quel skill maître lancer, quels skills
+            ciblés possèdent les voies de preuve et quels arguments changent un
+            workflow au lieu de décrire la tâche.
+          </p>
+          <a class="doc-action" href={pathFor("/skill-modes", locale)}>Ouvrir l’aide</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Tags founder et owner</h3>
+          <p>
+            ShipGlowz distingue désormais la perspective utilisateur-as-founder
+            de la perspective ShipGlowz-owner. Utilisez <code>#founder</code>
+            quand la conversation doit optimiser les décisions business, la
+            croissance et la clarté. Utilisez <code>#shipflow-owner</code>
+            quand la conversation concerne ShipGlowz lui-même ou des actifs
+            adjacents et demande un arbitrage au niveau portefeuille.
+          </p>
+          <a class="doc-action" href={pathFor("/focus-tags", locale)}>
+            Ouvrir la cheatsheet des tags
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Les profils nommés changent la posture, pas l’ownership</h3>
+          <p>
+            ShipGlowz accepte aussi des profils nommés comme
+            <code>%Victoire</code>, <code>%Prudence</code>,
+            <code>%Ariane</code> et <code>%Adhesion</code>. Ils changent
+            l’arbitrage du tour, mais le routeur choisit toujours le skill owner
+            et les focus tags restent séparés.
+          </p>
+          <a class="doc-action" href={pathFor("/skill-modes", locale)}>
+            Voir le guide profils et lancement
+          </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Tags de recentrage rapides</h3>
+          <p>
+            Si une conversation dérive, ShipGlowz accepte maintenant des tags de
+            recentrage légers comme <code>#partner</code>,
+            <code>#offer</code>, <code>#growth</code>,
+            <code>#clarity</code>, <code>#founder</code>,
+            <code>#shipflow-owner</code>, <code>#pitch</code>,
+            <code>#portfolio</code>, <code>#canon</code>,
+            <code>#quality</code>, <code>#ship</code> et
+            <code>#shipflow</code> pour recharger le bon contrat sans relancer
+            tout un workflow.
+          </p>
+          <a class="doc-action" href={pathFor("/docs#recommended-combos", locale)}>Voir les combinaisons recommandées</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Installer proprement le plugin Codex</h3>
+          <p>
+            Si vous voulez le chemin utilisateur le plus court, la page
+            d’installation montre la commande marketplace, l’étape dans le
+            répertoire des plugins et la première commande à lancer ensuite.
+          </p>
+          <a class="doc-action" href={pathFor("/install", locale)}>Voir l’installation</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Questions fréquentes</h3>
+          <p>
+            Pour une version directe, la FAQ couvre les questions récurrentes
+            sur la portée documentaire, les skills et le comportement du
+            framework.
+          </p>
+          <a class="doc-action" href={pathFor("/faq", locale)}>Ouvrir la FAQ</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Le blog a désormais une vraie surface runtime</h3>
+          <p>
+            ShipGlowz expose maintenant un blog indexé adossé à une collection
+            Astro, et non plus seulement quelques pages longues isolées. Le
+            repurposing a donc enfin une vraie destination de publication.
+          </p>
+          <a class="doc-action" href={pathFor("/blog", locale)}>Ouvrir le blog</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Les données privées sont versionnées à part</h3>
+          <p>
+            ShipGlowz garde les données opérateur privées durables en dehors du
+            dépôt public du framework. Le dossier
+            <code>~/.shipglowz/private/data/</code> est destiné à être un dépôt
+            Git séparé pour la mémoire privée versionnée, tandis que les files
+            de revue éphémères doivent rester dans d’autres chemins privés.
+          </p>
+          <a class="doc-action" href={pathFor("/blog/pourquoi-shipglowz-separe-le-code-public-des-donnees-privees", locale)}>
+            Lire l’explication
+          </a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="recommended-combos">
+      <div class="section-heading">
+        <p class="eyebrow">Combinaisons recommandées</p>
+        <h2>Commencez avec un petit pack de tags quand un seul tag ne suffit pas.</h2>
+        <p>
+          Ces combinaisons sont le moyen le plus rapide de remettre l’agent
+          dans la bonne posture business, contenu ou gouvernance sans écrire
+          une longue correction.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-secondary" href="https://github.com/dianedef/ShipGlowz/blob/main/shipglowz_data/technical/operator-guides/focus-tags-cheatsheet.md">
+            Ouvrir la cheatsheet complète
+          </a>
+        </div>
+      </div>
+
+      <div class="doc-grid">
+        {focusTagCombos.map(([title, tags, body]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p><code>{tags}</code></p>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Navigation centrale</p>
+        <h2>Commencez ici quand vous devez vous orienter.</h2>
+      </div>
+
+      <div class="doc-grid">
+        {coreDocs.map(([name, body]) => (
+          <article class="doc-card">
+            <h3>{name}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section" id="decision-contracts">
+      <div class="section-heading">
+        <p class="eyebrow">Contrats de décision</p>
+        <h2>Chaque document a un rôle explicite.</h2>
+        <p>
+          Business, produit, marque, GTM, architecture et guidelines restent
+          séparés volontairement. Cette séparation évite les doublons, le
+          contexte périmé et les contrats contradictoires.
+        </p>
+      </div>
+
+      <div class="doc-grid">
+        {decisionDocs.map(([name, body]) => (
+          <article class="doc-card">
+            <h3>{name}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Logique d’exécution</p>
+        <h2>Utilisez les docs comme des contrats produit, pas comme des notes passives.</h2>
+        <p>
+          La couche de contexte dit à l’agent où commencer. Les contrats de
+          décision disent ce qui compte. La doctrine de workflow dit comment
+          passer de la réduction d’ambiguïté à une livraison vérifiée.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href={pathFor("/skills", locale)}>Explorer les skills</a>
+          <a class="button button-secondary" href={pathFor("/skill-modes", locale)}>Lire l’aide au lancement</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer locale={locale} />
+</BaseLayout>

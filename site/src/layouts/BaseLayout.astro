@@ -1,27 +1,47 @@
 ---
 import "../styles/global.css";
+import { siteUrl, type Locale } from "../i18n/ui";
 
 interface Props {
   title?: string;
   description?: string;
+  locale?: Locale;
+  canonicalPath?: string;
+  alternatePath?: string;
 }
 
 const {
-  title = "ContentFlow App",
-  description = "ContentFlow App is the authenticated operator shell for creating, reviewing, and scheduling content with offline continuity."
+  title = "ShipGlowz",
+  description = "ShipGlowz is a unified framework for server delivery and AI-assisted execution discipline.",
+  locale = "en",
+  canonicalPath = Astro.url.pathname,
+  alternatePath
 } = Astro.props;
+
+const alternateLocale = locale === "fr" ? "en" : "fr";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={siteUrl(canonicalPath)} />
+    {alternatePath && <link rel="alternate" hreflang={alternateLocale} href={siteUrl(alternatePath)} />}
+    <link rel="alternate" hreflang={locale} href={siteUrl(canonicalPath)} />
+    <link rel="alternate" hreflang="x-default" href={siteUrl(alternateLocale === "en" ? alternatePath ?? "/" : canonicalPath)} />
+    <meta property="og:locale" content={locale === "fr" ? "fr_FR" : "en_US"} />
+    <meta property="og:url" content={siteUrl(canonicalPath)} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
     <slot />
+    {
+      import.meta.env.PROD && (
+        <script is:inline async src="https://cdn.onthe.io/io.js/YyAMWtaLLPUi" />
+      )
+    }
   </body>
 </html>

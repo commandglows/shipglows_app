@@ -1,0 +1,109 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+
+import {
+  ConfigError,
+  loadConfig,
+  publicConfig,
+} from "../../src/config.js";
+
+describe("runner configuration", () => {
+  it("loads provider integrations disabled by default", () => {
+    const config = loadConfig({ RUNNER_ENV: "test" }, { cwd: "/srv/runner" });
+
+    assert.equal(config.integrations.supabase.enabled, false);
+    assert.equal(config.integrations.github.enabled, false);
+    assert.equal(config.runtimes.codex.enabled, false);
+    assert.equal(config.runtimes.eve.enabled, false);
+    assert.equal(config.server.host, "127.0.0.1");
+    assert.equal(config.server.port, 3210);
+    assert.deepEqual(publicConfig(config), {
+      environment: "test",
+      host: "127.0.0.1",
+      port: 3210,
+      allowedOrigins: [],
+      maxConcurrentRunsPerTenant: 2,
+      maxRunDurationMs: 900000,
+      supabaseEnabled: false,
+      githubEnabled: false,
+      codexEnabled: false,
+      eveEnabled: false,
+    });
+  });
+
+  it("rejects invalid and unknown runner settings", () => {
+    assert.throws(
+      () => loadConfig({ RUNNER_PORT: "not-a-port" }),
+      (error: unknown) => error instanceof ConfigError,
+    );
+    assert.throws(
+      () => loadConfig({ RUNNER_UNSAFE_SHELL: "yes" }),
+      (error: unknown) =>
+        error instanceof ConfigError && error.issues.includes("RUNNER_UNSAFE_SHELL"),
+    );
+  });
+
+  it("normalizes configured browser origins", () => {
+    const config = loadConfig({
+      RUNNER_ALLOWED_ORIGINS: "https://cockpit.example.com/, https://cockpit.example.com",
+    });
+
+    assert.deepEqual(config.server.allowedOrigins, ["https://cockpit.example.com"]);
+  });
+
+  it("requires a Supabase URL only when the Supabase adapter is explicitly enabled", () => {
+    assert.throws(
+      () => loadConfig({ SUPABASE_AUTH_ENABLED: "true" }),
+      (error: unknown) =>
+        error instanceof ConfigError &&
+        error.issues.includes("SUPABASE_URL"),
+    );
+  });
+
+  it("requires GitHub App credentials and rejects classic GitHub tokens", () => {
+    assert.throws(
+      () => loadConfig({ GITHUB_ENABLED: "true" }),
+      (error: unknown) => error instanceof ConfigError && error.issues.includes("GITHUB_APP_ID"),
+    );
+    assert.throws(
+      () => loadConfig({ GITHUB_TOKEN: "legacy-token" }),
+      (error: unknown) => error instanceof ConfigError && error.issues.some((issue) => issue.startsWith("GITHUB_TOKEN")),
+    );
+    const config = loadConfig({
+      GITHUB_ENABLED: "true",
+      GITHUB_APP_ID: "42",
+      GITHUB_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\\nvalue\\n-----END PRIVATE KEY-----",
+    });
+    assert.equal(config.integrations.github.enabled, true);
+    assert.equal(config.integrations.github.appId, "42");
+    assert.match(config.integrations.github.privateKey ?? "", /\n/);
+    assert.equal("privateKey" in publicConfig(config), false);
+  });
+
+  it("rejects retired Clerk settings without echoing secret values", () => {
+    const secret = "sk_test_must_never_appear";
+    let thrown: unknown;
+
+    try {
+      loadConfig({
+        CLERK_ENABLED: "false",
+        CLERK_SECRET_KEY: secret,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+
+    assert.ok(thrown instanceof ConfigError);
+    assert.doesNotMatch(thrown.message, new RegExp(secret));
+    assert.doesNotMatch(JSON.stringify(thrown), new RegExp(secret));
+  });
+
+  it("requires an explicit opt-in before binding publicly", () => {
+    assert.throws(
+      () => loadConfig({ RUNNER_HOST: "0.0.0.0" }),
+      (error: unknown) =>
+        error instanceof ConfigError &&
+        error.issues.includes("RUNNER_ALLOW_PUBLIC_BINDING=true is required for a non-loopback host"),
+    );
+  });
+});
