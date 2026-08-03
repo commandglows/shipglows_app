@@ -37,7 +37,7 @@ related_skills:
   - "sg-check"
   - "sg-prod"
   - "sg-seo"
-  - "sg-audit-translate"
+  - "sg-translate"
 featured: false
 order: 120
 ---
