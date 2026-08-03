@@ -4,7 +4,7 @@ metadata_schema_version: "1.0"
 artifact_version: "1.5.0"
 project: "shipglows_app"
 created: "2026-05-11"
-updated: "2026-08-01"
+updated: "2026-08-03"
 status: reviewed
 source_skill: sf-veille
 scope: "project-competitors-and-inspirations"
@@ -19,6 +19,7 @@ evidence:
   - "Fresh 2026-08-01 open-source scan covered multi-project agent dashboards, remote Codex clients, terminal workspaces, file browsers, Git/worktree orchestration, sandbox control planes, skill/evidence supervision, and simulated Bash execution."
   - "Fresh 2026-08-01 Vercel Ship scan covered Open Agents, AI SDK 7, WorkflowAgent, Vercel Sandbox, scoped credentials, and agent observability patterns."
   - "CTO reframe 2026-08-01: ShipGlows is a multi-agent control plane; Codex is the first adapter, while OpenCode, Kilo and ACP are staged runtime paths behind a ShipGlows-owned capability contract."
+  - "Veille 2026-08-03: Warp Oz est retenu comme inspiration d'orchestration cloud multi-agent, sans adoption ni dépendance MVP."
 depends_on:
   - artifact: "shipglows_data/business/product.md"
     artifact_version: "1.0.0"
@@ -74,6 +75,7 @@ Ce dossier correspond probablement à l'application ShipGlows locale. Les meille
 | [Vercel AI Gateway](https://vercel.com/docs/ai-gateway/models-and-providers) | Inspiration gouvernance modèles | 7/10 | Routage, budgets, attribution et fallback pour les appels modèles natifs. Fournisseur optionnel derrière un port ShipGlows, pas une dépendance du runtime Codex. |
 | [Vercel Sandbox](https://vercel.com/docs/sandbox) | Brique isolation exécution | 8/10 | MicroVM éphémère pour code généré, audits ou previews. Très intéressant pour les runs bornés, mais pas pour le tmux/Neovim persistant et potentiellement dépendant d'un fournisseur. |
 | [Vercel Workflow](https://vercel.com/kb/guide/what-is-workflowagent) | Inspiration durabilité des runs | 8/10 | Retries, étapes persistées, reprise et approvals durables : exigences à conserver dans notre runner, même si l'implémentation initiale reste auto-hébergée. |
+| [Warp Oz](https://www.warp.dev/oz) | Inspiration orchestration cloud | 8/10 | Agents Codex/Claude/Warp déclenchés, parallélisés et observables. Référence pour orchestration, mémoire et supervision ; ShipGlows conserve son Cockpit, ses politiques et son `AgentRuntime`, sans dépendance MVP. |
 
 ## Ce qui reste propre à ShipGlows
 

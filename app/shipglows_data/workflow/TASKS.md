@@ -44,6 +44,8 @@
 
 ## Backlog
 
+🟠 [shipglows_app] task: Decide the redacted agent observability stack after one provider-configured Codex smoke: OpenTelemetry plus Jaeger for runner reliability, then Phoenix or Braintrust for agent-quality evaluation | status: todo | area: managed-agent-observability | id: managed-agent-observability-stack
+
 
 Primary references:
 

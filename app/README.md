@@ -42,7 +42,7 @@ Web builds are unsupported for direct local file reads. The app surfaces an expl
 ## Run
 
 ```bash
-cd /home/claude/shipglowz_app/app
+cd /home/claude/shipglows_app/app
 flutter pub get
 flutter run -d chrome
 ```

@@ -156,10 +156,17 @@ export function loadConfig(
   }
 
   const allowedOrigins = parseAllowedOrigins(env["RUNNER_ALLOWED_ORIGINS"], issues);
+  const environment = env["RUNNER_ENV"] ?? "test";
+  if (environment === "production" && !supabaseEnabled) {
+    issues.push("SUPABASE_AUTH_ENABLED=true is required in production");
+  }
+  if (environment === "production" && allowedOrigins.length === 0) {
+    issues.push("RUNNER_ALLOWED_ORIGINS is required in production");
+  }
   if (issues.length > 0) throw new ConfigError(issues);
 
   return {
-    environment: env["RUNNER_ENV"] ?? "test",
+    environment,
     cwd: options.cwd ?? process.cwd(),
     server: { host, port, allowedOrigins },
     limits: { maxConcurrentRunsPerTenant, maxRunDurationMs },

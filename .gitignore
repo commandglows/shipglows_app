@@ -6,3 +6,6 @@
 .playwright-mcp/
 .vercel/
 .vercel
+runner/.shipglows-runner.sqlite*
+runner/.shipglows-workspaces/
+runner/deploy/runner.env

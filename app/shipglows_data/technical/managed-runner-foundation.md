@@ -82,6 +82,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 ## Current Foundation
 
 - The public API is versioned under `v1` and uses closed schemas.
+- A production runner is loopback-only behind Caddy. It refuses to start unless Supabase authentication and an explicit `RUNNER_ALLOWED_ORIGINS` allowlist are configured; GitHub App and Codex remain separately opt-in server integrations. The deployment templates reserve `runner.shipglows.com` and port `3210` without committing secrets or a SQLite projection.
 - `GET /v1/projects/resolve?sourceSystem=...&sourceProjectId=...` is the canonical read-only identity bridge for deployments where the existing app project namespace differs from runner project IDs. It requires authentication, resolves through a server-owned tenant-scoped directory, rechecks read access on the resolved runner project, and returns only bounded opaque identifiers; it returns `503 identityUnavailable` until that directory is configured.
 - Server-side project provisioning can persist the bridge atomically by calling `OperationalStore.createProject` with `sourceSystem` and `sourceProjectId`, or by calling `bindProjectIdentity` for an existing runner project. The Flutter `/api/projects` client is not allowed to perform this write; its FastAPI implementation is outside this repository and must call the runner through a server-to-server deployment adapter.
 - `AgentRuntime` is the product-owned contract for sessions, turns, interruption, approval support and semantic event streams.

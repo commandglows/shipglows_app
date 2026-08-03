@@ -4,7 +4,7 @@ Canonical Astro source for the public ShipGlows website.
 
 ## Canonical ownership
 
-- Canonical source: `/home/claude/shipglowz_app/site`
+- Canonical source: `/home/claude/shipglows_app/site`
 - Git repository: `shipglows_app`
 - Vercel project: `shipglows-site`
 - Previous source `/home/claude/shipglowz/shipglows-site` was migrated here on 2026-08-02 and must not be recreated or edited as a second public surface.

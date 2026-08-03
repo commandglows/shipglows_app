@@ -1,13 +1,13 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.4.0"
+artifact_version: "1.5.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
-updated: "2026-08-01"
-updated_at: "2026-08-01 22:43:43 UTC"
-status: ready
+updated: "2026-08-03"
+updated_at: "2026-08-03 08:47:00 UTC"
+status: draft
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
 scope: "managed-agent-cockpit-mvp"
@@ -37,6 +37,7 @@ linked_systems:
   - "authenticated PTY/tmux gateway"
   - "ExecutionProvider contract"
   - "CapabilityBroker contract"
+  - "Warp Oz orchestration patterns (inspiration only)"
 depends_on:
   - artifact: "shipglows_data/technical/shipglows-foundational-architecture.md"
     artifact_version: "0.1.0"
@@ -92,6 +93,9 @@ depends_on:
   - artifact: "https://kilo.ai/docs/contributing/architecture/cli-runtime"
     artifact_version: "checked-2026-08-01"
     required_status: "active"
+  - artifact: "https://www.warp.dev/oz"
+    artifact_version: "checked-2026-08-03"
+    required_status: "active"
 supersedes:
   - artifact: "shipglows_data/technical/shipglows-foundational-architecture.md"
     scope: "The V1 read-only and agent/terminal-out-of-scope decisions only; repository authority, hidden managed clones, and GitHub-wins invariants remain active."
@@ -112,7 +116,8 @@ evidence:
   - "Repository inspection 2026-08-01: the Flutter prototype already exists under `app/lib/shipglows/`, including overview, project detail, settings, health models, repositories, providers, and tests; this spec extends that prototype rather than creating a new app."
   - "Fresh external documentation check 2026-08-01: xterm.dart supports Flutter Web, Android, and Windows terminal rendering; just-bash provides a TypeScript virtual Bash sandbox with bounded filesystem and network capabilities."
   - "CTO architecture reframe 2026-08-01: ShipGlows owns the multi-agent control plane; Codex app-server is the first runtime adapter, while OpenCode, Kilo and ACP must remain possible behind the same normalized contract."
-next_step: "/102-sg-start ShipGlows Managed Agent Cockpit MVP"
+  - "Warp Oz review 2026-08-03: cloud-agent orchestration, run observability, controlled triggers and team-scoped memory are useful patterns; ShipGlows retains the product control plane and does not adopt Oz as an MVP dependency."
+next_step: "/101-sg-ready ShipGlows Managed Agent Cockpit MVP"
 ---
 
 # Spec: ShipGlows Managed Agent Cockpit MVP
@@ -125,7 +130,7 @@ ShipGlows Managed Agent Cockpit MVP
 
 # Status
 
-Ready after the multi-agent readiness review on 2026-08-01. The existing Flutter prototype is the implementation base. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Supabase Auth is the recommended cross-platform identity baseline behind a portable provider boundary.
+Amended on 2026-08-03 after the Warp Oz review; a focused readiness review is required before the next implementation slice. The existing Flutter prototype is the implementation base. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Supabase Auth is the recommended cross-platform identity baseline behind a portable provider boundary.
 
 # User Story
 
@@ -184,6 +189,16 @@ Build a semantic multi-agent client inside the active Flutter runtime and a dedi
 7. `ExecutionProvider` keeps disposable agent/audit work separate from persistent operator work: `just-bash` may execute bounded read-only skill checks against a controlled snapshot, a future sandbox may execute disposable code-agent work, and only the operator Workspace may attach persistent tmux/Neovim. Real repository mutations and provider actions stay in the managed runner policy boundary.
 8. The operator Workspace uses a separately authenticated, short-lived capability to a server-side PTY/tmux gateway. Flutter renders it; Flutter Web/Android/Windows never receive SSH credentials or direct host access.
 
+# Orchestration And Context Contract
+
+Warp Oz informs this contract as an external pattern only. ShipGlows remains the authority for project health, policy, evidence, identity and user experience; no Warp SDK, API, hosted service or agent memory is required for this MVP.
+
+- Every run records an immutable `RunIntent`: `manual` is the only enabled trigger in the MVP; `schedule`, `githubEvent` and `systemRecommendation` are reserved values that must be rejected until separately enabled by server policy.
+- The Cockpit exposes a redacted operations summary alongside health: active, queued, awaiting approval, recently failed and last completed run per authorized project. It never exposes prompts, paths, credentials, raw logs, tenant-internal totals or another tenant's activity.
+- A server-owned `RunPolicy` selects runtime, execution provider, capability set, quota and approval boundary before a run begins. Runtime/model routing can optimize quality, latency or cost inside this policy, but never changes a selected provider, permission set or user-visible execution mode silently.
+- A `ProjectContextBundle` is an explicit, size-bounded, versioned set of approved project instructions, evidence references and skill outputs. It is tenant/project scoped, redacted, attributable to producers and source commits, and passed to a runtime only through the server. The MVP has no opaque cross-project, cross-tenant or self-modifying agent memory.
+- Future automatic triggers require their own ready specification covering trigger authorization, deduplication, rate limits, approval policy, delivery retries, auditability and an operator-visible disable control. They are not enabled by this amendment.
+
 # Product And Platform Footprint
 
 - Launch application surfaces: Flutter Web, Flutter Android and Flutter Windows from the existing codebase.
@@ -206,6 +221,7 @@ Build a semantic multi-agent client inside the active Flutter runtime and a dedi
 - Python remains available for bounded audit helpers invoked by approved server workflows, not as the public API or agent-runtime orchestration layer.
 - `xterm.dart` is the Flutter terminal-rendering candidate for Web, Android and Windows. The server PTY/tmux gateway remains an implementation boundary and must be selected through a disposable proof before production use.
 - `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker` and `ModelGateway` are ShipGlows-owned ports. They preserve the choice of Codex, OpenCode, Kilo, ACP, self-hosted sandbox, Vercel sandbox, direct model provider or future runtime without changing Flutter, health or authorization contracts.
+- Warp Oz is a reference for cloud-agent orchestration and fleet observability only. Its trigger, memory and model-routing patterns are represented by ShipGlows-owned `RunIntent`, `RunPolicy` and `ProjectContextBundle` contracts; no Oz client, hosted control plane or proprietary runtime API is a dependency.
 - Codex app-server is the first production adapter. The MVP must prove a fake second adapter contract before a real OpenCode/Kilo adapter is claimed; AI SDK HarnessAgent and eve are optional experimental spikes behind the same port, not baseline dependencies.
 - `just-bash` is an optional sandbox for safe skill checks and previews. It cannot provide SSH, tmux, Neovim or a real server filesystem, and it must not be presented as the operator terminal.
 
@@ -218,6 +234,8 @@ Build a semantic multi-agent client inside the active Flutter runtime and a dedi
 - Conversation create, list, open, resume, message, interrupt, and approval flows.
 - Predefined read-only audit actions and isolated proposed-fix actions.
 - Managed runner API, SSE event stream, persistence, idempotency, quotas, and diagnostics.
+- Redacted operations summary and explicit manual `RunIntent` records for authorized project runs.
+- Tenant/project-scoped, versioned `ProjectContextBundle` provenance for server-supplied runtime context.
 - ShipGlows `AgentRuntime` capability contract, Codex app-server first adapter and normalized event mapping.
 - Fake second-runtime conformance fixture proving Flutter and policy do not branch on Codex-only wire types.
 - Supabase Auth authentication for Web, Android and Windows through one Dart adapter; server-side JWT/JWKS validation behind the runner's `AuthProvider` interface.
@@ -243,6 +261,7 @@ Build a semantic multi-agent client inside the active Flutter runtime and a dedi
 - Pixel-for-pixel reproduction of a runtime terminal UI or tmux; functional event parity and clear native-app UX are required instead.
 - Multi-host runner scheduling and horizontal orchestration; the MVP supports one managed runner deployment with tenant-isolated records/workspaces.
 - Multiple simultaneous operator terminals per user/project; the MVP proves one bounded session attachment before expanding concurrency.
+- Scheduled, webhook-triggered or autonomous agent runs, shared opaque memory, self-improving prompts, and automatic runtime/provider switching.
 
 # Constraints
 
@@ -257,6 +276,8 @@ Build a semantic multi-agent client inside the active Flutter runtime and a dedi
 - Audit prompts and fix prompts have server-owned templates, bounded user additions, maximum sizes, and explicit permission profiles.
 - Audit work is read-only. Fix work uses one isolated worktree/branch per conversation and cannot target the canonical branch directly.
 - One mutating run per project may be active; read-only concurrency is bounded by server capacity and per-user/project quotas.
+- `manual` is the only accepted `RunIntent` trigger in the MVP. Reserved automatic trigger values are rejected until a separate approved specification enables them.
+- A `ProjectContextBundle` is server-built from approved, versioned and redacted tenant/project evidence. A runtime receives no arbitrary client-selected context, no cross-tenant bundle and no untracked persistent memory.
 - Raw command output and file content are size-limited, redacted, and normalized before streaming or persistence.
 - PTY output is streamed only to the authorized live Workspace, is not persisted as conversation events, and is excluded from Sentry and routine diagnostics.
 - Cockpit health never infers healthy from absent evidence.
@@ -269,6 +290,7 @@ Build a semantic multi-agent client inside the active Flutter runtime and a dedi
 - Codex CLI `0.144.5`, Node.js `22.22.2`, npm `11.17.0`, Flutter `3.41.7`, and Dart `3.11.5` are available in the current implementation environment.
 - Official Codex app-server documentation checked 2026-07-18 defines rich-client primitives for threads, turns, items, approvals, authentication, and streamed events over a local process transport; it informs the first adapter only.
 - Fresh docs checked 2026-08-01: Vercel AI SDK's HarnessAgent can normalize several agent harnesses but is experimental; OpenCode ACP is editor-to-subprocess JSON-RPC over stdio, while Kilo documents local HTTP/SSE runtime surfaces. ShipGlows therefore keeps its own remote contract and capability matrix.
+- Fresh Warp Oz documentation checked 2026-08-03 describes cloud-agent triggers, scheduling, parallelism, observability, multiple harnesses and persistent team memory. This spec adopts only bounded orchestration requirements; Warp/Oz remains outside the runtime dependency graph.
 - Official Supabase Flutter and Auth documentation checked 2026-08-01 supports the selected cross-platform session baseline; server-side JWT/JWKS verification remains behind the runner AuthProvider adapter.
 - Official GitHub App documentation checked 2026-07-18 supports short-lived installation access tokens, narrowed repository/permission scope, and HTTP Git authentication when Contents permission is granted.
 - Existing code foundations include `lib/shipglows/**`, `lib/data/shipglows_sources/**`, `lib/domain/project_health/**`, Firestore-shaped projection DTOs/validators, and legacy Clerk/GitHub service concepts.
@@ -285,6 +307,7 @@ Build a semantic multi-agent client inside the active Flutter runtime and a dedi
 - Repository/Markdown files decide canonical project and tracker content.
 - SQLite stores reconstructable operational state and cannot silently overwrite canonical repository content.
 - Every mutating command has an idempotency key, actor, project, conversation, timestamp, lifecycle state, and redacted outcome.
+- Every run has one immutable `RunIntent`, one resolved `RunPolicy` and an attributable `ProjectContextBundle` version or an explicit empty-context marker.
 - Every streamed event has a monotonically increasing conversation cursor and stable event identifier.
 - Reconnect reconciliation cannot duplicate a message, run, approval decision, or tracker proposal.
 - Missing evidence is unknown/not reported, not healthy.
@@ -299,6 +322,7 @@ The public runner API is versioned under `/v1` and returns opaque identifiers on
 ## Query endpoints
 
 - `GET /v1/cockpit`: authorized projects with aggregate and five-dimensional health.
+- `GET /v1/cockpit` includes only the caller-authorized redacted operations summary: active, queued, awaiting approval, recently failed and last completed run state per project.
 - `GET /v1/projects/:projectId`: project summary, access state, health evidence, and action availability.
 - `GET /v1/projects/:projectId/conversations`: project-scoped conversation summaries.
 - `GET /v1/conversations/:conversationId`: persisted normalized conversation and active run state.
@@ -330,6 +354,7 @@ All command endpoints require `Idempotency-Key`, authenticated actor context, pr
 - `file.changeProposed`, `file.changed`
 - `approval.requested`, `approval.resolved`, `approval.expired`
 - `run.queued`, `run.started`, `run.progress`, `run.completed`, `run.failed`
+- `run.policyResolved`, `run.contextAttached`, `run.triggerRejected`
 - `health.evidenceProduced`, `tracker.changeProposed`
 - `diagnostic.warning`, `diagnostic.error`, `stream.heartbeat`
 
@@ -377,6 +402,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 - Keep the PTY/tmux gateway private behind the runner. A client receives only a short-lived, single-purpose session capability; it cannot choose a host path, shell executable, tmux target or environment.
 - Apply per-user, per-project, and global limits for concurrent turns, queued jobs, event bytes, prompt bytes, duration, and daily cost. Limits return recoverable states instead of unbounded fan-out.
 - Audit logs record actor, action, target, decision, lifecycle, model/config identity, source commit, and redacted outcome. They exclude prompt secrets, credentials, environment values, full command output, and private file bodies.
+- Project-context bundles and operations summaries are tenant/project scoped and redacted before persistence. They record provenance and version only; they never become an unbounded prompt transcript, a hidden memory store or a cross-project retrieval surface.
 - Sentry receives stable error codes, release/commit identity, environment, platform, route/action class, and opaque project/conversation/run IDs. It never receives auth headers, tokens, cookies, raw prompts, repository file content, clone paths, or command output.
 - PTY bytes, terminal scrollback, Neovim buffers and shell commands are never persisted as conversation events or sent to Sentry. `just-bash` runs use bounded filesystem/network policies and are treated as untrusted execution output.
 - The app and runner expose a safe diagnostics/log-copy surface whose first lines include commit/build identity plus Paris and UTC build timestamps; copied diagnostics contain only redacted summaries and never raw terminal, prompt, token or private-file content.
@@ -401,6 +427,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 - Update `shipglows_data/technical/code-docs-map.md` with runner, API/event, Cockpit, conversation, and health-projection ownership.
 - Add `shipglows_data/technical/operator-guides/managed-agent-workspace.md` covering runtime capability selection, PTY/tmux capability, Neovim session policy, reconnect/cleanup, and incident recovery.
 - Add runner-owned `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker` and health-evaluator contracts. Document that portable ShipGlows skills produce versioned evidence and dimension outcomes; do not delegate this authority to a runtime, just-bash or a generic dashboard.
+- Add the `RunIntent`, `RunPolicy`, `ProjectContextBundle` and redacted operations-summary contracts to the runner/API ownership map, documenting manual-only MVP admission and the separate future-trigger specification gate.
 - Update `shipglows_data/technical/design-system-authority.md` if the active ShipGlows theme carrier is consolidated.
 - Update `README.md` only with behavior that has passed implementation proof; do not claim live Codex/GitHub/auth integration from contracts alone.
 - Update `shipglows_data/workflow/TASKS.md`, verification artifact, and `CHANGELOG.md` during implementation closure without rewriting unrelated operator edits.
@@ -430,6 +457,8 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 - Clock skew affects token expiry, event order, or stale-evidence calculations.
 - SQLite migration fails or the database is temporarily read-only.
 - Server reaches concurrency, duration, event-volume, or cost quota.
+- A client or repository attempts to submit a scheduled, webhook or system-recommended trigger before that policy exists.
+- A runtime request attempts to reuse untracked context from another project, tenant or historical run.
 
 # Implementation Tasks
 
@@ -455,10 +484,10 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Implementation note (2026-08-02): the runner now has a concrete GitHub App JWT/install-token issuer, immutable-repository REST revalidation, a narrowed `Contents: read` token boundary, a tenant-scoped persisted repository binding, and a fixed-argument Git transport. Local Git fixtures prove detached audit worktrees, isolated local fix branches, path/symlink containment, mutation locking and abandoned-worktree cleanup. This task remains in progress until a provider-configured GitHub App smoke validates an actual installation without exposing a token.
 - [ ] Task 4: Implement SQLite operational projection, durable-run checkpoints, and migrations.
   - Files: `runner/src/db/**`, `runner/migrations/**`, `runner/test/db/**`.
-  - Action: Persist users/tenants, project bindings, conversations, runtime/session mappings, selected runtime/capability decisions, runs/checkpoints, normalized events, cursors, approvals, idempotency records, health evidence, cost/usage summaries, and cleanup state with tenant-scoped queries.
+  - Action: Persist users/tenants, project bindings, conversations, runtime/session mappings, selected runtime/capability decisions, immutable `RunIntent`/`RunPolicy` summaries, context-bundle provenance/version, runs/checkpoints, normalized events, cursors, approvals, idempotency records, health evidence, cost/usage summaries, and cleanup state with tenant-scoped queries.
   - User story link: Restores conversations and Cockpit state without requiring tmux attachment.
   - Depends on: Task 1; schemas must align with Tasks 2-3.
-  - Validate with: migration up/down policy tests, transaction/idempotency tests, tenant-isolation tests, restart recovery tests, and backup/restore fixture proof.
+  - Validate with: migration up/down policy tests, transaction/idempotency tests, tenant-isolation tests, restart recovery tests, context-bundle provenance/redaction tests, manual-trigger rejection tests, and backup/restore fixture proof.
   - Implementation note (2026-08-02): schema v6 now persists tenant-scoped runs with redacted checkpoints and explicit state transitions, recovers in-flight runs as `interrupted` after restart, tracks workspace cleanup retries without storing local paths, projects runtime sessions, capability decisions, approvals, health evidence, bounded usage summaries, and server-owned cross-namespace project identity bindings. Transaction/backup/restore fixtures, a full migration harness, and broader route integration remain to be implemented.
 - [~] Task 5: Implement Codex as the first `AgentRuntime` adapter and normalize semantic events.
   - Files: `runner/src/agent-runtime/**`, `runner/src/agent-runtime/codex/**`, `runner/src/events/**`, `runner/test/agent-runtime/**`, `runner/test/events/**`.
@@ -469,14 +498,14 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Implementation note (2026-08-02): a server-owned stdio JSONL adapter now performs the initialize/initialized handshake, starts/resumes threads, starts/interrupts turns, maps safe semantic events, and resolves command/file approvals without forwarding raw app-server payloads. Provider-configured Codex smoke, reconnect/order hardening, and the fake second-adapter conformance fixture remain.
 - [~] Task 6: Implement command API, SSE resume, audit/fix policy, and run orchestration.
   - Files: `runner/src/routes/**`, `runner/src/runs/**`, `runner/src/policies/**`, `runner/test/routes/**`, `runner/test/runs/**`.
-  - Action: Add the versioned endpoints, idempotency, event cursors, heartbeat, quotas, timeout/interrupt behavior, approval flow, runtime/capability selection, allowlisted audit templates, isolated fix templates, and explicit no-push/no-merge gates.
+  - Action: Add the versioned endpoints, redacted Cockpit operations summary, idempotency, event cursors, heartbeat, quotas, timeout/interrupt behavior, approval flow, server-owned `RunPolicy` resolution, manual-only `RunIntent` validation, explicit context-bundle attachment, allowlisted audit templates, isolated fix templates, and explicit no-push/no-merge gates.
   - User story link: Turns buttons and conversation input into safe, observable agent work.
   - Depends on: Tasks 2-5.
-  - Validate with: API integration tests for success, disconnect, replay, denial, timeout, project-busy, quota, access-loss, and stale-state reconciliation.
+  - Validate with: API integration tests for success, disconnect, replay, denial, timeout, project-busy, quota, access-loss, stale-state reconciliation, tenant-safe operations summaries, rejected automatic triggers, and no implicit runtime/provider change.
   - Implementation note (2026-08-02): the first tenant/project-protected audit route now creates a durable run and invokes the selected runtime through the neutral command service; runtime events are persisted and exposed through a bounded cursor-based SSE replay route, with optional tenant/conversation-scoped live fan-out after persistence and a bounded idle window. State-changing Origin policy is implemented from `RUNNER_ALLOWED_ORIGINS`; per-tenant admission, maximum duration and interrupt reconciliation are implemented for the current audit command. Conversation create/message/interrupt/resume routes now use the same server-owned session/run boundary and durable idempotency contract. Both `POST /audits` and `POST /fixes` require durable idempotency and replay from SQLite; fixes additionally revalidate a tenant-owned GitHub binding, create an isolated server-owned worktree, start Codex with its internal workspace when GitHub/Codex are configured, and fail closed otherwise. A periodic cleanup worker reconciles due worktrees without exposing paths. Flutter integration and real-provider proof remain.
 - [ ] Task 7: Establish the proprietary ShipGlows health evaluator and five-dimensional Cockpit projection.
   - Files: `runner/src/skills/**`, `runner/src/health/**`, `runner/test/skills/**`, `runner/test/health/**`, `app/lib/domain/project_health/**`, `app/lib/shipglows/data/cockpit/**`, `app/test/domain/project_health/**`, `app/test/shipglows/data/cockpit/**`.
-  - Action: Define versioned skill-run/evidence contracts, execute one bounded read-only skill through `just-bash` against a controlled snapshot, map evaluator outcomes into tech/content/SEO/performance/security models, preserve explicit unknown/not-reported states, and link each result to its producing run.
+  - Action: Define versioned skill-run/evidence and `ProjectContextBundle` contracts, execute one bounded read-only skill through `just-bash` against a controlled snapshot, map evaluator outcomes into tech/content/SEO/performance/security models, preserve explicit unknown/not-reported states, and link each result to its producing run and context provenance.
   - User story link: Provides the global visual health view across tech, content, SEO, performance, and security.
   - Depends on: Task 1 contracts; can use fixtures before Task 6 is live.
   - Validate with: deterministic evaluator fixtures, sandbox limits, coverage, stale evidence, source-gap, malformed payload, and worst-state tests; prove that no absent evidence becomes healthy.
@@ -488,7 +517,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Validate with: Web bridge tests, Android adapter contract tests, token-refresh tests, reconnect/idempotency tests, and no-legacy-route dependency scan.
 - [ ] Task 9: Reconcile the Flutter design authority and implement the Cockpit shell.
   - Files: `app/lib/presentation/theme/app_theme.dart`, `app/lib/shipglows/app.dart`, `app/lib/shipglows/router.dart`, `app/lib/shipglows/presentation/screens/cockpit_screen.dart`, `app/lib/shipglows/presentation/widgets/cockpit/**`, corresponding widget/golden tests.
-  - Action: Make the active ShipGlows theme consume canonical semantic tokens; implement responsive Cockpit navigation, health matrix, project parent tabs, loading/empty/stale/access-lost/error states, keyboard/focus behavior, and accessible labels.
+  - Action: Make the active ShipGlows theme consume canonical semantic tokens; implement responsive Cockpit navigation, health matrix, redacted per-project run-state summary, project parent tabs, loading/empty/stale/access-lost/error states, keyboard/focus behavior, and accessible labels.
   - User story link: Gives the user one visual command center for every repository.
   - Depends on: Tasks 7-8.
   - Validate with: widget tests at phone/tablet/desktop widths, contrast/focus/semantics checks, golden snapshots, and design-system drift check.
@@ -550,6 +579,8 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - `AC-016`: An explicitly authorized operator can open one Workspace, attach to one allowlisted tmux session, resize/reconnect the PTY, launch Neovim, and close the session without exposing host paths, credentials, or arbitrary shell selection.
 - `AC-017`: At least one proprietary ShipGlows skill can run through bounded `just-bash` against a controlled snapshot, produce versioned evidence, and update health without accessing secrets or unrestricted network/filesystem state.
 - `AC-018`: Copied diagnostics begin with commit/build identity and Paris/UTC build timestamps, remain redacted, and are useful without direct Sentry dashboard access.
+- `AC-019`: The Cockpit shows only caller-authorized redacted run-state supervision; every MVP run records `manual`, and schedule/webhook/system-recommendation triggers are rejected without starting work.
+- `AC-020`: Every runtime context has an explicit versioned ShipGlows provenance bundle or an empty-context marker; no opaque, cross-project, cross-tenant or self-modifying memory is used.
 
 # Test Contract
 
@@ -590,6 +621,9 @@ The default execution order is sequential by batch. Parallel work is allowed onl
   - `MCC-019`: operator Workspace capability is project-scoped, expires, attaches only to an allowlisted tmux session, reconnects safely, and cannot expose host paths or credentials.
   - `MCC-020`: a just-bash skill run is bounded, produces versioned evidence, and cannot access secrets or unrestricted network/filesystem state.
   - `MCC-021`: diagnostics/log-copy exposes safe build identity and Paris/UTC timestamps without tokens, cookies, private text, terminal scrollback or raw payloads.
+  - `MCC-022`: operations summaries remain tenant/project scoped and do not expose prompts, paths, secrets, raw logs or unauthorized run totals.
+  - `MCC-023`: only a server-validated manual `RunIntent` starts MVP work; reserved automatic trigger values are rejected idempotently before runtime selection.
+  - `MCC-024`: project context is bounded, redacted, attributable and tenant/project scoped; attempts to attach client-selected, cross-project or untracked memory fail closed.
 - `required_results`: all scenario IDs pass or are explicitly blocked by unavailable external credentials under the narrow exception below; no critical/high security defect remains; no unsupported production claim is added; every failed external smoke retains complete fake/local contract proof and an exact operator follow-up; full Flutter and runner checks pass; changed governance artifacts pass metadata lint; design-system drift is addressed; working-tree changes remain scoped and preserve pre-existing operator edits.
 - `exception_with_proof`: live Supabase, GitHub App, Sentry ingestion, and Codex-first-adapter authenticated smoke calls may be deferred only when credentials or provider configuration are unavailable in the local environment. The implementation must still provide complete fake/local contract tests, disabled-by-default secure adapters, redaction proof, exact configuration diagnostics, and a verification checklist that marks the live scenario blocked rather than passed. A live Codex smoke may use the server's existing authenticated Codex installation without exposing credentials. A live OpenCode/Kilo adapter is explicitly outside this MVP proof. No release may be described as production-ready until all required live provider scenarios pass.
 - `exception_without_proof`: none for tenant isolation, authorization middleware, idempotency, event ordering/resume, audit read-only policy, fix worktree isolation, no-push/no-merge gates, path/symlink containment, prompt/output bounds, secret redaction, health unknown semantics, accessible failure states, metadata lint, dependency audit, and diff hygiene.
@@ -601,6 +635,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - SQLite migration, transaction, tenant boundary, idempotency, restart, backup, and restore tests.
 - Local Git fixtures for clone/fetch, renamed default branch, worktree isolation, concurrent mutation lock, symlink/traversal rejection, and abandoned-worktree cleanup.
 - API integration tests for auth, commands, approvals, quotas, timeouts, interruption, cursor resume, access loss, and malformed input.
+- Contract tests for operations-summary tenant isolation, manual-only run admission, immutable policy resolution, bounded context provenance and forbidden automatic triggers.
 - PTY/tmux integration fixtures for capability expiry, allowlists, resize, reconnect, cleanup, Neovim launch, and concurrent-session rejection.
 - just-bash contract fixtures for virtual filesystem bounds, network allowlists, execution limits, cancellation, and evidence capture.
 - Flutter provider/widget tests for loading, empty, disconnected, stale, access-lost, project-busy, streaming, approval, error, long conversation, multi-device update, and retry states.
@@ -626,6 +661,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - Medium data-coherence risk: operational projections could accidentally become canonical instead of GitHub/Markdown.
 - High operator-surface risk: a PTY/tmux bridge can become a general server shell if capability scope, allowlists, cleanup and audit boundaries are weakened.
 - Medium sandbox risk: just-bash is beta and simulated; its use must remain bounded and must not be mistaken for proof that real server commands are safe.
+- Medium orchestration risk: copied trigger or memory patterns could create unbounded autonomous work or tenant-context leakage; manual-only admission, explicit policy/context provenance and a future-spec gate keep those patterns out of the MVP.
 
 # Execution Notes
 
@@ -692,7 +728,12 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-02 16:42:40 UTC | 102-sg-start | GPT-5 Codex | Added the canonical runner identity bridge `GET /v1/projects/resolve`: authenticated callers provide a bounded source system and source project ID, the server-owned tenant directory resolves the runner ID, and project access is rechecked before returning the mapping. Added Flutter response parsing and runner contract coverage for success, missing identity, unavailable directory, and tenant-scoped inputs. | partial; configure the production identity directory and switch Flutter to it when namespaces differ; provider smoke remains external | Provide the server-side identity directory adapter, then validate one real cross-namespace project mapping |
 | 2026-08-02 16:47:33 UTC | 102-sg-start | GPT-5 Codex | Added the SQLite-backed production identity directory adapter: schema v6 stores tenant-scoped `(sourceSystem, sourceProjectId) -> runner projectId` bindings, `OperationalStore` resolves only bindings with read membership, and `main.ts` already passes the store as the runner project-access adapter. Same-namespace `shipglows-app` IDs resolve safely; cross-namespace bindings are server-provisioned through the store contract. Added migration and isolation coverage. | partial; invoke `bindProjectIdentity` from the real project provisioning flow, then validate one live mapping and provider smoke | Connect project creation/provisioning to the server-owned identity binding method |
 | 2026-08-02 16:48:00 UTC | 102-sg-start | GPT-5 Codex | Traced the existing `/api/projects` provisioning client: the Flutter repository contains only the client and no FastAPI implementation or server-to-server runner credentials. The runner hook is therefore complete (`createProject` accepts source identity fields and `bindProjectIdentity` handles existing projects), but the external backend call cannot be added safely in this repository; direct Flutter binding is explicitly rejected. | blocked on the external `/api/projects` backend adapter, not on the runner contract | Add the server-to-server call from the FastAPI project-creation handler, then run one real cross-namespace mapping proof |
+| 2026-08-02 21:43:08 UTC | 004-sg-deploy | GPT-5 Codex | Preflighted the requested `runner.shipglows.com` deployment directly on the Hetzner host, added loopback PM2/Caddy templates and production fail-closed configuration gates, and validated the runner locally. Caddy and PM2 are available, but the domain currently resolves away from this host and HTTPS is unavailable. | blocked before publication; no production process or Caddy mutation performed | Point `runner.shipglows.com` to the Hetzner public IP, then install the prepared Caddy/PM2 configuration with server-owned Supabase values |
+| 2026-08-02 21:54:31 UTC | 004-sg-deploy | GPT-5 Codex | Confirmed that Vercel authoritative DNS now maps `runner.shipglows.com` to the Hetzner host; public recursive DNS still returns the prior Vercel address during propagation. Caddy/PM2 are active on Hetzner, but no ShipGlows Supabase project or runner production environment is configured, so the fail-closed runner was not started. | blocked on managed identity provisioning and DNS propagation; no insecure public endpoint created | Create or select the ShipGlows Supabase project, then provision its URL and server-owned runtime configuration before Caddy/PM2 publication |
+| 2026-08-02 22:06:43 UTC | 004-sg-deploy | GPT-5 Codex | Created the dedicated Paris Supabase project and started the loopback-only authenticated runner under persisted PM2 supervision; its version route works and protected requests correctly return `401` without a session. DNS is still propagating publicly. Publishing the Caddy site requires root access to the existing system Caddy configuration, which this session does not have. | partial; private runner healthy, public TLS route blocked on DNS propagation and root-only Caddy change | Apply the prepared Caddy site with server administration, then validate `https://runner.shipglows.com/v1/version` |
+| 2026-08-03 08:47:00 UTC | 205-sg-veille | GPT-5 Codex | Recorded Warp Oz as a bounded product and architecture inspiration for cloud-agent orchestration, multi-agent observability and model/harness flexibility. | inspiration retained; no MVP adoption or runtime dependency | Continue the ShipGlows-owned runner and Cockpit implementation |
+| 2026-08-03 08:47:00 UTC | 100-sg-spec | GPT-5 Codex | Amended the current MVP contract with Warp Oz-informed, ShipGlows-owned orchestration patterns: manual-only run intents, redacted fleet supervision, immutable runtime policy resolution and attributed project context bundles. | amended; focused readiness review required before the next implementation slice | Rerun readiness against the orchestration/context additions |
 
 # Current Chantier Flow
 
-`100-sg-spec` (completed; multi-agent amendment) -> `101-sg-ready` (completed) -> `102-sg-start` (in progress; Tasks 1-6 first slices implemented) -> `103-sg-verify` -> `104-sg-end` -> `005-sg-ship`
+`100-sg-spec` (amended; orchestration/context review required) -> `101-sg-ready` (pending focused review) -> `102-sg-start` (in progress; Tasks 1-6 first slices implemented) -> `004-sg-deploy` (partial; private runner active, public Caddy/DNS pending) -> `103-sg-verify` -> `104-sg-end` -> `005-sg-ship`

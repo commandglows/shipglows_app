@@ -34,7 +34,7 @@ On est où dans l'application ? Normalement on a l'intention de créer une app
 
 ## Message 2 — Assistant
 
-Oui : l’application produit est bien une application Flutter, située dans [`app/`](/home/claude/shipglowz_app/app). Le dépôt est propre, sur `main`, synchronisé avec `origin/main`.
+Oui : l’application produit est bien une application Flutter, située dans [`app/`](/home/claude/shipglows_app/app). Le dépôt est propre, sur `main`, synchronisé avec `origin/main`.
 
 Aujourd’hui, ShipGlows est déjà un cockpit opérationnel en lecture seule :
 
@@ -45,7 +45,7 @@ Aujourd’hui, ShipGlows est déjà un cockpit opérationnel en lecture seule :
 - contrats Firestore, indexation GitHub et droits produit déjà préparés ;
 - ancien ContentFlow conservé comme runtime legacy, mais ce n’est plus la direction produit.
 
-Le point d’entrée le confirme dans [`main.dart`](/home/claude/shipglowz_app/app/lib/main.dart), et les routes actives sont dans [`shipglows/router.dart`](/home/claude/shipglowz_app/app/lib/shipglows/router.dart).
+Le point d’entrée le confirme dans [`main.dart`](/home/claude/shipglows_app/app/lib/main.dart), et les routes actives sont dans [`shipglows/router.dart`](/home/claude/shipglows_app/app/lib/shipglows/router.dart).
 
 Il existe toutefois une incohérence : le README annonce Linux desktop comme cible principale, mais seuls Android et Web ont actuellement leurs runners Flutter versionnés. Il faudra donc rétablir/valider le runner Linux avant d’intégrer un agent local.
 

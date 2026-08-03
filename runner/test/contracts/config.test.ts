@@ -60,6 +60,16 @@ describe("runner configuration", () => {
     );
   });
 
+  it("fails closed when a production runner is missing browser and authentication gates", () => {
+    assert.throws(
+      () => loadConfig({ RUNNER_ENV: "production" }),
+      (error: unknown) =>
+        error instanceof ConfigError &&
+        error.issues.includes("SUPABASE_AUTH_ENABLED=true is required in production") &&
+        error.issues.includes("RUNNER_ALLOWED_ORIGINS is required in production"),
+    );
+  });
+
   it("requires GitHub App credentials and rejects classic GitHub tokens", () => {
     assert.throws(
       () => loadConfig({ GITHUB_ENABLED: "true" }),

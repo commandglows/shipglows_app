@@ -66,8 +66,8 @@ design_system_authority:
     - shadows
     - motion
   validation:
-    - python3 /home/claude/shipglowz/tools/design_system_drift_check.py --root /home/claude/shipglowz_app/app --warn-only --format markdown
-    - python3 /home/claude/shipglowz/tools/design_system_drift_check.py --root /home/claude/shipglowz_app/site --warn-only --format markdown
+    - python3 /home/claude/shipglowz/tools/design_system_drift_check.py --root /home/claude/shipglows_app/app --warn-only --format markdown
+    - python3 /home/claude/shipglowz/tools/design_system_drift_check.py --root /home/claude/shipglows_app/site --warn-only --format markdown
   forbidden_bypass:
     - inline visual literals in app/site screens/widgets
     - one-off typography sizing

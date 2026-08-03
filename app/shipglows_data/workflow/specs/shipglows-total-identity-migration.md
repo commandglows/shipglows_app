@@ -30,7 +30,7 @@ depends_on:
   - artifact: "/home/claude/shipglowz/shipglows_data/branding/branding.md"
     artifact_version: "1.1.0"
     required_status: "reviewed"
-  - artifact: "/home/claude/shipglowz_app/app/shipglows_data/technical/design-system-authority.md"
+  - artifact: "/home/claude/shipglows_app/app/shipglows_data/technical/design-system-authority.md"
     artifact_version: "1.0.0"
     required_status: "draft"
 supersedes:
@@ -136,7 +136,7 @@ Automated proof runs after each bounded batch: exact legacy-name scans excluding
 # Invariants
 
 - Parent folders `/home/claude/shipglows` and `/home/claude/shipglows_app` remain unchanged.
-- Public site source remains `/home/claude/shipglowz_app/site`.
+- Public site source remains `/home/claude/shipglows_app/site`.
 - Git history, repository visibility, branch protection, collaborators, issues, releases, secrets and deployment data remain intact unless an explicit provider action necessarily changes a binding.
 - No secret or credential value is copied into source, logs, specs or reports.
 - New identity never overstates unshipped capabilities.
