@@ -1,25 +1,27 @@
 # ShipGlows Operations Dashboard App
 
-Local-first Flutter app for ShipGlows operational visibility.
+Flutter application for the ShipGlows managed repository-health and agent Cockpit.
 
-## Scope (V1)
+## Current MVP Scope
 
-- Read-only dashboard for ShipGlows evidence sources.
-- Android and Web targets.
-- No write-back into ShipGlows trackers or ledgers.
-- No auth, no cloud sync, no backend service.
+- Cross-project Cockpit with technical, content, SEO, performance, and security health.
+- Authenticated server-backed project projection with explicit local-source fallback.
+- Project-scoped managed agent conversations, approvals, interruption, and resume.
+- Server-owned GitHub App, worktree, persistence, and agent-runtime boundaries.
+- Web, Android, and Windows product architecture; Web is the first hosted proof surface.
+- Optional operator Workspace surface backed by a short-lived, project-scoped PTY/tmux capability when configured on the runner.
 - Legacy ContentFlow code remains in the repo only as migration/reference material.
 
-## Source Inputs
+## Data Sources
 
-The app reads:
+The active Cockpit can consume the managed runner projection. The local compatibility reader also supports:
 
 - `/home/claude/shipglows_data/PROJECTS.md`
 - `/home/claude/shipglows_data/AUDIT_LOG.md`
 - `/home/claude/shipglows_data/TASKS.md`
 - `/home/claude/shipglows_data/OPERATIONS_LOG.md`
 - `/home/claude/shipglows_data/DEPENDENCY_LOG.md`
-- `/home/claude/shipglowz/shipglows_data/workflow/specs/*.md`
+- `/home/claude/shipglows/shipglows_data/workflow/specs/*.md`
 - Project-local governance docs (`shipglows_data/workflow/AUDIT_LOG.md`, `shipglows_data/workflow/TASKS.md`, `CHANGELOG.md`, `shipglows_data/business/business.md`, `shipglows_data/business/product.md`, `shipglows_data/technical/guidelines.md`, `shipglows_data/technical/architecture.md`) when listed in `PROJECTS.md`
 
 ## Security and File Access
@@ -29,9 +31,9 @@ The app reads:
 - Sensitive path segments are redacted in diagnostics.
 - File size limits: `2 MB` per file, `20 MB` per refresh.
 
-## Unsupported Target Behavior
+## Local Reader Boundary
 
-Web builds are unsupported for direct local file reads. The app surfaces an explicit `unsupported_source` diagnostic instead of attempting a fake fallback.
+Web builds cannot read arbitrary local files. Hosted Web uses the managed runner projection; unsupported local-source access surfaces an explicit diagnostic rather than a fake fallback.
 
 ## Tracker vs Ledger Model
 
@@ -86,16 +88,14 @@ flutter run -d chrome --dart-define=APP_TARGET=contentflow
 Do not use the legacy target as the product direction. Its modules are classified
 in `shipglows_data/technical/legacy-contentflow-inventory.md`.
 
-## Future Auth, Sync, And Backend Work
+## Managed Runner
 
-ShipGlows will likely need multi-user auth, feedback, BYOK/OpenRouter, and a
-projection database later. Those are future specs under `shipglows_data/workflow/specs/`, not active V1 behavior.
+The TypeScript runner under `../runner/` now owns authentication, tenant/project authorization, agent-runtime selection, GitHub workspaces, SQLite operational projections, idempotent commands, semantic event streaming, and the separately authorized PTY/tmux gateway. The supervised runner and real PTY/tmux/Codex smoke pass on the managed server; public authenticated proof remains incomplete.
 
 Current data rule:
 
 - Markdown and repository files are the source of truth.
-- A future database is a projection/index/sync layer unless a later reviewed
-  spec supersedes this.
+- The runner database is a projection/index/sync layer unless a later reviewed spec supersedes this.
 - If the app changes project state, the intended write path is to update the
   relevant Markdown/repository file.
 - No privileged service-role keys or BYOK secrets belong in Flutter client code.
@@ -108,11 +108,11 @@ flutter test test/data/shipglows_sources/source_path_policy_test.dart test/data/
 flutter analyze
 ```
 
-## V2 Note
+## Current Limits
 
-Future auth/sync work must preserve local ledger inputs and enforce explicit
-user/project ownership. The provider is not final; Firebase/Firestore and
-Firebase Auth are candidates to be reviewed per dedicated spec. FastAPI is kept
-as legacy context and is not active in V1.
+- No automatic push, merge, deployment, or canonical-branch mutation.
+- Interactive PTY/tmux rendering is implemented and the managed runner has one server-owned ShipGlows allowlist. Public use remains unavailable until `runner.shipglows.com` has its HTTPS reverse-proxy route and an authenticated actor/project is provisioned.
+- No claim of complete Web/Android/Windows parity until platform proof passes.
+- FastAPI, Clerk, Firebase, and the older ContentFlow product remain legacy context unless a current ShipGlows contract explicitly adopts them.
 
-See `shipglows_data/technical/auth-sync-v2.md`.
+See `shipglows_data/technical/managed-runner-foundation.md` and the managed Cockpit MVP specification.

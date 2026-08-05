@@ -14,17 +14,24 @@ when_to_use:
   - "When you are learning or revisiting ShipGlows"
   - "When you cannot remember which skill fits the current situation"
   - "When you want a fast map of the system before choosing a path"
+  - "When you want the complete one-line list of every available skill and its modes"
 what_you_give:
   - "A need for orientation"
   - "Optionally a current task context"
 what_you_get:
   - "A workflow cheat sheet"
+  - "A complete skill-and-mode catalog with one line per skill"
   - "Better visibility into skill roles and sequencing"
   - "Less hesitation at the start of work"
 example_prompts:
   - "/sg-help"
   - "/sg-help spec workflow"
   - "/sg-help which skill for docs cleanup"
+  - "/302-sg-help mode"
+argument_modes:
+  - argument: "mode | modes"
+    effect: "Returns the canonical one-line catalog of every repository skill and its documented modes."
+    consequence: "Use when you know you need a command but want to scan the full skill surface first."
 limits:
   - "It explains the system; it does not execute the work for you"
   - "The real value still depends on using the right follow-up skill"

@@ -1,7 +1,7 @@
 ---
-title: "sg-build"
+title: "sg-development"
 slug: "sg-build"
-tagline: "Run non-trivial work from story to spec, build, verification, closeout, and ship without making the user drive every gate."
+tagline: "Take a product outcome from intent to verified delivery without making you drive every gate."
 summary: "The master user-facing lifecycle orchestrator for carrying a story, bug, or goal through ShipGlows's spec, readiness, implementation, verification, onboarding consideration, documentation, closure, and shipping gates."
 category: "Build & Fix"
 audience:

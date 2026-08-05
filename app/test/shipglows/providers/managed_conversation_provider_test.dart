@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipglows_app/shipglows/data/managed_runner_api.dart';
+import 'package:shipglows_app/shipglows/data/cockpit/cockpit_models.dart';
 import 'package:shipglows_app/shipglows/providers/managed_conversation_provider.dart';
 
 void main() {
@@ -39,6 +40,25 @@ void main() {
     expect(notifier.state.pendingApprovalId, isNull);
     notifier.dispose();
   });
+
+  test('keeps independent conversation tabs for one project', () async {
+    final runner = _FakeManagedRunner();
+    final workspace = ManagedConversationWorkspaceNotifier(
+      projectId: 'project-1',
+      client: runner,
+    );
+
+    expect(workspace.state.tabs, hasLength(1));
+    workspace.addTab();
+    expect(workspace.state.tabs, hasLength(2));
+    expect(workspace.state.activeIndex, 1);
+
+    await workspace.createConversation();
+    expect(workspace.activeNotifier.state.conversationId, 'conversation-1');
+    workspace.selectTab(0);
+    expect(workspace.activeNotifier.state.conversationId, isNull);
+    workspace.dispose();
+  });
 }
 
 class _FakeManagedRunner implements ManagedRunnerClient {
@@ -49,6 +69,20 @@ class _FakeManagedRunner implements ManagedRunnerClient {
   final approvals = <_ApprovalCall>[];
 
   @override
+  Future<ManagedWorkspaceCapability> workspaceCapability({
+    required String projectId,
+  }) async => const ManagedWorkspaceCapability(
+    available: false,
+    reason: 'Operator Workspace is not configured.',
+  );
+
+  @override
+  Future<CockpitSnapshot> loadCockpit() async => CockpitSnapshot(
+    generatedAt: DateTime.utc(2026, 8, 3),
+    projects: const <CockpitProject>[],
+  );
+
+  @override
   Future<ManagedProjectIdentityResult> resolveProjectIdentity({
     required String sourceSystem,
     required String sourceProjectId,
@@ -57,6 +91,11 @@ class _FakeManagedRunner implements ManagedRunnerClient {
     sourceProjectId: 'api_proj_1',
     projectId: 'runner_proj_1',
   );
+
+  @override
+  Future<List<ManagedConversationSummary>> listConversations({
+    required String projectId,
+  }) async => const <ManagedConversationSummary>[];
 
   @override
   Future<ManagedConversationResult> createConversation({

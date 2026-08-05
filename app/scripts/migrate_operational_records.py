@@ -29,9 +29,10 @@ CANONICAL_RECORD_RE = re.compile(
 )
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 VALID_TRAFFIC = {"🔴", "🟠", "🟡", "🟢"}
-ROOT = Path(__file__).resolve().parents[1]
+APP_ROOT = Path(__file__).resolve().parents[1]
+ROOT = APP_ROOT.parent
 WEB_READER_CONTRACT_PATH = ROOT / "shipglows_data/technical/operational-record-web-reader-contract.md"
-WEB_READER_FIXTURE_PATH = ROOT / "test/data/shipglows_sources/fixtures/operational_records_web_reader.md"
+WEB_READER_FIXTURE_PATH = APP_ROOT / "test/data/shipglows_sources/fixtures/operational_records_web_reader.md"
 REQUIRED_TEST_COMMAND = [
     ["flutter", "test", "test/data/shipglows_sources/parsers/operational_record_parser_test.dart"],
 ]
@@ -938,7 +939,7 @@ def assert_write_gates() -> List[str]:
         blockers.append(f"missing required fixture: {WEB_READER_FIXTURE_PATH}")
 
     for command in REQUIRED_TEST_COMMAND:
-        code, output = run_command(command, cwd=ROOT)
+        code, output = run_command(command, cwd=APP_ROOT)
         if code != 0:
             blockers.append(f"required parser tests failed: {' '.join(command)}\n{output[:2000]}")
     for shell_cmd in TUI_CHECK_COMMANDS:

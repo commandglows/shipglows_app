@@ -14,6 +14,31 @@ export interface RunnerConfig {
   readonly limits: RunnerLimitsConfig;
   readonly integrations: RunnerIntegrationsConfig;
   readonly runtimes: RunnerRuntimesConfig;
+  readonly operatorWorkspaces: Readonly<Record<string, OperatorWorkspaceConfig>>;
+}
+
+export interface OperatorWorkspaceConfig {
+  readonly cwd: string;
+  readonly tmuxSession: string;
+}
+
+function parseOperatorWorkspaces(value: string | undefined, issues: string[]): Record<string, OperatorWorkspaceConfig> {
+  if (value === undefined || value.trim() === "") return {};
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+    const result: Record<string, OperatorWorkspaceConfig> = {};
+    for (const [projectId, entry] of Object.entries(parsed)) {
+      if (!/^[A-Za-z0-9_-]{1,128}$/.test(projectId) || entry === null || typeof entry !== "object" || Array.isArray(entry)) throw new Error();
+      const { cwd, tmuxSession } = entry as Record<string, unknown>;
+      if (typeof cwd !== "string" || !cwd.startsWith("/") || typeof tmuxSession !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(tmuxSession)) throw new Error();
+      result[projectId] = { cwd, tmuxSession };
+    }
+    return result;
+  } catch {
+    issues.push("RUNNER_OPERATOR_WORKSPACES must be a JSON project map with absolute cwd and allowlisted tmuxSession");
+    return {};
+  }
 }
 
 export interface RunnerLimitsConfig {
@@ -104,6 +129,7 @@ export function loadConfig(
   const githubEnabled = readBoolean(env["GITHUB_ENABLED"], "GITHUB_ENABLED", issues);
   const codexEnabled = readBoolean(env["CODEX_ENABLED"], "CODEX_ENABLED", issues);
   const eveEnabled = readBoolean(env["EVE_ENABLED"], "EVE_ENABLED", issues);
+  const operatorWorkspaces = parseOperatorWorkspaces(env["RUNNER_OPERATOR_WORKSPACES"], issues);
   const maxConcurrentRunsPerTenant = readBoundedInteger(
     env["RUNNER_MAX_CONCURRENT_RUNS_PER_TENANT"],
     2,
@@ -189,6 +215,7 @@ export function loadConfig(
       codex: { enabled: codexEnabled },
       eve: { enabled: eveEnabled },
     },
+    operatorWorkspaces,
   };
 }
 
@@ -204,5 +231,6 @@ export function publicConfig(config: RunnerConfig) {
     githubEnabled: config.integrations.github.enabled,
     codexEnabled: config.runtimes.codex.enabled,
     eveEnabled: config.runtimes.eve.enabled,
+    operatorWorkspaceCount: Object.keys(config.operatorWorkspaces).length,
   };
 }

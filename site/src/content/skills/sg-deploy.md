@@ -1,5 +1,5 @@
 ---
-title: "sg-deploy"
+title: "sg-release"
 slug: "sg-deploy"
 tagline: "Run the whole release confidence loop instead of stitching checks, ship, prod, browser proof, and verification by hand."
 summary: "A release orchestration skill for moving work through technical checks, bounded shipping, deployment readiness, post-deploy evidence, final verification, and optional changelog routing."

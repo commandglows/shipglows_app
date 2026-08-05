@@ -1,7 +1,7 @@
 ---
-title: "sg-customer"
+title: "sg-experience"
 slug: "sg-customer"
-tagline: "Turn shipped features into clear, trusted customer journeys."
+tagline: "Turn product changes into clear, trusted customer journeys."
 summary: "A customer-experience skill for UX/UI clarity, friction, trust, first-success paths, onboarding, setup sequencing, recoverable states, docs coherence, and proof routing."
 category: "Build & Fix"
 audience:

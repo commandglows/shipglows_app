@@ -16,7 +16,7 @@ Live URL:
 https://shipglows.com
 ```
 
-This site is the public explanation, docs, FAQ, pricing hypothesis, blog, and skill-discovery surface for ShipGlows. It should stay aligned with the repository README and the governance corpus under `app/shipglows_data/` until that corpus is normalized at the monorepo root.
+This site is the public explanation, docs, FAQ, pricing hypothesis, blog, and skill-discovery surface for ShipGlows. It should stay aligned with the repository README and the canonical monorepo governance corpus under `shipglows_data/`.
 
 ## Commands
 

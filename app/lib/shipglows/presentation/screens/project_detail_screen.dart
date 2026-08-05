@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/project_health/project_health_models.dart';
@@ -39,6 +40,12 @@ class ProjectDetailScreen extends ConsumerWidget {
             }
           }
           if (project == null) {
+            if (resolvedRunnerProjectId != null) {
+              return _ServerProjectDetailBody(
+                projectName: projectName,
+                runnerProjectId: resolvedRunnerProjectId,
+              );
+            }
             return const Center(child: Text('Project not found.'));
           }
           return _ProjectDetailBody(
@@ -49,6 +56,54 @@ class ProjectDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _ServerProjectDetailBody extends StatelessWidget {
+  const _ServerProjectDetailBody({
+    required this.projectName,
+    required this.runnerProjectId,
+  });
+
+  final String projectName;
+  final String runnerProjectId;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.all(20),
+    children: [
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                projectName,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Projet piloté par la projection serveur ShipGlows.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Identité runner : $runnerProjectId',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      ManagedConversationPanel(projectId: runnerProjectId),
+      const SizedBox(height: 12),
+      _OperatorWorkspaceButton(
+        projectName: projectName,
+        projectId: runnerProjectId,
+      ),
+    ],
+  );
 }
 
 class _ProjectDetailBody extends StatelessWidget {
@@ -137,6 +192,13 @@ class _ProjectDetailBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ManagedConversationPanel(projectId: runnerProjectId),
+        if (runnerProjectId != null) ...[
+          const SizedBox(height: 12),
+          _OperatorWorkspaceButton(
+            projectName: project.project,
+            projectId: runnerProjectId!,
+          ),
+        ],
         const SizedBox(height: 12),
         Card(
           child: Padding(
@@ -235,6 +297,26 @@ class _ProjectDetailBody extends StatelessWidget {
       ],
     );
   }
+}
+
+class _OperatorWorkspaceButton extends StatelessWidget {
+  const _OperatorWorkspaceButton({
+    required this.projectName,
+    required this.projectId,
+  });
+
+  final String projectName;
+  final String projectId;
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+    onPressed: () => context.push(
+      '/project/${Uri.encodeComponent(projectName)}/workspace'
+      '?runnerProjectId=${Uri.encodeComponent(projectId)}',
+    ),
+    icon: const Icon(Icons.desktop_windows_outlined),
+    label: const Text('Ouvrir le Workspace opérateur'),
+  );
 }
 
 class _DetailStat extends StatelessWidget {

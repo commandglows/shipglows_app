@@ -65,7 +65,7 @@ class CockpitDtoMapper {
       conversationId: _requiredString(json, 'conversationId'),
       type: _eventType(_requiredString(json, 'type')),
       occurredAt: _requiredDateTime(json, 'occurredAt'),
-      summary: _requiredString(json, 'summary'),
+      summary: _summaryString(json['summary']),
       body: _optionalString(json, 'body'),
       runId: _optionalString(json, 'runId'),
       approvalId: _optionalString(json, 'approvalId'),
@@ -190,6 +190,18 @@ class CockpitDtoMapper {
     final value = json[key];
     if (value is String && value.trim().isNotEmpty) return value;
     throw FormatException('$key must be a non-empty string.');
+  }
+
+  static String _summaryString(Object? value) {
+    if (value is String && value.trim().isNotEmpty) return value;
+    if (value is Map &&
+        value['text'] is String &&
+        (value['text'] as String).trim().isNotEmpty) {
+      return value['text'] as String;
+    }
+    throw const FormatException(
+      'summary must be a non-empty string or text object.',
+    );
   }
 
   static String? _optionalString(Map<String, Object?> json, String key) {

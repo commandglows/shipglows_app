@@ -100,6 +100,19 @@ class ManagedConversationNotifier
     }
   }
 
+  void restoreConversation({
+    required String conversationId,
+    required String state,
+  }) {
+    if (this.state.conversationId != null) return;
+    this.state = this.state.copyWith(
+      phase: _phaseForRunnerState(state),
+      conversationId: conversationId,
+      clearError: true,
+    );
+    _listen();
+  }
+
   Future<void> sendMessage(String text) async {
     final value = text.trim();
     if (client == null || value.isEmpty) return;
@@ -244,6 +257,145 @@ class ManagedConversationNotifier
   @override
   void dispose() {
     _eventsSubscription?.cancel();
+    super.dispose();
+  }
+}
+
+class ManagedConversationTab {
+  ManagedConversationTab({required this.title, required this.notifier});
+
+  String title;
+  final ManagedConversationNotifier notifier;
+}
+
+class ManagedConversationWorkspaceState {
+  const ManagedConversationWorkspaceState({
+    required this.tabs,
+    required this.activeIndex,
+  });
+
+  final List<ManagedConversationTab> tabs;
+  final int activeIndex;
+
+  ManagedConversationTab get active => tabs[activeIndex];
+
+  ManagedConversationWorkspaceState copyWith({
+    List<ManagedConversationTab>? tabs,
+    int? activeIndex,
+  }) => ManagedConversationWorkspaceState(
+    tabs: tabs ?? this.tabs,
+    activeIndex: activeIndex ?? this.activeIndex,
+  );
+}
+
+final managedConversationWorkspaceProvider =
+    StateNotifierProvider.family<
+      ManagedConversationWorkspaceNotifier,
+      ManagedConversationWorkspaceState,
+      String
+    >((ref, projectId) {
+      final client = ref.watch(managedRunnerApiProvider);
+      final notifier = ManagedConversationWorkspaceNotifier(
+        projectId: projectId,
+        client: client,
+      );
+      ref.onDispose(notifier.dispose);
+      return notifier;
+    });
+
+class ManagedConversationWorkspaceNotifier
+    extends StateNotifier<ManagedConversationWorkspaceState> {
+  ManagedConversationWorkspaceNotifier({
+    required this.projectId,
+    required this.client,
+  }) : super(
+         const ManagedConversationWorkspaceState(tabs: [], activeIndex: 0),
+       ) {
+    addTab();
+    unawaited(_restoreTabs());
+  }
+
+  final String projectId;
+  final ManagedRunnerClient? client;
+  final _tabSubscriptions =
+      <ManagedConversationNotifier, void Function(ManagedConversationState)>{};
+
+  ManagedConversationNotifier get activeNotifier => state.active.notifier;
+
+  ManagedConversationState get activeState => state.active.notifier.state;
+
+  void addTab() {
+    final number = state.tabs.length + 1;
+    final notifier = ManagedConversationNotifier(
+      projectId: projectId,
+      client: client,
+    );
+    final tab = ManagedConversationTab(
+      title: 'Conversation $number',
+      notifier: notifier,
+    );
+    void listener(ManagedConversationState value) => _refresh();
+    notifier.addListener(listener);
+    _tabSubscriptions[notifier] = listener;
+    state = state.copyWith(
+      tabs: [...state.tabs, tab],
+      activeIndex: state.tabs.length,
+    );
+  }
+
+  Future<void> _restoreTabs() async {
+    if (client == null) return;
+    try {
+      final summaries = await client!.listConversations(projectId: projectId);
+      if (summaries.isEmpty || state.tabs.length != 1) return;
+      final first = state.tabs.first;
+      if (first.notifier.state.conversationId != null) return;
+      first.title = summaries.first.title;
+      first.notifier.restoreConversation(
+        conversationId: summaries.first.conversationId,
+        state: summaries.first.state,
+      );
+      for (final summary in summaries.skip(1)) {
+        addTab();
+        final tab = state.tabs.last;
+        tab.title = summary.title;
+        tab.notifier.restoreConversation(
+          conversationId: summary.conversationId,
+          state: summary.state,
+        );
+      }
+      selectTab(0);
+      _refresh();
+    } catch (error) {
+      // The local tab remains usable; a later refresh can retry reconciliation.
+    }
+  }
+
+  void selectTab(int index) {
+    if (index < 0 || index >= state.tabs.length || index == state.activeIndex) {
+      return;
+    }
+    state = state.copyWith(activeIndex: index);
+  }
+
+  Future<void> createConversation() => activeNotifier.createConversation();
+
+  Future<void> sendMessage(String text) => activeNotifier.sendMessage(text);
+
+  Future<void> interrupt() => activeNotifier.interrupt();
+
+  Future<void> resume() => activeNotifier.resume();
+
+  Future<void> resolveApproval(bool approved) =>
+      activeNotifier.resolveApproval(approved);
+
+  void _refresh() => state = state.copyWith(tabs: [...state.tabs]);
+
+  @override
+  void dispose() {
+    for (final entry in _tabSubscriptions.entries) {
+      entry.key.dispose();
+    }
     super.dispose();
   }
 }

@@ -53,4 +53,16 @@ void main() {
       throwsA(isA<ManagedRunnerException>()),
     );
   });
+
+  test('maps an opaque expiring operator session without host details', () {
+    final session = ManagedOperatorSession.fromJson({
+      'sessionId': 'ops_123',
+      'token': 'opaque-capability',
+      'expiresAt': '2026-08-03T15:00:00Z',
+    });
+
+    expect(session.sessionId, 'ops_123');
+    expect(session.token, 'opaque-capability');
+    expect(session.expiresAt.isUtc, isTrue);
+  });
 }

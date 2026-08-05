@@ -29,8 +29,13 @@ class _ManagedConversationPanelState
     if (projectId == null || projectId.trim().isEmpty) {
       return const _UnresolvedManagedProjectPanel();
     }
-    final state = ref.watch(managedConversationProvider(projectId));
-    final notifier = ref.read(managedConversationProvider(projectId).notifier);
+    final workspace = ref.watch(
+      managedConversationWorkspaceProvider(projectId),
+    );
+    final notifier = ref.read(
+      managedConversationWorkspaceProvider(projectId).notifier,
+    );
+    final state = notifier.activeState;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final unavailable = state.phase == ManagedConversationPhase.unavailable;
@@ -55,6 +60,12 @@ class _ManagedConversationPanelState
                 ),
                 _PhaseChip(phase: state.phase),
               ],
+            ),
+            const SizedBox(height: 14),
+            _ConversationTabs(
+              workspace: workspace,
+              onAdd: notifier.addTab,
+              onSelect: notifier.selectTab,
             ),
             const SizedBox(height: 6),
             Text(
@@ -174,7 +185,7 @@ class _ManagedConversationPanelState
     );
   }
 
-  void _send(ManagedConversationNotifier notifier) {
+  void _send(ManagedConversationWorkspaceNotifier notifier) {
     final text = _messageController.text;
     _messageController.clear();
     notifier.sendMessage(text);
@@ -205,6 +216,47 @@ class _UnresolvedManagedProjectPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ConversationTabs extends StatelessWidget {
+  const _ConversationTabs({
+    required this.workspace,
+    required this.onAdd,
+    required this.onSelect,
+  });
+
+  final ManagedConversationWorkspaceState workspace;
+  final VoidCallback onAdd;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var index = 0; index < workspace.tabs.length; index++)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(workspace.tabs[index].title),
+                    selected: index == workspace.activeIndex,
+                    onSelected: (_) => onSelect(index),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      IconButton(
+        tooltip: 'Nouvelle conversation',
+        onPressed: onAdd,
+        icon: const Icon(Icons.add),
+      ),
+    ],
+  );
 }
 
 class _PhaseChip extends StatelessWidget {

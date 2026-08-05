@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import websocket from "@fastify/websocket";
 import { Readable } from "node:stream";
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import { Type } from "typebox";
@@ -9,7 +10,7 @@ import {
 } from "./auth/index.js";
 import type { RunnerConfig } from "./config.js";
 import { installErrorHandler, CommandRequestSchemas, VersionResponseSchema } from "./contracts/index.js";
-import type { OperationalStore } from "./db/index.js";
+import type { CockpitProjectRecord, OperationalStore } from "./db/index.js";
 import type { PersistedEvent } from "./db/index.js";
 import type { AgentRuntime, SafePayload } from "./contracts/index.js";
 import type { EventHub } from "./events/index.js";
@@ -24,6 +25,7 @@ import {
   type ProjectAccessRepository,
 } from "./projects/projectAccess.js";
 import { stateChangingOriginGuard } from "./security/requestPolicy.js";
+import { OperatorWorkspaceError, type OperatorWorkspaceGateway } from "./operator-workspace/index.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -46,11 +48,23 @@ const noProjectAccess: ProjectAccessRepository = {
   hasProjectAccess: () => false,
 };
 
+const cockpitDimension = Type.Object({
+  dimension: Type.String(), status: Type.String(), summary: Type.Record(Type.String(), Type.Unknown()),
+  producer: Type.String(), evidenceCount: Type.Integer({ minimum: 0 }), sourceCommit: Type.Union([Type.String(), Type.Null()]), checkedAt: Type.Union([Type.String(), Type.Null()]),
+}, { additionalProperties: false });
+const cockpitResponse = Type.Object({ generatedAt: Type.String(), projects: Type.Array(Type.Object({
+  id: Type.String(), name: Type.String(), repositoryFullName: Type.String(), accessState: Type.String(), conversationCount: Type.Integer({ minimum: 0 }), activeRunCount: Type.Integer({ minimum: 0 }),
+  health: Type.Object({ overallStatus: Type.String(), coverage: Type.Number(), dimensions: Type.Array(cockpitDimension) }, { additionalProperties: false }),
+}, { additionalProperties: false })) }, { $id: "shipglowz.v1.cockpit.response", additionalProperties: false });
+
 export interface RunnerAppDependencies {
   readonly authentication?: AuthenticationAdapter;
   readonly projectAccess?: ProjectAccessRepository;
   readonly auditStore?: Pick<OperationalStore, "createConversation" | "createRun" | "appendEvent" | "saveRuntimeSession" | "checkpointRun">;
-  readonly eventStore?: Pick<OperationalStore, "getConversation" | "listEvents">;
+  readonly eventStore?: Pick<OperationalStore, "getConversation" | "listEvents"> & Partial<Pick<OperationalStore, "listConversations">>;
+  readonly cockpitStore?: Pick<OperationalStore, "listCockpitProjects">;
+  readonly operatorWorkspaceCapability?: (input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }) => Promise<{ readonly available: boolean; readonly reason: string }>;
+  readonly operatorWorkspaceGateway?: OperatorWorkspaceGateway;
   readonly eventHub?: EventHub;
   readonly runAdmission?: RunAdmission;
   readonly fixExecutor?: FixCommandExecutor;
@@ -94,6 +108,7 @@ export function buildRunnerApp({
   dependencies?: RunnerAppDependencies;
 }) {
   const app = Fastify({ logger: false, bodyLimit: 16 * 1024 });
+  void app.register(websocket, { options: { maxPayload: 20 * 1024 } });
   app.setValidatorCompiler(TypeBoxValidatorCompiler);
   installErrorHandler(app);
   const authentication = dependencies.authentication ?? new DisabledAuthenticationAdapter();
@@ -113,6 +128,117 @@ export function buildRunnerApp({
         eve: config.runtimes.eve.enabled,
       },
     }),
+  );
+
+  app.get(
+    "/v1/cockpit",
+    {
+      preHandler: [authenticationGuard(authentication)],
+      schema: { response: { 200: cockpitResponse, 503: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }) } },
+    },
+    async (request, reply) => {
+      const actor = request.shipglowsActor;
+      const store = dependencies.cockpitStore;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      if (store === undefined) return reply.status(503).send({ error: { code: "cockpitUnavailable", message: "Cockpit projection is unavailable." } });
+      const projects = store.listCockpitProjects({ tenantId: actor.tenantId, userId: actor.userId });
+      const rank: Record<string, number> = { healthy: 1, warning: 2, stale: 3, critical: 4, unknown: 0 };
+      return {
+        generatedAt: new Date().toISOString(),
+        projects: projects.map((project: CockpitProjectRecord) => {
+          const dimensions = project.dimensions;
+          const overallStatus = dimensions.reduce((current, item) => (rank[item.status] ?? 0) > (rank[current] ?? 0) ? item.status : current, "unknown");
+          return {
+            id: project.id,
+            name: project.name,
+            repositoryFullName: project.repositoryFullName,
+            accessState: project.accessState,
+            conversationCount: project.conversationCount,
+            activeRunCount: project.activeRunCount,
+            health: { overallStatus, coverage: dimensions.filter((item) => item.status !== "unknown").length / 5, dimensions },
+          };
+        }),
+      };
+    },
+  );
+
+  app.get<{ Params: { projectId: string } }>(
+    "/v1/projects/:projectId/operator-workspace",
+    {
+      preHandler: [authenticationGuard(authentication), projectAuthorizationGuard(projectAccess, "read")],
+      schema: {
+        params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
+        response: {
+          200: Type.Object({ available: Type.Boolean(), reason: Type.String() }, { $id: "shipglowz.v1.operator-workspace.capability", additionalProperties: false }),
+          503: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }),
+        },
+      },
+    },
+    async (request, reply) => {
+      const actor = request.shipglowsActor;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      if (dependencies.operatorWorkspaceCapability === undefined) {
+        return reply.status(503).send({ error: { code: "operatorWorkspaceUnavailable", message: "The operator Workspace is not configured on this runner." } });
+      }
+      return dependencies.operatorWorkspaceCapability({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId });
+    },
+  );
+
+  app.post<{ Params: { projectId: string }; Headers: { "idempotency-key": string } }>(
+    "/v1/projects/:projectId/operator-sessions",
+    {
+      preHandler: [authenticationGuard(authentication), projectAuthorizationGuard(projectAccess, "read"), stateChangingOriginGuard(config.server.allowedOrigins)],
+      schema: {
+        params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
+        headers: Type.Object({ "idempotency-key": Type.String({ minLength: 8, maxLength: 128 }) }, { additionalProperties: true }),
+        response: {
+          201: Type.Object({ sessionId: Type.String(), token: Type.String(), projectId: Type.String(), expiresAt: Type.String() }, { additionalProperties: false }),
+          503: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }),
+        },
+      },
+    },
+    async (request, reply) => {
+      const actor = request.shipglowsActor;
+      const gateway = dependencies.operatorWorkspaceGateway;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      if (gateway === undefined) return reply.status(503).send({ error: { code: "operatorWorkspaceUnavailable", message: "The operator Workspace is not configured on this runner." } });
+      try {
+        const session = gateway.create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, idempotencyKey: request.headers["idempotency-key"] });
+        return await reply.status(201).send({ sessionId: session.id, token: session.token, projectId: session.projectId, expiresAt: session.expiresAt });
+      } catch (error) {
+        if (error instanceof OperatorWorkspaceError) return reply.status(503).send({ error: { code: error.code, message: error.message } });
+        throw error;
+      }
+    },
+  );
+
+  app.post<{ Params: { sessionId: string } }>(
+    "/v1/operator-sessions/:sessionId/close",
+    {
+      preHandler: [authenticationGuard(authentication), stateChangingOriginGuard(config.server.allowedOrigins)],
+      schema: {
+        params: Type.Object({ sessionId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
+        response: { 200: Type.Object({ state: Type.Literal("closed") }, { additionalProperties: false }), 404: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }) },
+      },
+    },
+    async (request, reply) => {
+      const actor = request.shipglowsActor;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      const closed = dependencies.operatorWorkspaceGateway?.closeOwned({ sessionId: request.params.sessionId, tenantId: actor.tenantId, userId: actor.userId }) ?? false;
+      return closed ? reply.send({ state: "closed" as const }) : reply.status(404).send({ error: { code: "operatorSessionNotFound", message: "The operator session is unavailable." } });
+    },
+  );
+
+  app.get<{ Params: { sessionId: string } }>(
+    "/v1/operator-sessions/:sessionId/stream",
+    { websocket: true, schema: { params: Type.Object({ sessionId: Type.String() }) } },
+    (socket, request) => {
+      const gateway = dependencies.operatorWorkspaceGateway;
+      if (gateway === undefined) return socket.close(1011, "Workspace unavailable.");
+      const protocol = request.headers["sec-websocket-protocol"];
+      const token = typeof protocol === "string" && protocol.startsWith("shipglows.workspace.") ? protocol.slice("shipglows.workspace.".length) : "";
+      gateway.attach(request.params.sessionId, token, socket);
+    },
   );
 
   app.get<{
@@ -178,6 +304,24 @@ export function buildRunnerApp({
       },
     },
     (request) => ({ projectId: request.params.projectId, access: "read" as const }),
+  );
+
+  app.get<{ Params: { projectId: string } }>(
+    "/v1/projects/:projectId/conversations",
+    {
+      preHandler: [authenticationGuard(authentication), projectAuthorizationGuard(projectAccess, "read")],
+      schema: {
+        params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
+        response: { 200: Type.Object({ conversations: Type.Array(Type.Object({ id: Type.String(), projectId: Type.String(), title: Type.String(), state: Type.String() }, { additionalProperties: false })) }, { additionalProperties: false }) },
+      },
+    },
+    async (request, reply) => {
+      const actor = request.shipglowsActor;
+      const store = dependencies.eventStore;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      if (store?.listConversations === undefined) return reply.status(503).send({ error: { code: "conversationsUnavailable", message: "Conversation history is unavailable." } });
+      return { conversations: store.listConversations({ tenantId: actor.tenantId, projectId: request.params.projectId }) };
+    },
   );
 
   app.post<{

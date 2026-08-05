@@ -1,8 +1,8 @@
 ---
 title: "sg-docs"
 slug: "sg-docs"
-tagline: "Create or repair documentation so the repo stays navigable for both humans and agents."
-summary: "A documentation skill for maintaining docs, metadata, and governance-layout compliance across project surfaces."
+tagline: "Maintain internal documentation so the repo stays navigable for humans and agents."
+summary: "An internal-documentation skill for architecture context, technical guides, metadata, and governance-layout compliance. Public documentation and editorial content belong to sg-content."
 category: "Operate & Ship"
 audience:
   - "Founders who want cleaner documentation without bloated prose"
@@ -11,7 +11,7 @@ problem: "Docs decay quickly when product changes, metadata rules, or governance
 outcome: "You get documentation that is closer to the current reality of the repo and easier to rely on during execution, including layout, metadata, and bug workflow docs that stay coherent with the tracker model."
 founder_angle: "This skill matters because stale docs create the same drag as stale code: wrong assumptions, weak handoffs, and repeated rediscovery."
 when_to_use:
-  - "When the repo needs a new README, guide, or audit of existing docs"
+  - "When internal architecture, contributor, operational, or agent documentation needs repair"
   - "When implementation changed user-facing behavior or contracts"
   - "When the documentation surface feels inconsistent or stale"
   - "When legacy ShipGlows files at the project root need to move into the canonical shipglows_data layout"
@@ -19,12 +19,12 @@ what_you_give:
   - "A target file, doc mode, or documentation goal"
   - "The current repo and decision-doc context"
 what_you_get:
-  - "Generated or updated documentation"
+  - "Generated or updated internal documentation"
   - "Governance-layout review when legacy root docs should move into shipglows_data"
   - "Metadata and technical-docs coherence when contracts change"
   - "A stronger documentation contract for future work"
   - "Better coherence between code and supporting docs"
-  - "Skill documentation and public skill-page coherence when skill contracts change"
+  - "Skill documentation coherence when internal contracts change"
 example_prompts:
   - "/sg-docs readme"
   - "/sg-docs audit"
@@ -36,7 +36,7 @@ limits:
   - "A local README refresh is not enough when the real issue is mixed governance layout or stale metadata contracts"
   - "Bug workflow docs should be checked for coherence across shipglows_data/workflow/TEST_LOG.md, shipglows_data/workflow/BUGS.md, dossier formats, and public skill pages"
   - "Docs audits should also verify skill-budget coherence with the ShipGlows skill budget audit script when skill docs change"
-  - "Skill-contract changes belong to the internal 900 core build workflow; sg-docs keeps the docs and public surfaces coherent"
+  - "Public documentation, landing pages, FAQ, articles, and external README content belong to sg-content"
 related_skills:
   - "sg-context"
   - "sg-spec"

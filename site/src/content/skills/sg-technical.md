@@ -1,8 +1,8 @@
 ---
-title: "sg-technical"
+title: "sg-engineering"
 slug: "sg-technical"
-tagline: "Use one explicit technical mode for code risk, dependencies, performance, GitHub hygiene, or a breaking migration."
-summary: "A unified technical entrypoint with five bounded modes and evidence limits that match the work."
+tagline: "Own architecture, code quality, performance, data boundaries, and platform reliability from one métier."
+summary: "A unified engineering entrypoint with bounded modes for architecture, code risk, dependencies, performance, migrations, GitHub hygiene, sync, access, and platform parity."
 category: "Audit & Improve"
 audience:
   - "Founders who need a trustworthy technical review without memorizing several commands"

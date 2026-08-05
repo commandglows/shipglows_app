@@ -16,12 +16,14 @@ import { RunAdmission } from "./runs/limits.js";
 import { ManagedFixCommandExecutor } from "./runs/fix.js";
 import { GitHubAppGitTransport, LocalWorkspaceManager, ProcessGitCommand } from "./workspaces/index.js";
 import { WorkspaceCleanupWorker } from "./workspaces/cleanup.js";
+import { OperatorWorkspaceGateway } from "./operator-workspace/index.js";
 
 const config = loadConfig();
 const databasePath = process.env["RUNNER_DB_PATH"] ?? resolve(config.cwd, ".shipglows-runner.sqlite");
 const store = await openOperationalStore(databasePath);
 const eventHub = new EventHub();
 const runAdmission = new RunAdmission();
+const operatorWorkspaceGateway = new OperatorWorkspaceGateway(config.operatorWorkspaces);
 const authentication = config.integrations.supabase.enabled
   ? (() => {
       const projectUrl = config.integrations.supabase.url;
@@ -70,8 +72,11 @@ const dependencies = {
   approvalStore: store,
   conversationStore: store,
   eventStore: store,
+  cockpitStore: store,
   idempotencyStore: store,
   eventHub,
+  operatorWorkspaceGateway,
+  operatorWorkspaceCapability: ({ projectId }: { projectId: string }) => Promise.resolve(operatorWorkspaceGateway.capability(projectId)),
   runAdmission,
   ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime.executor }),
   ...(authentication === undefined ? {} : { authentication }),
@@ -82,5 +87,6 @@ resolvedFixRuntime?.cleanupWorker.start();
 app.addHook("onClose", () => {
   resolvedFixRuntime?.cleanupWorker.stop();
   store.close();
+  operatorWorkspaceGateway.shutdown();
 });
 await app.listen({ host: config.server.host, port: config.server.port });

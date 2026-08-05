@@ -28,6 +28,7 @@ describe("runner configuration", () => {
       githubEnabled: false,
       codexEnabled: false,
       eveEnabled: false,
+      operatorWorkspaceCount: 0,
     });
   });
 
@@ -49,6 +50,12 @@ describe("runner configuration", () => {
     });
 
     assert.deepEqual(config.server.allowedOrigins, ["https://cockpit.example.com"]);
+  });
+
+  it("accepts only absolute server-owned operator Workspace mappings", () => {
+    const config = loadConfig({ RUNNER_OPERATOR_WORKSPACES: '{"project":{"cwd":"/srv/project","tmuxSession":"shipglows-project"}}' });
+    assert.deepEqual(config.operatorWorkspaces, { project: { cwd: "/srv/project", tmuxSession: "shipglows-project" } });
+    assert.throws(() => loadConfig({ RUNNER_OPERATOR_WORKSPACES: '{"project":{"cwd":"../escape","tmuxSession":"bad name"}}' }), /RUNNER_OPERATOR_WORKSPACES/);
   });
 
   it("requires a Supabase URL only when the Supabase adapter is explicitly enabled", () => {

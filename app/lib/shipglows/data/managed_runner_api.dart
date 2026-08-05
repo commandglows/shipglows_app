@@ -2,6 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+import 'cockpit/cockpit_dto_mapper.dart';
+import 'cockpit/cockpit_models.dart';
 
 class ManagedRunnerException implements Exception {
   const ManagedRunnerException({
@@ -44,6 +48,87 @@ class ManagedConversationResult {
       runId: json['runId'] is String ? json['runId'] as String : null,
     );
   }
+}
+
+class ManagedConversationSummary {
+  const ManagedConversationSummary({
+    required this.conversationId,
+    required this.projectId,
+    required this.title,
+    required this.state,
+  });
+
+  final String conversationId;
+  final String projectId;
+  final String title;
+  final String state;
+
+  factory ManagedConversationSummary.fromJson(Map<String, dynamic> json) {
+    final conversationId = json['id'];
+    final projectId = json['projectId'];
+    final title = json['title'];
+    final state = json['state'];
+    if (conversationId is! String ||
+        projectId is! String ||
+        title is! String ||
+        state is! String) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'The managed runner returned an invalid conversation summary.',
+      );
+    }
+    return ManagedConversationSummary(
+      conversationId: conversationId,
+      projectId: projectId,
+      title: title,
+      state: state,
+    );
+  }
+}
+
+class ManagedWorkspaceCapability {
+  const ManagedWorkspaceCapability({
+    required this.available,
+    required this.reason,
+  });
+
+  final bool available;
+  final String reason;
+
+  factory ManagedWorkspaceCapability.fromJson(Map<String, dynamic> json) {
+    final available = json['available'];
+    final reason = json['reason'];
+    if (available is! bool || reason is! String) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'The managed runner returned an invalid Workspace capability.',
+      );
+    }
+    return ManagedWorkspaceCapability(available: available, reason: reason);
+  }
+}
+
+class ManagedOperatorSession {
+  const ManagedOperatorSession({required this.sessionId, required this.token, required this.expiresAt});
+  final String sessionId;
+  final String token;
+  final DateTime expiresAt;
+
+  factory ManagedOperatorSession.fromJson(Map<String, dynamic> json) {
+    final sessionId = json['sessionId'];
+    final token = json['token'];
+    final expiresAt = DateTime.tryParse(json['expiresAt']?.toString() ?? '');
+    if (sessionId is! String || token is! String || expiresAt == null) {
+      throw const ManagedRunnerException(code: 'invalidResponse', message: 'The managed runner returned an invalid operator session.');
+    }
+    return ManagedOperatorSession(sessionId: sessionId, token: token, expiresAt: expiresAt);
+  }
+}
+
+abstract interface class ManagedWorkspaceTransport {
+  Future<ManagedOperatorSession> createOperatorSession({required String projectId, required String idempotencyKey});
+  WebSocketChannel connectOperatorSession(ManagedOperatorSession session);
+  Future<void> closeOperatorSession({required String sessionId});
 }
 
 class ManagedApprovalResult {
@@ -201,6 +286,12 @@ class ManagedRunnerSseParser {
 }
 
 abstract interface class ManagedRunnerClient {
+  Future<ManagedWorkspaceCapability> workspaceCapability({
+    required String projectId,
+  });
+
+  Future<CockpitSnapshot> loadCockpit();
+
   Future<ManagedProjectIdentityResult> resolveProjectIdentity({
     required String sourceSystem,
     required String sourceProjectId,
@@ -210,6 +301,10 @@ abstract interface class ManagedRunnerClient {
     required String projectId,
     required String title,
     required String idempotencyKey,
+  });
+
+  Future<List<ManagedConversationSummary>> listConversations({
+    required String projectId,
   });
 
   Future<ManagedConversationResult> sendMessage({
@@ -246,7 +341,7 @@ abstract interface class ManagedRunnerClient {
   });
 }
 
-class ManagedRunnerApi implements ManagedRunnerClient {
+class ManagedRunnerApi implements ManagedRunnerClient, ManagedWorkspaceTransport {
   ManagedRunnerApi({
     required String baseUrl,
     this.accessTokenProvider,
@@ -262,6 +357,76 @@ class ManagedRunnerApi implements ManagedRunnerClient {
 
   final Dio _dio;
   final Future<String?> Function()? accessTokenProvider;
+
+  @override
+  Future<ManagedOperatorSession> createOperatorSession({required String projectId, required String idempotencyKey}) async {
+    try {
+      final response = await _dio.post<dynamic>('/v1/projects/$projectId/operator-sessions', options: Options(headers: {...await _headers(), 'Idempotency-Key': idempotencyKey}));
+      if (response.data is! Map) throw const ManagedRunnerException(code: 'invalidResponse', message: 'The managed runner returned an invalid operator session.');
+      return ManagedOperatorSession.fromJson(Map<String, dynamic>.from(response.data as Map));
+    } on DioException catch (error) { throw _mapError(error); }
+  }
+
+  @override
+  WebSocketChannel connectOperatorSession(ManagedOperatorSession session) {
+    final base = Uri.parse(_dio.options.baseUrl);
+    final scheme = base.scheme == 'https' ? 'wss' : 'ws';
+    final uri = base.replace(scheme: scheme, path: '/v1/operator-sessions/${session.sessionId}/stream', query: null);
+    return WebSocketChannel.connect(uri, protocols: ['shipglows.workspace.${session.token}']);
+  }
+
+  @override
+  Future<void> closeOperatorSession({required String sessionId}) async {
+    try {
+      await _dio.post<dynamic>('/v1/operator-sessions/$sessionId/close', options: Options(headers: await _headers()));
+    } on DioException catch (error) { throw _mapError(error); }
+  }
+
+  @override
+  Future<ManagedWorkspaceCapability> workspaceCapability({
+    required String projectId,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/projects/$projectId/operator-workspace',
+        options: Options(headers: await _headers()),
+      );
+      if (response.data is! Map) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message:
+              'The managed runner returned an invalid Workspace capability.',
+        );
+      }
+      return ManagedWorkspaceCapability.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<CockpitSnapshot> loadCockpit() async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/cockpit',
+        options: Options(headers: await _headers()),
+      );
+      if (response.data is! Map) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid Cockpit projection.',
+        );
+      }
+      return const CockpitDtoMapper().snapshotFromJson(
+        // The mapper validates every project and aggregate before exposure.
+        response.data as Map<String, Object?>,
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
 
   @override
   Future<ManagedProjectIdentityResult> resolveProjectIdentity({
@@ -287,6 +452,36 @@ class ManagedRunnerApi implements ManagedRunnerClient {
       return ManagedProjectIdentityResult.fromJson(
         Map<String, dynamic>.from(data),
       );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<List<ManagedConversationSummary>> listConversations({
+    required String projectId,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/projects/$projectId/conversations',
+        options: Options(headers: await _headers()),
+      );
+      final data = response.data;
+      final conversations = data is Map ? data['conversations'] : null;
+      if (conversations is! List) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid conversation list.',
+        );
+      }
+      return conversations
+          .whereType<Map>()
+          .map(
+            (item) => ManagedConversationSummary.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList(growable: false);
     } on DioException catch (error) {
       throw _mapError(error);
     }

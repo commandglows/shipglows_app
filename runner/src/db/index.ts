@@ -93,6 +93,26 @@ export interface PersistedHealthEvidence {
   readonly observedAt: string;
 }
 
+export interface CockpitDimensionRecord {
+  readonly dimension: HealthDimension;
+  readonly status: HealthStatus;
+  readonly summary: SafePayload;
+  readonly producer: string;
+  readonly evidenceCount: number;
+  readonly sourceCommit: string | null;
+  readonly checkedAt: string | null;
+}
+
+export interface CockpitProjectRecord {
+  readonly id: string;
+  readonly name: string;
+  readonly repositoryFullName: string;
+  readonly accessState: "available" | "unavailable";
+  readonly dimensions: readonly CockpitDimensionRecord[];
+  readonly conversationCount: number;
+  readonly activeRunCount: number;
+}
+
 export interface PersistedRunUsage {
   readonly tenantId: string;
   readonly runId: string;
@@ -218,6 +238,11 @@ export interface OperationalStore {
     readonly tenantId: string;
     readonly conversationId: string;
   }): { readonly id: string; readonly projectId: string; readonly title: string; readonly state: string } | undefined;
+  listCockpitProjects(input: { readonly tenantId: string; readonly userId: string }): readonly CockpitProjectRecord[];
+  listConversations(input: {
+    readonly tenantId: string;
+    readonly projectId: string;
+  }): readonly { readonly id: string; readonly projectId: string; readonly title: string; readonly state: string }[];
   appendEvent(input: Omit<PersistedEvent, "cursor" | "occurredAt">): PersistedEvent;
   listEvents(input: {
     readonly tenantId: string;
@@ -1153,6 +1178,43 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         capability,
         tenantId,
       ) !== undefined,
+    listCockpitProjects: ({ tenantId, userId }) => {
+      const projectRows = allRows(
+        db,
+        `SELECT DISTINCT p.id, COALESCE(g.full_name, p.id) AS repositoryFullName
+         FROM projects p JOIN memberships m ON m.project_id = p.id AND m.tenant_id = p.tenant_id
+         LEFT JOIN github_repository_bindings g ON g.project_id = p.id
+         WHERE p.tenant_id = ? AND m.user_id = ? AND m.capability IN ('read', 'mutate')
+         ORDER BY p.id`,
+        tenantId,
+        userId,
+      );
+      const dimensions: readonly HealthDimension[] = ["tech", "content", "seo", "performance", "security"];
+      return projectRows.map((project) => {
+        const projectId = readString(project, "id");
+        const evidenceRows = allRows(
+          db,
+          `SELECT dimension, status, summary, source_commit AS sourceCommit, observed_at AS observedAt
+           FROM health_evidence WHERE tenant_id = ? AND project_id = ?
+           ORDER BY observed_at DESC`,
+          tenantId,
+          projectId,
+        );
+        const latest = new Map<string, Record<string, unknown>>();
+        for (const row of evidenceRows) {
+          const dimension = readString(row, "dimension");
+          if (!latest.has(dimension)) latest.set(dimension, row);
+        }
+        const projectDimensions = dimensions.map((dimension) => {
+          const row = latest.get(dimension);
+          if (row === undefined) return { dimension, status: "unknown" as const, summary: { text: "No evidence reported." }, producer: "none", evidenceCount: 0, sourceCommit: null, checkedAt: null };
+          return { dimension, status: readString(row, "status") as HealthStatus, summary: parsePayload(readString(row, "summary")), producer: "shipglows-runner", evidenceCount: 1, sourceCommit: readString(row, "sourceCommit"), checkedAt: readString(row, "observedAt") };
+        });
+        const conversationCount = readNumber(oneRow(db, "SELECT COUNT(*) AS count FROM conversations WHERE tenant_id = ? AND project_id = ?", tenantId, projectId) ?? { count: 0 }, "count");
+        const activeRunCount = readNumber(oneRow(db, "SELECT COUNT(*) AS count FROM runs WHERE tenant_id = ? AND project_id = ? AND state IN ('queued', 'running')", tenantId, projectId) ?? { count: 0 }, "count");
+        return { id: projectId, name: readString(project, "repositoryFullName"), repositoryFullName: readString(project, "repositoryFullName"), accessState: "available" as const, dimensions: projectDimensions, conversationCount, activeRunCount };
+      });
+    },
     getConversation: ({ tenantId, conversationId }) => {
       const row = oneRow(
         db,
@@ -1168,6 +1230,17 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         state: readString(row, "state"),
       };
     },
+    listConversations: ({ tenantId, projectId }) => allRows(
+      db,
+      "SELECT id, project_id AS projectId, title, state FROM conversations WHERE tenant_id = ? AND project_id = ? ORDER BY rowid ASC",
+      tenantId,
+      projectId,
+    ).map((row) => ({
+      id: readString(row, "id"),
+      projectId: readString(row, "projectId"),
+      title: readString(row, "title"),
+      state: readString(row, "state"),
+    })),
     appendEvent: ({ id, tenantId, conversationId, type, payload }) => {
       assertSecretSafe(payload);
       const occurredAt = new Date().toISOString();

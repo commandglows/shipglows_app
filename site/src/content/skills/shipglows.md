@@ -30,6 +30,7 @@ example_prompts:
   - "shipglows explain which docs govern skill runtime"
   - "shipglows fix the checkout bug"
   - "shipglows prepare this change for deploy proof"
+  - "shipglows core improve the skill routing doctrine"
 argument_modes:
   - argument: "<instruction>"
     effect: "Classifies the request and either answers directly, executes a deterministic micro-edit directly, or hands the main thread to the selected ShipGlows skill."
@@ -40,14 +41,14 @@ limits:
   - "It asks a numbered question with the reason and recommended route instead of guessing when routing is ambiguous"
   - "It does not run master skills inside hidden subagents"
 related_skills:
-  - "sg-build"
-  - "sg-maintain"
+  - "sg-development"
+  - "sg-maintenance"
   - "sg-bug"
-  - "sg-deploy"
+  - "sg-release"
   - "sg-content"
   - "sg-design"
-  - "sg-customer"
-  - "sg-audit"
+  - "sg-experience"
+  - "sg-engineering"
 featured: true
 order: 5
 ---
@@ -81,6 +82,15 @@ shipglows %Ariane update the internal docs and external surfaces #Adhesion
 
 That means: keep Ariane's planning posture active, keep adhesion concerns
 visible, and let ShipGlows still route the work to the right owner skill.
+
+## Codex Expert Shortcuts
+
+Short forms such as `shipglows build`, `shipglows fix`, and
+`shipglows deploy` resolve through `sg-development build`, `sg-bug fix`, and
+`sg-release deploy` before selecting an internal engine. They are convenience
+routes, not a second skill hierarchy. `verify` preserves an explicit
+specialist owner; `core` is the sole hard context switch to ShipGlows-system
+maintenance.
 
 ## Install Path
 

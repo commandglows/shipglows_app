@@ -6,6 +6,7 @@ import type { ActorContext, AuthenticationAdapter } from "../../src/auth/index.j
 import { loadConfig } from "../../src/config.js";
 import type { AgentRuntime, OpaqueId } from "../../src/contracts/index.js";
 import type { ProjectAccessRepository } from "../../src/projects/projectAccess.js";
+import { OperatorWorkspaceGateway, type OperatorPty } from "../../src/operator-workspace/index.js";
 
 const actor: ActorContext = {
   tenantId: "ten_000000000001",
@@ -75,6 +76,68 @@ describe("runner API foundation", () => {
 
     assert.equal(response.statusCode, 401);
     assert.equal(response.json().error.code, "unauthorized");
+  });
+
+  it("keeps the operator Workspace capability tenant-scoped and unavailable by default", async () => {
+    const authentication: AuthenticationAdapter = { authenticate: async () => actor };
+    const projectAccess: ProjectAccessRepository = { hasProjectAccess: () => true };
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: { authentication, projectAccess },
+    });
+
+    const unavailable = await app.inject({
+      method: "GET",
+      url: "/v1/projects/prj_000000000001/operator-workspace",
+    });
+    await app.close();
+
+    assert.equal(unavailable.statusCode, 503);
+    assert.equal(unavailable.json().error.code, "operatorWorkspaceUnavailable");
+
+    const forbiddenApp = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication,
+        projectAccess: { hasProjectAccess: () => false },
+        operatorWorkspaceCapability: async () => ({ available: true, reason: "ready" }),
+      },
+    });
+    const forbidden = await forbiddenApp.inject({
+      method: "GET",
+      url: "/v1/projects/prj_000000000001/operator-workspace",
+    });
+    await forbiddenApp.close();
+
+    assert.equal(forbidden.statusCode, 403);
+    assert.equal(forbidden.json().error.code, "projectForbidden");
+  });
+
+  it("creates and closes an opaque operator session through authenticated routes", async () => {
+    const pty: OperatorPty = {
+      write: () => undefined,
+      resize: () => undefined,
+      kill: () => undefined,
+      onData: () => ({ dispose: () => undefined }),
+      onExit: () => ({ dispose: () => undefined }),
+    };
+    const gateway = new OperatorWorkspaceGateway({ prj_000000000001: { cwd: "/srv/private/project", tmuxSession: "shipglows-project" } }, () => pty);
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication: { authenticate: async () => actor },
+        projectAccess: { hasProjectAccess: () => true },
+        operatorWorkspaceGateway: gateway,
+      },
+    });
+    const created = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-1" } });
+    assert.equal(created.statusCode, 201);
+    assert.doesNotMatch(created.body, /srv|tmux|shipglows-project/);
+    const body = created.json();
+    const closed = await app.inject({ method: "POST", url: `/v1/operator-sessions/${body.sessionId}/close` });
+    await app.close();
+    assert.equal(closed.statusCode, 200);
+    assert.equal(closed.json().state, "closed");
   });
 
   it("resolves a canonical project identity only through the tenant-scoped server directory", async () => {

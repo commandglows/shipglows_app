@@ -1,11 +1,11 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "0.2.0"
+artifact_version: "0.3.0"
 draft: true
 project: shipglows_app
 created: "2026-04-26"
-updated: "2026-05-08"
+updated: "2026-08-03"
 status: draft
 source_skill: sf-docs
 scope: technical
@@ -21,15 +21,15 @@ evidence:
   - "shipglows_data/technical/legacy-contentflow-inventory.md"
 depends_on:
   - "CLAUDE.md@0.2.0"
-  - "shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md@0.1.0"
+  - "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md@1.4.0"
 supersedes:
   - "AGENT.md@1.1.0 contentflow_app guidance"
 linked_systems:
   - "Flutter"
   - "ShipGlows Markdown sources"
   - "Legacy ContentFlow runtime"
-next_review: "2026-06-08"
-next_step: "/sf-docs update"
+next_review: "2026-09-03"
+next_step: "Continue the managed Cockpit MVP without importing legacy ContentFlow assumptions."
 ---
 
 # AGENT - shipglows_app
@@ -42,8 +42,8 @@ Keep this repository aligned with ShipGlows as the active product while preservi
 
 - ShipGlows is the default runtime.
 - `APP_TARGET=legacy` and `APP_TARGET=contentflow` are temporary audit targets.
-- Markdown and repository files are the authoritative data source.
-- Future databases are projections or sync layers unless a later reviewed spec says otherwise.
+- GitHub repositories and ShipGlows Markdown are the authoritative content sources.
+- The runner SQLite database is an operational projection, not repository authority.
 - Legacy auth, FastAPI, OpenRouter, feedback, and pipeline code are reference material until a dedicated ShipGlows spec adopts them.
 
 ## Required Architecture Conventions
@@ -53,7 +53,7 @@ Keep this repository aligned with ShipGlows as the active product while preservi
    - `lib/data/shipglows_sources/**`
    - `lib/domain/project_health/**`
    - the existing read-only terminal TUI belongs in `/home/claude/shipglowz/tui`
-   - the future authenticated Flutter operator workspace (terminal/tmux/Neovim) belongs in this repo's `app/` and `runner/`, behind a dedicated high-risk spec and capability boundary
+   - the authenticated Flutter operator Workspace belongs in `app/` and `runner/`; its short-lived PTY/tmux stream is implemented, server-smoke proven, and remains fail-closed unless the runner allowlists and authorizes the project
 
 2. Legacy reuse requires classification:
    - Check `shipglows_data/technical/legacy-contentflow-inventory.md`.
@@ -88,7 +88,7 @@ rg -n "ContentFlow|contentflow|contentflow_app" README.md CLAUDE.md AGENT.md shi
 - `shipglows_data/technical/runtime-boundary.md`: active versus legacy runtime.
 - `shipglows_data/technical/markdown-source-of-truth.md`: data authority contract.
 - `shipglows_data/technical/legacy-contentflow-inventory.md`: legacy classification.
-- `shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md`: active chantier.
+- `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md`: active managed Cockpit chantier.
 
 ## Collaboration Guidance
 

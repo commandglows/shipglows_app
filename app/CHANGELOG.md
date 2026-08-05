@@ -7,18 +7,25 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Added the separately authorized operator Workspace: short-lived project/actor capabilities, server-owned allowlisted tmux PTY, dedicated WebSocket streaming, Flutter `xterm` rendering, bounded input/resize, owner-only closure, and a real isolated PTY/tmux/Codex smoke harness.
 - Added pure Dart GitHub managed clone/indexer contracts, local fake runner, allowlisted ShipGlows Markdown artifact indexing policy, repository interface, documentation, and tests.
 - Added the traffic-first operational record web-reader contract and shared parser fixture for future Markdown-backed web projections.
 - Added the dashboard read-only projection contract, in-memory projection repository, and tests for user-scoped refs, access-lost visibility, filtering, sorting, account switching, and forbidden-field rejection.
 - Added the local-contract-first ShipGlows product entitlement gate with bootstrap snapshot parsing, access-state stages, route/entry states, support docs, verification checklist, and tests.
 
 ### Changed
+- Activated one server-owned ShipGlows Workspace allowlist on the supervised loopback runner while preserving Supabase authentication; public browser delivery still awaits the root-managed HTTPS route and actor/project provisioning.
+- Moved the project governance corpus to the monorepo root, replaced legacy ContentFlow owner documents with current ShipGlows contracts, and archived ten historical ContentFlow specs outside the active chantier registry.
 - Updated task tracking to reflect the active Firebase/GitHub/Firestore projection foundation instead of the retired Supabase migration path.
 - Migrated active operational tracker/spec summaries toward canonical traffic-first records, with zero-unmapped write gates and parser/TUI validation evidence.
 - Readied the foundational auth/GitHub access, project onboarding, Markdown artifact governance, and dashboard read-only projection specs for the next implementation slice.
 
 ### Security
+- Kept Workspace capabilities out of WebSocket URLs and kept host paths, tmux identifiers, SSH credentials, PTY handles, and terminal transcripts outside Flutter persistence and routine diagnostics.
 - Separated product entitlement from identity, GitHub access, open access, and cached bootstrap state so protected workspace data fails closed without a trusted `shipglows_app` entitlement snapshot.
+
+### Verified
+- Passed runner typecheck/lint, 82 runner tests, npm high-severity audit, 30 ShipGlows Flutter tests, Flutter analysis, governance topology, metadata lint, and the real managed-server operator Workspace smoke.
 
 ## [2026-05-11]
 
@@ -113,7 +120,7 @@ The format is based on Keep a Changelog.
 - Added a persisted app theme preference with `light`, `dark`, and `system` modes, plus Flutter tests covering theme normalization and app-level theme restoration.
 - Added a shared editorial theme palette and semantic color tokens so surfaces, accents, and status tones can be reused consistently across the Flutter shell.
 - Added queue-aware offline sync badges on supported list surfaces so projects, personas, affiliations, content cards, and drip plans can show `Pending sync` or `Sync failed`.
-- Added the offline sync V2 reference spec in `shipglows_data/workflow/specs/SPEC-offline-sync-v2.md` and aligned project documentation with the current degraded-mode behavior.
+- Added the offline sync V2 reference spec in `shipglows_data/workflow/archives/contentflow-specs/SPEC-offline-sync-v2.md` and aligned project documentation with the current degraded-mode behavior.
 - Added a multi-project management flow with a dedicated `Projects` screen, a global current-project switcher, and backend-aligned project selection persistence.
 - Added Drip plan scheduling window fields (`publish_time_start`, `publish_time_end`) so plans can configure random publish slots instead of one fixed time.
 
@@ -232,7 +239,7 @@ The format is based on Keep a Changelog.
 - **ContentType.short** in Flutter enum with parser, serializer, icon, and theme color.
 - **Format-specific metadata** in Flutter: content cards and editor show SEO keyword, platform, duration, hashtags, narrative thread depending on content type.
 - **Settings: Content Frequency section** with sliders for each format.
-- Spec document: `shipglows_data/workflow/specs/SPEC-content-pipeline-unification.md`.
+- Spec document: `shipglows_data/workflow/archives/contentflow-specs/SPEC-content-pipeline-unification.md`.
 - Flutter repo initialized and pushed to GitHub (`dianedef/ContentFlow-app`).
 
 ### Changed
