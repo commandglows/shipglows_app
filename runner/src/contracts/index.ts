@@ -51,10 +51,68 @@ export interface AgentRuntime {
   ): Promise<void>;
 }
 
+export const EXECUTION_CAPABILITIES = ["readOnly", "isolatedWorkspace", "operatorWorkspace"] as const;
+export type ExecutionCapability = (typeof EXECUTION_CAPABILITIES)[number];
+export type ExecutionIntentTrigger = "manual";
+export type ExecutionOutcome =
+  | { readonly state: "completed"; readonly executionId: OpaqueId }
+  | { readonly state: "failed"; readonly executionId: OpaqueId; readonly code: string }
+  | { readonly state: "delegated"; readonly executionId: OpaqueId };
+
+/** Server-resolved, persistence-safe execution admission input. Never add prompts, paths, or secrets. */
+export interface ResolvedExecutionEnvelope {
+  readonly executionId: OpaqueId;
+  readonly runId: OpaqueId;
+  readonly tenantId: OpaqueId;
+  readonly projectId: OpaqueId;
+  readonly conversationId: OpaqueId;
+  readonly taskKind: "audit" | "fix" | "conversation";
+  readonly trigger: ExecutionIntentTrigger;
+  readonly runtimeId: string;
+  readonly providerId: string;
+  readonly requiredCapabilities: readonly ExecutionCapability[];
+  readonly resourceBudget: Readonly<{ maxDurationMs: number }>;
+  readonly deadlineAt: string;
+}
+
 export interface ExecutionProvider {
   readonly id: string;
   readonly kind: "disposable" | "persistent";
-  readonly capabilities: ReadonlySet<"readOnly" | "isolatedWorkspace" | "operatorWorkspace">;
+  readonly capabilities: ReadonlySet<ExecutionCapability>;
+  preflight(input: ResolvedExecutionEnvelope): Promise<void>;
+  cancel(input: { readonly executionId: OpaqueId; readonly runId: OpaqueId }): Promise<void>;
+}
+
+export class ExecutionProviderError extends Error {
+  constructor(
+    readonly code: "executionProviderUnavailable" | "executionCapabilityUnavailable" | "manualTriggerRequired",
+    readonly providerId: string,
+    readonly missing: readonly ExecutionCapability[] = [],
+  ) {
+    super(code === "manualTriggerRequired" ? "Execution must be manually triggered." : `Execution provider ${providerId} is unavailable.`);
+    this.name = "ExecutionProviderError";
+  }
+}
+
+export class ExecutionProviderRegistry {
+  readonly #providers: ReadonlyMap<string, ExecutionProvider>;
+
+  constructor(providers: readonly ExecutionProvider[]) {
+    const entries = new Map<string, ExecutionProvider>();
+    for (const provider of providers) {
+      if (entries.has(provider.id)) throw new Error(`Duplicate execution provider id: ${provider.id}`);
+      entries.set(provider.id, provider);
+    }
+    this.#providers = entries;
+  }
+
+  select(providerId: string, required: readonly ExecutionCapability[]): ExecutionProvider {
+    const provider = this.#providers.get(providerId);
+    if (provider === undefined) throw new ExecutionProviderError("executionProviderUnavailable", providerId);
+    const missing = required.filter((capability) => !provider.capabilities.has(capability));
+    if (missing.length > 0) throw new ExecutionProviderError("executionCapabilityUnavailable", providerId, missing);
+    return provider;
+  }
 }
 
 export interface CapabilityBroker {

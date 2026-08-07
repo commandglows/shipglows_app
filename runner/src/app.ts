@@ -20,6 +20,7 @@ import type { RunAdmission } from "./runs/limits.js";
 import { FixUnavailableError, type FixCommandExecutor } from "./runs/fix.js";
 import { ApprovalCommandError, ApprovalCommandService } from "./runs/approval.js";
 import { ConversationCommandError, ConversationCommandService } from "./runs/conversation.js";
+import type { ExecutionAdmissionService } from "./runs/execution.js";
 import {
   projectAuthorizationGuard,
   type ProjectAccessRepository,
@@ -72,6 +73,7 @@ export interface RunnerAppDependencies {
   readonly approvalStore?: Pick<OperationalStore, "getApproval" | "getRun" | "getRuntimeSession" | "resolveApproval" | "appendEvent">;
   readonly conversationStore?: Pick<OperationalStore, "createConversation" | "getConversation" | "createRun" | "getRun" | "getLatestRun" | "saveRuntimeSession" | "getRuntimeSession" | "checkpointRun" | "appendEvent">;
   readonly agentRuntime?: AgentRuntime;
+  readonly executionAdmission?: ExecutionAdmissionService;
 }
 
 function eventFrame(event: PersistedEvent): string {
@@ -352,7 +354,7 @@ export function buildRunnerApp({
       try {
         const outcome = await idempotencyStore.executeIdempotentAsync({ tenantId: actor.tenantId, actorUserId: actor.userId, scope: `conversation:create:${request.params.projectId}`, key: request.headers["idempotency-key"] }, async () => ({
           statusCode: 201,
-          body: (await new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission).create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, title: request.body.title })) as unknown as SafePayload,
+          body: (await new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission).create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, title: request.body.title })) as unknown as SafePayload,
         }));
         return await reply.status(outcome.response.statusCode).send(outcome.response.body);
       } catch (error: unknown) {
@@ -377,7 +379,7 @@ export function buildRunnerApp({
     if (idempotencyStore === undefined) return reply.status(503).send({ error: { code: "idempotencyUnavailable", message: "Durable command replay is unavailable." } });
     try {
       const outcome = await idempotencyStore.executeIdempotentAsync({ tenantId: actor.tenantId, actorUserId: actor.userId, scope: `conversation:${action}:${request.params.conversationId}`, key: request.headers["idempotency-key"] }, async () => {
-        const service = new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission);
+        const service = new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission);
         const result = action === "message"
           ? await service.message({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, conversationId: request.params.conversationId, text: request.body.text ?? "" })
           : action === "interrupt"
@@ -481,6 +483,7 @@ export function buildRunnerApp({
             dependencies.eventHub,
             config.limits,
             dependencies.runAdmission,
+            dependencies.executionAdmission,
           ).start({
             tenantId: actor.tenantId,
             userId: actor.userId,

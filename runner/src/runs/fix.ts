@@ -6,6 +6,7 @@ import type { GitRepositoryTransport, LocalWorkspaceManager } from "../workspace
 import { RunLimitError } from "./limits.js";
 import type { RunAdmission } from "./limits.js";
 import { randomUUID } from "node:crypto";
+import type { ExecutionAdmissionService } from "./execution.js";
 
 export interface FixCommandInput {
   readonly issueId: string;
@@ -69,6 +70,7 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
     private readonly eventHub: EventHub | undefined,
     private readonly limits: { readonly maxConcurrentRunsPerTenant: number; readonly maxRunDurationMs: number },
     private readonly admission: RunAdmission,
+    private readonly execution?: ExecutionAdmissionService,
   ) {}
 
   #appendEvent(input: Omit<PersistedEvent, "cursor" | "occurredAt">): void {
@@ -81,6 +83,7 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
     if (input.timeout !== undefined) clearTimeout(input.timeout);
     try {
       this.store.checkpointRun({ tenantId: input.tenantId, runId: input.runId, state, checkpoint });
+      this.execution?.finish({ tenantId: input.tenantId, runId: input.runId, state, ...(state === "failed" ? { failureCode: String(checkpoint["code"] ?? "runtimeFailed") } : {}) });
       this.store.scheduleWorkspaceCleanup({
         tenantId: input.tenantId,
         runId: input.runId,
@@ -136,10 +139,13 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
     const release = () => this.admission.release(input.tenantId);
     const conversationId = id("cnv");
     const runId = id("run");
+    let executionAdmitted = false;
     try {
       this.store.createConversation({ id: conversationId, tenantId: input.tenantId, projectId: input.projectId, createdBy: input.userId, title: `Fix: ${input.issueId}` });
       this.store.createRun({ id: runId, tenantId: input.tenantId, projectId: input.projectId, conversationId, runtimeId: this.runtime.id, executionProviderId: "managed-disposable", taskKind: "fix" });
       this.#appendEvent({ id: id("evt"), tenantId: input.tenantId, conversationId, type: "run.queued", payload: { runId, taskKind: "fix", issueId: input.issueId } });
+      await this.execution?.admit({ runId, tenantId: input.tenantId, projectId: input.projectId, conversationId, taskKind: "fix", runtimeId: this.runtime.id, providerId: "managed-disposable", requiredCapabilities: ["isolatedWorkspace"] });
+      executionAdmitted = this.execution !== undefined;
       const workspace = await this.workspaces.createFixWorktree({ projectId: input.projectId, conversationId, binding, transport: this.transport });
       const session = await this.runtime.createSession({ conversationId: opaque(conversationId), workspaceRoot: workspace.root });
       this.store.saveRuntimeSession({ id: id("ses"), tenantId: input.tenantId, conversationId, runtimeId: this.runtime.id, runtimeSessionId: String(session.runtimeSessionId), state: session.state });
@@ -157,6 +163,7 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
       } catch {
         // Preserve the original safe failure surface even if projection recovery also fails.
       }
+      if (executionAdmitted) this.execution?.finish({ tenantId: input.tenantId, runId, state: "failed", failureCode: "fixExecutorUnavailable" });
       release();
       if (error instanceof RunLimitError) throw error;
       throw new FixUnavailableError();

@@ -1,6 +1,6 @@
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
-import { assertSecretSafe, type SafePayload } from "../contracts/index.js";
+import { assertSecretSafe, type ResolvedExecutionEnvelope, type SafePayload } from "../contracts/index.js";
 import type { GitHubRepositoryBinding } from "../github/index.js";
 
 export class MigrationPolicyError extends Error {}
@@ -44,6 +44,23 @@ export interface PersistedRun {
   readonly checkpoint: SafePayload;
   readonly createdAt: string;
   readonly updatedAt: string;
+}
+
+export interface PersistedExecution {
+  readonly executionId: string;
+  readonly tenantId: string;
+  readonly runId: string;
+  readonly projectId: string;
+  readonly conversationId: string;
+  readonly taskKind: RunTaskKind;
+  readonly trigger: "manual";
+  readonly runtimeId: string;
+  readonly providerId: string;
+  readonly requiredCapabilities: readonly string[];
+  readonly maxDurationMs: number;
+  readonly deadlineAt: string;
+  readonly state: "pendingPreflight" | "preflightPassed" | "completed" | "interrupted" | "failed";
+  readonly failureCode: string | null;
 }
 
 export interface WorkspaceCleanupRecord {
@@ -165,6 +182,10 @@ export interface OperationalStore {
     readonly executionProviderId: string;
     readonly taskKind: RunTaskKind;
   }): PersistedRun;
+  createExecution(input: ResolvedExecutionEnvelope): void;
+  getExecution(input: { readonly tenantId: string; readonly executionId: string }): PersistedExecution | undefined;
+  markExecution(input: { readonly tenantId: string; readonly executionId: string; readonly state: "preflightPassed" | "completed" | "interrupted" | "failed"; readonly failureCode?: string }): void;
+  markExecutionForRun(input: { readonly tenantId: string; readonly runId: string; readonly state: "completed" | "interrupted" | "failed"; readonly failureCode?: string }): void;
   getRun(input: { readonly tenantId: string; readonly runId: string }): PersistedRun | undefined;
   getLatestRun(input: { readonly tenantId: string; readonly conversationId: string }): PersistedRun | undefined;
   checkpointRun(input: {
@@ -496,6 +517,20 @@ function selectRun(db: DatabaseSync, tenantId: string, runId: string): Record<st
   );
 }
 
+function readExecution(row: Record<string, unknown>): PersistedExecution {
+  const taskKind = readString(row, "taskKind");
+  if (!runTaskKinds.includes(taskKind as RunTaskKind)) throw new RunStateError("Execution task kind is invalid.");
+  const trigger = readString(row, "trigger");
+  if (trigger !== "manual") throw new RunStateError("Execution trigger is invalid.");
+  const state = readString(row, "state");
+  if (state !== "pendingPreflight" && state !== "preflightPassed" && state !== "completed" && state !== "interrupted" && state !== "failed") throw new RunStateError("Execution state is invalid.");
+  const required = JSON.parse(readString(row, "requiredCapabilities"));
+  if (!Array.isArray(required) || required.some((value) => typeof value !== "string")) throw new RunStateError("Execution capabilities are invalid.");
+  const failureCode = row["failureCode"];
+  if (failureCode !== null && typeof failureCode !== "string") throw new RunStateError("Execution failure code is invalid.");
+  return { executionId: readString(row, "executionId"), tenantId: readString(row, "tenantId"), runId: readString(row, "runId"), projectId: readString(row, "projectId"), conversationId: readString(row, "conversationId"), taskKind: taskKind as RunTaskKind, trigger, runtimeId: readString(row, "runtimeId"), providerId: readString(row, "providerId"), requiredCapabilities: required, maxDurationMs: readNumber(row, "maxDurationMs"), deadlineAt: readString(row, "deadlineAt"), state, failureCode };
+}
+
 function createSchema(db: DatabaseSync): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS meta(version INTEGER NOT NULL);
@@ -658,7 +693,30 @@ function createSchema(db: DatabaseSync): void {
     `);
     migratedVersion = 6;
   }
-  if (migratedVersion !== 6) {
+  if (migratedVersion === 6) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS executions(
+        execution_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        run_id TEXT NOT NULL UNIQUE,
+        project_id TEXT NOT NULL,
+        conversation_id TEXT NOT NULL,
+        task_kind TEXT NOT NULL,
+        trigger TEXT NOT NULL,
+        runtime_id TEXT NOT NULL,
+        provider_id TEXT NOT NULL,
+        required_capabilities TEXT NOT NULL,
+        max_duration_ms INTEGER NOT NULL,
+        deadline_at TEXT NOT NULL,
+        state TEXT NOT NULL,
+        failure_code TEXT
+      );
+      CREATE INDEX IF NOT EXISTS executions_tenant_run_idx ON executions(tenant_id, run_id);
+      UPDATE meta SET version = 7;
+    `);
+    migratedVersion = 7;
+  }
+  if (migratedVersion !== 7) {
     throw new Error(`Unsupported SQLite schema version ${migratedVersion}`);
   }
 }
@@ -814,6 +872,33 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
       if (created === undefined) throw new RunStateError("Created run cannot be read back.");
       return readRun(created);
     },
+    createExecution: (input) => {
+      assertSecretSafe(input as unknown as SafePayload);
+      validateOpaqueValue(String(input.executionId), "Execution identifier");
+      validateTimestamp(input.deadlineAt, "Execution deadline");
+      if (input.trigger !== "manual" || !runTaskKinds.includes(input.taskKind)) throw new RunStateError("Execution envelope is invalid.");
+      if (!Number.isSafeInteger(input.resourceBudget.maxDurationMs) || input.resourceBudget.maxDurationMs < 1) throw new RunStateError("Execution budget is invalid.");
+      if (selectRun(db, String(input.tenantId), String(input.runId)) === undefined) throw new RunStateError("Run is unavailable for this tenant.");
+      run(db, `INSERT INTO executions(execution_id, tenant_id, run_id, project_id, conversation_id, task_kind, trigger, runtime_id, provider_id, required_capabilities, max_duration_ms, deadline_at, state, failure_code)
+        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendingPreflight', NULL)`, String(input.executionId), String(input.tenantId), String(input.runId), String(input.projectId), String(input.conversationId), input.taskKind, input.trigger, input.runtimeId, input.providerId, JSON.stringify(input.requiredCapabilities), input.resourceBudget.maxDurationMs, input.deadlineAt);
+    },
+    getExecution: ({ tenantId, executionId }) => {
+      const row = oneRow(db, `SELECT execution_id AS executionId, tenant_id AS tenantId, run_id AS runId, project_id AS projectId, conversation_id AS conversationId, task_kind AS taskKind, trigger, runtime_id AS runtimeId, provider_id AS providerId, required_capabilities AS requiredCapabilities, max_duration_ms AS maxDurationMs, deadline_at AS deadlineAt, state, failure_code AS failureCode FROM executions WHERE tenant_id = ? AND execution_id = ?`, tenantId, executionId);
+      return row === undefined ? undefined : readExecution(row);
+    },
+    markExecution: ({ tenantId, executionId, state, failureCode }) => {
+      if (state !== "preflightPassed" && state !== "completed" && state !== "interrupted" && state !== "failed") throw new RunStateError("Execution state is invalid.");
+      if (failureCode !== undefined) validateOpaqueValue(failureCode, "Execution failure code");
+      const currentState = state === "preflightPassed" ? "pendingPreflight" : "preflightPassed";
+      const result = db.prepare("UPDATE executions SET state = ?, failure_code = ? WHERE tenant_id = ? AND execution_id = ? AND state = ?").run(state, failureCode ?? null, tenantId, executionId, currentState);
+      if (Number(result.changes) !== 1) throw new RunStateError("Execution is unavailable or already finalized.");
+    },
+    markExecutionForRun: ({ tenantId, runId, state, failureCode }) => {
+      if (state !== "completed" && state !== "interrupted" && state !== "failed") throw new RunStateError("Execution state is invalid.");
+      if (failureCode !== undefined) validateOpaqueValue(failureCode, "Execution failure code");
+      const result = db.prepare("UPDATE executions SET state = ?, failure_code = ? WHERE tenant_id = ? AND run_id = ? AND state = 'preflightPassed'").run(state, failureCode ?? null, tenantId, runId);
+      if (Number(result.changes) > 1) throw new RunStateError("Execution transition is ambiguous.");
+    },
     getRun: ({ tenantId, runId }) => {
       const row = selectRun(db, tenantId, runId);
       return row === undefined ? undefined : readRun(row);
@@ -858,6 +943,13 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
       validateTimestamp(occurredAt, "Recovery timestamp");
       const checkpoint: SafePayload = { phase: "runner_restart", reason: "in_flight_run_recovered" };
       assertSecretSafe(checkpoint);
+      db.prepare(
+        `UPDATE executions SET state = 'interrupted', failure_code = 'runnerRestart'
+         WHERE state = 'preflightPassed' AND EXISTS(
+           SELECT 1 FROM runs WHERE runs.id = executions.run_id AND runs.tenant_id = executions.tenant_id
+             AND runs.state IN ('queued', 'running')
+         )`,
+      ).run();
       const result = db.prepare(
         `UPDATE runs SET state = 'interrupted', checkpoint = ?, updated_at = ? WHERE state = 'running'`,
       ).run(JSON.stringify(checkpoint), occurredAt);

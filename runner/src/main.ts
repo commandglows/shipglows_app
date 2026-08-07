@@ -17,12 +17,15 @@ import { ManagedFixCommandExecutor } from "./runs/fix.js";
 import { GitHubAppGitTransport, LocalWorkspaceManager, ProcessGitCommand } from "./workspaces/index.js";
 import { WorkspaceCleanupWorker } from "./workspaces/cleanup.js";
 import { OperatorWorkspaceGateway } from "./operator-workspace/index.js";
+import { ExecutionAdmissionService, LocalManagedExecutionProvider } from "./runs/execution.js";
+import { ExecutionProviderRegistry } from "./contracts/index.js";
 
 const config = loadConfig();
 const databasePath = process.env["RUNNER_DB_PATH"] ?? resolve(config.cwd, ".shipglows-runner.sqlite");
 const store = await openOperationalStore(databasePath);
 const eventHub = new EventHub();
 const runAdmission = new RunAdmission();
+const executionAdmission = new ExecutionAdmissionService(store, new ExecutionProviderRegistry([new LocalManagedExecutionProvider()]), config.limits);
 const operatorWorkspaceGateway = new OperatorWorkspaceGateway(config.operatorWorkspaces);
 const authentication = config.integrations.supabase.enabled
   ? (() => {
@@ -59,7 +62,7 @@ const fixRuntime = config.integrations.github.enabled && agentRuntime !== undefi
       return LocalWorkspaceManager.create({ root: resolve(config.cwd, ".shipglows-workspaces") }).then((workspaces) => {
         const transport = new GitHubAppGitTransport(new ProcessGitCommand(), verifier.withVerifiedRepository.bind(verifier));
         return {
-          executor: new ManagedFixCommandExecutor(store, agentRuntime, workspaces, transport, eventHub, config.limits, runAdmission),
+          executor: new ManagedFixCommandExecutor(store, agentRuntime, workspaces, transport, eventHub, config.limits, runAdmission, executionAdmission),
           cleanupWorker: new WorkspaceCleanupWorker(store, workspaces, transport),
         };
       });
@@ -78,6 +81,7 @@ const dependencies = {
   operatorWorkspaceGateway,
   operatorWorkspaceCapability: ({ projectId }: { projectId: string }) => Promise.resolve(operatorWorkspaceGateway.capability(projectId)),
   runAdmission,
+  executionAdmission,
   ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime.executor }),
   ...(authentication === undefined ? {} : { authentication }),
   ...(agentRuntime === undefined ? {} : { agentRuntime }),

@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.5.0"
+artifact_version: "1.10.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
-updated: "2026-08-03"
-updated_at: "2026-08-03 08:47:00 UTC"
+updated: "2026-08-07"
+updated_at: "2026-08-07 19:55:18 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -117,6 +117,7 @@ evidence:
   - "Fresh external documentation check 2026-08-01: xterm.dart supports Flutter Web, Android, and Windows terminal rendering; just-bash provides a TypeScript virtual Bash sandbox with bounded filesystem and network capabilities."
   - "CTO architecture reframe 2026-08-01: ShipGlows owns the multi-agent control plane; Codex app-server is the first runtime adapter, while OpenCode, Kilo and ACP must remain possible behind the same normalized contract."
   - "Warp Oz review 2026-08-03: cloud-agent orchestration, run observability, controlled triggers and team-scoped memory are useful patterns; ShipGlows retains the product control plane and does not adopt Oz as an MVP dependency."
+  - "Warp oz-agent-worker review 2026-08-07: adopt only a ShipGlows-owned resolved execution envelope, provider preflight and explicit execution outcomes; distributed worker transport, Kubernetes, and durable reattach remain outside this MVP slice."
 next_step: "/102-sg-start ShipGlows Managed Agent Cockpit MVP"
 ---
 
@@ -130,7 +131,7 @@ ShipGlows Managed Agent Cockpit MVP
 
 # Status
 
-Amended on 2026-08-03 after the Warp Oz review; a focused readiness review is required before the next implementation slice. The existing Flutter prototype is the implementation base. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Supabase Auth is the recommended cross-platform identity baseline behind a portable provider boundary.
+Amended on 2026-08-07 after the Warp oz-agent-worker review; a focused readiness review is required before the next implementation slice. The existing Flutter prototype is the implementation base. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Supabase Auth is the recommended cross-platform identity baseline behind a portable provider boundary. The next runner slice turns `ExecutionProvider` into a server-owned admission and execution boundary with an immutable resolved envelope; it does not add Oz, a remote worker protocol, Kubernetes, or restart reattachment.
 
 # User Story
 
@@ -197,6 +198,9 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - The Cockpit exposes a redacted operations summary alongside health: active, queued, awaiting approval, recently failed and last completed run per authorized project. It never exposes prompts, paths, credentials, raw logs, tenant-internal totals or another tenant's activity.
 - A server-owned `RunPolicy` selects runtime, execution provider, capability set, quota and approval boundary before a run begins. Runtime/model routing can optimize quality, latency or cost inside this policy, but never changes a selected provider, permission set or user-visible execution mode silently.
 - A `ProjectContextBundle` is an explicit, size-bounded, versioned set of approved project instructions, evidence references and skill outputs. It is tenant/project scoped, redacted, attributable to producers and source commits, and passed to a runtime only through the server. The MVP has no opaque cross-project, cross-tenant or self-modifying agent memory.
+- The first `ExecutionProvider` implementation is local and managed. Before it has any side effect, the runner resolves and persists one secret-safe execution envelope containing only opaque IDs, manual intent, selected provider/runtime/capabilities, resource budget, deadline and an opaque workspace reference. A provider preflight failure produces a stable safe error and never falls back to another provider, runtime, policy, workspace, or permission set.
+- An execution result is explicitly `completed`, `failed`, or `delegated`; only a future remote provider may use `delegated`. Cancellation receives only opaque run/execution identifiers. Raw workspace roots, prompts, environment variables, tokens and provider secrets never appear in the persisted envelope, public event stream, API response, diagnostics or logs.
+- Restart recovery remains fail-closed in this MVP: active local executions become `interrupted` with a bounded recovery reason. Drain, remote task preservation and reattach/reconciliation require a separate ready specification with durable execution ownership and distributed-lease semantics.
 - Future automatic triggers require their own ready specification covering trigger authorization, deduplication, rate limits, approval policy, delivery retries, auditability and an operator-visible disable control. They are not enabled by this amendment.
 
 # Product And Platform Footprint
@@ -308,6 +312,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - SQLite stores reconstructable operational state and cannot silently overwrite canonical repository content.
 - Every mutating command has an idempotency key, actor, project, conversation, timestamp, lifecycle state, and redacted outcome.
 - Every run has one immutable `RunIntent`, one resolved `RunPolicy` and an attributable `ProjectContextBundle` version or an explicit empty-context marker.
+- Every run execution has exactly one server-resolved `ExecutionProvider`, opaque execution identifier and secret-safe immutable envelope. Preflight completes before workspace creation or runtime session/turn start; selection failure has no execution side effect and never triggers fallback.
 - Every streamed event has a monotonically increasing conversation cursor and stable event identifier.
 - Reconnect reconciliation cannot duplicate a message, run, approval decision, or tracker proposal.
 - Missing evidence is unknown/not reported, not healthy.
@@ -503,6 +508,13 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Depends on: Tasks 2-5.
   - Validate with: API integration tests for success, disconnect, replay, denial, timeout, project-busy, quota, access-loss, stale-state reconciliation, tenant-safe operations summaries, rejected automatic triggers, and no implicit runtime/provider change.
   - Implementation note (2026-08-02): the first tenant/project-protected audit route now creates a durable run and invokes the selected runtime through the neutral command service; runtime events are persisted and exposed through a bounded cursor-based SSE replay route, with optional tenant/conversation-scoped live fan-out after persistence and a bounded idle window. State-changing Origin policy is implemented from `RUNNER_ALLOWED_ORIGINS`; per-tenant admission, maximum duration and interrupt reconciliation are implemented for the current audit command. Conversation create/message/interrupt/resume routes now use the same server-owned session/run boundary and durable idempotency contract. Both `POST /audits` and `POST /fixes` require durable idempotency and replay from SQLite; fixes additionally revalidate a tenant-owned GitHub binding, create an isolated server-owned worktree, start Codex with its internal workspace when GitHub/Codex are configured, and fail closed otherwise. A periodic cleanup worker reconciles due worktrees without exposing paths. Flutter integration and real-provider proof remain.
+- [x] Task 6a: Make provider admission and execution an explicit, durable runner boundary.
+  - Files: `runner/src/contracts/index.ts`, `runner/src/runs/execution.ts`, `runner/src/runs/{audit,fix,conversation}.ts`, `runner/src/db/index.ts`, `runner/src/main.ts`, `runner/src/app.ts`, `runner/test/contracts/**`, `runner/test/runs/**`, `runner/test/db/**`.
+  - Action: Replace the marker-only `ExecutionProvider` with a typed registry, server-owned policy resolver and local managed provider. Resolve and persist an immutable secret-safe envelope before preflight; require manual-only intent, selected runtime/provider/capabilities, bounded resource budget and deadline. Preflight must precede workspace/session/turn creation. Persist one tenant-scoped opaque execution record with additive migration; return explicit completed/failed/delegated outcomes; cancel using only opaque run/execution identifiers. Preserve existing fail-closed restart interruption rather than claiming recovery until a future distributed-execution contract exists.
+  - User story link: Makes each visible agent action explainable, policy-bound and safely extensible to future execution environments without exposing infrastructure.
+  - Depends on: Tasks 1, 4, 5 and the existing Task 6 routes.
+  - Validate with: contract/registry tests; manual-only/no-fallback/preflight-before-side-effects tests; audit/fix/conversation regression tests; SQLite v6-to-v7 migration, tenant-isolation, state-transition and secret-redaction tests; typecheck, full runner test suite and diff hygiene.
+  - Implementation note (2026-08-07): the local `managed-disposable` registry, immutable execution admission, schema v7 envelope persistence, preflight ordering, opaque cancellation and terminal execution-state synchronization are implemented and locally verified. A restart interrupts both the active run and matching admitted execution. Remote dispatch, drain and reattach remain explicitly out of scope.
 - [ ] Task 7: Establish the proprietary ShipGlows health evaluator and five-dimensional Cockpit projection.
   - Files: `runner/src/skills/**`, `runner/src/health/**`, `runner/test/skills/**`, `runner/test/health/**`, `app/lib/domain/project_health/**`, `app/lib/shipglows/data/cockpit/**`, `app/test/domain/project_health/**`, `app/test/shipglows/data/cockpit/**`.
   - Action: Define versioned skill-run/evidence and `ProjectContextBundle` contracts, execute one bounded read-only skill through `just-bash` against a controlled snapshot, map evaluator outcomes into tech/content/SEO/performance/security models, preserve explicit unknown/not-reported states, and link each result to its producing run and context provenance.
@@ -582,6 +594,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - `AC-018`: Copied diagnostics begin with commit/build identity and Paris/UTC build timestamps, remain redacted, and are useful without direct Sentry dashboard access.
 - `AC-019`: The Cockpit shows only caller-authorized redacted run-state supervision; every MVP run records `manual`, and schedule/webhook/system-recommendation triggers are rejected without starting work.
 - `AC-020`: Every runtime context has an explicit versioned ShipGlows provenance bundle or an empty-context marker; no opaque, cross-project, cross-tenant or self-modifying memory is used.
+- `AC-021`: Every execution is admitted through one persisted, immutable, secret-safe server-resolved envelope; unsupported or unavailable provider capability fails before a workspace or runtime turn exists, with no fallback. Restart of a local execution is visibly interrupted rather than falsely represented as recovered.
 
 # Test Contract
 
@@ -625,6 +638,8 @@ The default execution order is sequential by batch. Parallel work is allowed onl
   - `MCC-022`: operations summaries remain tenant/project scoped and do not expose prompts, paths, secrets, raw logs or unauthorized run totals.
   - `MCC-023`: only a server-validated manual `RunIntent` starts MVP work; reserved automatic trigger values are rejected idempotently before runtime selection.
   - `MCC-024`: project context is bounded, redacted, attributable and tenant/project scoped; attempts to attach client-selected, cross-project or untracked memory fail closed.
+  - `MCC-025`: provider admission resolves manual intent, runtime/provider/capabilities/resources/deadline once; preflight rejection starts no workspace/session/turn, stores no secret/path, and cannot silently fall back.
+  - `MCC-026`: an active local execution becomes a bounded interrupted state after restart; the MVP never claims drain, remote preservation or reattach without a dedicated provider implementation.
 - `required_results`: all scenario IDs pass or are explicitly blocked by unavailable external credentials under the narrow exception below; no critical/high security defect remains; no unsupported production claim is added; every failed external smoke retains complete fake/local contract proof and an exact operator follow-up; full Flutter and runner checks pass; changed governance artifacts pass metadata lint; design-system drift is addressed; working-tree changes remain scoped and preserve pre-existing operator edits.
 - `exception_with_proof`: live Supabase, GitHub App, Sentry ingestion, and Codex-first-adapter authenticated smoke calls may be deferred only when credentials or provider configuration are unavailable in the local environment. The implementation must still provide complete fake/local contract tests, disabled-by-default secure adapters, redaction proof, exact configuration diagnostics, and a verification checklist that marks the live scenario blocked rather than passed. A live Codex smoke may use the server's existing authenticated Codex installation without exposing credentials. A live OpenCode/Kilo adapter is explicitly outside this MVP proof. No release may be described as production-ready until all required live provider scenarios pass.
 - `exception_without_proof`: none for tenant isolation, authorization middleware, idempotency, event ordering/resume, audit read-only policy, fix worktree isolation, no-push/no-merge gates, path/symlink containment, prompt/output bounds, secret redaction, health unknown semantics, accessible failure states, metadata lint, dependency audit, and diff hygiene.
@@ -637,6 +652,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - Local Git fixtures for clone/fetch, renamed default branch, worktree isolation, concurrent mutation lock, symlink/traversal rejection, and abandoned-worktree cleanup.
 - API integration tests for auth, commands, approvals, quotas, timeouts, interruption, cursor resume, access loss, and malformed input.
 - Contract tests for operations-summary tenant isolation, manual-only run admission, immutable policy resolution, bounded context provenance and forbidden automatic triggers.
+- Contract and migration tests for immutable execution-envelope persistence, provider capability/preflight rejection, opaque cancellation, no-fallback behavior, v6-to-v7 compatibility, tenant isolation and restart interruption semantics.
 - PTY/tmux integration fixtures for capability expiry, allowlists, resize, reconnect, cleanup, Neovim launch, and concurrent-session rejection.
 - just-bash contract fixtures for virtual filesystem bounds, network allowlists, execution limits, cancellation, and evidence capture.
 - Flutter provider/widget tests for loading, empty, disconnected, stale, access-lost, project-busy, streaming, approval, error, long conversation, multi-device update, and retry states.
@@ -656,6 +672,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - High product-trust risk: presenting legacy auth/GitHub concepts as live integration would mislead the operator and users.
 - Medium architecture risk: raw app-server protocol coupling could make the Flutter client brittle; normalization isolates it.
 - Medium operations risk: agent-runtime process crashes, stale worktrees, SQLite corruption, and token expiry need explicit recovery.
+- Medium architecture risk: distributed-worker recovery could be overstated before ShipGlows has a durable remote provider and distributed lease. This MVP records local execution truth and reports restart interruption; drain/reattach is deferred to a separately reviewed execution-provider slice.
 - Medium cost/availability risk: unbounded turns, output, concurrency, or retries could exhaust server and model quotas.
 - Medium UX risk: a terminal clone would be visually noisy and inaccessible; semantic event rendering requires careful progress/error design.
 - Medium platform risk: Supabase session and deep-link behavior still needs Web/Android/Windows proof; a Clerk compatibility path must not silently become a second identity model.
@@ -752,7 +769,15 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-03 15:11:53 UTC | 300-sg-docs | GPT-5 Codex | Reconciled product, GTM, architecture, technical context, code navigation, contributor guidance, changelog and a new operator runbook with the implemented Workspace gateway, Flutter terminal, real managed-server PTY/tmux/Codex smoke, supervised runner allowlist, and exact public TLS/identity proof gaps. | documentation aligned; implementation and loopback proof are explicit without overstating public availability | Complete the root-managed HTTPS route and actor/project provisioning, then append browser reconnect and Neovim evidence |
 | 2026-08-05 13:03:19 UTC | 706-continue | GPT-5 Codex | Resumed the active Cockpit MVP by repairing the runner Workspace lint gate without changing runtime policy or external infrastructure. | local runner validation green; public TLS and authenticated identity proof remain | Install the root-managed HTTPS route, provision an authorized actor/project, then run the authenticated browser Workspace proof |
 | 2026-08-05 15:20:09 UTC | 706-continue | GPT-5 Codex | Confirmed the supervised private runner on loopback, its fail-closed unauthenticated response, and the real tmux/PTY/Codex Workspace smoke. Verified the public domain fails during TLS before reaching the runner; the operational database has no tenant, user, project, membership, or repository binding. | local runtime proof remains green; hosted authenticated proof is blocked by root-managed TLS and first identity/project provisioning | Obtain Caddy administration, publish the runner route, provision the first authorized identity/project, then run the browser proof |
+| 2026-08-07 19:15:08 UTC | 100-sg-spec | GPT-5 Codex | Amended the ready MVP with the first Oz-inspired execution-provider slice: immutable server-resolved execution envelope, preflight-before-side-effects, explicit outcomes, opaque cancellation and fail-closed restart interruption. | amended; focused readiness review required | Revalidate the bounded runner slice, then implement Task 6a |
+| 2026-08-07 19:17:28 UTC | 101-sg-ready | GPT-5 Codex | Revalidated the bounded provider-execution slice: it preserves manual-only admission, tenant isolation, opaque secrets/path boundaries, existing restart interruption, task ordering and proof obligations. | ready; Task 6a may start | Implement the execution-provider slice, then run the targeted runner proof |
+| 2026-08-07 19:37:54 UTC | 300-sg-docs | GPT-5 Codex | Updated the managed runner contract documentation for the local execution-provider registry, schema v7 execution envelopes, preflight order, cancellation boundary and explicit no-reattach posture. | updated; existing nested site governance corpus remains unrelated migration debt | Continue Task 6a implementation proof |
+| 2026-08-07 19:40:23 UTC | 102-sg-start | GPT-5 Codex | Implemented Task 6a's local execution-provider boundary: typed registry, immutable manual-only envelope, SQLite v7 persistence, preflight-before-side-effects, no fallback and opaque cancellation. | implemented; remote/distributed execution remains deliberately deferred | Verify the focused runner slice and retain MVP-wide hosted proof limits |
+| 2026-08-07 19:40:23 UTC | 103-sg-verify | GPT-5 Codex | Verified the Task 6a local scope against the durable contract, secret/path boundary, restart posture, runner typecheck and full local test suite. | verified for this local slice; no hosted provider or reattach claim | Continue remaining MVP tasks and route distributed execution to a separate ready specification |
+| 2026-08-07 19:50:52 UTC | 103-sg-verify (mode=excellence) | GPT-5 Codex | Excellence review found and repaired the missing terminal synchronization between admitted executions and runs; completion, failure, interruption and restart are now monotonic, durable and locally proven. | excellent for Task 6a's local execution boundary; remote-provider proof remains outside this slice | Continue the broader MVP without claiming hosted provider or reattach readiness |
+| 2026-08-07 19:52:30 UTC | 104-sg-end | GPT-5 Codex | Closed the Task 6a work session only: its implementation, local proof and internal documentation are synchronized. The broader Cockpit MVP remains active and no public-release claim is made. | locally closed; documentation reflection updated; no TASKS or changelog delta because the active MVP row remains in progress | Ship the scoped runner slice for iteration |
+| 2026-08-07 19:55:18 UTC | 005-sg-ship | GPT-5 Codex | Shipped the scoped Task 6a runner execution-provider slice for iteration. | commit created; push pending at the time of this record; MVP and hosted-provider proof remain open | Confirm remote push, then continue the broader MVP |
 
 # Current Chantier Flow
 
-`100-sg-spec` (amended) -> `101-sg-ready` (ready) -> `102-sg-start` (in progress; Tasks 1-6 and Task 11 first slices implemented) -> `004-sg-deploy` (partial; private runner active, public Caddy/DNS pending) -> `103-sg-verify` -> `104-sg-end` -> `005-sg-ship`
+`100-sg-spec` (amended; provider-execution slice) -> `101-sg-ready` (ready) -> `102-sg-start` (Task 6a implemented; broader MVP remains in progress) -> `103-sg-verify` (Task 6a local scope excellent) -> `104-sg-end` (Task 6a locally closed) -> `005-sg-ship` (Task 6a scoped iteration ship) -> `004-sg-deploy` (partial; private runner active, public Caddy/DNS pending)

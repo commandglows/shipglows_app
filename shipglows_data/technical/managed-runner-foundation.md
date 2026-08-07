@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.6.0"
+artifact_version: "2.1.0"
 project: "shipglows_app"
 created: "2026-08-01"
-updated: "2026-08-03"
+updated: "2026-08-07"
 status: draft
 source_skill: "102-sg-start"
 scope: "managed-runner-foundation"
@@ -20,6 +20,7 @@ linked_systems:
   - "runner/src/main.ts"
   - "runner/src/events/index.ts"
   - "runner/src/runs/limits.ts"
+  - "runner/src/runs/execution.ts"
   - "runner/src/runs/fix.ts"
   - "runner/src/runs/approval.ts"
   - "runner/src/runs/conversation.ts"
@@ -41,7 +42,7 @@ linked_systems:
   - "eve"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
-    artifact_version: "1.4.0"
+    artifact_version: "1.10.0"
     required_status: "ready"
 supersedes: []
 evidence:
@@ -94,10 +95,11 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `GET /v1/projects/resolve?sourceSystem=...&sourceProjectId=...` is the canonical read-only identity bridge for deployments where the existing app project namespace differs from runner project IDs. It requires authentication, resolves through a server-owned tenant-scoped directory, rechecks read access on the resolved runner project, and returns only bounded opaque identifiers; it returns `503 identityUnavailable` until that directory is configured.
 - Server-side project provisioning can persist the bridge atomically by calling `OperationalStore.createProject` with `sourceSystem` and `sourceProjectId`, or by calling `bindProjectIdentity` for an existing runner project. The Flutter `/api/projects` client is not allowed to perform this write; its FastAPI implementation is outside this repository and must call the runner through a server-to-server deployment adapter.
 - `AgentRuntime` is the product-owned contract for sessions, turns, interruption, approval support and semantic event streams.
-- `ExecutionProvider`, `CapabilityBroker` and `ModelGateway` are separate ports. Selecting a runtime validates required capabilities and never silently falls back to another runtime.
+- `ExecutionProvider`, `CapabilityBroker` and `ModelGateway` are separate ports. The local `managed-disposable` provider is selected through a registry and validates required capabilities without fallback. Every audit, conversation turn and fix now persists a server-resolved, manual-only execution envelope before provider preflight; it contains only opaque identifiers, provider/runtime selection, bounded capabilities, duration budget and deadline.
 - Codex is now the first contract-tested adapter behind `AgentRuntime`, using a server-owned local JSONL app-server connection; Eve remains a future adapter while its beta API and deployment posture remain in flux.
-- The SQLite store holds a reconstructable operational projection: tenants, memberships, projects, canonical cross-namespace project identity bindings, GitHub repository bindings, conversations, durable run states/checkpoints, runtime session mappings, capability decisions, approvals, health evidence, usage summaries, event cursors, idempotency records and workspace-cleanup state. Schema v6 stores operational metadata only; repository and Markdown content remain canonical.
-- Run checkpoints are secret-safe and tenant-scoped. A runner restart can mark in-flight `running` records as `interrupted` with a bounded recovery reason, allowing the Cockpit to show a recoverable state instead of losing the run.
+- The SQLite store holds a reconstructable operational projection: tenants, memberships, projects, canonical cross-namespace project identity bindings, GitHub repository bindings, conversations, durable run states/checkpoints, secret-safe execution envelopes, runtime session mappings, capability decisions, approvals, health evidence, usage summaries, event cursors, idempotency records and workspace-cleanup state. Schema v7 stores operational metadata only; repository and Markdown content remain canonical.
+- Provider preflight always occurs before a worktree, runtime session or turn is created. A failed preflight has a stable bounded execution failure and cannot change provider, runtime, policy or permission. The envelope excludes prompts, environment variables, tokens and workspace paths; cancellation accepts only opaque run and execution identifiers. Its state moves monotonically from preflight to the same terminal outcome as the run.
+- Run checkpoints are secret-safe and tenant-scoped. A runner restart marks in-flight `running` records and their matching preflight-passed executions as `interrupted` with a bounded recovery reason. The local provider does not claim drain, remote task preservation or reattachment; those need a separate distributed-execution contract.
 - Workspace cleanup records contain only an opaque run id, state, due time, attempt count and bounded error code; managed filesystem paths remain exclusively inside the workspace manager.
 - Runtime sessions, capability decisions, approvals, health evidence and usage summaries are tenant-scoped projections. Health summaries pass the same secret-safety checks as event payloads, and usage values are bounded non-negative counters.
 - The first protected audit command creates a durable conversation/run, initializes the selected runtime, starts a turn, and records a safe running/failed projection. Event-stream persistence, bounded live fan-out, the state-changing Origin policy, per-tenant admission quota and bounded timeout/interruption reconciliation are implemented. The `POST /fixes` path now validates bounded issue/instruction input, requires a durable `Idempotency-Key`, and, when GitHub App configuration is enabled, revalidates the binding, creates a server-owned isolated fix worktree, starts Codex with that internal workspace, and schedules cleanup without exposing its path; it remains unavailable when the provider is not configured.
@@ -137,6 +139,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - GitHub App private keys and installation tokens are server-only. A public API response, SQLite event, diagnostic, log, Git URL, Git argument or Flutter payload must not contain either.
 - A managed audit always uses a detached worktree. A managed fix creates a local isolated branch only; it has no push, merge, deploy, or canonical-branch mutation path.
 - Active runs are admitted through a shared per-tenant limit and released on terminal event, timeout, or startup failure. The configured maximum duration interrupts the selected runtime; a failed interrupt is projected as a bounded failure code.
+- Every admitted execution is manual-only and immutable after persistence. Provider capability or preflight rejection occurs before side effects and cannot silently fall back to another provider or runtime.
 - The optional operator Workspace is a separate capability from semantic Codex conversations. It remains server-owned, tenant/project-scoped, allowlisted, short-lived, and unavailable by default for projects without an explicit server mapping.
 
 ## Validation

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { describe, it } from "node:test";
 
-import { SecretPayloadError } from "../../src/contracts/index.js";
+import { SecretPayloadError, type OpaqueId, type ResolvedExecutionEnvelope } from "../../src/contracts/index.js";
 import {
   MigrationPolicyError,
   openOperationalStore,
@@ -70,6 +70,43 @@ function seed(store: Awaited<ReturnType<typeof openOperationalStore>>): void {
 }
 
 describe("SQLite operational projection", () => {
+  it("persists one secret-safe tenant-scoped execution envelope", async () => {
+    const store = await openOperationalStore(await databasePath("execution-envelope"));
+    seed(store);
+    store.createRun({ id: ids.runA, tenantId: ids.tenantA, projectId: ids.projectA, conversationId: ids.conversationA, runtimeId: "codex", executionProviderId: "managed-disposable", taskKind: "audit" });
+    const envelope: ResolvedExecutionEnvelope = {
+      executionId: "exe_000000000001" as OpaqueId, runId: ids.runA as OpaqueId, tenantId: ids.tenantA as OpaqueId,
+      projectId: ids.projectA as OpaqueId, conversationId: ids.conversationA as OpaqueId, taskKind: "audit", trigger: "manual",
+      runtimeId: "codex", providerId: "managed-disposable", requiredCapabilities: ["readOnly"],
+      resourceBudget: { maxDurationMs: 10_000 }, deadlineAt: "2026-08-07T00:00:10.000Z",
+    };
+    store.createExecution(envelope);
+    store.markExecution({ tenantId: ids.tenantA, executionId: String(envelope.executionId), state: "preflightPassed" });
+    assert.deepEqual(store.getExecution({ tenantId: ids.tenantA, executionId: String(envelope.executionId) }), {
+      executionId: "exe_000000000001", tenantId: ids.tenantA, runId: ids.runA, projectId: ids.projectA, conversationId: ids.conversationA,
+      taskKind: "audit", trigger: "manual", runtimeId: "codex", providerId: "managed-disposable", requiredCapabilities: ["readOnly"], maxDurationMs: 10_000,
+      deadlineAt: "2026-08-07T00:00:10.000Z", state: "preflightPassed", failureCode: null,
+    });
+    assert.equal(store.getExecution({ tenantId: ids.tenantB, executionId: String(envelope.executionId) }), undefined);
+    assert.throws(() => store.createExecution({ ...envelope, executionId: "exe_000000000002" as OpaqueId, runId: "run_000000000002" as OpaqueId, providerId: "sk-test-secret" }), SecretPayloadError);
+    store.close();
+  });
+
+  it("transitions admitted executions once and interrupts active execution on restart", async () => {
+    const store = await openOperationalStore(await databasePath("execution-recovery"));
+    seed(store);
+    store.createRun({ id: ids.runA, tenantId: ids.tenantA, projectId: ids.projectA, conversationId: ids.conversationA, runtimeId: "codex", executionProviderId: "managed-disposable", taskKind: "audit" });
+    const envelope: ResolvedExecutionEnvelope = { executionId: "exe_000000000003" as OpaqueId, runId: ids.runA as OpaqueId, tenantId: ids.tenantA as OpaqueId, projectId: ids.projectA as OpaqueId, conversationId: ids.conversationA as OpaqueId, taskKind: "audit", trigger: "manual", runtimeId: "codex", providerId: "managed-disposable", requiredCapabilities: ["readOnly"], resourceBudget: { maxDurationMs: 10_000 }, deadlineAt: "2026-08-07T00:00:10.000Z" };
+    store.createExecution(envelope);
+    store.markExecution({ tenantId: ids.tenantA, executionId: String(envelope.executionId), state: "preflightPassed" });
+    store.checkpointRun({ tenantId: ids.tenantA, runId: ids.runA, state: "running", checkpoint: { phase: "turn_started" } });
+    assert.equal(store.recoverInFlightRuns({ occurredAt: "2026-08-07T00:00:00.000Z" }), 1);
+    assert.equal(store.getExecution({ tenantId: ids.tenantA, executionId: String(envelope.executionId) })?.state, "interrupted");
+    store.markExecutionForRun({ tenantId: ids.tenantA, runId: ids.runA, state: "completed" });
+    assert.equal(store.getExecution({ tenantId: ids.tenantA, executionId: String(envelope.executionId) })?.state, "interrupted");
+    store.close();
+  });
+
   it("enforces tenant/project membership boundaries", async () => {
     const store = await openOperationalStore(await databasePath("tenants"));
     seed(store);
@@ -185,7 +222,7 @@ describe("SQLite operational projection", () => {
         defaultBranch: "main",
       },
     });
-    assert.equal(store.schemaVersion(), 6);
+    assert.equal(store.schemaVersion(), 7);
     assert.deepEqual(
       store.getGitHubRepositoryBinding({ tenantId: ids.tenantA, projectId: ids.projectA }),
       {
@@ -341,7 +378,7 @@ describe("SQLite operational projection", () => {
     const path = await databasePath("restart");
     let store = await openOperationalStore(path);
     seed(store);
-    assert.equal(store.schemaVersion(), 6);
+    assert.equal(store.schemaVersion(), 7);
     assert.throws(() => store.migrateDown(), MigrationPolicyError);
     store.close();
 
@@ -424,7 +461,7 @@ describe("SQLite operational projection", () => {
     legacy.close();
 
     const store = await openOperationalStore(path);
-    assert.equal(store.schemaVersion(), 6);
+    assert.equal(store.schemaVersion(), 7);
     seed(store);
     assert.equal(
       store.createRun({

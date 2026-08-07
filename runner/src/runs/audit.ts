@@ -4,6 +4,7 @@ import type { AgentRuntime, OpaqueId } from "../contracts/index.js";
 import type { OperationalStore } from "../db/index.js";
 import type { EventHub } from "../events/index.js";
 import { RunAdmission, RunLimitError } from "./limits.js";
+import type { ExecutionAdmissionService } from "./execution.js";
 
 export type AuditCommandStore = Pick<
   OperationalStore,
@@ -22,6 +23,7 @@ interface RunLifecycle {
   readonly conversationId: string;
   readonly runtimeSessionId: OpaqueId;
   readonly runtimeTurnId: OpaqueId;
+  readonly executionId?: string;
   readonly release: () => void;
   timeout?: NodeJS.Timeout;
   finalized: boolean;
@@ -45,6 +47,7 @@ export class AuditCommandService {
       maxRunDurationMs: 15 * 60 * 1000,
     },
     private readonly admission: RunAdmission = new RunAdmission(),
+    private readonly execution?: ExecutionAdmissionService,
   ) {}
 
   #appendEvent(input: Parameters<AuditCommandStore["appendEvent"]>[0]) {
@@ -59,6 +62,7 @@ export class AuditCommandService {
     if (input.timeout !== undefined) clearTimeout(input.timeout);
     try {
       this.store.checkpointRun({ tenantId: input.tenantId, runId: input.runId, state, checkpoint });
+      this.execution?.finish({ tenantId: input.tenantId, runId: input.runId, state, ...(state === "failed" ? { failureCode: String(checkpoint["code"] ?? "runtimeFailed") } : {}) });
       if (event !== undefined) {
         this.#appendEvent({
           id: id("evt"),
@@ -135,6 +139,7 @@ export class AuditCommandService {
     const release = () => this.admission.release(input.tenantId);
     const conversationId = id("cnv");
     const runId = id("run");
+    let executionAdmitted = false;
     this.store.createConversation({
       id: conversationId,
       tenantId: input.tenantId,
@@ -159,6 +164,8 @@ export class AuditCommandService {
       payload: { runId, scope: input.scope },
     });
     try {
+      await this.execution?.admit({ runId, tenantId: input.tenantId, projectId: input.projectId, conversationId, taskKind: "audit", runtimeId: this.runtime.id, providerId: "managed-disposable", requiredCapabilities: ["readOnly"] });
+      executionAdmitted = this.execution !== undefined;
       const session = await this.runtime.createSession({ conversationId: opaque(conversationId) });
       this.store.saveRuntimeSession({
         id: id("ses"),
@@ -199,6 +206,7 @@ export class AuditCommandService {
       return { conversationId, runId, state: "running" };
     } catch {
       release();
+      if (executionAdmitted) this.execution?.finish({ tenantId: input.tenantId, runId, state: "failed", failureCode: "runtimeUnavailable" });
       this.store.checkpointRun({
         tenantId: input.tenantId,
         runId,

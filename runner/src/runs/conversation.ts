@@ -4,6 +4,7 @@ import type { AgentRuntime, OpaqueId } from "../contracts/index.js";
 import type { OperationalStore, PersistedRun } from "../db/index.js";
 import type { EventHub } from "../events/index.js";
 import { RunAdmission, RunLimitError } from "./limits.js";
+import type { ExecutionAdmissionService } from "./execution.js";
 
 export type ConversationCommandStore = Pick<
   OperationalStore,
@@ -56,6 +57,7 @@ export class ConversationCommandService {
       maxRunDurationMs: 15 * 60 * 1000,
     },
     private readonly admission: RunAdmission = new RunAdmission(),
+    private readonly execution?: ExecutionAdmissionService,
   ) {}
 
   #appendEvent(input: Parameters<ConversationCommandStore["appendEvent"]>[0]): void {
@@ -107,6 +109,7 @@ export class ConversationCommandService {
     }
     const release = () => this.admission.release(input.tenantId);
     const runId = id("run");
+    let executionAdmitted = false;
     this.store.createRun({
       id: runId,
       tenantId: input.tenantId,
@@ -124,6 +127,8 @@ export class ConversationCommandService {
       payload: { runId, text: input.text },
     });
     try {
+      await this.execution?.admit({ runId, tenantId: input.tenantId, projectId: input.projectId, conversationId: input.conversationId, taskKind: "conversation", runtimeId: this.runtime.id, providerId: "managed-disposable", requiredCapabilities: [] });
+      executionAdmitted = this.execution !== undefined;
       const turn = await this.runtime.startTurn({ runtimeSessionId: opaque(session.runtimeSessionId), message: input.text });
       this.store.checkpointRun({
         tenantId: input.tenantId,
@@ -138,6 +143,7 @@ export class ConversationCommandService {
         lifecycle.finalized = true;
         if (lifecycle.timeout !== undefined) clearTimeout(lifecycle.timeout);
         this.store.checkpointRun({ tenantId: input.tenantId, runId, state, checkpoint: { phase: "turn_finished", ...(code === undefined ? {} : { code }) } });
+        if (executionAdmitted) this.execution?.finish({ tenantId: input.tenantId, runId, state, ...(state === "failed" ? { failureCode: code ?? "runtimeFailed" } : {}) });
         release();
       };
       const persistEvents = async (): Promise<void> => {
@@ -169,6 +175,7 @@ export class ConversationCommandService {
     } catch {
       release();
       this.store.checkpointRun({ tenantId: input.tenantId, runId, state: "failed", checkpoint: { phase: "runtime_unavailable", code: "runtimeUnavailable" } });
+      if (executionAdmitted) this.execution?.finish({ tenantId: input.tenantId, runId, state: "failed", failureCode: "runtimeUnavailable" });
       return { conversationId: input.conversationId, runId, state: "failed" };
     }
   }
@@ -183,6 +190,7 @@ export class ConversationCommandService {
       throw new ConversationCommandError("runtimeUnavailable", "The runtime could not interrupt the turn.");
     }
     this.store.checkpointRun({ tenantId: input.tenantId, runId: context.run.id, state: "interrupted", checkpoint: { phase: "interrupted", code: "operatorInterrupted" } });
+    this.execution?.finish({ tenantId: input.tenantId, runId: context.run.id, state: "interrupted" });
     this.#appendEvent({ id: id("evt"), tenantId: input.tenantId, conversationId: input.conversationId, type: "turn.interrupted", payload: { runId: context.run.id, code: "operatorInterrupted" } });
     return { conversationId: input.conversationId, runId: context.run.id, state: "interrupted" };
   }
