@@ -21,11 +21,12 @@ The format is based on Keep a Changelog.
 - Readied the foundational auth/GitHub access, project onboarding, Markdown artifact governance, and dashboard read-only projection specs for the next implementation slice.
 
 ### Security
+- Added a server-enforced approval policy that refuses privileged actions from audit and ordinary conversation runs, while preserving explicit denial and allowing approval only for isolated fix runs; added adversarial regressions for repository prompt injection, secret access, exfiltration wording, and cross-project approval references.
 - Kept Workspace capabilities out of WebSocket URLs and kept host paths, tmux identifiers, SSH credentials, PTY handles, and terminal transcripts outside Flutter persistence and routine diagnostics.
 - Separated product entitlement from identity, GitHub access, open access, and cached bootstrap state so protected workspace data fails closed without a trusted `shipglows_app` entitlement snapshot.
 
 ### Verified
-- Passed runner typecheck/lint, 82 runner tests, npm high-severity audit, 30 ShipGlows Flutter tests, Flutter analysis, governance topology, metadata lint, and the real managed-server operator Workspace smoke.
+- Passed runner typecheck/lint, 94 runner tests, npm high-severity audit, 30 ShipGlows Flutter tests, Flutter analysis, governance topology, metadata lint, and the real managed-server operator Workspace smoke.
 
 ## [2026-05-11]
 

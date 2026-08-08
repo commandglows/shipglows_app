@@ -29,8 +29,15 @@ export class LocalManagedExecutionProvider implements ExecutionProvider {
     this.capabilities = new Set(capabilities);
   }
 
-  async preflight(_input: ResolvedExecutionEnvelope): Promise<void> {}
-  async cancel(_input: { readonly executionId: OpaqueId; readonly runId: OpaqueId }): Promise<void> {}
+  preflight(input: ResolvedExecutionEnvelope): Promise<void> {
+    void input;
+    return Promise.resolve();
+  }
+
+  cancel(input: { readonly executionId: OpaqueId; readonly runId: OpaqueId }): Promise<void> {
+    void input;
+    return Promise.resolve();
+  }
 }
 
 export class ExecutionAdmissionService {
@@ -52,7 +59,6 @@ export class ExecutionAdmissionService {
     readonly trigger?: ExecutionIntentTrigger;
   }): Promise<ResolvedExecutionEnvelope> {
     const trigger = input.trigger ?? "manual";
-    if (trigger !== "manual") throw new ExecutionProviderError("manualTriggerRequired", input.providerId);
     const provider = this.providers.select(input.providerId, input.requiredCapabilities);
     const envelope: ResolvedExecutionEnvelope = Object.freeze({
       executionId: opaque(`exe_${randomUUID()}`), runId: opaque(input.runId), tenantId: opaque(input.tenantId),

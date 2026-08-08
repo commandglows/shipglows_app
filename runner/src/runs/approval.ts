@@ -16,7 +16,7 @@ export interface ApprovalCommandResult {
 
 export class ApprovalCommandError extends Error {
   constructor(
-    readonly code: "approvalNotFound" | "approvalAlreadyResolved" | "runtimeUnavailable",
+    readonly code: "approvalNotFound" | "approvalAlreadyResolved" | "approvalPolicyDenied" | "runtimeUnavailable",
     message: string,
   ) {
     super(message);
@@ -63,6 +63,16 @@ export class ApprovalCommandService {
     }
     if (approval.state !== "pending") {
       throw new ApprovalCommandError("approvalAlreadyResolved", "The approval has already been resolved.");
+    }
+    // Until provider-neutral action metadata is available, only an isolated fix run may
+    // approve a privileged runtime action. Audit and conversation runs fail closed; a
+    // hostile repository or prompt cannot turn their human approval UI into a capability
+    // escalation. Denial always remains available so the operator can stop the request.
+    if (input.decision === "approve" && run.taskKind !== "fix") {
+      throw new ApprovalCommandError(
+        "approvalPolicyDenied",
+        "This run is not allowed to approve privileged runtime actions.",
+      );
     }
     const session: PersistedRuntimeSession | undefined = this.store.getRuntimeSession({
       tenantId: input.tenantId,

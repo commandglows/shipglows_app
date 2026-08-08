@@ -652,7 +652,10 @@ export function buildRunnerApp({
         return await reply.status(outcome.response.statusCode).send(outcome.response.body);
       } catch (error: unknown) {
         if (error instanceof ApprovalCommandError) {
-          const statusCode = error.code === "approvalNotFound" ? 404 : error.code === "approvalAlreadyResolved" ? 409 : 503;
+          const statusCode = error.code === "approvalNotFound" ? 404
+            : error.code === "approvalAlreadyResolved" ? 409
+            : error.code === "approvalPolicyDenied" ? 403
+            : 503;
           return reply.status(statusCode).send({ error: { code: error.code, message: error.message } });
         }
         throw error;

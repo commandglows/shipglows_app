@@ -361,7 +361,7 @@ describe("runner API foundation", () => {
         conversationId: "cnv_000000000001",
         runtimeId: "codex",
         executionProviderId: "managed-disposable",
-        taskKind: "conversation",
+        taskKind: "fix",
         state: "running",
         checkpoint: {},
         createdAt: "2026-08-02T00:00:00.000Z",
@@ -422,6 +422,44 @@ describe("runner API foundation", () => {
     assert.deepEqual(second.json(), first.json());
     assert.equal(runtimeCalls, 1);
     assert.equal(resolveCalls, 1);
+  });
+
+  it("fails closed when an audit attempts to approve a privileged runtime action", async () => {
+    let runtimeCalls = 0;
+    let resolveCalls = 0;
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication: { authenticate: async () => actor },
+        projectAccess: { hasProjectAccess: () => true },
+        approvalStore: {
+          getApproval: () => ({ id: "approval_policy", tenantId: actor.tenantId, runId: "run_policy", state: "pending", requestedAt: "2026-08-08T00:00:00.000Z", resolvedAt: null }),
+          getRun: () => ({ id: "run_policy", tenantId: actor.tenantId, projectId: "prj_000000000001", conversationId: "cnv_policy", runtimeId: "codex", executionProviderId: "managed-disposable", taskKind: "audit", state: "running", checkpoint: {}, createdAt: "2026-08-08T00:00:00.000Z", updatedAt: "2026-08-08T00:00:00.000Z" }),
+          getRuntimeSession: () => ({ id: "ses_policy", tenantId: actor.tenantId, conversationId: "cnv_policy", runtimeId: "codex", runtimeSessionId: "thread_policy", state: "active" }),
+          resolveApproval: () => { resolveCalls += 1; },
+          appendEvent: (input) => ({ ...input, cursor: 1, occurredAt: "2026-08-08T00:00:00.000Z" }),
+        },
+        agentRuntime: {
+          id: "codex", capabilities: new Set(["approvals"]),
+          createSession: async () => ({ runtimeSessionId: "thread_policy" as OpaqueId, state: "idle" }),
+          resumeSession: async () => ({ runtimeSessionId: "thread_policy" as OpaqueId, state: "idle" }),
+          startTurn: async () => ({ runtimeTurnId: "turn_policy" as OpaqueId, state: "queued" }),
+          interruptTurn: async () => undefined,
+          resolveApproval: async () => { runtimeCalls += 1; },
+          async *events() { yield* []; },
+        },
+        idempotencyStore: {
+          executeIdempotentAsync: async (_input, callback) => ({ replayed: false, response: await callback() }),
+        },
+      },
+    });
+    const response = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/approvals/approval_policy", headers: { "idempotency-key": "policy-1" }, payload: { decision: "approve" } });
+    await app.close();
+
+    assert.equal(response.statusCode, 403);
+    assert.equal(response.json().error.code, "approvalPolicyDenied");
+    assert.equal(runtimeCalls, 0);
+    assert.equal(resolveCalls, 0);
   });
 
   it("creates conversations and replays duplicate messages without a second turn", async () => {

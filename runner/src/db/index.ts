@@ -519,16 +519,15 @@ function selectRun(db: DatabaseSync, tenantId: string, runId: string): Record<st
 
 function readExecution(row: Record<string, unknown>): PersistedExecution {
   const taskKind = readString(row, "taskKind");
-  if (!runTaskKinds.includes(taskKind as RunTaskKind)) throw new RunStateError("Execution task kind is invalid.");
+  if (!isRunTaskKind(taskKind)) throw new RunStateError("Execution task kind is invalid.");
   const trigger = readString(row, "trigger");
   if (trigger !== "manual") throw new RunStateError("Execution trigger is invalid.");
   const state = readString(row, "state");
   if (state !== "pendingPreflight" && state !== "preflightPassed" && state !== "completed" && state !== "interrupted" && state !== "failed") throw new RunStateError("Execution state is invalid.");
-  const required = JSON.parse(readString(row, "requiredCapabilities"));
-  if (!Array.isArray(required) || required.some((value) => typeof value !== "string")) throw new RunStateError("Execution capabilities are invalid.");
+  const required = parseStringArray(readString(row, "requiredCapabilities"), "Execution capabilities");
   const failureCode = row["failureCode"];
   if (failureCode !== null && typeof failureCode !== "string") throw new RunStateError("Execution failure code is invalid.");
-  return { executionId: readString(row, "executionId"), tenantId: readString(row, "tenantId"), runId: readString(row, "runId"), projectId: readString(row, "projectId"), conversationId: readString(row, "conversationId"), taskKind: taskKind as RunTaskKind, trigger, runtimeId: readString(row, "runtimeId"), providerId: readString(row, "providerId"), requiredCapabilities: required, maxDurationMs: readNumber(row, "maxDurationMs"), deadlineAt: readString(row, "deadlineAt"), state, failureCode };
+  return { executionId: readString(row, "executionId"), tenantId: readString(row, "tenantId"), runId: readString(row, "runId"), projectId: readString(row, "projectId"), conversationId: readString(row, "conversationId"), taskKind, trigger, runtimeId: readString(row, "runtimeId"), providerId: readString(row, "providerId"), requiredCapabilities: required, maxDurationMs: readNumber(row, "maxDurationMs"), deadlineAt: readString(row, "deadlineAt"), state, failureCode };
 }
 
 function createSchema(db: DatabaseSync): void {
@@ -873,10 +872,10 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
       return readRun(created);
     },
     createExecution: (input) => {
-      assertSecretSafe(input as unknown as SafePayload);
+      assertSecretSafe(input);
       validateOpaqueValue(String(input.executionId), "Execution identifier");
       validateTimestamp(input.deadlineAt, "Execution deadline");
-      if (input.trigger !== "manual" || !runTaskKinds.includes(input.taskKind)) throw new RunStateError("Execution envelope is invalid.");
+      if (!runTaskKinds.includes(input.taskKind)) throw new RunStateError("Execution envelope is invalid.");
       if (!Number.isSafeInteger(input.resourceBudget.maxDurationMs) || input.resourceBudget.maxDurationMs < 1) throw new RunStateError("Execution budget is invalid.");
       if (selectRun(db, String(input.tenantId), String(input.runId)) === undefined) throw new RunStateError("Run is unavailable for this tenant.");
       run(db, `INSERT INTO executions(execution_id, tenant_id, run_id, project_id, conversation_id, task_kind, trigger, runtime_id, provider_id, required_capabilities, max_duration_ms, deadline_at, state, failure_code)
@@ -887,14 +886,12 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
       return row === undefined ? undefined : readExecution(row);
     },
     markExecution: ({ tenantId, executionId, state, failureCode }) => {
-      if (state !== "preflightPassed" && state !== "completed" && state !== "interrupted" && state !== "failed") throw new RunStateError("Execution state is invalid.");
       if (failureCode !== undefined) validateOpaqueValue(failureCode, "Execution failure code");
       const currentState = state === "preflightPassed" ? "pendingPreflight" : "preflightPassed";
       const result = db.prepare("UPDATE executions SET state = ?, failure_code = ? WHERE tenant_id = ? AND execution_id = ? AND state = ?").run(state, failureCode ?? null, tenantId, executionId, currentState);
       if (Number(result.changes) !== 1) throw new RunStateError("Execution is unavailable or already finalized.");
     },
     markExecutionForRun: ({ tenantId, runId, state, failureCode }) => {
-      if (state !== "completed" && state !== "interrupted" && state !== "failed") throw new RunStateError("Execution state is invalid.");
       if (failureCode !== undefined) validateOpaqueValue(failureCode, "Execution failure code");
       const result = db.prepare("UPDATE executions SET state = ?, failure_code = ? WHERE tenant_id = ? AND run_id = ? AND state = 'preflightPassed'").run(state, failureCode ?? null, tenantId, runId);
       if (Number(result.changes) > 1) throw new RunStateError("Execution transition is ambiguous.");

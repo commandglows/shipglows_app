@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.10.0"
+artifact_version: "1.13.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
-updated: "2026-08-07"
-updated_at: "2026-08-07 19:55:18 UTC"
+updated: "2026-08-08"
+updated_at: "2026-08-08 16:01:35 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -168,6 +168,8 @@ After signing in, the user sees one Cockpit summarizing every authorized GitHub 
 - A second mutating run for the same project is rejected with HTTP `409` and code `projectBusy`; the user may retry after the active run ends, and no second writable worktree starts.
 - A timeout or user interrupt ends the active turn, keeps prior events, marks the result `interrupted` or `timedOut`, and permits a deliberate resume.
 - An approval timeout or denial blocks the requested privileged action and leaves an explicit denied/expired approval event.
+- Until provider-neutral proposed-action metadata can be verified, only an isolated `fix` run may approve a privileged runtime request; audit and ordinary conversation approvals fail closed without calling the runtime.
+- Adversarial regression tests must prove that repository prompt injection, secret-access wording, exfiltration wording and cross-project approval references cannot widen that policy; denial must remain available.
 - Invalid identifiers, cross-tenant references, unsupported action types, oversized prompts, excessive event payloads, and path traversal attempts are rejected server-side with stable error codes.
 - A projection refresh failure never erases the last known Cockpit evidence; affected dimensions become stale or unknown with a timestamp and source diagnostic.
 - Repository content that attempts prompt injection cannot expand server permissions, reveal secrets, alter tenant/project selection, or bypass approval and sandbox policies.
@@ -772,6 +774,10 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-07 19:15:08 UTC | 100-sg-spec | GPT-5 Codex | Amended the ready MVP with the first Oz-inspired execution-provider slice: immutable server-resolved execution envelope, preflight-before-side-effects, explicit outcomes, opaque cancellation and fail-closed restart interruption. | amended; focused readiness review required | Revalidate the bounded runner slice, then implement Task 6a |
 | 2026-08-07 19:17:28 UTC | 101-sg-ready | GPT-5 Codex | Revalidated the bounded provider-execution slice: it preserves manual-only admission, tenant isolation, opaque secrets/path boundaries, existing restart interruption, task ordering and proof obligations. | ready; Task 6a may start | Implement the execution-provider slice, then run the targeted runner proof |
 | 2026-08-07 19:37:54 UTC | 300-sg-docs | GPT-5 Codex | Updated the managed runner contract documentation for the local execution-provider registry, schema v7 execution envelopes, preflight order, cancellation boundary and explicit no-reattach posture. | updated; existing nested site governance corpus remains unrelated migration debt | Continue Task 6a implementation proof |
+| 2026-08-08 12:28:02 UTC | 010-sg-technical | GPT-5 Codex | Added the first agentic-security policy slice: privileged approvals fail closed outside isolated fix runs, with regression proof and a durable exploration of richer action metadata, capability sets, alignment critics and adversarial testing. | locally verified: 89 tests, typecheck and lint pass | Continue with provider-neutral proposed-action metadata before enabling broader approvals |
+| 2026-08-08 15:40:08 UTC | 010-sg-technical | GPT-5 Codex | Added five bounded adversarial policy regressions for prompt injection, secret access, exfiltration wording, cross-project approval and safe denial. | locally verified: 94 tests and typecheck pass; focused lint passes; pre-existing execution-slice lint debt remains outside this bounded test slice | Keep the broader agentic architecture deferred until provider-neutral action metadata is available |
+| 2026-08-08 16:01:35 UTC | 104-sg-end | GPT-5 Codex | Closed the bounded agentic-security slice after repairing the runner lint debt, synchronizing the exploration, specification and project changelog, and retaining richer action metadata as deferred future work. | locally closed: 94 tests, typecheck, full lint and metadata pass; broader Cockpit MVP remains active | Ship the bounded security and lint-hardening slice |
+| 2026-08-08 16:01:35 UTC | 005-sg-ship | GPT-5 Codex | Prepared the bounded agentic-security and runner lint-hardening slice for shipment without including unrelated site work. | commit and push pending at the time of this record; broader Cockpit MVP remains active | Commit and push the scoped files to origin/main |
 | 2026-08-07 19:40:23 UTC | 102-sg-start | GPT-5 Codex | Implemented Task 6a's local execution-provider boundary: typed registry, immutable manual-only envelope, SQLite v7 persistence, preflight-before-side-effects, no fallback and opaque cancellation. | implemented; remote/distributed execution remains deliberately deferred | Verify the focused runner slice and retain MVP-wide hosted proof limits |
 | 2026-08-07 19:40:23 UTC | 103-sg-verify | GPT-5 Codex | Verified the Task 6a local scope against the durable contract, secret/path boundary, restart posture, runner typecheck and full local test suite. | verified for this local slice; no hosted provider or reattach claim | Continue remaining MVP tasks and route distributed execution to a separate ready specification |
 | 2026-08-07 19:50:52 UTC | 103-sg-verify (mode=excellence) | GPT-5 Codex | Excellence review found and repaired the missing terminal synchronization between admitted executions and runs; completion, failure, interruption and restart are now monotonic, durable and locally proven. | excellent for Task 6a's local execution boundary; remote-provider proof remains outside this slice | Continue the broader MVP without claiming hosted provider or reattach readiness |
@@ -780,4 +786,4 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 # Current Chantier Flow
 
-`100-sg-spec` (amended; provider-execution slice) -> `101-sg-ready` (ready) -> `102-sg-start` (Task 6a implemented; broader MVP remains in progress) -> `103-sg-verify` (Task 6a local scope excellent) -> `104-sg-end` (Task 6a locally closed) -> `005-sg-ship` (Task 6a scoped iteration ship) -> `004-sg-deploy` (partial; private runner active, public Caddy/DNS pending)
+`100-sg-spec` (amended; agentic-security slice) -> `101-sg-ready` (existing MVP contract ready) -> `102-sg-start` (bounded approval policy implemented; broader MVP remains in progress) -> `103-sg-verify` (94 runner tests, typecheck and full lint pass) -> `104-sg-end` (bounded security slice locally closed) -> `005-sg-ship` (scoped commit/push in progress) -> `004-sg-deploy` (not required for this local policy/test slice; broader hosted proof remains partial)

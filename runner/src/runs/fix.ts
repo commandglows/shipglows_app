@@ -83,7 +83,8 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
     if (input.timeout !== undefined) clearTimeout(input.timeout);
     try {
       this.store.checkpointRun({ tenantId: input.tenantId, runId: input.runId, state, checkpoint });
-      this.execution?.finish({ tenantId: input.tenantId, runId: input.runId, state, ...(state === "failed" ? { failureCode: String(checkpoint["code"] ?? "runtimeFailed") } : {}) });
+      const checkpointCode = checkpoint["code"];
+      this.execution?.finish({ tenantId: input.tenantId, runId: input.runId, state, ...(state === "failed" ? { failureCode: typeof checkpointCode === "string" ? checkpointCode : "runtimeFailed" } : {}) });
       this.store.scheduleWorkspaceCleanup({
         tenantId: input.tenantId,
         runId: input.runId,
