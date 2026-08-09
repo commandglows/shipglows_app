@@ -20,11 +20,18 @@ describe("ShipGlows installer endpoint", () => {
 });
 
 describe("dotfiles endpoint", () => {
-  it("serves the safe canonical bootstrap", async () => {
-    const response = await getDotfiles({} as Parameters<typeof getDotfiles>[0]);
+  it.each(["powershell", "ps1", "windows"])("serves PowerShell for %s", async (format) => {
+    const response = await getDotfiles(context(`https://shipglows.com/dotfiles-script?format=${format}`));
+    expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+    expect(response.headers.get("cache-control")).toBe("public, max-age=300, s-maxage=300");
+    expect(await response.text()).toMatch(/^# Native Windows Dotfiles bootstrap/);
+  });
+
+  it.each(["", "unknown"])("serves shell by default for '%s'", async (format) => {
+    const suffix = format ? `?format=${format}` : "";
+    const response = await getDotfiles(context(`https://shipglows.com/dotfiles-script${suffix}`));
     const body = await response.text();
     expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
-    expect(body).toContain("raw.githubusercontent.com/dianedef/dotfiles/main/dotfiles/install-dotfiles.sh");
-    expect(body).toContain('exec sh "$tmp_file"');
+    expect(body).toContain('exec bash "$DOTFILES_DIR/dotfiles/install.sh" "$@"');
   });
 });

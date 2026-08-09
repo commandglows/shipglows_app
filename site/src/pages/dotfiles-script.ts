@@ -1,21 +1,17 @@
-export const prerender = true;
+export const prerender = false;
 
 import type { APIRoute } from "astro";
+import shellInstaller from "../generated/dotfiles-installer.sh?raw";
+import powershellInstaller from "../generated/dotfiles-installer.ps1?raw";
 
-export const dotfilesInstaller = `#!/usr/bin/env sh
-set -eu
+export const GET: APIRoute = ({ url }) => {
+  const format = url.searchParams.get("format");
+  const usePowerShell = format === "powershell" || format === "ps1" || format === "windows";
 
-tmp_dir="\${TMPDIR:-/tmp}"
-tmp_file="$tmp_dir/dotfiles-install.sh"
-
-mkdir -p "$tmp_dir"
-curl -fsSL https://raw.githubusercontent.com/dianedef/dotfiles/main/dotfiles/install-dotfiles.sh -o "$tmp_file"
-exec sh "$tmp_file"
-`;
-
-export const GET: APIRoute = () => new Response(dotfilesInstaller, {
-  headers: {
-    "Cache-Control": "public, max-age=300, s-maxage=300",
-    "Content-Type": "text/plain; charset=utf-8",
-  },
-});
+  return new Response(usePowerShell ? powershellInstaller : shellInstaller, {
+    headers: {
+      "Cache-Control": "public, max-age=300, s-maxage=300",
+      "Content-Type": "text/plain; charset=utf-8",
+    },
+  });
+};
