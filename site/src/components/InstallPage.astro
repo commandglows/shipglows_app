@@ -1,0 +1,111 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "./Footer.astro";
+import NavBar from "./NavBar.astro";
+import type { InstallPageContent, Locale } from "../data/installPages";
+
+interface Props { locale: Locale; page: InstallPageContent; }
+const { locale, page } = Astro.props;
+const isFr = locale === "fr";
+// Absolute URLs keep this migrated surface on the production apex even while
+// the site's pre-existing locale helper still references its legacy domain.
+const canonicalPath = `https://shipglows.com${isFr ? "/fr" : ""}/${page.slug}`;
+const alternatePath = `https://shipglows.com${isFr ? "" : "/fr"}/${page.slug}`;
+const first = page.variants[0];
+const platforms = [...new Set(page.variants.map((variant) => variant.platform))];
+const modes = [...new Set(page.variants.map((variant) => variant.mode))];
+const labels = isFr
+  ? { platform: "Plateforme", mode: "Mode", unix: "Unix / macOS", windows: "Windows natif", termux: "Android Termux", local: "Local", full: "Full / serveur", unavailable: "Non disponible" }
+  : { platform: "Platform", mode: "Mode", unix: "Unix / macOS", windows: "Native Windows", termux: "Android Termux", local: "Local", full: "Full / server", unavailable: "Unavailable" };
+---
+
+<BaseLayout title={`${page.title} | ShipGlows`} description={page.description} locale={locale} canonicalPath={canonicalPath} alternatePath={alternatePath}>
+  <main class="page-shell">
+    <NavBar locale={locale} currentPath={`/${page.slug}`} />
+    <section class="install-hero">
+      <div class="install-intro">
+        <p class="eyebrow">{page.kicker}</p>
+        <h1 class="page-title">{page.title}</h1>
+        <p>{page.description}</p>
+        <div class="hero-actions">
+          <button class="button button-primary" type="button" data-copy data-command={first.command} data-label={page.copyLabel} data-copied={page.copiedLabel} aria-live="polite">{page.copyLabel}</button>
+          <a class="button button-secondary" href={page.rawUrl}>{page.rawLabel}</a>
+          <a class="button button-secondary" href={page.repositoryUrl} rel="noreferrer">{page.repositoryLabel}</a>
+        </div>
+      </div>
+
+      <div class="installer" data-installer data-variants={JSON.stringify(page.variants)} data-unavailable={labels.unavailable}>
+        <div class="terminal-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+        {platforms.length > 1 && <fieldset><legend>{labels.platform}</legend><div class="choices">{platforms.map((platform, index) => <button type="button" data-platform={platform} aria-pressed={index === 0}>{labels[platform]}</button>)}</div></fieldset>}
+        {modes.length > 1 && <fieldset><legend>{labels.mode}</legend><div class="choices">{modes.map((mode, index) => <button type="button" data-mode={mode} aria-pressed={index === 0}>{labels[mode]}</button>)}</div></fieldset>}
+        <pre tabindex="0"><code data-command-output>{first.command}</code></pre>
+        <p class="install-note" data-note>{first.note}</p>
+      </div>
+    </section>
+
+    <section class="section install-grid">
+      <article class="doc-card"><h2>{page.fitTitle}</h2><ul>{page.fit.map((item) => <li>{item}</li>)}</ul></article>
+      <article class="doc-card"><h2>{page.installedTitle}</h2><ul>{page.installed.map((item) => <li>{item}</li>)}</ul></article>
+      <article class="doc-card"><h2>{page.limitsTitle}</h2><ul>{page.limits.map((item) => <li>{item}</li>)}</ul></article>
+    </section>
+  </main>
+  <Footer locale={locale} />
+
+  <script is:inline>
+    const root = document.querySelector('[data-installer]');
+    const copy = document.querySelector('[data-copy]');
+    if (root && copy) {
+      const variants = JSON.parse(root.dataset.variants || '[]');
+      const unavailable = root.dataset.unavailable || 'Unavailable';
+      let platform = variants[0].platform;
+      let mode = variants[0].mode;
+      const render = () => {
+        const variant = variants.find((item) => item.platform === platform && item.mode === mode);
+        if (!variant) return;
+        root.querySelector('[data-command-output]').textContent = variant.command || '—';
+        root.querySelector('[data-note]').textContent = variant.note;
+        copy.dataset.command = variant.command;
+        copy.disabled = !variant.available;
+        copy.setAttribute('aria-label', variant.available ? copy.dataset.label : unavailable);
+      };
+      root.querySelectorAll('[data-platform]').forEach((button) => button.addEventListener('click', () => {
+        platform = button.dataset.platform;
+        root.querySelectorAll('[data-platform]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        const valid = variants.find((item) => item.platform === platform && item.mode === mode);
+        if (!valid) mode = variants.find((item) => item.platform === platform)?.mode || mode;
+        root.querySelectorAll('[data-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item.dataset.mode === mode)));
+        render();
+      }));
+      root.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => {
+        mode = button.dataset.mode;
+        root.querySelectorAll('[data-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        render();
+      }));
+      copy.addEventListener('click', async () => {
+        const command = copy.dataset.command;
+        if (!command) return;
+        await navigator.clipboard.writeText(command);
+        copy.textContent = copy.dataset.copied;
+        window.setTimeout(() => { copy.textContent = copy.dataset.label; }, 1800);
+      });
+    }
+  </script>
+</BaseLayout>
+
+<style>
+  .install-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, .9fr); gap: 28px; align-items: center; padding: clamp(28px, 5vw, 64px); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--panel-strong); box-shadow: var(--shadow); }
+  .install-intro > p:not(.eyebrow) { max-width: 680px; color: var(--muted); font-size: 1.08rem; }
+  .installer { min-width: 0; padding: 20px; color: #f7f3eb; background: #1f1a14; border-radius: var(--radius-md); box-shadow: var(--shadow-strong); }
+  .terminal-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+  .terminal-bar span { width: 11px; height: 11px; border-radius: 50%; background: #c9665d; }
+  .terminal-bar span:nth-child(2) { background: #d9b15f; } .terminal-bar span:nth-child(3) { background: #64a87b; }
+  fieldset { margin: 0 0 16px; padding: 0; border: 0; } legend { margin-bottom: 8px; color: #cfc5b7; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .choices { display: flex; flex-wrap: wrap; gap: 8px; }
+  .choices button { min-height: 40px; padding: 7px 12px; color: #eee7dc; background: transparent; border: 1px solid rgba(255,255,255,.22); border-radius: var(--radius-sm); cursor: pointer; }
+  .choices button[aria-pressed="true"] { color: #fff; background: var(--accent); border-color: #5ba49e; }
+  pre { min-height: 96px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; color: #b9eee9; background: rgba(255,255,255,.06); border-radius: var(--radius-sm); }
+  .install-note { margin-bottom: 0; color: #cfc5b7; }
+  .install-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .install-grid h2 { font-size: 1.35rem; } .install-grid ul { padding-left: 1.2rem; } .install-grid li + li { margin-top: 8px; }
+  @media (max-width: 820px) { .install-hero, .install-grid { grid-template-columns: 1fr; } .install-hero { padding: 24px; } }
+</style>
