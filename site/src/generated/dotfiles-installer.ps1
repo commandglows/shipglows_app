@@ -41,7 +41,7 @@ function Install-WinGetPackage([string]$Name, [string]$PackageId, [string]$Comma
     }
     $winget = Get-WinGet
     Write-Info "Installing $Name. This can take a few minutes; keep this window open."
-    & $winget install --id $PackageId --exact --source winget --accept-package-agreements --accept-source-agreements --silent | Out-Host
+    & $winget install --id $PackageId --exact --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "$Name installation returned exit code $LASTEXITCODE." }
     Update-ProcessPath
     Write-Success "$Name installed."
@@ -60,7 +60,7 @@ function Ensure-Git {
     }
 
     Write-Info 'Installing Git for Windows. This can take a few minutes; keep this window open.'
-    & $winget.Source install --id Git.Git --exact --source winget --accept-package-agreements --accept-source-agreements --silent | Out-Host
+    & $winget.Source install --id Git.Git --exact --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Git installation returned exit code $LASTEXITCODE." }
     Update-ProcessPath
     $git = Get-Application 'git.exe'
