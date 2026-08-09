@@ -7,7 +7,9 @@ param(
     [string]$Branch = 'master',
     [string]$DotfilesDir = (Join-Path $env:USERPROFILE 'dotfiles'),
     [switch]$ConfigureWezTerm,
-    [switch]$SkipWezTerm
+    [switch]$SkipWezTerm,
+    [switch]$ConfigureTools,
+    [switch]$SkipTools
 )
 
 $ErrorActionPreference = 'Stop'
@@ -24,6 +26,25 @@ function Update-ProcessPath {
 
 function Get-Application([string]$Name) {
     return Get-Command $Name -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+}
+
+function Get-WinGet {
+    $winget = Get-Application 'winget.exe'
+    if (-not $winget) { throw 'WinGet is required to install Windows applications. Install App Installer from Microsoft, then rerun this command.' }
+    return $winget.Source
+}
+
+function Install-WinGetPackage([string]$Name, [string]$PackageId, [string]$Command) {
+    if (Get-Application $Command) {
+        Write-Success "$Name is already installed."
+        return
+    }
+    $winget = Get-WinGet
+    Write-Info "Installing $Name. This can take a few minutes; keep this window open."
+    & $winget install --id $PackageId --exact --source winget --accept-package-agreements --accept-source-agreements --silent | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "$Name installation returned exit code $LASTEXITCODE." }
+    Update-ProcessPath
+    Write-Success "$Name installed."
 }
 
 function Ensure-Git {
@@ -90,16 +111,61 @@ function Should-ConfigureWezTerm {
     return $answer -notin @('n', 'no')
 }
 
+function Confirm-Choice([string]$Prompt, [bool]$DefaultYes = $true) {
+    $suffix = if ($DefaultYes) { '[Y/n]' } else { '[y/N]' }
+    $answer = (Read-Host "$Prompt $suffix").Trim().ToLowerInvariant()
+    if (-not $answer) { return $DefaultYes }
+    return $answer -in @('y', 'yes')
+}
+
+function Should-ConfigureTools {
+    if ($SkipTools) { return $false }
+    if ($ConfigureTools) { return $true }
+    if ([Console]::IsInputRedirected) {
+        Write-Info 'Non-interactive run: developer tools skipped. Use -ConfigureTools to install them explicitly.'
+        return $false
+    }
+    return Confirm-Choice 'Install the recommended Windows terminal toolkit (Neovim, Starship, Zoxide, fzf, ripgrep, fd, bat, and Yazi)?'
+}
+
+function Install-DeveloperTools {
+    $tools = @(
+        @{ Name = 'Neovim'; Package = 'Neovim.Neovim'; Command = 'nvim.exe' },
+        @{ Name = 'Starship'; Package = 'Starship.Starship'; Command = 'starship.exe' },
+        @{ Name = 'Zoxide'; Package = 'ajeetdsouza.zoxide'; Command = 'zoxide.exe' },
+        @{ Name = 'fzf'; Package = 'junegunn.fzf'; Command = 'fzf.exe' },
+        @{ Name = 'ripgrep'; Package = 'BurntSushi.ripgrep.MSVC'; Command = 'rg.exe' },
+        @{ Name = 'fd'; Package = 'sharkdp.fd'; Command = 'fd.exe' },
+        @{ Name = 'bat'; Package = 'sharkdp.bat'; Command = 'bat.exe' },
+        @{ Name = 'Yazi'; Package = 'sxyazi.yazi'; Command = 'yazi.exe' }
+    )
+    foreach ($tool in $tools) { Install-WinGetPackage $tool.Name $tool.Package $tool.Command }
+}
+
+function Copy-ConfigWithBackup([string]$Source, [string]$Target) {
+    if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) { throw "Configuration file not found: $Source" }
+    New-Item -ItemType Directory -Path (Split-Path -Parent $Target) -Force | Out-Null
+    if (Test-Path -LiteralPath $Target -PathType Leaf) {
+        $sameContents = (Get-FileHash -LiteralPath $Source -Algorithm SHA256).Hash -eq (Get-FileHash -LiteralPath $Target -Algorithm SHA256).Hash
+        if ($sameContents) { return }
+        $backup = "$Target.dotfiles-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        Move-Item -LiteralPath $Target -Destination $backup
+        Write-Info "Existing configuration backed up to $backup"
+    }
+    Copy-Item -LiteralPath $Source -Destination $Target -Force
+}
+
+function Install-TerminalConfigs {
+    Copy-ConfigWithBackup (Join-Path $DotfilesDir 'starship\starship.toml') (Join-Path $env:USERPROFILE '.config\starship.toml')
+    Copy-ConfigWithBackup (Join-Path $DotfilesDir 'powershell\ShipGlows.Profile.ps1') (Join-Path $env:USERPROFILE '.config\shipglows\profile.ps1')
+    Write-Success 'Starship and PowerShell terminal configuration installed.'
+}
+
 function Install-WezTermConfig {
+    Install-TerminalConfigs
     $wezterm = Get-Application 'wezterm.exe'
     if (-not $wezterm) {
-        $winget = Get-Application 'winget.exe'
-        if (-not $winget) { throw 'WezTerm setup was selected but WinGet is unavailable. Install WezTerm manually, then rerun with -ConfigureWezTerm.' }
-        Write-Info 'Installing WezTerm. This can take a few minutes; keep this window open.'
-        & $winget.Source install --id wez.wezterm --exact --source winget --accept-package-agreements --accept-source-agreements --silent | Out-Host
-        if ($LASTEXITCODE -ne 0) { throw "WezTerm installation returned exit code $LASTEXITCODE." }
-        Update-ProcessPath
-        Write-Success 'WezTerm installed.'
+        Install-WinGetPackage 'WezTerm' 'wez.wezterm' 'wezterm.exe'
     } else {
         Write-Success 'WezTerm is already installed.'
     }
@@ -123,19 +189,25 @@ function Install-WezTermConfig {
 }
 
 if ($ConfigureWezTerm -and $SkipWezTerm) { throw 'Choose only one of -ConfigureWezTerm or -SkipWezTerm.' }
+if ($ConfigureTools -and $SkipTools) { throw 'Choose only one of -ConfigureTools or -SkipTools.' }
 Write-Host ''
 Write-Host 'Dotfiles Windows Bootstrap' -ForegroundColor Cyan
 Write-Host '==========================' -ForegroundColor Cyan
-Write-Host 'This installs only the public Dotfiles checkout and optional WezTerm configuration.' -ForegroundColor DarkGray
-Write-Host 'It does not edit your PowerShell profile or install the legacy full-machine application catalogue.' -ForegroundColor DarkGray
+Write-Host 'This installs the public Dotfiles checkout and your selected native Windows terminal tools.' -ForegroundColor DarkGray
+Write-Host 'It does not edit your PowerShell profile, change execution policy, or install the legacy application catalogue.' -ForegroundColor DarkGray
 
 Update-ProcessPath
 $git = Ensure-Git
 Sync-DotfilesCheckout $git
 Write-Success "Dotfiles checkout ready: $DotfilesDir"
 
+$installTools = Should-ConfigureTools
+if ($installTools) {
+    Install-DeveloperTools
+    Install-TerminalConfigs
+}
 if (Should-ConfigureWezTerm) { Install-WezTermConfig }
 
 Write-Host ''
 Write-Success 'Dotfiles Windows bootstrap completed.'
-Write-Host 'Open a new WezTerm window to use the installed configuration.' -ForegroundColor Green
+Write-Host 'Open a new WezTerm window to use Neovim, Yazi, Starship, and the native pane shortcuts.' -ForegroundColor Green
