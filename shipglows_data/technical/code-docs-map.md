@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.1.0"
+artifact_version: "1.2.0"
 project: "shipglows_app"
 created: "2026-05-08"
 updated: "2026-08-11"
@@ -20,7 +20,7 @@ linked_systems:
   - "shipglows_data/workflow/specs/"
 depends_on: []
 supersedes:
-  - "shipglows_data/technical/code-docs-map.md@1.0.0"
+  - "shipglows_data/technical/code-docs-map.md@1.1.0"
 evidence:
   - "app/lib/main.dart has one product entrypoint: ShipGlowsApp."
   - "Task 9-10 Cockpit and semantic conversation surfaces are covered by Flutter tests."
@@ -72,7 +72,7 @@ This map links current ShipGlows code areas to their primary technical documenta
 | `app/lib/presentation/` | Canonical Flutter theme plus dormant UI modules outside the product entrypoint | `shipglows_data/technical/design-system-authority.md` and `shipglows_data/technical/runtime-boundary.md` | `cd app && flutter test test/presentation test/shipglows/theme` | Any shared theme change or dormant UI integration into ShipGlows |
 | `site` + `app UI` | Separate platform carriers under one documented product/design direction | `shipglows_data/technical/design-system-authority.md` | `python3 /home/claude/shipglows/tools/design_system_drift_check.py --changed --warn-only --root /home/claude/shipglows_app` puis `rg -n "design_system_authority" shipglows_data/technical/design-system-authority.md` | Toute évolution visuelle production ou des carriers de tokens |
 | `app/lib/providers/providers.dart`, `app/lib/router.dart`, `app/web_auth/` | Dormant modules outside the single ShipGlows entrypoint | `shipglows_data/technical/runtime-boundary.md` | `rg -n "providers/providers|appRouterProvider|web_auth" app/lib/main.dart app/lib/shipglows` | Any proposal to integrate one of these modules into ShipGlows |
-| `shipglows_data/workflow/specs/` | Active ShipGlows chantier registry plus retained cross-product maintenance specs; archived ContentFlow contracts live outside this directory | `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md` and `shipglows_data/workflow/archives/contentflow-specs/README.md` | `rg -n "contentflow|ContentFlow|ShipGlows" shipglows_data/workflow/specs shipglows_data/workflow/archives/contentflow-specs/README.md` | Any spec archive, rename, or activation decision |
+| `shipglows_data/workflow/specs/` | Active ShipGlows chantier registry; superseded migration records and archived historical contracts are not implementation authority | `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md`, `firebase-auth-convex-alignment.md`, and `shipglows_data/workflow/archives/contentflow-specs/README.md` | `rg -n "^status: (active|ready|superseded)|ShipGlows" shipglows_data/workflow/specs` | Any spec archive, supersession, or activation decision |
 | Recovered branch reality | Branch and stack decision memory | `shipglows_data/technical/recovered-branch-reality.md` | `git show --stat backup/local-supabase-wip-2026-05-08` | Any decision about Supabase WIP, Firebase/Firestore migration, or project identity |
 | Firebase/Firestore translation | Target remote projection architecture | `shipglows_data/workflow/specs/firebase-firestore-projection-migration.md` | `rg -n "Supabase|Firebase|Firestore|Cloud Functions|GitHub repository|local clone" shipglows_data/workflow/specs shipglows_data/technical README.md` | Any Firebase/Auth/Firestore/Cloud Functions implementation or Supabase WIP recovery |
 | Supabase-to-Firebase contract map | Recovered WIP contract extraction | `shipglows_data/technical/supabase-to-firebase-contract-map.md` | `rg -n "Contract Mapping|Security Rule Requirements|Cloud Function Requirements" shipglows_data/technical/supabase-to-firebase-contract-map.md` | Any recovery of Supabase WIP behavior into Firebase architecture |
@@ -90,7 +90,7 @@ This map links current ShipGlows code areas to their primary technical documenta
 ## Non-Coverage
 
 - Firebase, Firestore, BYOK OpenRouter, and feedback implementation are not covered by current managed-runner truth unless explicitly wired through the ShipGlows runtime. The operator terminal capability is active on the loopback runner and server-smoke proven, but public authenticated browser delivery still lacks TLS routing and actor/project provisioning proof.
-- Archived ContentFlow specs are historical references and cannot become active ShipGlows implementation contracts without a current adoption decision.
+- Superseded and archived historical specs cannot become ShipGlows implementation contracts without a current adoption decision.
 
 ## Invariants
 
@@ -101,7 +101,7 @@ This map links current ShipGlows code areas to their primary technical documenta
 
 ```bash
 rg -n "Maintenance Rule|Validation|Owned Files|Entrypoints" shipglows_data/technical
-rg -n "APP_TARGET|LegacyShipGlowsApp" app/lib app/test
+! rg -n "APP_TARGET|LegacyShipGlowsApp" app/lib app/test
 flutter test
 flutter analyze
 ```

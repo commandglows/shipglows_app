@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.22.0"
+artifact_version: "1.25.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-11"
-updated_at: "2026-08-11 17:46:09 UTC"
+updated_at: "2026-08-11 18:26:17 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -26,7 +26,8 @@ linked_systems:
   - "OpenAI Codex app-server adapter"
   - "OpenCode / ACP adapter path"
   - "Kilo Code adapter path"
-  - "Supabase Auth"
+  - "Firebase Auth"
+  - "Convex target product data layer"
   - "GitHub App"
   - "GitHub repositories"
   - "managed repository workspaces"
@@ -63,12 +64,9 @@ depends_on:
   - artifact: "https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md"
     artifact_version: "checked-2026-08-01"
     required_status: "active"
-  - artifact: "https://supabase.com/docs/guides/getting-started/quickstarts/flutter"
-    artifact_version: "checked-2026-08-01"
-    required_status: "active"
-  - artifact: "https://supabase.com/docs/guides/auth"
-    artifact_version: "checked-2026-08-01"
-    required_status: "active"
+  - artifact: "shipglows_data/workflow/specs/firebase-auth-convex-alignment.md"
+    artifact_version: "0.1.0"
+    required_status: "draft"
   - artifact: "https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app"
     artifact_version: "checked-2026-07-18"
     required_status: "active"
@@ -131,7 +129,7 @@ ShipGlows Managed Agent Cockpit MVP
 
 # Status
 
-Amended on 2026-08-07 after the Warp oz-agent-worker review; a focused readiness review is required before the next implementation slice. The existing Flutter prototype is the implementation base. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Supabase Auth is the recommended cross-platform identity baseline behind a portable provider boundary. The next runner slice turns `ExecutionProvider` into a server-owned admission and execution boundary with an immutable resolved envelope; it does not add Oz, a remote worker protocol, Kubernetes, or restart reattachment.
+Amended on 2026-08-11 after the portfolio architecture decision. The existing Flutter prototype is the implementation base. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Firebase Auth is the cross-platform identity baseline behind a portable provider boundary; Convex is the target product data layer, while Fastify/SQLite remains the documented execution-plane exception. The next runner slice turns `ExecutionProvider` into a server-owned admission and execution boundary with an immutable resolved envelope; it does not add Oz, a remote worker protocol, Kubernetes, or restart reattachment.
 
 # User Story
 
@@ -210,7 +208,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Launch application surfaces: Flutter Web, Flutter Android and Flutter Windows from the existing codebase.
 - First-class shared surface: Flutter Windows, using the existing Flutter domain and the same authenticated API.
 - First complete hosted proof: Flutter Web on the current Vercel-oriented web path, connected to the managed runner over HTTPS.
-- Android and Windows MVP proof: build, Supabase session/authentication adapter contract, deep-link/session handling where applicable, responsive UI tests, terminal rendering tests, and live API compatibility against the same runner.
+- Android and Windows MVP proof: build, Firebase session/authentication adapter contract, deep-link/session handling where applicable, responsive UI tests, terminal rendering tests, and live API compatibility against the same runner.
 - Roadmap: iOS can use the same Flutter domain/UI code after adding the platform shell and identity adapter; it is not an MVP launch gate.
 - Linux desktop is not an MVP launch gate, but the Web contract must remain usable from Linux browsers.
 - End-user terminal surface: semantic agent work by default; real terminal/tmux/Neovim only inside the explicit operator Workspace.
@@ -244,7 +242,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Tenant/project-scoped, versioned `ProjectContextBundle` provenance for server-supplied runtime context.
 - ShipGlows `AgentRuntime` capability contract, Codex app-server first adapter and normalized event mapping.
 - Fake second-runtime conformance fixture proving Flutter and policy do not branch on Codex-only wire types.
-- Supabase Auth authentication for Web, Android and Windows through one Dart adapter; server-side JWT/JWKS validation behind the runner's `AuthProvider` interface.
+- Firebase Auth authentication for Web, Android and Windows through one Dart adapter; server-side ID-token/JWKS validation behind the runner's `AuthProvider` interface.
 - GitHub App repository authorization and short-lived installation-token use on the server.
 - Managed clone reuse for audits and isolated worktree/branch creation for fixes, selected through server-owned `ExecutionProvider` policy.
 - Read-only ingestion of existing ShipGlows Markdown and GitHub evidence into Cockpit health.
@@ -297,7 +295,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Official Codex app-server documentation checked 2026-07-18 defines rich-client primitives for threads, turns, items, approvals, authentication, and streamed events over a local process transport; it informs the first adapter only.
 - Fresh docs checked 2026-08-01: Vercel AI SDK's HarnessAgent can normalize several agent harnesses but is experimental; OpenCode ACP is editor-to-subprocess JSON-RPC over stdio, while Kilo documents local HTTP/SSE runtime surfaces. ShipGlows therefore keeps its own remote contract and capability matrix.
 - Fresh Warp Oz documentation checked 2026-08-03 describes cloud-agent triggers, scheduling, parallelism, observability, multiple harnesses and persistent team memory. This spec adopts only bounded orchestration requirements; Warp/Oz remains outside the runtime dependency graph.
-- Official Supabase Flutter and Auth documentation checked 2026-08-01 supports the selected cross-platform session baseline; server-side JWT/JWKS verification remains behind the runner AuthProvider adapter.
+- The current Firebase Auth and Convex boundary is owned by `firebase-auth-convex-alignment.md`; server-side ID-token/JWKS verification remains behind the runner AuthProvider adapter.
 - Official GitHub App documentation checked 2026-07-18 supports short-lived installation access tokens, narrowed repository/permission scope, and HTTP Git authentication when Contents permission is granted.
 - Official `just-bash` repository and threat model rechecked 2026-08-11: 3.2.0 supports an in-memory filesystem, disabled-by-default network/JavaScript/Python, a restricted command registry, abort signals and execution limits. Its npm tarball currently omits several declaration files referenced by the package entrypoint, so ShipGlows isolates the runtime behind a narrow local typed adapter without enabling `skipLibCheck`.
 - Existing code foundations include `lib/shipglows/**`, `lib/data/shipglows_sources/**`, `lib/domain/project_health/**`, and Firestore-shaped projection DTOs/validators. Dormant Clerk/GitHub modules are not current integration proof.
@@ -391,9 +389,9 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 
 # Auth And Authorization Contract
 
-- Supabase Auth establishes ShipGlows identity; GitHub App establishes repository authority. They remain distinct.
-- Flutter Web, Android and Windows use one Dart `AuthProvider` interface with Supabase session refresh and deep-link handling where applicable.
-- Fastify validates the Supabase-issued JWT through server-side signature/JWKS checks on every request and never trusts client-decoded claims alone. A Clerk compatibility adapter is allowed only behind the same interface and must not create a second authorization model.
+- Firebase Auth establishes ShipGlows identity; GitHub App establishes repository authority. They remain distinct.
+- Flutter Web, Android and Windows use one Dart `AuthProvider` interface with Firebase session refresh and deep-link handling where applicable.
+- Fastify validates the Firebase ID token through server-side issuer, audience, algorithm, and JWKS checks on every request and never trusts client-decoded claims alone. No alternate auth runtime is supported.
 - Runner data access is filtered by tenant and user membership before any project/conversation lookup result is returned.
 - Repository-sensitive actions revalidate GitHub App installation access and required permissions immediately before clone, refresh, audit, or fix setup.
 - GitHub Contents read access permits projection, audit, and local isolated fix work. A future push or pull-request feature must separately require and verify the necessary write permissions before that capability is added.
@@ -439,7 +437,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 - Update `shipglows_data/technical/design-system-authority.md` if the active ShipGlows theme carrier is consolidated.
 - Update `README.md` only with behavior that has passed implementation proof; do not claim live Codex/GitHub/auth integration from contracts alone.
 - Update `shipglows_data/workflow/TASKS.md`, verification artifact, and `CHANGELOG.md` during implementation closure without rewriting unrelated operator edits.
-- Create an operator runbook for server provisioning, runtime auth health/capability diagnostics, workspace cleanup, SQLite migration/backup, GitHub App permissions, Supabase configuration, Sentry redaction, and incident recovery.
+- Create an operator runbook for server provisioning, runtime auth health/capability diagnostics, workspace cleanup, SQLite migration/backup, GitHub App permissions, Firebase configuration, Sentry redaction, and incident recovery.
 
 # Edge Cases
 
@@ -476,13 +474,13 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - User story link: Creates the managed boundary that replaces end-user SSH/terminal administration.
   - Depends on: this spec passing `/101-sg-ready`.
   - Validate with: runner unit tests, typecheck, lint, dependency audit, config-secret scan, API schema snapshots, and a fake second-runtime conformance fixture proving no Codex wire type escapes the port.
-- [~] Task 2: Implement portable Supabase Auth authentication and tenant/project authorization middleware.
+- [~] Task 2: Implement portable Firebase Auth authentication and tenant/project authorization middleware.
   - Files: `runner/src/auth/**`, `runner/src/projects/projectAccess.ts`, `runner/test/auth/**`, `app/lib/shipglows/auth/**`, `app/test/shipglows/auth/**`.
-  - Action: Implement one Supabase-backed Dart/server identity contract, verify JWT/JWKS server-side, derive opaque actor context, enforce tenant/project membership, origin/CSRF controls, session refresh and stable unauthorized/forbidden errors. Keep any Clerk bridge behind the same interface and out of feature code.
+  - Action: Implement one Firebase-backed Dart/server identity contract, verify ID tokens/JWKS server-side, derive opaque actor context, enforce tenant/project membership, origin/CSRF controls, session refresh and stable unauthorized/forbidden errors. Keep provider types out of feature code.
   - User story link: Ensures users see and control only their authorized projects.
   - Depends on: Task 1.
   - Validate with: missing/expired/forged/cross-tenant token tests and redaction assertions.
-  - Implementation note (2026-08-01): runner JWT/JWKS verification, subject-to-tenant actor resolution, malformed/invalid/cross-tenant fail-closed tests, a protected read-only authorization-route fixture, and the Flutter provider-neutral Supabase session/refresh adapter are complete. The task remains in progress until the first state-changing route adds origin/CSRF controls and a provider-configured runner deployment proves the same boundary end-to-end.
+  - Implementation note (2026-08-11): runner Firebase ID-token/JWKS verification, subject-to-tenant actor resolution, malformed/invalid/cross-tenant fail-closed tests, a protected read-only authorization-route fixture, and the Flutter provider-neutral Firebase session/refresh adapter are complete. The task remains in progress until Linux REST/OIDC support and a provider-configured runner deployment prove the same boundary end-to-end.
 - [~] Task 3: Implement GitHub App access and managed workspace lifecycle.
   - Files: `runner/src/github/**`, `runner/src/workspaces/**`, `runner/test/github/**`, `runner/test/workspaces/**`.
   - Action: Generate narrowed short-lived installation tokens, verify repo permissions, clone/fetch managed repos, create isolated fix worktrees/branches, enforce path/symlink boundaries, lock project mutation, and clean abandoned workspaces.
@@ -592,7 +590,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - `AC-008`: GitHub access is revalidated server-side before repo-sensitive work; revoked access blocks action while preserving stale readable projection.
 - `AC-009`: HTTP retry and SSE reconnect cannot duplicate conversations, turns, runs, approvals, or tracker proposals.
 - `AC-010`: Cross-tenant/project identifiers, traversal paths, oversized payloads, prompt-injection attempts, and client-selected policies are rejected server-side.
-- `AC-011`: No GitHub/runtime/Supabase secret, token, cookie, tokenized URL, local path, environment value, raw private file, or unrestricted command output appears in client payloads, persisted events, logs, or Sentry.
+- `AC-011`: No GitHub/runtime/Firebase secret, token, cookie, tokenized URL, local path, environment value, raw private file, or unrestricted command output appears in client payloads, persisted events, logs, or Sentry.
 - `AC-012`: Web passes a complete authenticated end-to-end scenario; Android and Windows pass platform, responsive UI, terminal-rendering contract, and API compatibility proof.
 - `AC-013`: Server restart, selected-runtime process failure, event disconnect, timeout, project-busy, quota, SQLite failure, and abandoned-worktree scenarios preserve understandable state and bounded recovery.
 - `AC-014`: Completed run evidence can update the Cockpit and create a proposed tracker change while repository/Markdown remains canonical.
@@ -606,7 +604,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 
 # Test Contract
 
-- `surface`: Flutter Web, Android and Windows active ShipGlows runtime; Node.js/TypeScript managed control plane; `AgentRuntime`/`ExecutionProvider`/`CapabilityBroker` contracts; Codex app-server first adapter plus fake second-adapter conformance proof; Supabase Auth identity adapter; GitHub App access layer; managed clone/worktree layer; SQLite operational projection; authenticated SSE/HTTP API plus separate authenticated PTY channel; Cockpit health projection; semantic conversation UI; operator Workspace; Sentry diagnostics; operator docs; bounded just-bash skill execution. Marketing site, production push/merge/deploy, iOS shell, Linux desktop application launch, a live OpenCode/Kilo adapter, and unrestricted shell access are outside this proof.
+- `surface`: Flutter Web, Android and Windows active ShipGlows runtime; Node.js/TypeScript managed control plane; `AgentRuntime`/`ExecutionProvider`/`CapabilityBroker` contracts; Codex app-server first adapter plus fake second-adapter conformance proof; Firebase Auth identity adapter; GitHub App access layer; managed clone/worktree layer; SQLite operational projection; authenticated SSE/HTTP API plus separate authenticated PTY channel; Cockpit health projection; semantic conversation UI; operator Workspace; Sentry diagnostics; operator docs; bounded just-bash skill execution. Convex is the target product data layer but its first projection is outside this proof. Marketing site, production push/merge/deploy, iOS shell, Linux desktop application launch, a live OpenCode/Kilo adapter, and unrestricted shell access are outside this proof.
 - `proof_profile`: high-risk authenticated runtime and agent-execution proof. Required evidence combines official-doc freshness, runner unit/contract/integration/security tests, Flutter unit/widget/platform tests, authenticated Web browser proof, Android and Windows build/session/adapter proof, local managed Git/Codex-first-adapter smoke plus fake second-adapter conformance proof, restart/reconnect/idempotency proof, tenant isolation, secret/redaction scans, Sentry and diagnostics redaction, metadata lint, design-system drift check, dependency audit, and diff hygiene.
 - `proof_order`:
   1. Freeze shared request/response/event/error schemas and threat boundaries.
@@ -636,10 +634,10 @@ The default execution order is sequential by batch. Parallel work is allowed onl
   - `MCC-012`: interrupt, timeout, selected-runtime crash, runner restart, project-busy, and quota states are recoverable without duplicate work.
   - `MCC-013`: no secret/token/cookie/header/private path/raw private file leaks through API, SQLite events, logs, diagnostics, or Sentry.
   - `MCC-014`: Web authenticated end-to-end user journey succeeds without infrastructure knowledge.
-  - `MCC-015`: Android and Windows build, Supabase adapter contract, deep-link/session handling where applicable, and runner API compatibility succeed.
+  - `MCC-015`: Android and Windows build, Firebase adapter contract, deep-link/session handling where applicable, and runner API compatibility succeed.
   - `MCC-016`: completed evidence updates health projection and tracker proposal without making SQLite canonical.
   - `MCC-017`: design-system authority, keyboard/focus/semantics, responsive layout, and long-conversation behavior pass UI proof.
-  - `MCC-018`: official OpenAI, OpenCode/Kilo/ACP, Supabase and GitHub assumptions are rechecked immediately before dependency/runtime integration.
+  - `MCC-018`: official OpenAI, OpenCode/Kilo/ACP, Firebase, Convex, and GitHub assumptions are rechecked immediately before dependency/runtime integration.
   - `MCC-019`: operator Workspace capability is project-scoped, expires, attaches only to an allowlisted tmux session, reconnects safely, and cannot expose host paths or credentials.
   - `MCC-020`: a just-bash skill run is bounded, produces versioned evidence, and cannot access secrets or unrestricted network/filesystem state.
   - `MCC-021`: diagnostics/log-copy exposes safe build identity and Paris/UTC timestamps without tokens, cookies, private text, terminal scrollback or raw payloads.
@@ -649,13 +647,13 @@ The default execution order is sequential by batch. Parallel work is allowed onl
   - `MCC-025`: provider admission resolves manual intent, runtime/provider/capabilities/resources/deadline once; preflight rejection starts no workspace/session/turn, stores no secret/path, and cannot silently fall back.
   - `MCC-026`: an active local execution becomes a bounded interrupted state after restart; the MVP never claims drain, remote preservation or reattach without a dedicated provider implementation.
 - `required_results`: all scenario IDs pass or are explicitly blocked by unavailable external credentials under the narrow exception below; no critical/high security defect remains; no unsupported production claim is added; every failed external smoke retains complete fake/local contract proof and an exact operator follow-up; full Flutter and runner checks pass; changed governance artifacts pass metadata lint; design-system drift is addressed; working-tree changes remain scoped and preserve pre-existing operator edits.
-- `exception_with_proof`: live Supabase, GitHub App, Sentry ingestion, and Codex-first-adapter authenticated smoke calls may be deferred only when credentials or provider configuration are unavailable in the local environment. The implementation must still provide complete fake/local contract tests, disabled-by-default secure adapters, redaction proof, exact configuration diagnostics, and a verification checklist that marks the live scenario blocked rather than passed. A live Codex smoke may use the server's existing authenticated Codex installation without exposing credentials. A live OpenCode/Kilo adapter is explicitly outside this MVP proof. No release may be described as production-ready until all required live provider scenarios pass.
+- `exception_with_proof`: live Firebase, GitHub App, Sentry ingestion, and Codex-first-adapter authenticated smoke calls may be deferred only when credentials or provider configuration are unavailable in the local environment. The implementation must still provide complete fake/local contract tests, disabled-by-default secure adapters, redaction proof, exact configuration diagnostics, and a verification checklist that marks the live scenario blocked rather than passed. A live Codex smoke may use the server's existing authenticated Codex installation without exposing credentials. A live OpenCode/Kilo adapter is explicitly outside this MVP proof. No release may be described as production-ready until all required live provider scenarios pass.
 - `exception_without_proof`: none for tenant isolation, authorization middleware, idempotency, event ordering/resume, audit read-only policy, fix worktree isolation, no-push/no-merge gates, path/symlink containment, prompt/output bounds, secret redaction, health unknown semantics, accessible failure states, metadata lint, dependency audit, and diff hygiene.
 
 # Test Strategy
 
 - Unit tests for every schema, state transition, health aggregation rule, redactor, policy, and mapper.
-- Contract tests with fake Supabase Auth, GitHub App, Codex adapter, second agent adapter, filesystem, clock, and Sentry transports.
+- Contract tests with fake Firebase Auth, GitHub App, Codex adapter, second agent adapter, filesystem, clock, and Sentry transports.
 - SQLite migration, transaction, tenant boundary, idempotency, restart, backup, and restore tests.
 - Local Git fixtures for clone/fetch, renamed default branch, worktree isolation, concurrent mutation lock, symlink/traversal rejection, and abandoned-worktree cleanup.
 - API integration tests for auth, commands, approvals, quotas, timeouts, interruption, cursor resume, access loss, and malformed input.
@@ -683,7 +681,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - Medium architecture risk: distributed-worker recovery could be overstated before ShipGlows has a durable remote provider and distributed lease. This MVP records local execution truth and reports restart interruption; drain/reattach is deferred to a separately reviewed execution-provider slice.
 - Medium cost/availability risk: unbounded turns, output, concurrency, or retries could exhaust server and model quotas.
 - Medium UX risk: a terminal clone would be visually noisy and inaccessible; semantic event rendering requires careful progress/error design.
-- Medium platform risk: Supabase session and deep-link behavior still needs Web/Android/Windows proof; a Clerk compatibility path must not silently become a second identity model.
+- Medium platform risk: Firebase session and deep-link behavior still needs Web/Android/Windows proof; Linux REST/OIDC support remains unimplemented.
 - Medium data-coherence risk: operational projections could accidentally become canonical instead of GitHub/Markdown.
 - High operator-surface risk: a PTY/tmux bridge can become a general server shell if capability scope, allowlists, cleanup and audit boundaries are weakened.
 - Medium sandbox risk: just-bash is beta and simulated; its use must remain bounded and must not be mistaken for proof that real server commands are safe.
@@ -812,6 +810,8 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-11 17:46:09 UTC | 103-sg-verify | GPT-5 Codex | Verified 200 Flutter tests, clean analysis, release Web build, three stable goldens, zero changed-file design drift, metadata/diff hygiene and clean Chrome console after Web bootstrap cleanup. | Task 9 complete; broader MVP remains active | Commit the scoped visual-proof slice without unrelated site or TASKS changes |
 | 2026-08-11 17:46:09 UTC | 300-sg-docs | GPT-5 Codex | Updated the design authority, runtime boundary, code map and active MVP contract with the exact local visual, accessibility and browser proof boundary. | internal documentation aligned; no hosted authentication claim added | Preserve Task 9 closure while continuing Tasks 8, 10-13 |
 | 2026-08-11 17:47:40 UTC | 005-sg-ship | GPT-5 Codex | Created the scoped local Task 9 visual-contract commit with code, deterministic goldens and internal proof documentation, excluding unrelated `site/` and `TASKS.md` changes. | local commit created; push not authorized | Continue the broader MVP from the committed Task 9 baseline |
+| 2026-08-11 17:57:13 UTC | 300-sg-docs | GPT-5 Codex | Audited documentation freshness after the Cockpit commits. The active spec, runtime boundary, design authority and code map are aligned; the app contributor entrypoints and migration trackers still describe removed `APP_TARGET`/ContentFlow runtime behavior. | documentation is only partially current; no product claim changed and no unrelated worktree changes were touched | Reconcile the stale contributor and migration documents in a scoped documentation pass before any new implementation work |
+| 2026-08-11 18:26:17 UTC | 300-sg-docs + 007-sg-content | GPT-5 Codex | Reconciled contributor guidance, public app README, technical context, runtime/code maps, the active MVP contract, and historical migration records with one ShipGlows runtime, Firebase Auth, Convex target data plane, and Fastify/SQLite execution-plane exception. Historical cleanup documents and their two originating specs are now explicitly superseded. | documentation is current for the implemented Cockpit baseline; live Firebase, hosted runner, Sentry and public Workspace proof remain open and are not claimed complete | Continue the hosted Firebase/Runner proof from the documented single-runtime baseline |
 
 # Current Chantier Flow
 

@@ -1,14 +1,14 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.1.0"
 project: "shipglows_app"
 created: "2026-05-10"
 created_at: "2026-05-10 10:22:56 UTC"
-updated: "2026-07-11"
-updated_at: "2026-07-11 20:42:00 UTC"
-status: ready
-source_skill: sf-spec
+updated: "2026-08-11"
+updated_at: "2026-08-11 19:57:13 UTC"
+status: superseded
+source_skill: 300-sg-docs
 source_model: "GPT-5 Codex"
 scope: "legacy-file-migration-tracker"
 owner: "Diane"
@@ -43,15 +43,16 @@ depends_on:
     artifact_version: "0.1.0"
     required_status: "draft"
 supersedes: []
+superseded_by: "shipglows_data/technical/runtime-boundary.md"
 evidence:
   - "User asked 2026-05-10 whether shipglows_data/workflow/specs track old files that should be moved to legacy or deleted, because otherwise old and new files will become confusing."
   - "shipglows_data/technical/legacy-contentflow-inventory.md classifies legacy areas but does not yet track current path, target path, migration status, decision source, and validation per file or area."
   - "shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md requires classification before deletion and blocks destructive cleanup when risk or product value is unclear."
   - "shipglows_data/editorial/content-map.md points to legacy-contentflow-inventory.md as canonical classification source."
-next_step: "/104-sg-end ShipGlows Legacy File Migration Tracker"
+next_step: "Superseded by the single-runtime boundary; retain only as historical cleanup evidence."
 ---
 # Spec: ShipGlows Legacy File Migration Tracker
-🟢 [shipglows_app] spec: ShipGlows Legacy File Migration Tracker | status: ready | path: shipglows_data/workflow/specs/shipglows-legacy-file-migration-tracker.md | next: /104-sg-end ShipGlows Legacy File Migration Tracker
+⚪ [shipglows_app] spec: ShipGlows Legacy File Migration Tracker | status: superseded | path: shipglows_data/workflow/specs/shipglows-legacy-file-migration-tracker.md | next: consult runtime-boundary.md
 
 # Title
 
@@ -59,7 +60,7 @@ ShipGlows Legacy File Migration Tracker
 
 # Status
 
-Ready spec. This spec creates the tracking contract for future legacy file moves, archives, and deletions. It does not move, delete, rename, or rewrite legacy files by itself.
+Superseded on 2026-08-11. This document remains historical cleanup evidence only: ShipGlows has one product runtime and dormant modules are not a compatibility surface.
 
 # User Story
 
@@ -67,7 +68,7 @@ En tant que fondatrice de ShipGlows, je veux un suivi explicite des anciens fich
 
 # Minimal Behavior Contract
 
-Le suivi accepte l'inventaire legacy actuel et produit une table durable qui dit, pour chaque ancien fichier ou zone legacy, ou il est aujourd'hui, quelle decision ShipGlows lui est appliquee, s'il doit rester en place, etre adapte, deplace dans un dossier legacy/archive, ou supprime plus tard, quelle preuve justifie la decision, et quel check valide l'action. Si une decision est risquee ou ambigue, le fichier reste en place avec un statut bloque ou decision requise. L'edge case facile a rater est de classer une zone comme "legacy" puis de la deplacer ou supprimer sans tracer qu'elle contient encore une idee produit confirmee, un contrat de securite, ou une reference utile pour une future spec.
+This historical contract preserves the safe-cleanup rule: no dormant module may be moved or deleted without a current owner spec and import/behavior proof. It must not be used to restore an alternate application runtime.
 
 # Success Behavior
 

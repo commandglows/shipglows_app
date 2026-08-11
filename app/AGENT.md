@@ -1,16 +1,15 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "0.3.0"
-draft: true
+artifact_version: "1.0.0"
 project: shipglows_app
 created: "2026-04-26"
-updated: "2026-08-03"
-status: draft
-source_skill: sf-docs
+updated: "2026-08-11"
+status: active
+source_skill: 300-sg-docs
 scope: technical
 owner: "Diane"
-confidence: medium
+confidence: high
 risk_level: high
 security_impact: yes
 docs_impact: yes
@@ -18,33 +17,32 @@ evidence:
   - "CLAUDE.md"
   - "shipglows_data/editorial/content-map.md"
   - "shipglows_data/technical/code-docs-map.md"
-  - "shipglows_data/technical/legacy-contentflow-inventory.md"
+  - "shipglows_data/technical/runtime-boundary.md"
 depends_on:
   - "CLAUDE.md@0.2.0"
-  - "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md@1.4.0"
+  - "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md@1.25.0"
 supersedes:
-  - "AGENT.md@1.1.0 contentflow_app guidance"
+  - "AGENT.md@0.3.0 historical contributor guidance"
 linked_systems:
   - "Flutter"
   - "ShipGlows Markdown sources"
-  - "Legacy ContentFlow runtime"
+  - "Dormant modules outside the ShipGlows entrypoint"
 next_review: "2026-09-03"
-next_step: "Continue the managed Cockpit MVP without importing legacy ContentFlow assumptions."
+next_step: "Continue the managed Cockpit MVP from the single ShipGlows runtime."
 ---
 
 # AGENT - shipglows_app
 
 ## Mission
 
-Keep this repository aligned with ShipGlows as the active product while preserving useful ContentFlow legacy ideas until they are classified. Do not treat legacy ContentFlow implementation details as current ShipGlows decisions.
+Keep this repository aligned with the single ShipGlows product runtime. Code outside that runtime is dormant unless a current ShipGlows spec explicitly integrates it.
 
 ## Technical Mandate For Contributors
 
-- ShipGlows is the default runtime.
-- `APP_TARGET=legacy` and `APP_TARGET=contentflow` are temporary audit targets.
+- `app/lib/main.dart` always starts `ShipGlowsApp`.
 - GitHub repositories and ShipGlows Markdown are the authoritative content sources.
 - The runner SQLite database is an operational projection, not repository authority.
-- Legacy auth, FastAPI, OpenRouter, feedback, and pipeline code are reference material until a dedicated ShipGlows spec adopts them.
+- Dormant auth, feedback, pipeline, and integration modules are not product features until a current ShipGlows spec adopts them.
 
 ## Required Architecture Conventions
 
@@ -55,14 +53,14 @@ Keep this repository aligned with ShipGlows as the active product while preservi
    - the existing read-only terminal TUI belongs in `/home/claude/shipglowz/tui`
    - the authenticated Flutter operator Workspace belongs in `app/` and `runner/`; its short-lived PTY/tmux stream is implemented, server-smoke proven, and remains fail-closed unless the runner allowlists and authorizes the project
 
-2. Legacy reuse requires classification:
-   - Check `shipglows_data/technical/legacy-contentflow-inventory.md`.
-   - Move only the smallest useful concept.
+2. Dormant-module reuse requires classification:
+   - Check `shipglows_data/technical/runtime-boundary.md` and `shipglows_data/technical/legacy-contentflow-inventory.md`.
+   - Integrate only the smallest useful concept.
    - Preserve security boundaries for auth, secrets, feedback, terminal, and agent execution.
 
 3. Runtime boundaries must stay explicit:
-   - Do not add new default dependencies from the legacy runtime into ShipGlows.
-   - Do not expose legacy routes as product features without a ready spec.
+   - Do not add dependencies from dormant modules into ShipGlows without a ready spec.
+   - Do not expose dormant routes or scripts as product features.
 
 4. Data rules:
    - Do not make a database canonical by accident.
@@ -76,8 +74,8 @@ Keep this repository aligned with ShipGlows as the active product while preservi
 ```bash
 flutter test
 flutter analyze
-rg -n "APP_TARGET|LegacyShipGlowsApp|ShipGlowsApp" lib test
-rg -n "ContentFlow|contentflow|contentflow_app" README.md CLAUDE.md AGENT.md shipglows_data/workflow/TASKS.md shipglows_data/editorial/content-map.md shipglows_data/technical shipglows_data/workflow/specs lib test
+! rg -n "APP_TARGET|LegacyShipGlowsApp" lib/main.dart lib/shipglows web/index.html
+rg -n "ShipGlowsApp" lib/main.dart lib/shipglows
 ```
 
 ## Canonical Sources
@@ -85,9 +83,9 @@ rg -n "ContentFlow|contentflow|contentflow_app" README.md CLAUDE.md AGENT.md shi
 - `CLAUDE.md`: contributor guidance.
 - `shipglows_data/editorial/content-map.md`: content and documentation surface map.
 - `shipglows_data/technical/code-docs-map.md`: code area documentation map.
-- `shipglows_data/technical/runtime-boundary.md`: active versus legacy runtime.
+- `shipglows_data/technical/runtime-boundary.md`: single-runtime and dormant-module boundary.
 - `shipglows_data/technical/markdown-source-of-truth.md`: data authority contract.
-- `shipglows_data/technical/legacy-contentflow-inventory.md`: legacy classification.
+- `shipglows_data/technical/legacy-contentflow-inventory.md`: historical dormant-module classification.
 - `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md`: active managed Cockpit chantier.
 
 ## Collaboration Guidance

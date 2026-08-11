@@ -1,15 +1,15 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "0.3.0"
+artifact_version: "1.0.0"
 project: shipglows_app
 created: "2026-04-26"
-updated: "2026-08-03"
-status: draft
-source_skill: sf-docs
+updated: "2026-08-11"
+status: active
+source_skill: 300-sg-docs
 scope: technical
 owner: "Diane"
-confidence: medium
+confidence: high
 risk_level: high
 security_impact: yes
 docs_impact: yes
@@ -18,12 +18,12 @@ evidence:
   - "lib/main.dart"
   - "shipglows_data/technical/runtime-boundary.md"
   - "shipglows_data/technical/markdown-source-of-truth.md"
-  - "shipglows_data/technical/legacy-contentflow-inventory.md"
+  - "shipglows_data/technical/managed-runner-foundation.md"
 depends_on:
-  - "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md@1.4.0"
-  - "shipglows_data/technical/code-docs-map.md@0.8.0"
+  - "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md@1.25.0"
+  - "shipglows_data/technical/code-docs-map.md@1.1.0"
 supersedes:
-  - "CLAUDE.md@1.1.0 contentflow_app guidance"
+  - "CLAUDE.md@0.3.0 historical contributor guidance"
 linked_systems:
   - "Flutter"
   - "Riverpod"
@@ -40,15 +40,14 @@ next_step: "Complete public TLS and authenticated browser proof for the implemen
 
 `shipglows_app` is the Flutter application and managed runner for the ShipGlows repository-health and agent Cockpit. The active runtime combines server-backed project/health projections with a local Markdown compatibility source.
 
-The repository still contains a legacy ContentFlow runtime. Treat it as migration/reference material unless a ready ShipGlows spec explicitly adapts it.
+There is one product runtime. Modules outside it are dormant code, not a compatibility target or a second application.
 
 ## Current Product Contract
 
 - Active product: ShipGlows.
-- Active default runtime: `APP_TARGET=shipglows`.
-- Temporary legacy runtimes: `APP_TARGET=legacy` and `APP_TARGET=contentflow`.
+- Active runtime: `ShipGlowsApp` from `lib/main.dart`.
 - Current MVP mode: authenticated Cockpit plus managed semantic conversations; Web, Android, and Windows are the target platforms.
-- Current validation loop: push to Git, let Vercel build the Flutter web app, then validate the served web version.
+- Deployment state is not inferred from this file; verify the configured Web deployment before making a hosted claim.
 - Source of truth: Markdown and repository files.
 - Runner database role: operational projection, index, cache, or sync layer unless a later reviewed spec supersedes this.
 
@@ -96,7 +95,8 @@ Focused checks:
 ```bash
 flutter test test/data/shipglows_sources
 flutter test test/domain/project_health
-rg -n "APP_TARGET|LegacyShipGlowsApp|ShipGlowsApp" lib test
+! rg -n "APP_TARGET|LegacyShipGlowsApp" lib/main.dart lib/shipglows web/index.html
+rg -n "ShipGlowsApp" lib/main.dart lib/shipglows
 ```
 
 Optional TUI checks:
@@ -113,29 +113,29 @@ On Linux ARM64 (`aarch64`/`arm64`), do not run Android release builds locally: n
 
 ## Active App Structure
 
-- `lib/main.dart`: root app target switch.
+- `lib/main.dart`: single ShipGlows composition root.
 - `lib/shipglows/`: active ShipGlows UI runtime.
 - `lib/data/shipglows_sources/`: active source readers and parsers.
 - `lib/domain/project_health/`: active project posture model.
 - `tui/`: optional ShipGlows terminal dashboard runtime (Bun/OpenTUI), read-only V1.
-- `shipglows_data/technical/`: technical governance for active and legacy boundaries.
+- `shipglows_data/technical/`: technical governance for active and dormant-module boundaries.
 - `../runner/`: active managed control plane.
 - `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md`: active product chantier.
 
-## Legacy Structure
+## Dormant Modules
 
-These areas are retained for classification, not as active product direction:
+These areas are outside the product entrypoint. They must not be exposed or reused without a current ShipGlows spec:
 
 - `lib/router.dart`
 - `lib/providers/providers.dart`
 - `lib/presentation/**`
 - `lib/data/services/**`
 - `lib/data/models/**`
-- `lib/core/**` when tied to ContentFlow assumptions
+- `lib/core/**` when not imported by ShipGlows
 - `web_auth/**`
-- legacy `shipglows_data/workflow/specs/*.md`
+- historical workflow records outside the active MVP contract
 
-Use `shipglows_data/technical/legacy-contentflow-inventory.md` before moving or deleting any of them.
+Use `shipglows_data/technical/runtime-boundary.md` before moving, deleting, or integrating any of them.
 
 ## Data Rules
 
@@ -151,7 +151,7 @@ Use `shipglows_data/technical/legacy-contentflow-inventory.md` before moving or 
 - Text feedback.
 - Interactive terminal/tmux operator access from Flutter Web, Android, or Windows is implemented behind an allowlisted short-lived capability. Real server PTY/tmux/Codex smoke passes; public HTTPS/authenticated reconnect and Neovim proof remain.
 - New automatic agent triggers, push, merge, deployment, or canonical write-back.
-- FastAPI/local service runner.
+- Any new backend authority beyond the documented Convex target and Fastify/SQLite execution-plane exception.
 
 ## Documentation Rule
 
@@ -161,4 +161,4 @@ Before broad implementation work, keep these in sync:
 - `shipglows_data/technical/code-docs-map.md`
 - `shipglows_data/technical/runtime-boundary.md`
 - `shipglows_data/technical/markdown-source-of-truth.md`
-- `shipglows_data/technical/legacy-contentflow-inventory.md`
+- `shipglows_data/technical/managed-runner-foundation.md`

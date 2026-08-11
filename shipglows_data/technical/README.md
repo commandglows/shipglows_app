@@ -1,15 +1,15 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.3.0"
+artifact_version: "1.0.0"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-08-03"
-status: draft
-source_skill: sf-docs
+updated: "2026-08-11"
+status: active
+source_skill: 300-sg-docs
 scope: "technical-governance"
 owner: "Diane"
-confidence: medium
+confidence: high
 risk_level: medium
 security_impact: yes
 docs_impact: yes
@@ -19,15 +19,17 @@ linked_systems:
   - "lib/data/shipglows_sources/"
   - "lib/domain/project_health/"
   - "lib/presentation/"
-  - "lib/router.dart"
+  - "runner/src/"
   - "shipglows_data/editorial/content-map.md"
 depends_on:
-  - "shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md@0.1.0"
-supersedes: []
+  - "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md@1.25.0"
+  - "shipglows_data/workflow/specs/firebase-auth-convex-alignment.md@0.1.0"
+supersedes:
+  - "shipglows_data/technical/README.md@0.3.0"
 evidence:
   - "README.md identifies ShipGlows as the active app."
-  - "lib/main.dart defaults APP_TARGET to shipglows."
-  - "Legacy ContentFlow runtime remains available behind explicit APP_TARGET values."
+  - "lib/main.dart always launches ShipGlowsApp."
+  - "Firebase Auth and the managed Fastify/SQLite runner are implemented behind provider-neutral boundaries."
 next_review: "2026-09-03"
 next_step: "Keep public TLS, identity provisioning, and Workspace proof status aligned."
 ---
@@ -36,7 +38,7 @@ next_step: "Keep public TLS, identity provisioning, and Workspace proof status a
 
 ## Purpose
 
-This directory is the code-proximate governance layer for `shipglows_app`. It records which code areas are active ShipGlows surfaces, which areas are legacy ContentFlow surfaces, and which documents must be updated before broad implementation work.
+This directory is the code-proximate governance layer for `shipglows_app`. It records the single ShipGlows runtime, its managed control plane, and the dormant modules that must not become product behavior by accident.
 
 ## Owned Files
 
@@ -44,29 +46,29 @@ This directory is the code-proximate governance layer for `shipglows_app`. It re
 - `shipglows_data/technical/code-docs-map.md`
 - `shipglows_data/technical/runtime-boundary.md`
 - `shipglows_data/technical/markdown-source-of-truth.md`
-- `shipglows_data/technical/legacy-contentflow-inventory.md`
+- `shipglows_data/technical/managed-runner-foundation.md`
 
 ## Entrypoints
 
-- `app/lib/main.dart` chooses the runtime target.
-- `app/lib/shipglows/app.dart` starts the active ShipGlows dashboard.
-- `app/lib/router.dart` starts the legacy runtime only when `APP_TARGET=legacy` or `APP_TARGET=contentflow`.
+- `app/lib/main.dart` always starts `ShipGlowsApp`.
+- `app/lib/shipglows/app.dart` starts the ShipGlows Cockpit.
+- `runner/src/main.ts` starts the managed control plane.
 - `shipglows_data/editorial/content-map.md` maps project-owned content and documentation surfaces.
 
 ## Invariants
 
-- ShipGlows is the active product in this repository.
-- Legacy ContentFlow code is not deleted until classified.
+- ShipGlows is the only product runtime in this repository.
+- Dormant modules are not executable product surfaces and are only changed through a current ShipGlows spec.
 - Markdown and repository files remain the source of truth for ShipGlows operational data.
 - SQLite remains an operational projection unless a later spec changes that contract.
-- Supabase auth and the managed runner are active behind portable contracts; BYOK and feedback remain future work.
+- Firebase Auth is the active identity adapter; Convex is the target product data layer; Fastify/SQLite is the justified execution-plane exception.
 - The operator Workspace gateway and Flutter terminal are implemented; real server PTY/tmux/Codex smoke passes. Public authenticated access remains unavailable pending Caddy/TLS and actor/project provisioning.
 
 ## Validation
 
 ```bash
-rg -n "ContentFlow|contentflow|contentflow_app" README.md CLAUDE.md AGENT.md shipglows_data/workflow/TASKS.md shipglows_data/editorial/content-map.md shipglows_data/technical shipglows_data/workflow/specs lib test
-rg -n "APP_TARGET|LegacyShipGlowsApp|ShipGlowsApp" lib test
+! rg -n "APP_TARGET|LegacyShipGlowsApp" app/lib/main.dart app/lib/shipglows app/web/index.html
+rg -n "ShipGlowsApp" app/lib/main.dart app/lib/shipglows
 flutter test
 flutter analyze
 ```
@@ -74,11 +76,11 @@ flutter analyze
 ## Reader Checklist
 
 - Does the file describe ShipGlows as the active product?
-- Does it distinguish active code from legacy/reference code?
-- Does it avoid making Firebase, Firestore, FastAPI, Clerk, Supabase, or OpenRouter a hidden implementation decision?
+- Does it distinguish active code from dormant modules?
+- Does it preserve Firebase Auth, Convex, and the Fastify/SQLite execution-plane boundary exactly as documented?
 - Does it preserve the Markdown source-of-truth invariant?
-- Does it avoid instructing agents to delete legacy code without a classification?
+- Does it avoid turning dormant code into an alternate runtime?
 
 ## Maintenance Rule
 
-When code moves between active ShipGlows, shared/adapted code, and legacy ContentFlow, update `shipglows_data/technical/code-docs-map.md` and `shipglows_data/technical/legacy-contentflow-inventory.md` in the same chantier.
+When code moves between the ShipGlows runtime and dormant modules, update `shipglows_data/technical/code-docs-map.md` and `shipglows_data/technical/runtime-boundary.md` in the same chantier.

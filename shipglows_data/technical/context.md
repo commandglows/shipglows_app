@@ -23,7 +23,7 @@ depends_on:
     artifact_version: "1.6.0"
     required_status: draft
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
-    artifact_version: "1.4.0"
+    artifact_version: "1.25.0"
     required_status: ready
 supersedes:
   - "shipglows_data/workflow/archives/contentflow-governance/technical-context.md"
@@ -70,7 +70,7 @@ The canonical governance corpus lives at root `shipglows_data/`.
 - Audits are read-only; fixes use isolated worktrees and stop before push, merge, or deployment.
 - The operator Workspace PTY/tmux gateway and Flutter terminal rendering are implemented. A real isolated server smoke has proved PTY input/output, resize, tmux attachment, Codex execution, and cleanup.
 - The supervised runner last proved on loopback still uses its previously provisioned Supabase authentication configuration and one server-owned Workspace allowlist. The repository source now targets Firebase Auth, but that deployment has not been reconfigured or re-proven. Public access is also unproven because `runner.shipglows.com` lacks its root-owned Caddy route and the runner identity database has no provisioned actor/project.
-- Legacy ContentFlow code remains behind explicit legacy targets and is not current product truth.
+- Dormant modules remain outside the single ShipGlows entrypoint and are not current product behavior.
 
 ## Validation
 

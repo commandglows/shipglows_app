@@ -10,7 +10,7 @@ Flutter application for the ShipGlows managed repository-health and agent Cockpi
 - Server-owned GitHub App, worktree, persistence, and agent-runtime boundaries.
 - Web, Android, and Windows product architecture; Web is the first hosted proof surface.
 - Optional operator Workspace surface backed by a short-lived, project-scoped PTY/tmux capability when configured on the runner.
-- Legacy ContentFlow code remains in the repo only as migration/reference material.
+- `ShipGlowsApp` is the repository's only product runtime.
 
 ## Data Sources
 
@@ -70,23 +70,16 @@ bun run dev
 - Isolated dependency boundary: no OpenTUI dependency is added to this Flutter root.
 - Scope is read-only inspection of ShipGlows sources; no write-back/actions.
 
-## Runtime Targets
+## Runtime
 
-The default runtime is ShipGlows:
+Run the ShipGlows application:
 
 ```bash
 flutter run -d chrome
 ```
 
-The repository still exposes the old ContentFlow runtime for migration audit:
-
-```bash
-flutter run -d chrome --dart-define=APP_TARGET=legacy
-flutter run -d chrome --dart-define=APP_TARGET=contentflow
-```
-
-Do not use the legacy target as the product direction. Its modules are classified
-in `shipglows_data/technical/legacy-contentflow-inventory.md`.
+`app/lib/main.dart` has no alternate application target. Modules not reached from
+that entrypoint are dormant and cannot be treated as a supported product surface.
 
 ## Managed Runner
 
@@ -113,6 +106,6 @@ flutter analyze
 - No automatic push, merge, deployment, or canonical-branch mutation.
 - Interactive PTY/tmux rendering is implemented and the managed runner has one server-owned ShipGlows allowlist. Public use remains unavailable until `runner.shipglows.com` has its HTTPS reverse-proxy route and an authenticated actor/project is provisioned.
 - No claim of complete Web/Android/Windows parity until platform proof passes.
-- FastAPI, Clerk, Firebase, and the older ContentFlow product remain legacy context unless a current ShipGlows contract explicitly adopts them.
+- Firebase Auth is the active identity adapter behind a provider-neutral boundary. Convex is the target product data layer; Fastify/SQLite is the documented execution-plane exception. Live Firebase and hosted-runner proof remain incomplete.
 
 See `shipglows_data/technical/managed-runner-foundation.md` and the managed Cockpit MVP specification.

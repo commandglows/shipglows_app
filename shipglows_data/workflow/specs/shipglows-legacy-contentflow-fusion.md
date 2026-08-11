@@ -1,14 +1,14 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.1.0"
 project: "shipglows_app"
 created: "2026-05-08"
 created_at: "2026-05-08 20:09:28 UTC"
-updated: "2026-05-10"
-updated_at: "2026-05-10 10:36:30 UTC"
-status: active
-source_skill: sf-spec
+updated: "2026-08-11"
+updated_at: "2026-08-11 19:57:13 UTC"
+status: superseded
+source_skill: 300-sg-docs
 source_model: "GPT-5 Codex"
 scope: "migration-fusion"
 owner: "user"
@@ -20,7 +20,7 @@ docs_impact: "yes"
 linked_systems:
   - "Flutter desktop/web runtime"
   - "Markdown repository source of truth"
-  - "Legacy ContentFlow runtime"
+  - "Historical dormant-module classification"
   - "Future auth and BYOK integrations"
   - "Future projection database"
   - "shipglows_data/technical/legacy-file-migration-tracker.md"
@@ -44,15 +44,16 @@ depends_on:
     artifact_version: "0.1.0"
     required_status: "draft"
 supersedes: []
+superseded_by: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
 evidence:
   - "origin/main is the sane base; local Supabase WIP was archived on backup/local-supabase-wip-2026-05-08"
   - "README.md and pubspec.yaml identify ShipGlows as current project, while legacy ContentFlow files remain embedded"
   - "User direction: keep Markdown as source of truth; database is a projection/sync layer"
   - "User direction: do not delete legacy auth, BYOK, feedback, or pipeline ideas before classification"
-next_step: "/sf-ready ShipGlows Legacy ContentFlow Fusion"
+next_step: "Superseded by the single-runtime boundary and managed Cockpit MVP; do not implement from this spec."
 ---
 # Spec: ShipGlows Legacy ContentFlow Fusion
-🟡 [shipglows_app] spec: ShipGlows Legacy ContentFlow Fusion | status: active | path: shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md | next: /sf-ready ShipGlows Legacy ContentFlow Fusion
+⚪ [shipglows_app] spec: ShipGlows Legacy ContentFlow Fusion | status: superseded | path: shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md | next: consult the managed Cockpit MVP
 
 # Title
 
@@ -60,7 +61,7 @@ ShipGlows Legacy ContentFlow Fusion
 
 # Status
 
-In progress. The spec is ready for the first migration/fusion slice, the technical governance corpus has been bootstrapped, root guidance has been redirected to ShipGlows, and low-risk test/package rename cleanup has started. Remaining work is legacy classification refinement and later decision-specific shipglows_data/workflow/specs.
+Superseded on 2026-08-11. It records the original safe-classification premise only. ShipGlows now has one product runtime; `shipglows-managed-codex-cockpit-mvp.md` and `runtime-boundary.md` own current behavior.
 
 # User Story
 
@@ -68,7 +69,7 @@ En tant que fondatrice de ShipGlows, je veux fusionner proprement l'heritage Con
 
 # Minimal Behavior Contract
 
-Le chantier accepte l'etat actuel du repo avec un runtime ShipGlows par defaut et un runtime legacy ContentFlow encore present. Il doit produire une frontiere explicite entre le produit actif et l'heritage, classer chaque brique legacy en `keep`, `adapt`, `park`, `archive`, ou `delete-later`, puis appliquer uniquement les changements dont l'intention est claire et reversible. En cas d'ambiguite, de conflit de donnees, de securite ou de risque de perte d'idee produit, le chantier laisse le code intact, documente la decision manquante, et demande une decision utilisateur avant suppression. L'edge case facile a rater est de supprimer une brique ContentFlow qui ne sert plus au runtime actuel mais qui correspond a un besoin ShipGlows deja confirme: auth, BYOK OpenRouter, feedback texte, pipeline, ou futur runner d'agents.
+This historical contract preserves the rule that destructive cleanup needs classification. It must not be used to reintroduce an alternate runtime or to infer current product behavior.
 
 # Success Behavior
 

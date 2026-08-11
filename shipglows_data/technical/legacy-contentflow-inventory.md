@@ -1,12 +1,12 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "1.0.0"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-05-10"
-status: draft
-source_skill: sf-docs
+updated: "2026-08-11"
+status: superseded
+source_skill: 300-sg-docs
 scope: "legacy-contentflow-inventory"
 owner: "Diane"
 confidence: medium
@@ -25,24 +25,25 @@ depends_on:
   - "shipglows_data/workflow/research/explorations/2026-05-08-legacy-contentflow-shipglows-inventory.md@1.0.0"
   - "shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md@0.1.0"
 supersedes: []
+superseded_by: "shipglows_data/technical/runtime-boundary.md"
 evidence:
   - "Exploration report created on 2026-05-08."
-  - "Repo scan found active ShipGlows and embedded legacy ContentFlow runtime."
+  - "app/lib/main.dart always launches ShipGlowsApp; the former alternate target was removed on 2026-08-11."
 next_review: "2026-09-03"
-next_step: "Continue file-level classification before removing any legacy runtime code."
+next_step: "Use runtime-boundary.md for current behavior; consult this inventory only before a destructive dormant-module cleanup."
 ---
 
-# Legacy ContentFlow Inventory
+# Historical Dormant Module Inventory
 
 ## Purpose
 
-This inventory prevents destructive cleanup while ShipGlows absorbs useful ContentFlow ideas. A path can be renamed, moved, or removed only after its decision is recorded here or in a later spec that supersedes this inventory.
+This historical inventory prevents destructive cleanup of dormant modules. It is not a product architecture: ShipGlows has one runtime, and no ContentFlow runtime remains selectable.
 
 ## Migration Tracking
 
 Operational move/archive/delete status is tracked in `shipglows_data/technical/legacy-file-migration-tracker.md`.
 
-Before any future legacy cleanup moves, archives, renames, or deletes a path, the path must have:
+Before any future dormant-module cleanup moves, archives, renames, or deletes a path, the path must have:
 
 - a tracker row or explicit grouped row;
 - a `Migration status`;
@@ -62,14 +63,13 @@ This inventory remains the classification source. The migration tracker is the o
 - `lib/core/**`
 - `web_auth/**`
 - `shipglows_data/workflow/specs/*.md`
-- legacy sections in `README.md`, `CLAUDE.md`, `AGENT.md`, and `shipglows_data/workflow/TASKS.md`
+- historical references in repository guidance and workflow records
 - `shipglows_data/technical/legacy-file-migration-tracker.md`
 
 ## Entrypoints
 
-- `lib/main.dart` selects `LegacyShipGlowsApp` only for `APP_TARGET=legacy` or `APP_TARGET=contentflow`.
-- `lib/router.dart` owns the legacy ContentFlow route graph.
-- `lib/providers/providers.dart` wires most legacy runtime state.
+- `lib/main.dart` always starts `ShipGlowsApp`.
+- `lib/router.dart` and `lib/providers/providers.dart` are dormant modules outside the product entrypoint.
 
 ## Inventory
 
@@ -78,7 +78,7 @@ This inventory remains the classification source. The migration tracker is the o
 | `lib/shipglows/` | Active ShipGlows dashboard | keep | low | Keep as active runtime surface |
 | `lib/data/shipglows_sources/` | Active Markdown readers/parsers | keep | medium | Preserve source allowlists and diagnostics |
 | `lib/domain/project_health/` | Active project health logic | keep | medium | Preserve as active domain layer |
-| `lib/main.dart` | Runtime selector | keep-temporary | medium | Document and avoid expanding target names |
+| `lib/main.dart` | Single product entrypoint | keep | low | Keep `ShipGlowsApp` as the only root |
 | `lib/presentation/theme/` | Legacy/shared UI theme | adapt-candidate | low | Review for shared design tokens later |
 | `lib/presentation/widgets/app_error_view.dart` | Generic error primitive | adapt-candidate | low | Consider moving to ShipGlows widgets after review |
 | `lib/presentation/widgets/skeleton_loader.dart` | Generic loading primitive | adapt-candidate | low | Consider moving to ShipGlows widgets after review |
@@ -98,7 +98,7 @@ This inventory remains the classification source. The migration tracker is the o
 | `lib/data/services/offline_storage_service.dart` | Legacy offline/cache | adapt-candidate | medium | Review if projection/sync needs local cache |
 | `lib/data/services/notification_service.dart` | Legacy notification scaffold | park | medium | Keep parked until notification need exists |
 | `lib/providers/providers.dart` | Legacy provider graph | park | high | Split only when specific reused module is selected |
-| `lib/router.dart` | Legacy route graph | archive-later | high | Keep while legacy target exists |
+| `lib/router.dart` | Dormant route graph | archive-later | high | Do not expose it as a product route |
 | `lib/presentation/screens/auth/` | Legacy auth UI | reference-only | high | Do not choose Clerk by default |
 | `lib/presentation/screens/feedback/` | Legacy feedback UI | keep-concept | medium | Future text feedback spec decides reuse |
 | `lib/presentation/screens/settings/` | Legacy settings/integrations | adapt-candidate | medium | Review for BYOK/source settings later |
@@ -110,13 +110,13 @@ This inventory remains the classification source. The migration tracker is the o
 | `lib/presentation/screens/activity/`, `runs`, `analytics`, `performance`, `uptime`, `work_domains` | Operational views | needs-decision | medium | Some concepts may fit ShipGlows operations |
 | `web_auth/` | Legacy Clerk web auth pages | reference-only | high | Archive after auth provider decision if not Clerk |
 | `shipglows_data/workflow/specs/*contentflow*`, FastAPI shipglows_data/workflow/specs | Legacy shipglows_data/workflow/specs | classify | medium | Mark active, reference, archive, or superseded one by one |
-| `README.md`, `CLAUDE.md`, `AGENT.md`, `shipglows_data/workflow/TASKS.md` | Mixed product guidance | rewrite | high | Make ShipGlows active and preserve legacy decisions as archive |
+| `README.md`, `CLAUDE.md`, `AGENT.md`, `shipglows_data/workflow/TASKS.md` | Historical guidance records | rewrite | high | Keep one ShipGlows runtime and label history as history |
 
 ## Spec Classification
 
 | Spec | Current origin | ShipGlows decision | Risk | Next action |
 | --- | --- | --- | --- | --- |
-| `shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md` | ShipGlows | active | high | Use as current migration/fusion chantier |
+| `shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md` | Historical migration premise | superseded | high | The managed Cockpit MVP and runtime boundary now own current product behavior |
 | `shipglows_data/workflow/archives/contentflow-specs/SPEC-offline-sync-v2.md` | ContentFlow | archived-reference | medium | Preserve cache, queue, replay, and recovery concepts only |
 | `shipglows_data/workflow/archives/contentflow-specs/architecture-cible-fastapi-clerk-flutter.md` | ContentFlow | archived-reference | high | FastAPI and Clerk are not active ShipGlows decisions |
 | `shipglows_data/workflow/archives/contentflow-specs/feedback-admin-v1-contentflow.md` | ContentFlow | archived-concept | medium | Mine only through a current feedback specification |
@@ -143,7 +143,7 @@ The former canonical ContentFlow business and technical owner documents were pre
 ## Validation
 
 ```bash
-rg -n "ContentFlow|contentflow|contentflow_app" README.md CLAUDE.md AGENT.md shipglows_data/workflow/TASKS.md shipglows_data/editorial/content-map.md shipglows_data/technical shipglows_data/workflow/specs lib test
+! rg -n "APP_TARGET|LegacyShipGlowsApp" app/lib/main.dart app/lib/shipglows app/web/index.html
 rg -n "Clerk|OpenRouter|FastAPI|Supabase|Firebase|Firestore|feedback|pipeline" lib shipglows_data/technical shipglows_data/workflow/specs README.md
 ```
 
@@ -151,9 +151,9 @@ rg -n "Clerk|OpenRouter|FastAPI|Supabase|Firebase|Firestore|feedback|pipeline" l
 
 - Is the path still present and correctly classified?
 - Did a product decision change a `park` or `needs-decision` item?
-- Is a future feature being inferred from legacy code instead of a ready spec?
+- Is a future feature being inferred from dormant code instead of a ready spec?
 - Would deleting this path lose a confirmed ShipGlows idea?
 
 ## Maintenance Rule
 
-Every legacy cleanup PR or chantier must update this inventory and `shipglows_data/technical/legacy-file-migration-tracker.md` before moving or removing files.
+Every destructive dormant-module cleanup must update this inventory and `shipglows_data/technical/legacy-file-migration-tracker.md` before moving or removing files.

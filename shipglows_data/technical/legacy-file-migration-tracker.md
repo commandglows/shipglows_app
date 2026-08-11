@@ -1,12 +1,12 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.1.0"
+artifact_version: "1.0.0"
 project: "shipglows_app"
 created: "2026-05-10"
-updated: "2026-05-10"
-status: draft
-source_skill: sf-start
+updated: "2026-08-11"
+status: superseded
+source_skill: 300-sg-docs
 scope: "legacy-file-migration-tracker"
 owner: "Diane"
 confidence: medium
@@ -28,18 +28,19 @@ depends_on:
   - "shipglows_data/technical/legacy-contentflow-inventory.md@0.1.0"
   - "shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md@0.4.0"
 supersedes: []
+superseded_by: "shipglows_data/technical/runtime-boundary.md"
 evidence:
   - "User request 2026-05-10: create explicit tracking for old files to keep, adapt, move to legacy, or delete later."
   - "Legacy inventory classifies areas but did not track target path, migration status, decision source, and validation per row."
 next_review: "2026-06-10"
-next_step: "/sf-verify ShipGlows Legacy File Migration Tracker"
+next_step: "Use only for a destructive dormant-module cleanup; runtime-boundary.md owns current behavior."
 ---
 
-# Legacy File Migration Tracker
+# Historical Dormant Module Cleanup Tracker
 
 ## Purpose
 
-This tracker is the operational ledger for legacy ContentFlow files during the ShipGlows migration. It tells future agents which files are active, which are legacy references, which need a future owner spec, and which may eventually move to a legacy/archive path or be deleted.
+This historical tracker is the operational ledger for dormant modules during cleanup. It does not describe a second application or compatibility runtime: `lib/main.dart` only starts ShipGlows.
 
 This document is not a deletion approval. Any move, archive, or delete action must cite a tracker row and still pass the owner spec or explicit user-decision gate named by that row.
 
@@ -66,9 +67,9 @@ This document is not a deletion approval. Any move, archive, or delete action mu
 
 - `stay-current` means no move is planned now.
 - `future ShipGlows path by owner spec` means the target path is chosen only by a later ready feature spec.
-- `future legacy/contentflow/...` is the default future code/archive target for legacy runtime code if a cleanup spec approves movement.
-- `future shipglows_data/workflow/specs/legacy/contentflow/...` is the default future target for legacy specs if a cleanup spec approves movement.
-- `future shipglows_data/legacy/contentflow/...` is the default future target for legacy shipglows_data or root-guide excerpts if a cleanup spec approves movement.
+- `future archive/dormant-modules/...` is the default future target for dormant code if a cleanup spec approves movement.
+- `future shipglows_data/workflow/archives/dormant-modules/...` is the default future target for historical specs if a cleanup spec approves movement.
+- `future shipglows_data/workflow/archives/dormant-guidance/...` is the default future target for historical guidance excerpts if a cleanup spec approves movement.
 - Target directories are not created by this tracker.
 
 ## Migration Table Schema
@@ -94,7 +95,7 @@ Each row must answer:
 | `lib/shipglows/` | Active ShipGlows dashboard runtime | keep | `active-keep` | `stay-current` | `shipglows_data/editorial/content-map.md`; `runtime-boundary.md` | low | `rg -n "ShipGlowsApp|shipglows" lib/shipglows lib/main.dart` | Protect from legacy cleanup |
 | `lib/data/shipglows_sources/` | Active Markdown readers/parsers | keep | `active-keep` | `stay-current` | `markdown-source-of-truth.md` | medium | `flutter test test/data/shipglows_sources` | Protect source allowlists and diagnostics |
 | `lib/domain/project_health/` | Active project health logic | keep | `active-keep` | `stay-current` | `markdown-source-of-truth.md`; `shipglows_data/editorial/content-map.md` | medium | `flutter test test/domain/project_health` | Protect active domain layer |
-| `lib/main.dart` | Runtime selector | keep temporary | `keep-temporary` | `stay-current` until legacy target removal gate passes | `runtime-boundary.md` | medium | `rg -n "APP_TARGET|LegacyShipGlowsApp|ShipGlowsApp" lib/main.dart lib test` | Keep target split stable |
+| `lib/main.dart` | Single ShipGlows entrypoint | keep | `active-keep` | `stay-current` | `runtime-boundary.md` | low | `! rg -n "APP_TARGET|LegacyShipGlowsApp" lib/main.dart` | Keep one product runtime |
 | `lib/presentation/theme/` | Legacy/shared UI theme | adapt candidate | `adapt-candidate` | future ShipGlows path by owner spec or `future legacy/contentflow/presentation/theme/` | `legacy-contentflow-inventory.md` | low | `rg -n "presentation/theme|ThemeData|AppTheme" lib test` | Review during design-token/spec work |
 | `lib/presentation/widgets/app_error_view.dart` | Generic error primitive | adapt candidate | `adapt-candidate` | future ShipGlows widget path by owner spec or `future legacy/contentflow/presentation/widgets/` | `legacy-contentflow-inventory.md` | low | `rg -n "AppErrorView" lib test` | Move only with import impact proven |
 | `lib/presentation/widgets/skeleton_loader.dart` | Generic loading primitive | adapt candidate | `adapt-candidate` | future ShipGlows widget path by owner spec or `future legacy/contentflow/presentation/widgets/` | `legacy-contentflow-inventory.md` | low | `rg -n "SkeletonLoader|skeleton_loader" lib test` | Move only with import impact proven |
@@ -116,8 +117,8 @@ Each row must answer:
 | `lib/data/services/clerk_auth_service_web.dart` | Legacy Clerk auth web integration | reference only | `blocked-needs-spec` | `stay-current`; future `legacy/contentflow/data/services/` only after auth decision | `legacy-contentflow-inventory.md` | high | `rg -n "clerk_auth_service_web|clerk-runtime|sso-callback" lib web_auth` | Archive only after auth provider decision |
 | `lib/data/services/offline_storage_service.dart` | Legacy offline/cache | adapt candidate | `adapt-candidate` | future projection/cache path by owner spec | `legacy-contentflow-inventory.md` | medium | `rg -n "OfflineStorage|offline_storage" lib test` | Review after projection/sync spec |
 | `lib/data/services/notification_service.dart` | Legacy notification scaffold | park | `park` | `stay-current`; future `legacy/contentflow/data/services/notification_service.dart` if cleanup spec approves | `legacy-contentflow-inventory.md` | medium | `rg -n "NotificationService|notification_service" lib test` | Keep parked until notification need exists |
-| `lib/providers/providers.dart` | Legacy provider graph | park | `blocked-needs-spec` | `stay-current`; future `legacy/contentflow/providers/providers.dart` only after runtime removal plan | `legacy-contentflow-inventory.md`; `runtime-boundary.md` | high | `rg -n "providers.dart|ProviderScope|LegacyShipGlowsApp" lib test` | Split only when reused module is selected |
-| `lib/router.dart` | Legacy route graph | archive later | `archive-later` | `stay-current` until legacy runtime removal; future `legacy/contentflow/router.dart` | `runtime-boundary.md` | high | `rg -n "GoRoute|LegacyShipGlowsApp|APP_TARGET" lib/router.dart lib/main.dart test` | Remove/archive only after runtime removal conditions |
+| `lib/providers/providers.dart` | Dormant provider graph | park | `blocked-needs-spec` | `stay-current`; future archive path only after a cleanup spec | `legacy-contentflow-inventory.md`; `runtime-boundary.md` | high | `rg -n "providers.dart|ProviderScope" lib test` | Split only when a current spec selects a module |
+| `lib/router.dart` | Dormant route graph | archive later | `archive-later` | `stay-current`; future archive path after cleanup proof | `runtime-boundary.md` | high | `rg -n "GoRoute" lib/router.dart` | Remove/archive only after import proof |
 | `lib/presentation/screens/auth/` | Legacy auth UI | reference only | `blocked-needs-spec` | `stay-current`; future `legacy/contentflow/presentation/screens/auth/` after auth decision | `legacy-contentflow-inventory.md`; `shipglows_legacy-reuse-roadmap.md` | high | `rg -n "Auth|Clerk|auth" lib/presentation/screens/auth lib test` | Do not choose Clerk by default |
 | `lib/presentation/screens/projects/` | Legacy project UI | adapt candidate | `adapt-candidate` | future ShipGlows project UI by owner spec | `legacy-contentflow-inventory.md`; project onboarding specs | medium | `rg -n "ProjectsScreen|projects_screen|project" lib/presentation/screens/projects lib test` | Compare with GitHub project onboarding |
 | `lib/presentation/screens/onboarding/` | Legacy onboarding | adapt candidate | `adapt-candidate` | future ShipGlows onboarding path by owner spec | `legacy-contentflow-inventory.md`; project onboarding specs | medium | `rg -n "onboarding" lib/presentation/screens/onboarding lib test` | Reuse only after onboarding spec |

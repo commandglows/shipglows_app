@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.1.0"
+artifact_version: "1.2.0"
 project: "shipglows_app"
 created: "2026-05-08"
 updated: "2026-08-11"
@@ -23,7 +23,7 @@ linked_systems:
   - "app/lib/shipglows/auth/**"
 depends_on: []
 supersedes:
-  - "shipglows_data/technical/runtime-boundary.md@1.0.0"
+  - "shipglows_data/technical/runtime-boundary.md@1.1.0"
 evidence:
   - "app/lib/main.dart always launches ShipGlowsApp and no longer accepts APP_TARGET."
   - "Managed Cockpit auth bootstrap is disabled without all required public Firebase build values."
@@ -59,7 +59,7 @@ ShipGlows App has one product runtime. This document defines its executable boun
 - New product work belongs under `app/lib/shipglows/` or an explicitly shared, documented module.
 - Dormant files elsewhere under `app/lib/` are not a product surface, compatibility target, or architecture constraint. They may be reused only after a narrow review and direct integration into ShipGlows.
 - Auth, feedback, BYOK, pipeline, terminal, and agent-runner features cannot be activated by naming or compile-time target aliases.
-- The Web entrypoint must not load dormant Clerk or ContentFlow runtime scripts. Optional local browser diagnostics use the ShipGlows namespace only.
+- The Web entrypoint must not load dormant auth or historical application scripts. Optional local browser diagnostics use the ShipGlows namespace only.
 - `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`, and `FIREBASE_PROJECT_ID` are optional public client build configuration. If any value is absent, `main.dart` injects a disabled ShipGlows auth adapter and the read-only local Cockpit remains available.
 - Privileged Firebase service-account credentials are never Flutter build values.
 - The managed runner owns neutral `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker`, and `ModelGateway` contracts. Flutter consumes only normalized ShipGlows API/event types, never a runtime wire protocol.
@@ -67,9 +67,9 @@ ShipGlows App has one product runtime. This document defines its executable boun
 ## Validation
 
 ```bash
-rg -n "APP_TARGET|LegacyShipGlowsApp" app/lib app/test
-rg -n "package:shipglows_app/(providers/providers\\.dart|data/services/|router\\.dart)" app/lib/shipglows
-rg -n "clerk-runtime|ContentFlow|contentflow:" app/web/index.html
+! rg -n "APP_TARGET|LegacyShipGlowsApp" app/lib app/test
+! rg -n "package:shipglows_app/(providers/providers\\.dart|data/services/|router\\.dart)" app/lib/shipglows
+! rg -n "clerk-runtime|contentflow:" app/web/index.html
 cd app && flutter test test/widget_test.dart && flutter analyze
 ```
 
