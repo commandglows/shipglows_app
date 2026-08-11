@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipglows_app/shipglows/data/managed_runner_api.dart';
 
@@ -65,4 +68,156 @@ void main() {
     expect(session.token, 'opaque-capability');
     expect(session.expiresAt.isUtc, isTrue);
   });
+
+  test(
+    'refreshes Firebase auth once after 401 and replays the same command',
+    () async {
+      final adapter = _RecordingAdapter((request, attempt) {
+        if (attempt == 1) {
+          return _jsonResponse(401, {
+            'error': {'code': 'invalidToken', 'message': 'Expired'},
+          });
+        }
+        return _jsonResponse(200, {
+          'conversationId': 'conversation-1',
+          'state': 'ready',
+        });
+      });
+      final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+        ..httpClientAdapter = adapter;
+      final refreshes = <bool>[];
+      final api = ManagedRunnerApi(
+        baseUrl: 'https://runner.example',
+        dio: dio,
+        accessTokenProvider: ({forceRefresh = false}) async {
+          refreshes.add(forceRefresh);
+          return forceRefresh ? 'fresh-token' : 'expired-token';
+        },
+      );
+
+      final result = await api.createConversation(
+        projectId: 'project-1',
+        title: 'Demo',
+        idempotencyKey: 'conversation-stable-key',
+      );
+
+      expect(result.conversationId, 'conversation-1');
+      expect(refreshes, [false, true]);
+      expect(adapter.requests, hasLength(2));
+      expect(
+        adapter.requests.map((request) => request.headers['Authorization']),
+        ['Bearer expired-token', 'Bearer fresh-token'],
+      );
+      expect(
+        adapter.requests.map((request) => request.headers['Idempotency-Key']),
+        everyElement('conversation-stable-key'),
+      );
+    },
+  );
+
+  test(
+    'retries one transient command with its original idempotency key',
+    () async {
+      final adapter = _RecordingAdapter((request, attempt) {
+        if (attempt == 1) {
+          throw DioException(
+            requestOptions: request,
+            type: DioExceptionType.connectionError,
+            message: 'offline',
+          );
+        }
+        return _jsonResponse(200, {
+          'conversationId': 'conversation-1',
+          'state': 'running',
+        });
+      });
+      final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+        ..httpClientAdapter = adapter;
+      final api = ManagedRunnerApi(baseUrl: 'https://runner.example', dio: dio);
+
+      await api.sendMessage(
+        projectId: 'project-1',
+        conversationId: 'conversation-1',
+        text: 'Continue',
+        idempotencyKey: 'message-stable-key',
+      );
+
+      expect(adapter.requests, hasLength(2));
+      expect(
+        adapter.requests.map((request) => request.headers['Idempotency-Key']),
+        everyElement('message-stable-key'),
+      );
+    },
+  );
+
+  test(
+    'resumes authenticated SSE with query cursor and Last-Event-ID',
+    () async {
+      final adapter = _RecordingAdapter((request, attempt) {
+        return ResponseBody.fromString(
+          'id: 8\nevent: turn.completed\n'
+          'data: {"cursor":8,"id":"evt_8","type":"turn.completed",'
+          '"payload":{},"occurredAt":"2026-08-02T00:00:00Z"}\n\n',
+          200,
+          headers: {
+            Headers.contentTypeHeader: ['text/event-stream'],
+          },
+        );
+      });
+      final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+        ..httpClientAdapter = adapter;
+      final api = ManagedRunnerApi(
+        baseUrl: 'https://runner.example',
+        dio: dio,
+        accessTokenProvider: ({forceRefresh = false}) async => 'token',
+      );
+
+      final events = await api
+          .events(
+            projectId: 'project-1',
+            conversationId: 'conversation-1',
+            after: 7,
+            live: true,
+          )
+          .toList();
+
+      expect(events.single.cursor, 8);
+      expect(adapter.requests.single.queryParameters['after'], 7);
+      expect(adapter.requests.single.queryParameters['live'], 'true');
+      expect(adapter.requests.single.headers['Last-Event-ID'], '7');
+      expect(adapter.requests.single.headers['Authorization'], 'Bearer token');
+    },
+  );
+}
+
+ResponseBody _jsonResponse(int status, Map<String, Object?> body) =>
+    ResponseBody.fromString(
+      jsonEncode(body),
+      status,
+      headers: {
+        Headers.contentTypeHeader: ['application/json'],
+      },
+    );
+
+typedef _AdapterHandler =
+    FutureOr<ResponseBody> Function(RequestOptions request, int attempt);
+
+class _RecordingAdapter implements HttpClientAdapter {
+  _RecordingAdapter(this._handler);
+
+  final _AdapterHandler _handler;
+  final requests = <RequestOptions>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    requests.add(options);
+    return _handler(options, requests.length);
+  }
+
+  @override
+  void close({bool force = false}) {}
 }

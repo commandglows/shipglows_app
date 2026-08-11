@@ -9,6 +9,7 @@ final managedRunnerApiProvider = Provider<ManagedRunnerClient?>((ref) {
   final auth = ref.watch(shipGlowsAuthProvider);
   return ManagedRunnerApi(
     baseUrl: AppConfig.managedRunnerBaseUrl,
-    accessTokenProvider: () async => (await auth.currentSession())?.accessToken,
+    accessTokenProvider: ({forceRefresh = false}) async =>
+        (await auth.currentSession(forceRefresh: forceRefresh))?.accessToken,
   );
 });

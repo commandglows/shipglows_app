@@ -17,17 +17,18 @@ class ShipGlowsSession {
 class ShipGlowsAuthState {
   const ShipGlowsAuthState._(this.status, this.session);
 
-  const ShipGlowsAuthState.signedOut() : this._(ShipGlowsAuthStatus.signedOut, null);
+  const ShipGlowsAuthState.signedOut()
+    : this._(ShipGlowsAuthStatus.signedOut, null);
 
   const ShipGlowsAuthState.signedIn(ShipGlowsSession session)
-      : this._(ShipGlowsAuthStatus.signedIn, session);
+    : this._(ShipGlowsAuthStatus.signedIn, session);
 
   final ShipGlowsAuthStatus status;
   final ShipGlowsSession? session;
 }
 
 abstract interface class ShipGlowsAuthProvider {
-  Future<ShipGlowsSession?> currentSession();
+  Future<ShipGlowsSession?> currentSession({bool forceRefresh = false});
 
   Stream<ShipGlowsAuthState> get authStateChanges;
 }
@@ -40,7 +41,8 @@ class DisabledShipGlowsAuthProvider implements ShipGlowsAuthProvider {
       const Stream<ShipGlowsAuthState>.empty();
 
   @override
-  Future<ShipGlowsSession?> currentSession() async => null;
+  Future<ShipGlowsSession?> currentSession({bool forceRefresh = false}) async =>
+      null;
 }
 
 class FirebaseSessionSnapshot {
@@ -63,7 +65,7 @@ abstract interface class FirebaseSessionSource {
 
   Stream<FirebaseSessionSnapshot?> get sessionChanges;
 
-  Future<FirebaseSessionSnapshot?> refreshSession();
+  Future<FirebaseSessionSnapshot?> loadSession({required bool forceRefresh});
 }
 
 class FirebaseFlutterSessionSource implements FirebaseSessionSource {
@@ -80,8 +82,9 @@ class FirebaseFlutterSessionSource implements FirebaseSessionSource {
       _auth.idTokenChanges().asyncMap(_mapUser);
 
   @override
-  Future<FirebaseSessionSnapshot?> refreshSession() async =>
-      _mapUser(_auth.currentUser, forceRefresh: true);
+  Future<FirebaseSessionSnapshot?> loadSession({
+    required bool forceRefresh,
+  }) async => _mapUser(_auth.currentUser, forceRefresh: forceRefresh);
 
   Future<FirebaseSessionSnapshot?> _mapUser(
     User? user, {
@@ -100,25 +103,48 @@ class FirebaseFlutterSessionSource implements FirebaseSessionSource {
 }
 
 class FirebaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
-  FirebaseShipGlowsAuthProvider(
-    this._source, {
-    DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now;
+  FirebaseShipGlowsAuthProvider(this._source, {DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now;
 
   final FirebaseSessionSource _source;
   final DateTime Function() _clock;
+  Future<FirebaseSessionSnapshot?>? _refreshInFlight;
+
+  static const _refreshSkew = Duration(minutes: 1);
 
   @override
   Stream<ShipGlowsAuthState> get authStateChanges =>
       _source.sessionChanges.map(_toState);
 
   @override
-  Future<ShipGlowsSession?> currentSession() async {
+  Future<ShipGlowsSession?> currentSession({bool forceRefresh = false}) async {
     var snapshot = _source.currentSession;
-    if (snapshot != null && snapshot.isExpiredAt(_clock())) {
-      snapshot = await _source.refreshSession();
+    final now = _clock().toUtc();
+    final expiresAt = snapshot?.expiresAt;
+    final needsRefresh =
+        forceRefresh ||
+        snapshot == null ||
+        snapshot.isExpiredAt(now) ||
+        (expiresAt != null && !expiresAt.isAfter(now.add(_refreshSkew)));
+    if (needsRefresh) {
+      snapshot = await _loadSession(
+        forceRefresh: forceRefresh || snapshot != null,
+      );
     }
     return _toSession(snapshot);
+  }
+
+  Future<FirebaseSessionSnapshot?> _loadSession({required bool forceRefresh}) {
+    final inFlight = _refreshInFlight;
+    if (inFlight != null) return inFlight;
+
+    final refresh = _source.loadSession(forceRefresh: forceRefresh);
+    _refreshInFlight = refresh;
+    return refresh.whenComplete(() {
+      if (identical(_refreshInFlight, refresh)) {
+        _refreshInFlight = null;
+      }
+    });
   }
 
   ShipGlowsAuthState _toState(FirebaseSessionSnapshot? snapshot) {
@@ -129,7 +155,9 @@ class FirebaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
   }
 
   ShipGlowsSession? _toSession(FirebaseSessionSnapshot? snapshot) {
-    if (snapshot == null || snapshot.userId.isEmpty || snapshot.accessToken.isEmpty) {
+    if (snapshot == null ||
+        snapshot.userId.isEmpty ||
+        snapshot.accessToken.isEmpty) {
       return null;
     }
     return ShipGlowsSession(

@@ -64,18 +64,27 @@ final managedConversationProvider =
 
 class ManagedConversationNotifier
     extends StateNotifier<ManagedConversationState> {
-  ManagedConversationNotifier({required this.projectId, required this.client})
-    : super(
-        ManagedConversationState(
-          phase: client == null
-              ? ManagedConversationPhase.unavailable
-              : ManagedConversationPhase.idle,
-        ),
-      );
+  ManagedConversationNotifier({
+    required this.projectId,
+    required this.client,
+    this.maxReconnectAttempts = 3,
+    this.reconnectDelay = const Duration(milliseconds: 500),
+  }) : super(
+         ManagedConversationState(
+           phase: client == null
+               ? ManagedConversationPhase.unavailable
+               : ManagedConversationPhase.idle,
+         ),
+       );
 
   final String projectId;
   final ManagedRunnerClient? client;
+  final int maxReconnectAttempts;
+  final Duration reconnectDelay;
   StreamSubscription<ManagedConversationEvent>? _eventsSubscription;
+  Timer? _reconnectTimer;
+  var _reconnectAttempts = 0;
+  var _disposed = false;
   static int _keyCounter = 0;
 
   Future<void> createConversation() async {
@@ -204,13 +213,15 @@ class ManagedConversationNotifier
         )
         .listen(
           _acceptEvent,
-          onError: _fail,
-          onDone: () => _eventsSubscription = null,
+          onError: _handleStreamFailure,
+          onDone: _handleStreamDone,
+          cancelOnError: true,
         );
   }
 
   void _acceptEvent(ManagedConversationEvent event) {
     if (state.events.any((item) => item.id == event.id)) return;
+    _reconnectAttempts = 0;
     final events = [...state.events, event];
     final approvalId = event.type == 'approval.requested'
         ? event.payload['approvalId']?.toString()
@@ -251,11 +262,60 @@ class ManagedConversationNotifier
     );
   }
 
+  void _handleStreamFailure(Object error) {
+    _eventsSubscription = null;
+    if (error is ManagedRunnerException &&
+        (error.statusCode == 401 || error.code == 'unauthorized')) {
+      _fail(error);
+      return;
+    }
+    _scheduleReconnect(error);
+  }
+
+  void _handleStreamDone() {
+    _eventsSubscription = null;
+    if (_shouldKeepStreaming) {
+      _scheduleReconnect(
+        const ManagedRunnerException(
+          code: 'streamDisconnected',
+          message: 'The managed runner event stream disconnected.',
+        ),
+      );
+    }
+  }
+
+  bool get _shouldKeepStreaming => switch (state.phase) {
+    ManagedConversationPhase.ready ||
+    ManagedConversationPhase.sending ||
+    ManagedConversationPhase.streaming ||
+    ManagedConversationPhase.waitingApproval => true,
+    _ => false,
+  };
+
+  void _scheduleReconnect(Object error) {
+    if (_disposed || !_shouldKeepStreaming || _reconnectTimer != null) return;
+    if (_reconnectAttempts >= maxReconnectAttempts) {
+      _fail(error);
+      return;
+    }
+    _reconnectAttempts += 1;
+    state = state.copyWith(
+      phase: ManagedConversationPhase.streaming,
+      errorMessage: 'Reconnecting to the managed runner…',
+    );
+    _reconnectTimer = Timer(reconnectDelay, () {
+      _reconnectTimer = null;
+      if (!_disposed) _listen();
+    });
+  }
+
   String _key(String prefix) =>
       '$prefix-${DateTime.now().microsecondsSinceEpoch}-${_keyCounter++}';
 
   @override
   void dispose() {
+    _disposed = true;
+    _reconnectTimer?.cancel();
     _eventsSubscription?.cancel();
     super.dispose();
   }

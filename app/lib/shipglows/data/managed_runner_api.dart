@@ -7,6 +7,9 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'cockpit/cockpit_dto_mapper.dart';
 import 'cockpit/cockpit_models.dart';
 
+typedef ManagedRunnerAccessTokenProvider =
+    Future<String?> Function({bool forceRefresh});
+
 class ManagedRunnerException implements Exception {
   const ManagedRunnerException({
     required this.code,
@@ -109,7 +112,11 @@ class ManagedWorkspaceCapability {
 }
 
 class ManagedOperatorSession {
-  const ManagedOperatorSession({required this.sessionId, required this.token, required this.expiresAt});
+  const ManagedOperatorSession({
+    required this.sessionId,
+    required this.token,
+    required this.expiresAt,
+  });
   final String sessionId;
   final String token;
   final DateTime expiresAt;
@@ -119,14 +126,24 @@ class ManagedOperatorSession {
     final token = json['token'];
     final expiresAt = DateTime.tryParse(json['expiresAt']?.toString() ?? '');
     if (sessionId is! String || token is! String || expiresAt == null) {
-      throw const ManagedRunnerException(code: 'invalidResponse', message: 'The managed runner returned an invalid operator session.');
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'The managed runner returned an invalid operator session.',
+      );
     }
-    return ManagedOperatorSession(sessionId: sessionId, token: token, expiresAt: expiresAt);
+    return ManagedOperatorSession(
+      sessionId: sessionId,
+      token: token,
+      expiresAt: expiresAt,
+    );
   }
 }
 
 abstract interface class ManagedWorkspaceTransport {
-  Future<ManagedOperatorSession> createOperatorSession({required String projectId, required String idempotencyKey});
+  Future<ManagedOperatorSession> createOperatorSession({
+    required String projectId,
+    required String idempotencyKey,
+  });
   WebSocketChannel connectOperatorSession(ManagedOperatorSession session);
   Future<void> closeOperatorSession({required String sessionId});
 }
@@ -341,7 +358,8 @@ abstract interface class ManagedRunnerClient {
   });
 }
 
-class ManagedRunnerApi implements ManagedRunnerClient, ManagedWorkspaceTransport {
+class ManagedRunnerApi
+    implements ManagedRunnerClient, ManagedWorkspaceTransport {
   ManagedRunnerApi({
     required String baseUrl,
     this.accessTokenProvider,
@@ -353,33 +371,67 @@ class ManagedRunnerApi implements ManagedRunnerClient, ManagedWorkspaceTransport
                baseUrl: baseUrl,
                headers: {'Content-Type': 'application/json'},
              ),
-           );
+           ) {
+    final tokenProvider = accessTokenProvider;
+    if (tokenProvider != null) {
+      _dio.interceptors.add(_ManagedRunnerAuthInterceptor(_dio, tokenProvider));
+    }
+  }
 
   final Dio _dio;
-  final Future<String?> Function()? accessTokenProvider;
+  final ManagedRunnerAccessTokenProvider? accessTokenProvider;
 
   @override
-  Future<ManagedOperatorSession> createOperatorSession({required String projectId, required String idempotencyKey}) async {
+  Future<ManagedOperatorSession> createOperatorSession({
+    required String projectId,
+    required String idempotencyKey,
+  }) async {
     try {
-      final response = await _dio.post<dynamic>('/v1/projects/$projectId/operator-sessions', options: Options(headers: {...await _headers(), 'Idempotency-Key': idempotencyKey}));
-      if (response.data is! Map) throw const ManagedRunnerException(code: 'invalidResponse', message: 'The managed runner returned an invalid operator session.');
-      return ManagedOperatorSession.fromJson(Map<String, dynamic>.from(response.data as Map));
-    } on DioException catch (error) { throw _mapError(error); }
+      final response = await _dio.post<dynamic>(
+        '/v1/projects/$projectId/operator-sessions',
+        options: Options(
+          headers: {...await _headers(), 'Idempotency-Key': idempotencyKey},
+        ),
+      );
+      if (response.data is! Map) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid operator session.',
+        );
+      }
+      return ManagedOperatorSession.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
   }
 
   @override
   WebSocketChannel connectOperatorSession(ManagedOperatorSession session) {
     final base = Uri.parse(_dio.options.baseUrl);
     final scheme = base.scheme == 'https' ? 'wss' : 'ws';
-    final uri = base.replace(scheme: scheme, path: '/v1/operator-sessions/${session.sessionId}/stream', query: null);
-    return WebSocketChannel.connect(uri, protocols: ['shipglows.workspace.${session.token}']);
+    final uri = base.replace(
+      scheme: scheme,
+      path: '/v1/operator-sessions/${session.sessionId}/stream',
+      query: null,
+    );
+    return WebSocketChannel.connect(
+      uri,
+      protocols: ['shipglows.workspace.${session.token}'],
+    );
   }
 
   @override
   Future<void> closeOperatorSession({required String sessionId}) async {
     try {
-      await _dio.post<dynamic>('/v1/operator-sessions/$sessionId/close', options: Options(headers: await _headers()));
-    } on DioException catch (error) { throw _mapError(error); }
+      await _dio.post<dynamic>(
+        '/v1/operator-sessions/$sessionId/close',
+        options: Options(headers: await _headers()),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
   }
 
   @override
@@ -577,7 +629,10 @@ class ManagedRunnerApi implements ManagedRunnerClient, ManagedWorkspaceTransport
         queryParameters: {'after': after, if (live) 'live': 'true'},
         options: Options(
           responseType: ResponseType.stream,
-          headers: await _headers(),
+          headers: {
+            ...await _headers(),
+            if (after > 0) 'Last-Event-ID': '$after',
+          },
         ),
       );
       final body = response.data;
@@ -600,42 +655,65 @@ class ManagedRunnerApi implements ManagedRunnerClient, ManagedWorkspaceTransport
     required String idempotencyKey,
     required T Function(Map<String, dynamic>) parser,
   }) async {
-    try {
-      final response = await _dio.request<dynamic>(
-        path,
-        data: body,
-        options: Options(
-          method: method,
-          headers: {...await _headers(), 'Idempotency-Key': idempotencyKey},
-        ),
-      );
-      final data = response.data;
-      if (data is! Map) {
-        throw const ManagedRunnerException(
-          code: 'invalidResponse',
-          message: 'The managed runner returned an invalid response.',
+    for (var attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        final response = await _dio.request<dynamic>(
+          path,
+          data: body,
+          options: Options(
+            method: method,
+            headers: {...await _headers(), 'Idempotency-Key': idempotencyKey},
+          ),
         );
+        final data = response.data;
+        if (data is! Map) {
+          throw const ManagedRunnerException(
+            code: 'invalidResponse',
+            message: 'The managed runner returned an invalid response.',
+          );
+        }
+        return parser(Map<String, dynamic>.from(data));
+      } on DioException catch (error) {
+        if (attempt == 0 && _isTransient(error)) continue;
+        throw _mapError(error);
       }
-      return parser(Map<String, dynamic>.from(data));
-    } on DioException catch (error) {
-      throw _mapError(error);
     }
+    throw const ManagedRunnerException(
+      code: 'requestFailed',
+      message: 'The managed runner request failed.',
+    );
   }
 
-  Future<Map<String, String>> _headers() async {
-    final token = await accessTokenProvider?.call();
+  Future<Map<String, String>> _headers({bool forceRefresh = false}) async {
+    final token = await accessTokenProvider?.call(forceRefresh: forceRefresh);
     return {
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
     };
   }
 
+  bool _isTransient(DioException error) => switch (error.type) {
+    DioExceptionType.connectionError ||
+    DioExceptionType.connectionTimeout ||
+    DioExceptionType.sendTimeout ||
+    DioExceptionType.receiveTimeout => true,
+    _ => false,
+  };
+
   ManagedRunnerException _mapError(DioException error) {
     final statusCode = error.response?.statusCode;
     final payload = error.response?.data;
     final errorBody = payload is Map ? payload['error'] : null;
+    final fallbackCode = switch (error.type) {
+      DioExceptionType.connectionError => 'offline',
+      DioExceptionType.connectionTimeout ||
+      DioExceptionType.sendTimeout ||
+      DioExceptionType.receiveTimeout => 'timeout',
+      DioExceptionType.cancel => 'cancelled',
+      _ => 'requestFailed',
+    };
     final code = errorBody is Map && errorBody['code'] is String
         ? errorBody['code'] as String
-        : 'requestFailed';
+        : fallbackCode;
     final message = errorBody is Map && errorBody['message'] is String
         ? errorBody['message'] as String
         : 'The managed runner request failed.';
@@ -644,5 +722,56 @@ class ManagedRunnerApi implements ManagedRunnerClient, ManagedWorkspaceTransport
       message: message,
       statusCode: statusCode,
     );
+  }
+}
+
+class _ManagedRunnerAuthInterceptor extends QueuedInterceptor {
+  _ManagedRunnerAuthInterceptor(this._dio, this._tokenProvider);
+
+  static const _retryMarker = 'shipglowsAuthRetried';
+
+  final Dio _dio;
+  final ManagedRunnerAccessTokenProvider _tokenProvider;
+
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    if (options.headers['Authorization'] == null) {
+      final token = await _tokenProvider(forceRefresh: false);
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    }
+    handler.next(options);
+  }
+
+  @override
+  void onError(DioException error, ErrorInterceptorHandler handler) async {
+    final request = error.requestOptions;
+    if (error.response?.statusCode != 401 ||
+        request.extra[_retryMarker] == true) {
+      handler.next(error);
+      return;
+    }
+
+    final token = await _tokenProvider(forceRefresh: true);
+    if (token == null || token.isEmpty) {
+      handler.next(error);
+      return;
+    }
+
+    try {
+      final response = await _dio.fetch<dynamic>(
+        request.copyWith(
+          headers: {...request.headers, 'Authorization': 'Bearer $token'},
+          extra: {...request.extra, _retryMarker: true},
+        ),
+      );
+      handler.resolve(response);
+    } on DioException catch (retryError) {
+      handler.next(retryError);
+    }
   }
 }
