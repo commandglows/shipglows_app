@@ -19,10 +19,15 @@ import { WorkspaceCleanupWorker } from "./workspaces/cleanup.js";
 import { OperatorWorkspaceGateway } from "./operator-workspace/index.js";
 import { ExecutionAdmissionService, LocalManagedExecutionProvider } from "./runs/execution.js";
 import { ExecutionProviderRegistry } from "./contracts/index.js";
+import { createBuildIdentity, RunnerDiagnostics } from "./observability/index.js";
 
 const config = loadConfig();
 const databasePath = process.env["RUNNER_DB_PATH"] ?? resolve(config.cwd, ".shipglows-runner.sqlite");
 const store = await openOperationalStore(databasePath);
+const diagnostics = new RunnerDiagnostics({
+  build: createBuildIdentity(process.env),
+  probes: [{ name: "database", check: () => { store.schemaVersion(); } }],
+});
 const eventHub = new EventHub();
 const runAdmission = new RunAdmission();
 const executionAdmission = new ExecutionAdmissionService(store, new ExecutionProviderRegistry([new LocalManagedExecutionProvider()]), config.limits);
@@ -79,6 +84,7 @@ const dependencies = {
   operatorWorkspaceCapability: ({ projectId }: { projectId: string }) => Promise.resolve(operatorWorkspaceGateway.capability(projectId)),
   runAdmission,
   executionAdmission,
+  diagnostics,
   ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime.executor }),
   ...(authentication === undefined ? {} : { authentication }),
   ...(agentRuntime === undefined ? {} : { agentRuntime }),

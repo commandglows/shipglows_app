@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.6.0"
+artifact_version: "2.7.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-11"
@@ -30,6 +30,8 @@ linked_systems:
   - "runner/src/workspaces/cleanup.ts"
   - "runner/src/db/index.ts"
   - "runner/src/health/index.ts"
+  - "runner/src/observability/index.ts"
+  - "runner/scripts/backup-operational-store.ts"
   - "runner/src/skills/contracts.ts"
   - "runner/src/skills/sandbox.ts"
   - "runner/src/auth/index.ts"
@@ -45,13 +47,14 @@ linked_systems:
   - "eve"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
-    artifact_version: "1.18.0"
+    artifact_version: "1.20.0"
     required_status: "ready"
 supersedes: []
 evidence:
   - "Managed Agent Cockpit MVP Tasks 1-3 foundation implementation"
   - "Fastify v5 current documentation check on 2026-08-01"
   - "Node.js sqlite API availability from Node.js v22.5.0"
+  - "Node.js sqlite backup API availability from Node.js v22.16.0"
   - "eve Apache-2.0 beta repository review on 2026-08-01"
   - "GitHub App and Git worktree official documentation check on 2026-08-02"
 next_review: "2026-08-16"
@@ -76,6 +79,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `runner/src/workspaces/cleanup.ts`
 - `runner/src/db/index.ts`
 - `runner/src/health/**`
+- `runner/src/observability/**`
 - `runner/src/skills/**`
 - `runner/src/auth/**`
 - `runner/src/projects/**`
@@ -83,6 +87,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `runner/src/workspaces/**`
 - `runner/src/operator-workspace/**`
 - `runner/scripts/operator-workspace-smoke.ts`
+- `runner/scripts/backup-operational-store.ts`
 - `runner/test/**`
 
 ## Entrypoints
@@ -92,6 +97,8 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `loadConfig` refuses flags that would expose a public app-server, accept client-selected paths, or enable an unsafe shell.
 - `RUNNER_OPERATOR_WORKSPACES` accepts only a server-owned JSON map from bounded project ids to absolute working directories and bounded tmux names. Neither value is returned to Flutter.
 - `npm run smoke:operator-workspace` creates an isolated real PTY/tmux session, proves resize and input/output with the installed Codex executable, scans the bounded transcript for obvious secret markers, and cleans the temporary tmux session.
+- `GET /health/live` is the public, dependency-free liveness probe and returns only `{ "status": "ok" }`. `GET /v1/diagnostics` is authenticated and returns only bounded build identity, UTC/Europe-Paris timestamps and normalized probe states.
+- `npm run backup:sqlite -- --database <live.sqlite> --destination-dir <backup-dir>` creates a uniquely named online backup, refuses a missing/non-file source or existing destination, and validates SQLite integrity plus the current schema before reporting success.
 
 ## Current Foundation
 
@@ -103,6 +110,8 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `ExecutionProvider`, `CapabilityBroker` and `ModelGateway` are separate ports. The local `managed-disposable` provider is selected through a registry and validates required capabilities without fallback. Every audit, conversation turn and fix now persists a server-resolved, manual-only execution envelope before provider preflight; it contains only opaque identifiers, provider/runtime selection, bounded capabilities, duration budget and deadline.
 - Codex is now the first contract-tested adapter behind `AgentRuntime`, using a server-owned local JSONL app-server connection; Eve remains a future adapter while its beta API and deployment posture remain in flux.
 - The SQLite store holds a reconstructable operational projection: tenants, memberships, projects, canonical cross-namespace project identity bindings, GitHub repository bindings, conversations, durable run states/checkpoints, secret-safe execution envelopes, runtime session mappings, capability decisions, approvals, project-context bundles, versioned skill runs, health evidence, usage summaries, event cursors, idempotency records and workspace-cleanup state. Schema v8 stores operational metadata only; repository and Markdown content remain canonical.
+- Operational diagnostics never include probe exceptions, filesystem paths, credentials or runtime configuration. Invalid build metadata becomes `unknown`; synthetic dependency failures become the fixed `dependencyFailure` code. The public liveness route is deliberately separate from this authenticated surface.
+- Online SQLite backup uses the Node-supported `node:sqlite.backup` API and therefore raises the runner floor to Node 22.16.0. The backup is non-overwriting, checked with `PRAGMA integrity_check`, checked against schema v8, and covered by a v2-to-v8 migration/restore fixture. This is local recovery proof, not a hosted retention or disaster-recovery claim.
 - Provider preflight always occurs before a worktree, runtime session or turn is created. A failed preflight has a stable bounded execution failure and cannot change provider, runtime, policy or permission. The envelope excludes prompts, environment variables, tokens and workspace paths; cancellation accepts only opaque run and execution identifiers. Its state moves monotonically from preflight to the same terminal outcome as the run.
 - Run checkpoints are secret-safe and tenant-scoped. A runner restart marks in-flight `running` records and their matching preflight-passed executions as `interrupted` with a bounded recovery reason. The local provider does not claim drain, remote task preservation or reattachment; those need a separate distributed-execution contract.
 - Workspace cleanup records contain only an opaque run id, state, due time, attempt count and bounded error code; managed filesystem paths remain exclusively inside the workspace manager.

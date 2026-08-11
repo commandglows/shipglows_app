@@ -27,6 +27,7 @@ import {
 } from "./projects/projectAccess.js";
 import { stateChangingOriginGuard } from "./security/requestPolicy.js";
 import { OperatorWorkspaceError, type OperatorWorkspaceGateway } from "./operator-workspace/index.js";
+import type { RunnerDiagnostics } from "./observability/index.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -58,6 +59,30 @@ const cockpitResponse = Type.Object({ generatedAt: Type.String(), projects: Type
   health: Type.Object({ overallStatus: Type.String(), coverage: Type.Number(), dimensions: Type.Array(cockpitDimension) }, { additionalProperties: false }),
 }, { additionalProperties: false })) }, { $id: "shipglowz.v1.cockpit.response", additionalProperties: false });
 
+const LivenessResponseSchema = Type.Object(
+  { status: Type.Literal("ok") },
+  { $id: "shipglows.v1.liveness.response", additionalProperties: false },
+);
+
+const DiagnosticResponseSchema = Type.Object({
+  status: Type.Union([Type.Literal("ok"), Type.Literal("degraded")]),
+  build: Type.Object({
+    service: Type.Literal("shipglows-managed-runner"),
+    version: Type.Literal("0.1.0"),
+    buildId: Type.String({ maxLength: 128 }),
+    commit: Type.String({ maxLength: 128 }),
+    builtAtUtc: Type.String({ maxLength: 64 }),
+    builtAtParis: Type.String({ maxLength: 64 }),
+  }, { additionalProperties: false }),
+  generatedAtUtc: Type.String({ maxLength: 64 }),
+  generatedAtParis: Type.String({ maxLength: 64 }),
+  checks: Type.Array(Type.Object({
+    name: Type.String({ maxLength: 32 }),
+    status: Type.Union([Type.Literal("ok"), Type.Literal("failed")]),
+    code: Type.Union([Type.Literal("available"), Type.Literal("dependencyFailure")]),
+  }, { additionalProperties: false }), { maxItems: 16 }),
+}, { $id: "shipglows.v1.diagnostics.response", additionalProperties: false });
+
 export interface RunnerAppDependencies {
   readonly authentication?: AuthenticationAdapter;
   readonly projectAccess?: ProjectAccessRepository;
@@ -74,6 +99,7 @@ export interface RunnerAppDependencies {
   readonly conversationStore?: Pick<OperationalStore, "createConversation" | "getConversation" | "createRun" | "getRun" | "getLatestRun" | "saveRuntimeSession" | "getRuntimeSession" | "checkpointRun" | "appendEvent">;
   readonly agentRuntime?: AgentRuntime;
   readonly executionAdmission?: ExecutionAdmissionService;
+  readonly diagnostics?: RunnerDiagnostics;
 }
 
 function eventFrame(event: PersistedEvent): string {
@@ -117,6 +143,12 @@ export function buildRunnerApp({
   const projectAccess = dependencies.projectAccess ?? noProjectAccess;
 
   app.get(
+    "/health/live",
+    { schema: { response: { 200: LivenessResponseSchema } } },
+    () => ({ status: "ok" as const }),
+  );
+
+  app.get(
     "/v1/version",
     { schema: { response: { 200: VersionResponseSchema } } },
     () => ({
@@ -130,6 +162,35 @@ export function buildRunnerApp({
         eve: config.runtimes.eve.enabled,
       },
     }),
+  );
+
+  app.get(
+    "/v1/diagnostics",
+    {
+      preHandler: [authenticationGuard(authentication)],
+      schema: { response: { 200: DiagnosticResponseSchema, 503: DiagnosticResponseSchema } },
+    },
+    async (_request, reply) => {
+      const diagnostics = dependencies.diagnostics;
+      if (diagnostics === undefined) {
+        return reply.status(503).send({
+          status: "degraded",
+          build: {
+            service: "shipglows-managed-runner",
+            version: "0.1.0",
+            buildId: "unknown",
+            commit: "unknown",
+            builtAtUtc: "unknown",
+            builtAtParis: "unknown",
+          },
+          generatedAtUtc: new Date(0).toISOString(),
+          generatedAtParis: "1970-01-01T01:00:00 Europe/Paris",
+          checks: [{ name: "diagnostics", status: "failed", code: "dependencyFailure" }],
+        });
+      }
+      const snapshot = await diagnostics.snapshot();
+      return reply.status(snapshot.status === "ok" ? 200 : 503).send(snapshot);
+    },
   );
 
   app.get(

@@ -9,3 +9,4 @@
 runner/.shipglows-runner.sqlite*
 runner/.shipglows-workspaces/
 runner/deploy/runner.env
+runner/node_modules/

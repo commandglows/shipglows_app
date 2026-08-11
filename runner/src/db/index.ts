@@ -1,4 +1,6 @@
-import { DatabaseSync, type SQLInputValue } from "node:sqlite";
+import { stat, unlink } from "node:fs/promises";
+import { resolve } from "node:path";
+import { backup, DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import { assertSecretSafe, type ResolvedExecutionEnvelope, type SafePayload } from "../contracts/index.js";
 import type { GitHubRepositoryBinding } from "../github/index.js";
@@ -147,6 +149,7 @@ export interface PersistedRunUsage {
 
 export interface OperationalStore {
   schemaVersion(): number;
+  backupTo(destinationPath: string): Promise<OperationalBackupResult>;
   listTenantIds(): readonly string[];
   createTenant(input: { readonly id: string; readonly identityRef: string }): void;
   createUser(input: { readonly id: string; readonly authSubject: string }): void;
@@ -300,6 +303,22 @@ export interface OperationalStore {
   ): Promise<{ readonly replayed: boolean; readonly response: { readonly statusCode: number; readonly body: T } }>;
   migrateDown(): never;
   close(): void;
+}
+
+export interface OperationalBackupResult {
+  readonly schemaVersion: number;
+  readonly pages: number;
+  readonly createdAt: string;
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return true;
+  } catch (error) {
+    if (isRecord(error) && error["code"] === "ENOENT") return false;
+    throw error;
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -785,6 +804,35 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
       const row = oneRow(db, "SELECT version FROM meta LIMIT 1");
       if (row === undefined) throw new Error("SQLite schema version is missing");
       return readNumber(row, "version");
+    },
+    backupTo: async (destinationPath) => {
+      const destination = resolve(destinationPath);
+      if (file !== ":memory:" && destination === resolve(file)) {
+        throw new Error("Operational backup destination must differ from the live database.");
+      }
+      if (await pathExists(destination)) {
+        throw new Error("Operational backup destination already exists.");
+      }
+      try {
+        const pages = await backup(db, destination);
+        const restored = new DatabaseSync(destination, { readOnly: true });
+        try {
+          const integrity = oneRow(restored, "PRAGMA integrity_check");
+          const version = oneRow(restored, "SELECT version FROM meta LIMIT 1");
+          if (integrity === undefined || readString(integrity, "integrity_check") !== "ok") {
+            throw new Error("Operational backup integrity check failed.");
+          }
+          if (version === undefined || readNumber(version, "version") !== 8) {
+            throw new Error("Operational backup schema version is invalid.");
+          }
+        } finally {
+          restored.close();
+        }
+        return { schemaVersion: 8, pages, createdAt: new Date().toISOString() };
+      } catch (error) {
+        if (await pathExists(destination)) await unlink(destination);
+        throw error;
+      }
     },
     listTenantIds: () => allRows(db, "SELECT id FROM tenants ORDER BY id").map((row) => readString(row, "id")),
     createTenant: ({ id, identityRef }) => run(db, "INSERT INTO tenants VALUES(?, ?)", id, identityRef),

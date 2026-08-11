@@ -4,13 +4,14 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.5.0 <25"
+    "node": ">=22.16.0 <25"
   },
   "scripts": {
     "start": "node --import tsx src/main.ts",
     "test": "tsx --test test/**/*.test.ts",
     "smoke:providers": "tsx scripts/provider-smoke.ts",
     "smoke:operator-workspace": "tsx scripts/operator-workspace-smoke.ts",
+    "backup:sqlite": "tsx scripts/backup-operational-store.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test scripts",
     "audit": "npm audit --audit-level=high"

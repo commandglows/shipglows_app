@@ -7,6 +7,7 @@ import { loadConfig } from "../../src/config.js";
 import type { AgentRuntime, OpaqueId } from "../../src/contracts/index.js";
 import type { ProjectAccessRepository } from "../../src/projects/projectAccess.js";
 import { OperatorWorkspaceGateway, type OperatorPty } from "../../src/operator-workspace/index.js";
+import { createBuildIdentity, RunnerDiagnostics } from "../../src/observability/index.js";
 
 const actor: ActorContext = {
   tenantId: "ten_000000000001",
@@ -15,6 +16,56 @@ const actor: ActorContext = {
 };
 
 describe("runner API foundation", () => {
+  it("serves a minimal liveness response without build, config, or path details", async () => {
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }, { cwd: "/srv/private" }),
+    });
+
+    const response = await app.inject({ method: "GET", url: "/health/live" });
+    await app.close();
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.json(), { status: "ok" });
+    assert.doesNotMatch(response.body, /version|commit|provider|\/srv\/private/i);
+  });
+
+  it("keeps structured diagnostics authenticated and redacts synthetic failures", async () => {
+    const diagnostics = new RunnerDiagnostics({
+      build: createBuildIdentity({
+        RUNNER_BUILD_ID: "test-build",
+        RUNNER_BUILD_COMMIT: "a232292d",
+        RUNNER_BUILD_TIMESTAMP: "2026-08-11T16:00:00.000Z",
+      }),
+      probes: [{ name: "database", check: () => { throw new Error("ghp_abcdefghijklmnopqrstuvwxyz at /srv/private.sqlite"); } }],
+      now: () => new Date("2026-08-11T16:05:00.000Z"),
+    });
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: { authentication: { authenticate: async () => actor }, diagnostics },
+    });
+
+    const response = await app.inject({ method: "GET", url: "/v1/diagnostics" });
+    await app.close();
+
+    assert.equal(response.statusCode, 503);
+    assert.equal(response.json().status, "degraded");
+    assert.deepEqual(response.json().checks, [
+      { name: "database", status: "failed", code: "dependencyFailure" },
+    ]);
+    assert.doesNotMatch(response.body, /ghp_|\/srv\/|private\.sqlite/i);
+  });
+
+  it("fails closed when unauthenticated diagnostics are requested", async () => {
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: { diagnostics: new RunnerDiagnostics() },
+    });
+    const response = await app.inject({ method: "GET", url: "/v1/diagnostics" });
+    await app.close();
+    assert.equal(response.statusCode, 401);
+    assert.equal(response.json().error.code, "unauthorized");
+  });
+
   it("serves a schema-validated version endpoint without internal paths", async () => {
     const app = buildRunnerApp({
       config: loadConfig({ RUNNER_ENV: "test" }, { cwd: "/srv/private" }),
