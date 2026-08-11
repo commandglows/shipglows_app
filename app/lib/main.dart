@@ -11,7 +11,7 @@ import 'presentation/theme/app_theme.dart';
 import 'router.dart';
 import 'shipglows/app.dart' as shipglows;
 import 'shipglows/auth/auth_provider.dart';
-import 'shipglows/auth/supabase_bootstrap.dart';
+import 'shipglows/auth/firebase_bootstrap.dart';
 import 'shipglows/providers/auth_provider.dart';
 
 const _appTarget = String.fromEnvironment(
@@ -23,7 +23,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPreferences = await SharedPreferences.getInstance();
   final authProvider = await bootstrapShipGlowsAuth(
-    const SupabaseBootstrapConfiguration.fromEnvironment(),
+    const FirebaseBootstrapConfiguration.fromEnvironment(),
   );
 
   runApp(

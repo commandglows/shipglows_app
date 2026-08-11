@@ -212,7 +212,7 @@ export const VersionResponseSchema = Type.Object(
     serviceVersion: Type.String(),
     providers: Type.Object(
       {
-        supabase: Type.Boolean(),
+        firebase: Type.Boolean(),
         github: Type.Boolean(),
         codex: Type.Boolean(),
         eve: Type.Boolean(),

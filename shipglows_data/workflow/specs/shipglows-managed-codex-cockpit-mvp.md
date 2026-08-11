@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.13.0"
+artifact_version: "1.14.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
-updated: "2026-08-08"
-updated_at: "2026-08-08 16:01:35 UTC"
+updated: "2026-08-11"
+updated_at: "2026-08-11 14:45:00 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -783,7 +783,14 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-07 19:50:52 UTC | 103-sg-verify (mode=excellence) | GPT-5 Codex | Excellence review found and repaired the missing terminal synchronization between admitted executions and runs; completion, failure, interruption and restart are now monotonic, durable and locally proven. | excellent for Task 6a's local execution boundary; remote-provider proof remains outside this slice | Continue the broader MVP without claiming hosted provider or reattach readiness |
 | 2026-08-07 19:52:30 UTC | 104-sg-end | GPT-5 Codex | Closed the Task 6a work session only: its implementation, local proof and internal documentation are synchronized. The broader Cockpit MVP remains active and no public-release claim is made. | locally closed; documentation reflection updated; no TASKS or changelog delta because the active MVP row remains in progress | Ship the scoped runner slice for iteration |
 | 2026-08-07 19:55:18 UTC | 005-sg-ship | GPT-5 Codex | Shipped the scoped Task 6a runner execution-provider slice for iteration. | commit created; push pending at the time of this record; MVP and hosted-provider proof remain open | Confirm remote push, then continue the broader MVP |
+| 2026-08-09 20:49:25 UTC | sg-planning | GPT-5 Codex | Recorded the public Workspace proof as a dedicated blocked execution item while preserving the broader Cockpit MVP as active. | planning synchronized; local runner proof retained and sudo-dependent Caddy publication paused | Resume the hosted proof when sudo access is available |
 
 # Current Chantier Flow
+
+## Architecture amendment — 2026-08-11
+
+The portfolio architecture decision now supersedes this spec's original Supabase identity recommendation. New Cockpit source uses Firebase Auth behind the existing provider-neutral Flutter and runner contracts. Convex is the target product backend/data layer, while Fastify/SQLite remains a justified execution-plane exception for PTY/tmux, local processes, managed workspaces, admission and operational events.
+
+Historical Supabase task text and run-history evidence below remains a record of what was decided, implemented or deployed at that time; it is not current implementation guidance. The last managed-server proof still used the Supabase deployment and cannot be claimed as Firebase proof. Current completion requirements are owned by `firebase-auth-convex-alignment.md`: Linux REST/OIDC support, live Firebase authentication, deployment migration and a separately specified first Convex product projection remain open.
 
 `100-sg-spec` (amended; agentic-security slice) -> `101-sg-ready` (existing MVP contract ready) -> `102-sg-start` (bounded approval policy implemented; broader MVP remains in progress) -> `103-sg-verify` (94 runner tests, typecheck and full lint pass) -> `104-sg-end` (bounded security slice locally closed) -> `005-sg-ship` (scoped commit/push in progress) -> `004-sg-deploy` (not required for this local policy/test slice; broader hosted proof remains partial)

@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 
 import { buildRunnerApp } from "./app.js";
-import { SupabaseAuthenticationAdapter, createSupabaseJwksVerifier } from "./auth/index.js";
+import { FirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
 import { CodexAppServerRuntime, StdioCodexConnection } from "./agent-runtime/codex/index.js";
 import { loadConfig } from "./config.js";
 import { openOperationalStore } from "./db/index.js";
@@ -27,15 +27,12 @@ const eventHub = new EventHub();
 const runAdmission = new RunAdmission();
 const executionAdmission = new ExecutionAdmissionService(store, new ExecutionProviderRegistry([new LocalManagedExecutionProvider()]), config.limits);
 const operatorWorkspaceGateway = new OperatorWorkspaceGateway(config.operatorWorkspaces);
-const authentication = config.integrations.supabase.enabled
+const authentication = config.integrations.firebase.enabled
   ? (() => {
-      const projectUrl = config.integrations.supabase.url;
-      if (projectUrl === undefined) throw new Error("Supabase URL is required when authentication is enabled.");
-      return new SupabaseAuthenticationAdapter(
-        createSupabaseJwksVerifier({
-          projectUrl,
-          audience: config.integrations.supabase.jwtAudience,
-        }),
+      const projectId = config.integrations.firebase.projectId;
+      if (projectId === undefined) throw new Error("Firebase project ID is required when authentication is enabled.");
+      return new FirebaseAuthenticationAdapter(
+        createFirebaseIdTokenVerifier({ projectId }),
         { resolve: (input) => Promise.resolve(store.resolveActor(input) ?? null) },
       );
     })()

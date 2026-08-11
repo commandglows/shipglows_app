@@ -11,7 +11,7 @@ describe("runner configuration", () => {
   it("loads provider integrations disabled by default", () => {
     const config = loadConfig({ RUNNER_ENV: "test" }, { cwd: "/srv/runner" });
 
-    assert.equal(config.integrations.supabase.enabled, false);
+    assert.equal(config.integrations.firebase.enabled, false);
     assert.equal(config.integrations.github.enabled, false);
     assert.equal(config.runtimes.codex.enabled, false);
     assert.equal(config.runtimes.eve.enabled, false);
@@ -24,7 +24,7 @@ describe("runner configuration", () => {
       allowedOrigins: [],
       maxConcurrentRunsPerTenant: 2,
       maxRunDurationMs: 900000,
-      supabaseEnabled: false,
+      firebaseEnabled: false,
       githubEnabled: false,
       codexEnabled: false,
       eveEnabled: false,
@@ -58,12 +58,12 @@ describe("runner configuration", () => {
     assert.throws(() => loadConfig({ RUNNER_OPERATOR_WORKSPACES: '{"project":{"cwd":"../escape","tmuxSession":"bad name"}}' }), /RUNNER_OPERATOR_WORKSPACES/);
   });
 
-  it("requires a Supabase URL only when the Supabase adapter is explicitly enabled", () => {
+  it("requires a Firebase project ID only when the Firebase adapter is explicitly enabled", () => {
     assert.throws(
-      () => loadConfig({ SUPABASE_AUTH_ENABLED: "true" }),
+      () => loadConfig({ FIREBASE_AUTH_ENABLED: "true" }),
       (error: unknown) =>
         error instanceof ConfigError &&
-        error.issues.includes("SUPABASE_URL"),
+        error.issues.includes("FIREBASE_PROJECT_ID"),
     );
   });
 
@@ -72,7 +72,7 @@ describe("runner configuration", () => {
       () => loadConfig({ RUNNER_ENV: "production" }),
       (error: unknown) =>
         error instanceof ConfigError &&
-        error.issues.includes("SUPABASE_AUTH_ENABLED=true is required in production") &&
+        error.issues.includes("FIREBASE_AUTH_ENABLED=true is required in production") &&
         error.issues.includes("RUNNER_ALLOWED_ORIGINS is required in production"),
     );
   });

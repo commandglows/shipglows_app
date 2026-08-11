@@ -124,7 +124,7 @@ export function buildRunnerApp({
       service: "shipglows-managed-runner",
       serviceVersion: "0.1.0",
       providers: {
-        supabase: config.integrations.supabase.enabled,
+        firebase: config.integrations.firebase.enabled,
         github: config.integrations.github.enabled,
         codex: config.runtimes.codex.enabled,
         eve: config.runtimes.eve.enabled,

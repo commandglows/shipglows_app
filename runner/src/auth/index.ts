@@ -20,7 +20,7 @@ export interface AuthenticationAdapter {
   authenticate(request: Pick<FastifyRequest, "headers">): Promise<ActorContext | null>;
 }
 
-export interface SupabaseJwtVerifier {
+export interface FirebaseIdTokenVerifier {
   verify(accessToken: string): Promise<{ readonly subject: string }>;
 }
 
@@ -57,9 +57,9 @@ function tenantHeader(headers: FastifyRequest["headers"]): string | undefined {
   return tenantId;
 }
 
-export class SupabaseAuthenticationAdapter implements AuthenticationAdapter {
+export class FirebaseAuthenticationAdapter implements AuthenticationAdapter {
   constructor(
-    private readonly verifier: SupabaseJwtVerifier,
+    private readonly verifier: FirebaseIdTokenVerifier,
     private readonly actors: ActorResolver,
   ) {}
 
@@ -79,26 +79,24 @@ export class SupabaseAuthenticationAdapter implements AuthenticationAdapter {
 
 function readSubject(payload: JWTPayload): string {
   if (typeof payload.sub !== "string" || payload.sub.length === 0) {
-    throw new Error("Supabase token has no subject.");
+    throw new Error("Firebase ID token has no subject.");
   }
   return payload.sub;
 }
 
-export function createSupabaseJwksVerifier(input: {
-  readonly projectUrl: string;
-  readonly audience: string;
-}): SupabaseJwtVerifier {
-  const projectUrl = new URL(input.projectUrl);
-  const issuer = new URL("/auth/v1", projectUrl).toString().replace(/\/$/, "");
-  const jwksUrl = new URL("/auth/v1/.well-known/jwks.json", projectUrl);
+export function createFirebaseIdTokenVerifier(input: {
+  readonly projectId: string;
+}): FirebaseIdTokenVerifier {
+  const issuer = `https://securetoken.google.com/${input.projectId}`;
+  const jwksUrl = new URL("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com");
   const jwks = createRemoteJWKSet(jwksUrl);
 
   return {
     verify: async (accessToken) => {
       const { payload } = await jwtVerify(accessToken, jwks, {
         issuer,
-        audience: input.audience,
-        algorithms: ["ES256", "RS256"],
+        audience: input.projectId,
+        algorithms: ["RS256"],
       });
       return { subject: readSubject(payload) };
     },

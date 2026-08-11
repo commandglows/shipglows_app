@@ -61,9 +61,10 @@ dependencies:
   # Audio feedback
   record: ^6.2.0
   audioplayers: ^6.6.0
-  supabase_flutter: ^2.16.0
   xterm: ^4.0.0
   web_socket_channel: ^3.0.3
+  firebase_core: ^4.13.0
+  firebase_auth: ^6.5.7
 
 dev_dependencies:
   flutter_test:

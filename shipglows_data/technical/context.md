@@ -1,10 +1,10 @@
 ---
 artifact: technical_context
 metadata_schema_version: "1.0"
-artifact_version: "2.1.0"
+artifact_version: "2.2.0"
 project: "shipglows_app"
 created: "2026-04-26"
-updated: "2026-08-03"
+updated: "2026-08-11"
 status: reviewed
 source_skill: 300-sg-docs
 scope: technical
@@ -65,11 +65,11 @@ The canonical governance corpus lives at root `shipglows_data/`.
 ## Current Boundaries
 
 - Codex app-server is the first complete runtime adapter; the product contract remains runtime-neutral.
-- Supabase is the first identity adapter behind a provider-neutral Flutter/server boundary.
+- Firebase Auth is the identity adapter behind a provider-neutral Flutter/server boundary.
 - GitHub App access is server-only and narrowed per repository.
 - Audits are read-only; fixes use isolated worktrees and stop before push, merge, or deployment.
 - The operator Workspace PTY/tmux gateway and Flutter terminal rendering are implemented. A real isolated server smoke has proved PTY input/output, resize, tmux attachment, Codex execution, and cleanup.
-- The supervised runner is active on loopback with Supabase authentication and one server-owned Workspace allowlist. Public access is not yet proven because `runner.shipglows.com` lacks its root-owned Caddy route and the runner identity database has no provisioned actor/project.
+- The supervised runner last proved on loopback still uses its previously provisioned Supabase authentication configuration and one server-owned Workspace allowlist. The repository source now targets Firebase Auth, but that deployment has not been reconfigured or re-proven. Public access is also unproven because `runner.shipglows.com` lacks its root-owned Caddy route and the runner identity database has no provisioned actor/project.
 - Legacy ContentFlow code remains behind explicit legacy targets and is not current product truth.
 
 ## Validation

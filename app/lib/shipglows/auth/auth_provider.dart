@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 enum ShipGlowsAuthStatus { signedOut, signedIn }
 
@@ -43,8 +43,8 @@ class DisabledShipGlowsAuthProvider implements ShipGlowsAuthProvider {
   Future<ShipGlowsSession?> currentSession() async => null;
 }
 
-class SupabaseSessionSnapshot {
-  const SupabaseSessionSnapshot({
+class FirebaseSessionSnapshot {
+  const FirebaseSessionSnapshot({
     required this.userId,
     required this.accessToken,
     required this.expiresAt,
@@ -58,49 +58,54 @@ class SupabaseSessionSnapshot {
       expiresAt != null && !expiresAt!.isAfter(now);
 }
 
-abstract interface class SupabaseSessionSource {
-  SupabaseSessionSnapshot? get currentSession;
+abstract interface class FirebaseSessionSource {
+  FirebaseSessionSnapshot? get currentSession;
 
-  Stream<SupabaseSessionSnapshot?> get sessionChanges;
+  Stream<FirebaseSessionSnapshot?> get sessionChanges;
 
-  Future<SupabaseSessionSnapshot?> refreshSession();
+  Future<FirebaseSessionSnapshot?> refreshSession();
 }
 
-class SupabaseFlutterSessionSource implements SupabaseSessionSource {
-  SupabaseFlutterSessionSource(this._auth);
+class FirebaseFlutterSessionSource implements FirebaseSessionSource {
+  FirebaseFlutterSessionSource(this._auth);
 
-  final GoTrueClient _auth;
-
-  @override
-  SupabaseSessionSnapshot? get currentSession => _mapSession(_auth.currentSession);
+  final FirebaseAuth _auth;
+  FirebaseSessionSnapshot? _snapshot;
 
   @override
-  Stream<SupabaseSessionSnapshot?> get sessionChanges =>
-      _auth.onAuthStateChange.map((event) => _mapSession(event.session));
+  FirebaseSessionSnapshot? get currentSession => _snapshot;
 
   @override
-  Future<SupabaseSessionSnapshot?> refreshSession() async =>
-      _mapSession((await _auth.refreshSession()).session);
+  Stream<FirebaseSessionSnapshot?> get sessionChanges =>
+      _auth.idTokenChanges().asyncMap(_mapUser);
 
-  SupabaseSessionSnapshot? _mapSession(Session? session) {
-    if (session == null) return null;
-    return SupabaseSessionSnapshot(
-      userId: session.user.id,
-      accessToken: session.accessToken,
-      expiresAt: session.expiresAt == null
-          ? null
-          : DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000, isUtc: true),
+  @override
+  Future<FirebaseSessionSnapshot?> refreshSession() async =>
+      _mapUser(_auth.currentUser, forceRefresh: true);
+
+  Future<FirebaseSessionSnapshot?> _mapUser(
+    User? user, {
+    bool forceRefresh = false,
+  }) async {
+    if (user == null) return _snapshot = null;
+    final token = await user.getIdTokenResult(forceRefresh);
+    final accessToken = token.token;
+    if (accessToken == null || accessToken.isEmpty) return _snapshot = null;
+    return _snapshot = FirebaseSessionSnapshot(
+      userId: user.uid,
+      accessToken: accessToken,
+      expiresAt: token.expirationTime?.toUtc(),
     );
   }
 }
 
-class SupabaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
-  SupabaseShipGlowsAuthProvider(
+class FirebaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
+  FirebaseShipGlowsAuthProvider(
     this._source, {
     DateTime Function()? clock,
   }) : _clock = clock ?? DateTime.now;
 
-  final SupabaseSessionSource _source;
+  final FirebaseSessionSource _source;
   final DateTime Function() _clock;
 
   @override
@@ -116,14 +121,14 @@ class SupabaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
     return _toSession(snapshot);
   }
 
-  ShipGlowsAuthState _toState(SupabaseSessionSnapshot? snapshot) {
+  ShipGlowsAuthState _toState(FirebaseSessionSnapshot? snapshot) {
     final session = _toSession(snapshot);
     return session == null
         ? const ShipGlowsAuthState.signedOut()
         : ShipGlowsAuthState.signedIn(session);
   }
 
-  ShipGlowsSession? _toSession(SupabaseSessionSnapshot? snapshot) {
+  ShipGlowsSession? _toSession(FirebaseSessionSnapshot? snapshot) {
     if (snapshot == null || snapshot.userId.isEmpty || snapshot.accessToken.isEmpty) {
       return null;
     }

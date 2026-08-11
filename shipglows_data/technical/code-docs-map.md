@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.8.0"
+artifact_version: "0.9.0"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-08-03"
+updated: "2026-08-11"
 status: draft
 source_skill: sf-docs
 scope: "code-docs-map"
@@ -51,9 +51,9 @@ This map links code areas to their primary technical documentation, validation c
 
 | Code area | Current role | Primary doc | Validation | Update trigger |
 | --- | --- | --- | --- | --- |
-| `app/lib/main.dart` | Runtime target switch and optional public Supabase bootstrap | `shipglows_data/technical/runtime-boundary.md` | `flutter analyze && flutter test app/test/shipglows/auth/auth_provider_test.dart` | Any change to app boot, target names, public auth configuration, or provider overrides |
+| `app/lib/main.dart` | Runtime target switch and optional public Firebase bootstrap | `shipglows_data/technical/runtime-boundary.md` | `flutter analyze && flutter test app/test/shipglows/auth/auth_provider_test.dart` | Any change to app boot, target names, public auth configuration, or provider overrides |
 | `app/lib/shipglows/` | Active ShipGlows UI runtime | `shipglows_data/technical/runtime-boundary.md` | `flutter test app/test/widget_test.dart` | Any dashboard route, screen, or provider behavior change |
-| `app/lib/shipglows/auth/**` + `app/test/shipglows/auth/**` | Provider-neutral identity/session adapter; Supabase is optional first implementation | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/technical/runtime-boundary.md` | `flutter analyze && flutter test app/test/shipglows/auth/auth_provider_test.dart` | Any authentication provider, session refresh, compile-time configuration, identity mapping, token use, or platform auth behavior change |
+| `app/lib/shipglows/auth/**` + `app/test/shipglows/auth/**` | Provider-neutral identity/session adapter; Firebase Auth is the active implementation | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/technical/runtime-boundary.md` | `flutter analyze && flutter test app/test/shipglows/auth/auth_provider_test.dart` | Any authentication provider, session refresh, compile-time configuration, identity mapping, token use, or platform auth behavior change |
 | `app/lib/shipglows/data/managed_runner_api.dart` + `app/lib/shipglows/providers/managed_runner_provider.dart` + `app/lib/shipglows/providers/managed_conversation_provider.dart` + `app/lib/shipglows/providers/managed_workspace_provider.dart` + `app/lib/shipglows/providers/managed_project_identity_provider.dart` + `app/lib/shipglows/presentation/widgets/managed_conversation_panel.dart` + `app/lib/shipglows/presentation/screens/project_detail_screen.dart` + `app/lib/shipglows/presentation/screens/operator_workspace_screen.dart` + `app/lib/shipglows/router.dart` + matching tests | Typed Flutter managed surfaces: semantic conversation commands/state plus a separate operator Workspace that creates an opaque short-lived session, connects over WebSocket, renders PTY output with `xterm`, forwards input/resize, closes on disposal, and fails closed without authorization or availability | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md` | `flutter analyze app/lib/shipglows && flutter test app/test/shipglows` | Any runner API path, conversation or Workspace state/action, approval UX, auth-token attachment, SSE/WebSocket behavior, project identity mapping, or interactive terminal rendering change |
 | `app/lib/data/shipglows_sources/` | Active Markdown/source readers | `shipglows_data/technical/markdown-source-of-truth.md` | `flutter test app/test/data/shipglows_sources` | Any parser, allowlist, diagnostics, source file rule, or operational record grammar change |
 | `app/lib/domain/project_health/` | Active project health model | `shipglows_data/technical/markdown-source-of-truth.md` | `flutter test app/test/domain/project_health` | Any project posture, next-command, or health scoring change |

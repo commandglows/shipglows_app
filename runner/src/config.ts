@@ -53,10 +53,9 @@ export interface RunnerServerConfig {
 }
 
 export interface RunnerIntegrationsConfig {
-  readonly supabase: {
+  readonly firebase: {
     readonly enabled: boolean;
-    readonly url?: string;
-    readonly jwtAudience: string;
+    readonly projectId?: string;
   };
   readonly github: {
     readonly enabled: boolean;
@@ -125,7 +124,7 @@ export function loadConfig(
   const issues: string[] = [];
   const port = Number(env["RUNNER_PORT"] ?? 3210);
   const host = env["RUNNER_HOST"] ?? "127.0.0.1";
-  const supabaseEnabled = readBoolean(env["SUPABASE_AUTH_ENABLED"], "SUPABASE_AUTH_ENABLED", issues);
+  const firebaseEnabled = readBoolean(env["FIREBASE_AUTH_ENABLED"], "FIREBASE_AUTH_ENABLED", issues);
   const githubEnabled = readBoolean(env["GITHUB_ENABLED"], "GITHUB_ENABLED", issues);
   const codexEnabled = readBoolean(env["CODEX_ENABLED"], "CODEX_ENABLED", issues);
   const eveEnabled = readBoolean(env["EVE_ENABLED"], "EVE_ENABLED", issues);
@@ -154,10 +153,13 @@ export function loadConfig(
   if (env["RUNNER_PUBLIC_APP_SERVER"] !== undefined) issues.push("RUNNER_PUBLIC_APP_SERVER");
   if (env["RUNNER_ALLOW_CLIENT_PATHS"] !== undefined) issues.push("RUNNER_ALLOW_CLIENT_PATHS");
   if (env["CLERK_ENABLED"] !== undefined || env["CLERK_SECRET_KEY"] !== undefined) {
-    issues.push("CLERK_* is retired; use the Supabase Auth adapter");
+    issues.push("CLERK_* is retired; use the Firebase Auth adapter");
   }
-  if (supabaseEnabled && !env["SUPABASE_URL"]) {
-    issues.push("SUPABASE_URL");
+  if (env["SUPABASE_AUTH_ENABLED"] !== undefined || env["SUPABASE_URL"] !== undefined || env["SUPABASE_JWT_AUDIENCE"] !== undefined) {
+    issues.push("SUPABASE_* is retired; use FIREBASE_AUTH_ENABLED and FIREBASE_PROJECT_ID");
+  }
+  if (firebaseEnabled && !env["FIREBASE_PROJECT_ID"]) {
+    issues.push("FIREBASE_PROJECT_ID");
   }
   if (githubEnabled && !/^[1-9][0-9]*$/.test(env["GITHUB_APP_ID"] ?? "")) {
     issues.push("GITHUB_APP_ID");
@@ -183,8 +185,8 @@ export function loadConfig(
 
   const allowedOrigins = parseAllowedOrigins(env["RUNNER_ALLOWED_ORIGINS"], issues);
   const environment = env["RUNNER_ENV"] ?? "test";
-  if (environment === "production" && !supabaseEnabled) {
-    issues.push("SUPABASE_AUTH_ENABLED=true is required in production");
+  if (environment === "production" && !firebaseEnabled) {
+    issues.push("FIREBASE_AUTH_ENABLED=true is required in production");
   }
   if (environment === "production" && allowedOrigins.length === 0) {
     issues.push("RUNNER_ALLOWED_ORIGINS is required in production");
@@ -197,10 +199,9 @@ export function loadConfig(
     server: { host, port, allowedOrigins },
     limits: { maxConcurrentRunsPerTenant, maxRunDurationMs },
     integrations: {
-      supabase: {
-        enabled: supabaseEnabled,
-        jwtAudience: env["SUPABASE_JWT_AUDIENCE"] ?? "authenticated",
-        ...(env["SUPABASE_URL"] ? { url: env["SUPABASE_URL"] } : {}),
+      firebase: {
+        enabled: firebaseEnabled,
+        ...(env["FIREBASE_PROJECT_ID"] ? { projectId: env["FIREBASE_PROJECT_ID"] } : {}),
       },
       github: {
         enabled: githubEnabled,
@@ -227,7 +228,7 @@ export function publicConfig(config: RunnerConfig) {
     allowedOrigins: config.server.allowedOrigins,
     maxConcurrentRunsPerTenant: config.limits.maxConcurrentRunsPerTenant,
     maxRunDurationMs: config.limits.maxRunDurationMs,
-    supabaseEnabled: config.integrations.supabase.enabled,
+    firebaseEnabled: config.integrations.firebase.enabled,
     githubEnabled: config.integrations.github.enabled,
     codexEnabled: config.runtimes.codex.enabled,
     eveEnabled: config.runtimes.eve.enabled,

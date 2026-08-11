@@ -71,7 +71,7 @@ The repository still contains a legacy ContentFlow runtime. Treat it as migratio
 - GoRouter
 - TypeScript / Fastify managed runner
 - SQLite operational projection
-- Supabase first auth adapter behind provider-neutral contracts
+- Firebase Auth identity adapter behind provider-neutral contracts
 - GitHub App repository authorization and managed worktrees
 - Codex app-server first agent adapter behind `AgentRuntime`
 - The existing ShipGlows read-only terminal TUI lives in `/home/claude/shipglowz/tui`; this Flutter app does not own the Bun/OpenTUI package.
@@ -80,7 +80,7 @@ The repository still contains a legacy ContentFlow runtime. Treat it as migratio
 - Shared preferences for local settings
 - Markdown/source parsers under `lib/data/shipglows_sources/`
 
-Do not infer that FastAPI, Clerk, Firebase, Firestore, or OpenRouter are active product dependencies just because legacy files mention them. Supabase is the current first identity adapter and must remain behind the portable auth boundary.
+Do not infer that FastAPI, Clerk, Firestore, or OpenRouter are active product dependencies just because legacy files mention them. Firebase Auth is the current source-code identity adapter behind the portable auth boundary; Convex is the target product backend/data layer, while the managed Fastify/SQLite runner remains a justified execution-plane exception. Deployment state must be documented separately from source-code state.
 
 ## Common Commands
 

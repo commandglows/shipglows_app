@@ -2,7 +2,7 @@
  * PM2 process definition for the managed runner.
  *
  * Secrets deliberately do not live here. Before starting this process, load
- * the server-owned environment file with Supabase and GitHub App values.
+ * the server-owned environment file with Firebase and GitHub App values.
  */
 module.exports = {
   apps: [{

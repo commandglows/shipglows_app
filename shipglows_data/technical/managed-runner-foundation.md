@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.1.0"
+artifact_version: "2.2.0"
 project: "shipglows_app"
 created: "2026-08-01"
-updated: "2026-08-07"
+updated: "2026-08-11"
 status: draft
 source_skill: "102-sg-start"
 scope: "managed-runner-foundation"
@@ -91,7 +91,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 ## Current Foundation
 
 - The public API is versioned under `v1` and uses closed schemas.
-- A production runner is loopback-only behind Caddy. It refuses to start unless Supabase authentication and an explicit `RUNNER_ALLOWED_ORIGINS` allowlist are configured; GitHub App and Codex remain separately opt-in server integrations. The deployment templates reserve `runner.shipglows.com` and port `3210` without committing secrets or a SQLite projection.
+- A production runner is loopback-only behind Caddy. It refuses to start unless Firebase authentication and an explicit `RUNNER_ALLOWED_ORIGINS` allowlist are configured; GitHub App and Codex remain separately opt-in server integrations. The deployment templates reserve `runner.shipglows.com` and port `3210` without committing secrets or a SQLite projection.
 - `GET /v1/projects/resolve?sourceSystem=...&sourceProjectId=...` is the canonical read-only identity bridge for deployments where the existing app project namespace differs from runner project IDs. It requires authentication, resolves through a server-owned tenant-scoped directory, rechecks read access on the resolved runner project, and returns only bounded opaque identifiers; it returns `503 identityUnavailable` until that directory is configured.
 - Server-side project provisioning can persist the bridge atomically by calling `OperationalStore.createProject` with `sourceSystem` and `sourceProjectId`, or by calling `bindProjectIdentity` for an existing runner project. The Flutter `/api/projects` client is not allowed to perform this write; its FastAPI implementation is outside this repository and must call the runner through a server-to-server deployment adapter.
 - `AgentRuntime` is the product-owned contract for sessions, turns, interruption, approval support and semantic event streams.
@@ -111,17 +111,17 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - The gateway spawns `tmux new-session -A` with fixed arguments from the server allowlist through `node-pty`. Flutter cannot select a shell command, filesystem path, tmux name, host, or execution permission.
 - Flutter now has an opt-in `ManagedRunnerApi`, a provider-neutral `ManagedRunnerClient`, Riverpod conversation state, and a first managed-agent panel on project detail. `MANAGED_RUNNER_BASE_URL` enables it; the client obtains the current provider-neutral auth token, sends explicit `Idempotency-Key` values for commands, maps safe runner errors, parses chunked authenticated SSE frames, and remains visibly disabled when the runner URL is not configured. The panel supports create/send/interrupt/resume and approval decisions, accepts only an opaque `runnerProjectId`, and now resolves it from the existing authenticated `availableProjectsProvider` by normalized unique project name; ambiguous or unavailable matches remain non-executable.
 - Flutter now exposes a dedicated operator Workspace route from a server-backed project detail. It creates the short-lived session over authenticated HTTP, connects through `web_socket_channel`, renders output and captures keyboard input with `xterm`, forwards bounded resize frames, and closes the session on screen disposal. Unavailable and interrupted states remain explicit; no SSH credential, server path, PTY handle or tmux identifier is presented. Cockpit and semantic Codex conversations remain the normal user surface.
-- The composition root now opens the server-owned SQLite projection, optionally enables Supabase JWKS authentication and Codex stdio, and closes the store with the app lifecycle. The protected event route emits a bounded, tenant-scoped SSE replay with cursor resume and heartbeat; `live=true` adds tenant/conversation-scoped in-process fan-out, a 30-second idle bound, and disconnect cleanup.
+- The composition root now opens the server-owned SQLite projection, optionally enables Firebase ID-token authentication and Codex stdio, and closes the store with the app lifecycle. The protected event route emits a bounded, tenant-scoped SSE replay with cursor resume and heartbeat; `live=true` adds tenant/conversation-scoped in-process fan-out, a 30-second idle bound, and disconnect cleanup.
 - All persisted event, run checkpoint, and idempotency payloads are checked for credentials, cookies, authorization material, clone paths and recognizable token values.
-- Supabase is the first identity adapter. The runner verifies an access token with the project's JWKS, accepts only ES256/RS256 tokens with its expected issuer and audience, then resolves the JWT subject through a tenant membership lookup.
-- Flutter exposes a provider-neutral `ShipGlowsAuthProvider`. The optional Supabase adapter maps only `userId`, access token and expiry into that contract; no Supabase wire type reaches feature code.
-- A Flutter build without both `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` keeps the local dashboard available with an explicitly disabled auth adapter. The publishable key is a client value; privileged Supabase keys remain server-only.
+- Firebase Auth is the identity adapter. The runner verifies an access token with the project's JWKS, accepts only RS256 ID tokens with its expected issuer and audience, then resolves the JWT subject through a tenant membership lookup.
+- Flutter exposes a provider-neutral `ShipGlowsAuthProvider`. The optional Firebase adapter maps only `userId`, access token and expiry into that contract; no Firebase wire type reaches feature code.
+- A Flutter build without both `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID` and `FIREBASE_PROJECT_ID` keeps the local dashboard available with an explicitly disabled auth adapter. The Firebase client configuration is public application metadata; privileged Firebase service-account credentials remain server-only.
 - GitHub access uses a GitHub App rather than OAuth or a personal access token. Enabling it requires the server-only `GITHUB_APP_ID` and `GITHUB_PRIVATE_KEY`; classic `GITHUB_TOKEN` configuration is rejected.
 - A GitHub App issuer signs a short app JWT, requests one installation token limited to one repository and `Contents: read`, and refuses expired, long-lived, widened, or permission-expanded responses. The token is scoped to one internal callback and is never cached, returned, logged, or persisted.
 - Repository-sensitive work rechecks the immutable repository id, full name, default branch, and archived state with GitHub before Git runs. The resulting internal binding contains repository metadata only, never a credential.
 - The workspace manager owns opaque mirror, audit and fix paths. It rejects traversal and escaping symlinks, creates detached audit worktrees, creates one local `shipglows/fix/...` branch per fix conversation, serializes mutation per project, and can remove stale worktrees.
 - The guarded provider smoke harness runs with `cd runner && npm run smoke:providers -- --confirm` only after review. It requires `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY`, `RUNNER_SMOKE_GITHUB_INSTALLATION_ID`, `RUNNER_SMOKE_GITHUB_REPOSITORY_ID`, `RUNNER_SMOKE_GITHUB_FULL_NAME` and `RUNNER_SMOKE_GITHUB_DEFAULT_BRANCH`; it revalidates the GitHub App binding, creates only a temporary detached audit worktree, starts Codex with a read-only prompt, requires a terminal turn event, removes the temporary workspace, and never prints credentials.
-- The operator smoke has passed on the managed server with a real PTY, isolated tmux session, resize, terminal input/output, installed Codex executable, and cleanup. The supervised production runner was restarted with one ShipGlows allowlist entry while retaining Supabase authentication; loopback version is `200` and unauthenticated protected access remains `401`.
+- The operator smoke passed on the managed server with a real PTY, isolated tmux session, resize, terminal input/output, installed Codex executable, and cleanup. That proof used the previously provisioned Supabase deployment. Repository source and templates now target Firebase Auth, but the managed server has not yet been reconfigured or re-proven with Firebase; the old loopback evidence must not be presented as Firebase deployment proof.
 - This is not public end-to-end proof. `runner.shipglows.com` resolves to the managed host, but the root-owned system Caddy configuration has no route for it and TLS fails before the runner. The operational identity database also has no provisioned actor/project, so the Flutter browser flow cannot yet receive an authorized capability.
 - The production Git transport executes fixed Git argument lists without a shell. Its HTTP authorization lives only in the child process environment; it is never embedded in a clone URL or command argument and Git output is not surfaced.
 
@@ -131,10 +131,10 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - No raw Codex, ACP, PTY, tmux, SSH, filesystem or model-provider transport is a public endpoint.
 - Flutter does not import runtime-specific types or use runtime session identifiers as authorization proof.
 - A missing capability returns `runtimeCapabilityUnavailable`; it never causes a different runtime or broader permission to be selected.
-- Supabase is the planned identity adapter. Retired Clerk configuration is rejected before startup.
+- Firebase Auth is the source-code identity adapter. Retired Clerk and Supabase configuration is rejected before startup.
 - Authentication fails closed for a malformed token, failed signature/claim validation, invalid tenant header, missing tenant membership or unavailable auth adapter.
 - State-changing routes reject a present `Origin` unless it exactly matches the normalized `RUNNER_ALLOWED_ORIGINS` allowlist. Native clients may omit `Origin`; reads and SSE are not blocked by this state-changing policy.
-- The runner, not the Flutter client, maps a Supabase subject to a ShipGlows actor and tenant. A bearer token alone never selects a project or expands permissions.
+- The runner, not the Flutter client, maps a Firebase subject to a ShipGlows actor and tenant. A bearer token alone never selects a project or expands permissions.
 - SQLite is an operational projection and cannot overwrite repository/Markdown authority. GitHub bindings are read only through their owning tenant and contain no token or private key.
 - GitHub App private keys and installation tokens are server-only. A public API response, SQLite event, diagnostic, log, Git URL, Git argument or Flutter payload must not contain either.
 - A managed audit always uses a detached worktree. A managed fix creates a local isolated branch only; it has no push, merge, deploy, or canonical-branch mutation path.

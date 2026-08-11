@@ -19,7 +19,7 @@ import {
 const actor: ActorContext = {
   tenantId: "ten_000000000001",
   userId: "usr_000000000001",
-  subject: "supabase-user-000000000001",
+  subject: "firebase-user-000000000001",
   sessionId: "ses_000000000001",
 };
 

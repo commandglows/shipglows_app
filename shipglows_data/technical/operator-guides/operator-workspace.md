@@ -1,10 +1,10 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.1.0"
 project: "shipglows_app"
 created: "2026-08-03"
-updated: "2026-08-03"
+updated: "2026-08-11"
 status: reviewed
 source_skill: 300-sg-docs
 scope: operator-workspace
@@ -41,7 +41,7 @@ next_step: "Complete public TLS and authenticated actor/project provisioning, th
 
 - Implemented: protected capability discovery, idempotent session creation, short-lived capability, owner-only closure, dedicated WebSocket stream, allowlisted tmux PTY, bounded input/resize, Flutter `xterm` rendering, and explicit unavailable/interrupted states.
 - Server-smoke proven: real PTY, isolated tmux, resize, terminal input/output, installed Codex executable, no obvious secret markers in the bounded transcript, and temporary-session cleanup.
-- Loopback deployed: the supervised runner is healthy with Supabase authentication and one server-owned Workspace allowlist.
+- Last loopback proof: the supervised runner was healthy with its previous Supabase deployment and one server-owned Workspace allowlist. Repository source now targets Firebase, but the server migration and Firebase-authenticated smoke are still pending.
 - Not yet publicly proven: HTTPS reverse proxy for `runner.shipglows.com`, provisioned authenticated actor/project, Flutter Web connection, long reconnect, Neovim, Android, and Windows rendering.
 
 ## Security Contract
@@ -64,7 +64,7 @@ RUNNER_OPERATOR_WORKSPACES={"<opaque-project-id>":{"cwd":"<absolute-server-owned
 Configuration validation rejects relative paths, malformed project ids, malformed tmux names, and non-object shapes. Restart the supervised runner while preserving its existing secret environment, then confirm:
 
 - process state is online and stable;
-- Supabase authentication remains enabled;
+- Firebase authentication is enabled after the deployment migration (the previous Supabase deployment is not sufficient proof);
 - Workspace allowlist count is expected;
 - `GET /v1/version` returns `200` on loopback;
 - an unauthenticated protected Workspace request returns `401`;
@@ -86,7 +86,7 @@ A DNS record alone is insufficient. If TLS fails before the runner, do not weake
 
 An allowlist entry does not create product authorization. Before browser proof, provision through the server-owned flow:
 
-1. tenant and authenticated Supabase subject mapping;
+1. tenant and authenticated Firebase subject mapping;
 2. actor/user membership;
 3. opaque runner project;
 4. project membership with the required capability;

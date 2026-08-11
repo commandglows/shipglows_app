@@ -2,46 +2,46 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipglows_app/shipglows/auth/auth_provider.dart';
-import 'package:shipglows_app/shipglows/auth/supabase_bootstrap.dart';
+import 'package:shipglows_app/shipglows/auth/firebase_bootstrap.dart';
 
-class _FakeSessionSource implements SupabaseSessionSource {
+class _FakeSessionSource implements FirebaseSessionSource {
   _FakeSessionSource(this.currentSession);
 
   @override
-  SupabaseSessionSnapshot? currentSession;
+  FirebaseSessionSnapshot? currentSession;
 
-  SupabaseSessionSnapshot? refreshedSession;
+  FirebaseSessionSnapshot? refreshedSession;
   var refreshCount = 0;
-  final StreamController<SupabaseSessionSnapshot?> _changes =
-      StreamController<SupabaseSessionSnapshot?>.broadcast();
+  final StreamController<FirebaseSessionSnapshot?> _changes =
+      StreamController<FirebaseSessionSnapshot?>.broadcast();
 
   @override
-  Stream<SupabaseSessionSnapshot?> get sessionChanges => _changes.stream;
+  Stream<FirebaseSessionSnapshot?> get sessionChanges => _changes.stream;
 
   @override
-  Future<SupabaseSessionSnapshot?> refreshSession() async {
+  Future<FirebaseSessionSnapshot?> refreshSession() async {
     refreshCount += 1;
     return refreshedSession;
   }
 
-  void emit(SupabaseSessionSnapshot? session) => _changes.add(session);
+  void emit(FirebaseSessionSnapshot? session) => _changes.add(session);
 
   Future<void> dispose() => _changes.close();
 }
 
-SupabaseSessionSnapshot _session({DateTime? expiresAt}) =>
-    SupabaseSessionSnapshot(
+FirebaseSessionSnapshot _session({DateTime? expiresAt}) =>
+    FirebaseSessionSnapshot(
       userId: 'user_000000000001',
       accessToken: 'signed.access.token',
       expiresAt: expiresAt,
     );
 
 void main() {
-  test('refreshes an expired Supabase session before exposing a runner token', () async {
+  test('refreshes an expired Firebase session before exposing a runner token', () async {
     final now = DateTime.utc(2026, 8, 1, 12);
     final source = _FakeSessionSource(_session(expiresAt: now.subtract(const Duration(seconds: 1))))
       ..refreshedSession = _session(expiresAt: now.add(const Duration(minutes: 5)));
-    final provider = SupabaseShipGlowsAuthProvider(source, clock: () => now);
+    final provider = FirebaseShipGlowsAuthProvider(source, clock: () => now);
 
     final session = await provider.currentSession();
 
@@ -50,9 +50,9 @@ void main() {
     await source.dispose();
   });
 
-  test('normalizes Supabase session changes without exposing a provider wire type', () async {
+  test('normalizes Firebase session changes without exposing a provider wire type', () async {
     final source = _FakeSessionSource(null);
-    final provider = SupabaseShipGlowsAuthProvider(source);
+    final provider = FirebaseShipGlowsAuthProvider(source);
     final states = <ShipGlowsAuthState>[];
     final subscription = provider.authStateChanges.listen(states.add);
 
@@ -71,18 +71,25 @@ void main() {
 
   test('keeps the local dashboard auth adapter disabled without build config', () async {
     final provider = await bootstrapShipGlowsAuth(
-      const SupabaseBootstrapConfiguration(url: '', publishableKey: ''),
+      const FirebaseBootstrapConfiguration(
+        apiKey: '',
+        appId: '',
+        messagingSenderId: '',
+        projectId: '',
+      ),
     );
 
     expect(provider, isA<DisabledShipGlowsAuthProvider>());
     expect(await provider.currentSession(), isNull);
   });
 
-  test('does not initialize Supabase from an invalid URL', () async {
+  test('does not initialize Firebase from an incomplete client configuration', () async {
     final provider = await bootstrapShipGlowsAuth(
-      const SupabaseBootstrapConfiguration(
-        url: 'file:///not-a-supabase-project',
-        publishableKey: 'publishable-key',
+      const FirebaseBootstrapConfiguration(
+        apiKey: 'public-api-key',
+        appId: '',
+        messagingSenderId: 'sender-id',
+        projectId: 'shipglows-test',
       ),
     );
 

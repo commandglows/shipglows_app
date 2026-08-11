@@ -32,7 +32,7 @@ try {
   const transcript = frames.join("");
   assert.match(transcript, new RegExp(marker));
   assert.match(transcript, /codex-cli|codex [0-9]/i);
-  assert.doesNotMatch(transcript, /Bearer |SUPABASE_|GITHUB_PRIVATE_KEY/);
+  assert.doesNotMatch(transcript, /Bearer |FIREBASE_|GITHUB_PRIVATE_KEY/);
   process.stdout.write("Operator Workspace smoke passed: real PTY, isolated tmux, resize, input/output, and Codex executable.\n");
 } finally {
   gateway.shutdown();

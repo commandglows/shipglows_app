@@ -11,7 +11,7 @@ import { OperatorWorkspaceGateway, type OperatorPty } from "../../src/operator-w
 const actor: ActorContext = {
   tenantId: "ten_000000000001",
   userId: "usr_000000000001",
-  subject: "supabase-user-000000000001",
+  subject: "firebase-user-000000000001",
 };
 
 describe("runner API foundation", () => {
@@ -28,7 +28,7 @@ describe("runner API foundation", () => {
       apiVersion: "v1",
       service: "shipglows-managed-runner",
       serviceVersion: "0.1.0",
-      providers: { supabase: false, github: false, codex: false, eve: false },
+      providers: { firebase: false, github: false, codex: false, eve: false },
     });
     assert.doesNotMatch(response.body, /\/srv\/private/);
   });

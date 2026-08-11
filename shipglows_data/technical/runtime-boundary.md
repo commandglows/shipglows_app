@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.3.0"
+artifact_version: "0.4.0"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-08-01"
+updated: "2026-08-11"
 status: draft
 source_skill: sf-docs
 scope: "runtime-boundary"
@@ -27,7 +27,7 @@ supersedes: []
 evidence:
   - "lib/main.dart defaults APP_TARGET to shipglows."
   - "LegacyShipGlowsApp is only selected for APP_TARGET=legacy or APP_TARGET=contentflow."
-  - "Managed Cockpit auth bootstrap is disabled without both public Supabase build values."
+  - "Managed Cockpit auth bootstrap is disabled without both public Firebase build values."
 next_review: "2026-06-08"
 next_step: "/sf-docs technical audit"
 ---
@@ -63,7 +63,7 @@ This document defines which runtime is active and which runtime is legacy while 
 - Active runtime code in `lib/shipglows/` must not import legacy runtime modules (`lib/router.dart`, `lib/providers/providers.dart`, `lib/data/services/**`, `lib/presentation/**`, `web_auth/**`) without an explicit migration or compatibility spec.
 - Legacy tests should import those legacy modules only through `test/legacy_contract.dart` unless a migration spec explicitly allows direct imports in place.
 - Auth, feedback, BYOK, pipeline, terminal, and agent runner features cannot be activated by runtime naming alone.
-- `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` are optional public build configuration. If either is absent or the URL is invalid, `lib/main.dart` injects a disabled ShipGlows auth adapter and the read-only local dashboard remains available. Privileged Supabase keys are never Flutter build values.
+- `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID` and `FIREBASE_PROJECT_ID` are optional public client build configuration. If any value is absent, `lib/main.dart` injects a disabled ShipGlows auth adapter and the read-only local dashboard remains available. Privileged Firebase service-account credentials are never Flutter build values.
 - The managed runner owns neutral `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker`, and `ModelGateway` contracts. Flutter must consume only normalized ShipGlows API/event types, never a runtime wire protocol.
 
 ## Runtime Selection

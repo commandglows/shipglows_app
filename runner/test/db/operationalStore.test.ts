@@ -32,10 +32,10 @@ async function databasePath(name: string): Promise<string> {
 }
 
 function seed(store: Awaited<ReturnType<typeof openOperationalStore>>): void {
-  store.createTenant({ id: ids.tenantA, identityRef: "supabase-tenant-a" });
-  store.createTenant({ id: ids.tenantB, identityRef: "supabase-tenant-b" });
-  store.createUser({ id: ids.userA, authSubject: "supabase-user-a" });
-  store.createUser({ id: ids.userB, authSubject: "supabase-user-b" });
+  store.createTenant({ id: ids.tenantA, identityRef: "firebase-tenant-a" });
+  store.createTenant({ id: ids.tenantB, identityRef: "firebase-tenant-b" });
+  store.createUser({ id: ids.userA, authSubject: "firebase-user-a" });
+  store.createUser({ id: ids.userB, authSubject: "firebase-user-b" });
   store.addTenantUser({ tenantId: ids.tenantA, userId: ids.userA, role: "owner" });
   store.addTenantUser({ tenantId: ids.tenantB, userId: ids.userB, role: "owner" });
   store.createProject({
@@ -137,11 +137,11 @@ describe("SQLite operational projection", () => {
     seed(store);
 
     assert.deepEqual(
-      store.resolveActor({ subject: "supabase-user-a", tenantId: ids.tenantA }),
-      { tenantId: ids.tenantA, userId: ids.userA, subject: "supabase-user-a" },
+      store.resolveActor({ subject: "firebase-user-a", tenantId: ids.tenantA }),
+      { tenantId: ids.tenantA, userId: ids.userA, subject: "firebase-user-a" },
     );
     assert.equal(
-      store.resolveActor({ subject: "supabase-user-a", tenantId: ids.tenantB }),
+      store.resolveActor({ subject: "firebase-user-a", tenantId: ids.tenantB }),
       undefined,
     );
     store.close();
@@ -180,8 +180,8 @@ describe("SQLite operational projection", () => {
 
   it("records a project identity binding during server-side project provisioning", async () => {
     const store = await openOperationalStore(await databasePath("project-provisioning-identity"));
-    store.createTenant({ id: ids.tenantA, identityRef: "supabase-tenant-a" });
-    store.createUser({ id: ids.userA, authSubject: "supabase-user-a" });
+    store.createTenant({ id: ids.tenantA, identityRef: "firebase-tenant-a" });
+    store.createUser({ id: ids.userA, authSubject: "firebase-user-a" });
     store.addTenantUser({ tenantId: ids.tenantA, userId: ids.userA, role: "owner" });
     store.createProject({
       id: ids.projectA,
