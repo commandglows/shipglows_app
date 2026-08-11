@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.7.0"
+artifact_version: "2.8.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-11"
@@ -26,7 +26,13 @@ linked_systems:
   - "runner/src/runs/conversation.ts"
   - "runner/scripts/provider-smoke.ts"
   - "app/lib/shipglows/data/managed_runner_api.dart"
+  - "app/lib/shipglows/data/conversations/**"
   - "app/lib/shipglows/providers/managed_runner_provider.dart"
+  - "app/lib/shipglows/providers/managed_cockpit_provider.dart"
+  - "app/lib/shipglows/providers/managed_conversation_provider.dart"
+  - "app/lib/shipglows/presentation/screens/cockpit_screen.dart"
+  - "app/lib/shipglows/presentation/widgets/cockpit/**"
+  - "app/lib/shipglows/presentation/widgets/conversations/**"
   - "runner/src/workspaces/cleanup.ts"
   - "runner/src/db/index.ts"
   - "runner/src/health/index.ts"
@@ -47,9 +53,10 @@ linked_systems:
   - "eve"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
-    artifact_version: "1.20.0"
+    artifact_version: "1.21.0"
     required_status: "ready"
-supersedes: []
+supersedes:
+  - "shipglows_data/technical/managed-runner-foundation.md@2.7.0"
 evidence:
   - "Managed Agent Cockpit MVP Tasks 1-3 foundation implementation"
   - "Fastify v5 current documentation check on 2026-08-01"
@@ -57,6 +64,7 @@ evidence:
   - "Node.js sqlite backup API availability from Node.js v22.16.0"
   - "eve Apache-2.0 beta repository review on 2026-08-01"
   - "GitHub App and Git worktree official documentation check on 2026-08-02"
+  - "Flutter Task 9-10 local proof on 2026-08-11: 194 tests, clean analysis, and release Web build."
 next_review: "2026-08-16"
 next_step: "Complete public Caddy/TLS routing and actor/project provisioning, then prove the Workspace from Flutter Web."
 ---
@@ -118,7 +126,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - Runtime sessions, capability decisions, approvals, health evidence and usage summaries are tenant-scoped projections. Health summaries pass the same secret-safety checks as event payloads, and usage values are bounded non-negative counters.
 - `ShipGlowsHealthEvaluator` is the single runner authority for the five-dimensional Cockpit projection. It always emits tech, content, SEO, performance and security; absent evidence is `notReported`, malformed or secret-bearing evidence fails closed, and healthy evidence older than 30 days becomes `stale` without downgrading older warning or critical findings. Coverage excludes `unknown` and `notReported`, while the overall status retains the worst reported state.
 - Versioned `ProjectContextBundle`, skill-run and skill-evidence contracts bind every accepted result to one tenant, project, source commit and bounded redacted source set. Validation rejects unsupported versions, cross-project or detached provenance, invalid chronology, secret-bearing summaries, failed runs that publish evidence, unknown source kinds and duplicate dimension results before persistence.
-- Schema v8 persists a validated context bundle, its skill run and all emitted health evidence in one SQLite transaction. A failed insert rolls the complete envelope back; tenant-scoped readers expose the provenance identifiers to the evaluator and Cockpit without exposing repository paths or raw source content. The legacy evidence writer cannot claim provenance.
+- Schema v8 persists a validated context bundle, its skill run and all emitted health evidence in one SQLite transaction. A failed insert rolls the complete envelope back; tenant-scoped readers expose the provenance identifiers to the evaluator and Cockpit without exposing repository paths or raw source content. The unversioned evidence writer cannot claim provenance.
 - The first real health producer runs the fixed `shipglows.tech.snapshot@1.0.0` read-only audit in `just-bash` 3.2.0 against an in-memory, pre-redacted snapshot only. Host filesystem access, network, JavaScript and Python are not enabled; the command registry, file/byte counts, output grammar, execution count/depth and wall-clock duration are bounded. Only a normalized status, issue count, source hashes and opaque provenance are persisted. Because the published 3.2.0 npm tarball omits several declaration files re-exported by its public types, the adapter uses one local minimal CommonJS type boundary rather than disabling project-wide library checking.
 - The first protected audit command creates a durable conversation/run, initializes the selected runtime, starts a turn, and records a safe running/failed projection. Event-stream persistence, bounded live fan-out, the state-changing Origin policy, per-tenant admission quota and bounded timeout/interruption reconciliation are implemented. The `POST /fixes` path now validates bounded issue/instruction input, requires a durable `Idempotency-Key`, and, when GitHub App configuration is enabled, revalidates the binding, creates a server-owned isolated fix worktree, starts Codex with that internal workspace, and schedules cleanup without exposing its path; it remains unavailable when the provider is not configured.
 - The operational store replays completed asynchronous audit/fix commands from SQLite and coalesces concurrent duplicate keys inside one process. Both state-changing command routes require a bounded `Idempotency-Key`. The cleanup worker scans all tenant cleanup records every minute, resolves run/project/binding context server-side, removes managed worktrees, and marks bounded success/failure states; no local path is persisted.
@@ -127,7 +135,10 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `POST /v1/projects/:projectId/operator-sessions` requires authentication, project access, trusted Origin policy and a bounded idempotency key. It returns one opaque project/actor-scoped session capability with a one-minute attachment lifetime; duplicate keys replay the live capability and creating a different session replaces the previous actor/project session.
 - `WS /v1/operator-sessions/:sessionId/stream` carries only bounded PTY input, output, resize and status frames. The capability travels as a WebSocket subprotocol rather than in the URL. Invalid, expired and concurrent attachments close with a bounded denial; disconnect permits bounded reconnect to the same server PTY, and the authenticated close route releases only an actor-owned session.
 - The gateway spawns `tmux new-session -A` with fixed arguments from the server allowlist through `node-pty`. Flutter cannot select a shell command, filesystem path, tmux name, host, or execution permission.
-- Flutter now has an opt-in `ManagedRunnerApi`, a provider-neutral `ManagedRunnerClient`, Riverpod conversation state, and a first managed-agent panel on project detail. `MANAGED_RUNNER_BASE_URL` enables it; the client obtains the current provider-neutral auth token, sends explicit `Idempotency-Key` values for commands, maps safe runner errors, parses chunked authenticated SSE frames, and remains visibly disabled when the runner URL is not configured. The panel supports create/send/interrupt/resume and approval decisions, accepts only an opaque `runnerProjectId`, and now resolves it from the existing authenticated `availableProjectsProvider` by normalized unique project name; ambiguous or unavailable matches remain non-executable.
+- Flutter now has an opt-in `ManagedRunnerApi`, a provider-neutral `ManagedRunnerClient`, and bounded Riverpod state. `MANAGED_RUNNER_BASE_URL` enables it; the client obtains the current provider-neutral auth token, sends stable `Idempotency-Key` values across retries, maps safe runner errors, parses chunked authenticated SSE frames, and remains visibly disabled when the runner URL is not configured.
+- The server-first Cockpit treats the runner project list as authoritative and keeps local Markdown health as a bounded fallback. It renders explicit loading, empty, local-only, stale, access-lost, session-expired, fallback and failure states across compact, medium and expanded layouts.
+- Semantic conversations map normalized runner events into typed message, tool, plan, approval, progress and result items; assistant deltas coalesce, ANSI/control bytes are removed, cursors remain monotonic, duplicate events are suppressed and retained timelines are bounded. Tabs expose unread state, pause inactive streams, and replace the final closed tab atomically.
+- Conversation controls cover create, message, interrupt, resume, approve, deny, audit and proposed fix. Audit/fix routes use the verified runner payloads and stable idempotency keys. Runtime identity and capability limits appear only when represented by safe typed values; the semantic surface never renders PTY or terminal output.
 - Flutter now exposes a dedicated operator Workspace route from a server-backed project detail. It creates the short-lived session over authenticated HTTP, connects through `web_socket_channel`, renders output and captures keyboard input with `xterm`, forwards bounded resize frames, and closes the session on screen disposal. Unavailable and interrupted states remain explicit; no SSH credential, server path, PTY handle or tmux identifier is presented. Cockpit and semantic Codex conversations remain the normal user surface.
 - The composition root now opens the server-owned SQLite projection, optionally enables Firebase ID-token authentication and Codex stdio, and closes the store with the app lifecycle. The protected event route emits a bounded, tenant-scoped SSE replay with cursor resume and heartbeat; `live=true` adds tenant/conversation-scoped in-process fan-out, a 30-second idle bound, and disconnect cleanup.
 - All persisted event, run checkpoint, and idempotency payloads are checked for credentials, cookies, authorization material, clone paths and recognizable token values.

@@ -1,12 +1,12 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.4.0"
+artifact_version: "1.0.0"
 project: "shipglows_app"
 created: "2026-05-08"
 updated: "2026-08-11"
-status: draft
-source_skill: sf-docs
+status: active
+source_skill: 300-sg-docs
 scope: "runtime-boundary"
 owner: "Diane"
 confidence: high
@@ -14,91 +14,69 @@ risk_level: medium
 security_impact: yes
 docs_impact: yes
 linked_systems:
-  - "lib/main.dart"
-  - "lib/shipglows/app.dart"
-  - "lib/router.dart"
-  - "lib/providers/providers.dart"
+  - "app/lib/main.dart"
+  - "app/lib/shipglows/app.dart"
+  - "app/lib/shipglows/router.dart"
   - "runner/src/main.ts"
   - "runner/src/app.ts"
-  - "lib/shipglows/auth/**"
-depends_on:
-  - "shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md@0.1.0"
-supersedes: []
+  - "app/lib/shipglows/auth/**"
+depends_on: []
+supersedes:
+  - "shipglows_data/technical/runtime-boundary.md@0.4.0"
 evidence:
-  - "lib/main.dart defaults APP_TARGET to shipglows."
-  - "LegacyShipGlowsApp is only selected for APP_TARGET=legacy or APP_TARGET=contentflow."
-  - "Managed Cockpit auth bootstrap is disabled without both public Firebase build values."
-next_review: "2026-06-08"
-next_step: "/sf-docs technical audit"
+  - "app/lib/main.dart always launches ShipGlowsApp and no longer accepts APP_TARGET."
+  - "Managed Cockpit auth bootstrap is disabled without all required public Firebase build values."
+  - "The Flutter product consumes only normalized ShipGlows runner contracts."
+next_review: "2026-09-11"
+next_step: "/sg-docs technical audit"
 ---
 
 # Runtime Boundary
 
 ## Purpose
 
-This document defines which runtime is active and which runtime is legacy while ShipGlows absorbs useful ContentFlow ideas.
+ShipGlows App has one product runtime. This document defines its executable boundary and prevents dormant repository modules from becoming accidental alternate applications.
 
 ## Owned Files
 
-- `lib/main.dart`
-- `lib/shipglows/app.dart`
-- `lib/shipglows/router.dart`
-- `lib/router.dart`
-- `lib/providers/providers.dart`
-- `lib/presentation/**`
+- `app/lib/main.dart`
+- `app/lib/shipglows/app.dart`
+- `app/lib/shipglows/router.dart`
+- `app/lib/shipglows/**`
 
 ## Entrypoints
 
-- Default runtime: `flutter run` launches `shipglows.ShipGlowsApp` on a supported Android or Web device.
-- Managed control-plane bootstrap: `runner/src/main.ts` starts a loopback-only Fastify service. It exposes only the versioned ShipGlows API boundary; it never exposes a raw Codex, PTY, tmux, SSH, or filesystem transport.
-- Active target: `APP_TARGET=shipglows`.
-- Legacy targets: `APP_TARGET=legacy` and `APP_TARGET=contentflow`.
+- `flutter run` and production Flutter builds launch `shipglows.ShipGlowsApp`.
+- `runner/src/main.ts` starts the loopback-only managed Fastify control plane.
+- There is no product runtime selector and no supported alternate app target.
 
 ## Invariants
 
-- ShipGlows is the default and active product runtime.
-- The legacy runtime is a migration reference, not the product direction.
-- The legacy runtime remains temporarily available until its modules are classified.
-- New product work should target `lib/shipglows/` unless a ready spec explicitly adapts legacy code.
-- Active runtime code in `lib/shipglows/` must not import legacy runtime modules (`lib/router.dart`, `lib/providers/providers.dart`, `lib/data/services/**`, `lib/presentation/**`, `web_auth/**`) without an explicit migration or compatibility spec.
-- Legacy tests should import those legacy modules only through `test/legacy_contract.dart` unless a migration spec explicitly allows direct imports in place.
-- Auth, feedback, BYOK, pipeline, terminal, and agent runner features cannot be activated by runtime naming alone.
-- `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID` and `FIREBASE_PROJECT_ID` are optional public client build configuration. If any value is absent, `lib/main.dart` injects a disabled ShipGlows auth adapter and the read-only local dashboard remains available. Privileged Firebase service-account credentials are never Flutter build values.
-- The managed runner owns neutral `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker`, and `ModelGateway` contracts. Flutter must consume only normalized ShipGlows API/event types, never a runtime wire protocol.
-
-## Runtime Selection
-
-`lib/main.dart` normalizes `APP_TARGET`. Values `legacy` and `contentflow` select `LegacyShipGlowsApp`; all other values select `shipglows.ShipGlowsApp`.
-
-This is intentional during migration. It lets us inspect and test old screens without presenting them as ShipGlows's default product.
-
-## Removal Conditions
-
-The legacy target can be removed only after:
-
-- Every legacy code area in `shipglows_data/technical/legacy-contentflow-inventory.md` is classified.
-- Reusable concepts are either moved into ShipGlows-specific modules or tracked in future specs.
-- The active ShipGlows runtime has no direct dependencies on the legacy graph in `lib/` code; legacy-only test dependencies must go through `test/legacy_contract.dart`.
-- The user explicitly accepts the removal scope.
+- `app/lib/main.dart` always launches `ShipGlowsApp`.
+- New product work belongs under `app/lib/shipglows/` or an explicitly shared, documented module.
+- Dormant files elsewhere under `app/lib/` are not a product surface, compatibility target, or architecture constraint. They may be reused only after a narrow review and direct integration into ShipGlows.
+- Auth, feedback, BYOK, pipeline, terminal, and agent-runner features cannot be activated by naming or compile-time target aliases.
+- `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`, and `FIREBASE_PROJECT_ID` are optional public client build configuration. If any value is absent, `main.dart` injects a disabled ShipGlows auth adapter and the read-only local Cockpit remains available.
+- Privileged Firebase service-account credentials are never Flutter build values.
+- The managed runner owns neutral `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker`, and `ModelGateway` contracts. Flutter consumes only normalized ShipGlows API/event types, never a runtime wire protocol.
 
 ## Validation
 
 ```bash
-rg -n "APP_TARGET|LegacyShipGlowsApp|ShipGlowsApp" lib/main.dart lib/shipglows app test
-rg -n "package:shipglows_app/(providers/providers\\.dart|data/services/|router\\.dart|presentation/)" lib/shipglows
-rg -n "package:shipglows_app/(providers/providers\\.dart|data/services/|router\\.dart|presentation/)" test --glob '!test/legacy_contract.dart'
-./scripts/validate-boundary-suite.sh
-./scripts/validate-shipglows-runtime-boundary.sh
-./scripts/validate-legacy-test-boundary.sh
-flutter test test/widget_test.dart
+rg -n "APP_TARGET|LegacyShipGlowsApp" app/lib app/test
+rg -n "package:shipglows_app/(providers/providers\\.dart|data/services/|router\\.dart)" app/lib/shipglows
+cd app && flutter test test/widget_test.dart && flutter analyze
 ```
+
+The first two searches must return no active-runtime dependency or selector.
 
 ## Reader Checklist
 
-- Does a change affect only the active runtime, only the legacy runtime, or both?
-- Does a new dependency make ShipGlows rely on legacy providers or routes?
-- Is a future feature being accidentally enabled through the legacy target?
+- Does this change stay inside the single ShipGlows product runtime?
+- Does a new shared import have a documented current purpose?
+- Could a dormant route, provider, service, or auth path become executable accidentally?
+- Does Flutter remain isolated from runtime-specific wire protocols and privileged credentials?
 
 ## Maintenance Rule
 
-Any change to `APP_TARGET`, app bootstrapping, root providers, or route ownership must update this document in the same chantier.
+Any change to app bootstrapping, root providers, route ownership, or the runner/client boundary must update this document in the same chantier.

@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipglows_app/shipglows/data/managed_runner_api.dart';
 import 'package:shipglows_app/shipglows/data/cockpit/cockpit_models.dart';
 import 'package:shipglows_app/shipglows/providers/managed_conversation_provider.dart';
+import 'package:shipglows_app/shipglows/providers/managed_runner_provider.dart';
 
 void main() {
   test('connects commands, SSE events and approval state', () async {
@@ -36,7 +38,7 @@ void main() {
     expect(notifier.state.phase, ManagedConversationPhase.waitingApproval);
 
     await notifier.resolveApproval(true);
-    expect(runner.approvals.single.decision, 'approved');
+    expect(runner.approvals.single.decision, 'approve');
     expect(notifier.state.pendingApprovalId, isNull);
     notifier.dispose();
   });
@@ -57,7 +59,66 @@ void main() {
     expect(workspace.activeNotifier.state.conversationId, 'conversation-1');
     workspace.selectTab(0);
     expect(workspace.activeNotifier.state.conversationId, isNull);
+    workspace.closeTab(0);
+    expect(workspace.state.tabs, hasLength(1));
+    expect(workspace.state.activeIndex, 0);
     workspace.dispose();
+  });
+
+  test(
+    'replaces the final tab atomically without publishing an empty state',
+    () {
+      final workspace = ManagedConversationWorkspaceNotifier(
+        projectId: 'project-1',
+        client: null,
+      );
+      final observedLengths = <int>[];
+      workspace.addListener((value) => observedLengths.add(value.tabs.length));
+
+      workspace.closeTab(0);
+
+      expect(workspace.state.tabs, hasLength(1));
+      expect(observedLengths, isNot(contains(0)));
+      expect(() => workspace.activeState, returnsNormally);
+      workspace.dispose();
+    },
+  );
+
+  test('provider container owns workspace notifier disposal', () {
+    final container = ProviderContainer(
+      overrides: [managedRunnerApiProvider.overrideWithValue(null)],
+    );
+    container.read(managedConversationWorkspaceProvider('project-1'));
+
+    expect(container.dispose, returnsNormally);
+  });
+
+  test('denies approval and controls interruption and resume', () async {
+    final runner = _FakeManagedRunner();
+    final notifier = ManagedConversationNotifier(
+      projectId: 'project-1',
+      client: runner,
+    );
+    await notifier.createConversation();
+    runner.eventsController.add(
+      const ManagedConversationEvent(
+        cursor: 1,
+        id: 'approval-event',
+        type: 'approval.requested',
+        payload: {'approvalId': 'approval-1'},
+        occurredAt: '2026-08-11T00:00:00Z',
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    await notifier.resolveApproval(false);
+    await notifier.interrupt();
+    await notifier.resume();
+
+    expect(runner.approvals.single.decision, 'deny');
+    expect(runner.interruptions, 1);
+    expect(runner.resumptions, 1);
+    notifier.dispose();
   });
 }
 
@@ -67,6 +128,8 @@ class _FakeManagedRunner implements ManagedRunnerClient {
   final createdKeys = <String>[];
   final messages = <_MessageCall>[];
   final approvals = <_ApprovalCall>[];
+  var interruptions = 0;
+  var resumptions = 0;
 
   @override
   Future<ManagedWorkspaceCapability> workspaceCapability({
@@ -129,20 +192,26 @@ class _FakeManagedRunner implements ManagedRunnerClient {
     required String projectId,
     required String conversationId,
     required String idempotencyKey,
-  }) async => const ManagedConversationResult(
-    conversationId: 'conversation-1',
-    state: 'interrupted',
-  );
+  }) async {
+    interruptions += 1;
+    return const ManagedConversationResult(
+      conversationId: 'conversation-1',
+      state: 'interrupted',
+    );
+  }
 
   @override
   Future<ManagedConversationResult> resume({
     required String projectId,
     required String conversationId,
     required String idempotencyKey,
-  }) async => const ManagedConversationResult(
-    conversationId: 'conversation-1',
-    state: 'running',
-  );
+  }) async {
+    resumptions += 1;
+    return const ManagedConversationResult(
+      conversationId: 'conversation-1',
+      state: 'running',
+    );
+  }
 
   @override
   Future<ManagedApprovalResult> resolveApproval({

@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.20.0"
+artifact_version: "1.21.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-11"
-updated_at: "2026-08-11 16:04:33 UTC"
+updated_at: "2026-08-11 17:27:11 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -110,7 +110,7 @@ evidence:
   - "Operator validation 2026-07-18: conversations launch audits or fixes and improve project trackers across tech, content, SEO, performance, and security."
   - "Operator validation 2026-07-18: the MVP must reuse useful current code, including the interface, auth concepts, and GitHub integration concepts."
   - "Repository inspection 2026-07-18: the active ShipGlows runtime already has Riverpod, go_router, project health parsing, local source redaction, projection contracts, and responsive Flutter widgets."
-  - "Repository inspection 2026-07-18: legacy auth and GitHub service code currently belong to the legacy runtime and are not yet wired into the active ShipGlows runtime."
+  - "Operator correction 2026-08-11: ShipGlows App has one product runtime; dormant repository modules are not a legacy product or compatibility target."
   - "Fresh OpenAI documentation check 2026-07-18: Codex app-server exposes threads, turns, items, approvals, authentication state, and streamed events for rich clients over a local process transport."
   - "Fresh GitHub documentation check 2026-07-18: installation access tokens are short-lived, server-side, repository-scopable, and can authenticate HTTP Git when the GitHub App has Contents permission."
   - "Repository inspection 2026-08-01: the Flutter prototype already exists under `app/lib/shipglows/`, including overview, project detail, settings, health models, repositories, providers, and tests; this spec extends that prototype rather than creating a new app."
@@ -218,12 +218,12 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 # Preferred Stack Resolution
 
 - Flutter is applied as the canonical authenticated application stack.
-- Supabase Auth is the MVP identity baseline because its official Flutter integration covers Web, Android and Windows. A portable `AuthProvider` interface isolates the choice; existing Clerk concepts remain migration material and may only be retained behind a compatibility adapter.
+- Firebase Auth is the current identity baseline behind a portable `AuthProvider` interface. Dormant Clerk code is not a product runtime and may only contribute a narrowly reviewed concept if directly integrated into ShipGlows.
 - GitHub App remains the repository authorization authority from the ready foundational specifications.
 - The Convex backend baseline is intentionally not used for the runtime executor because this feature requires supervised agent runtimes, managed Git clones/worktrees, local filesystem isolation, resumable event streaming, and bounded OS-level execution. A dedicated Node.js/TypeScript Fastify server is the documented exception.
 - TypeScript is selected because it fits the event-heavy Fastify control plane, supports server-side JWT/JWKS validation for the selected identity provider, and typed adapters can isolate every runtime transport from the Flutter contract.
 - SQLite is selected for the MVP runner's operational projection because the managed server is the execution authority, the data is reconstructable from runtime/repository state, and a transactional local store avoids adding a second remote control plane before behavior is proven. The repository/Markdown authority rule remains unchanged.
-- Hosted Firestore is not an MVP runtime dependency. Its existing contracts remain useful migration/reference material, but the Flutter client reads the versioned runner API and the runner owns its SQLite projection. Any later Firestore synchronization must stay a rebuildable projection behind a separate contract.
+- Hosted Firestore is not an MVP runner dependency. The Flutter Cockpit reads the versioned runner API and the runner owns its SQLite operational projection. Any later Firestore synchronization must stay a rebuildable projection behind a separate contract.
 - Python remains available for bounded audit helpers invoked by approved server workflows, not as the public API or agent-runtime orchestration layer.
 - `xterm.dart` is the implemented Flutter terminal renderer for Web, Android and Windows, and `web_socket_channel` carries the dedicated stream. The runner uses `node-pty` with fixed server-owned tmux arguments. Local contracts and an isolated real server smoke pass; hosted and per-platform rendering proof remain.
 - `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker` and `ModelGateway` are ShipGlows-owned ports. They preserve the choice of Codex, OpenCode, Kilo, ACP, self-hosted sandbox, Vercel sandbox, direct model provider or future runtime without changing Flutter, health or authorization contracts.
@@ -289,7 +289,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Cockpit health never infers healthy from absent evidence.
 - Repository/Markdown content remains canonical; SQLite and UI state are projections.
 - UI work must use the declared Flutter design-system authority. The active ShipGlows private theme must be reconciled with `app/lib/presentation/theme/app_theme.dart` before new visual tokens are introduced.
-- The implementation cannot import the legacy runtime wholesale. Reuse is limited to reviewed concepts or narrowly extracted adapters.
+- ShipGlows App has one executable product runtime. Dormant modules outside `lib/shipglows/**` are not compatibility constraints and may be integrated only through a narrow reviewed change.
 
 # Dependencies
 
@@ -300,7 +300,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Official Supabase Flutter and Auth documentation checked 2026-08-01 supports the selected cross-platform session baseline; server-side JWT/JWKS verification remains behind the runner AuthProvider adapter.
 - Official GitHub App documentation checked 2026-07-18 supports short-lived installation access tokens, narrowed repository/permission scope, and HTTP Git authentication when Contents permission is granted.
 - Official `just-bash` repository and threat model rechecked 2026-08-11: 3.2.0 supports an in-memory filesystem, disabled-by-default network/JavaScript/Python, a restricted command registry, abort signals and execution limits. Its npm tarball currently omits several declaration files referenced by the package entrypoint, so ShipGlows isolates the runtime behind a narrow local typed adapter without enabling `skipLibCheck`.
-- Existing code foundations include `lib/shipglows/**`, `lib/data/shipglows_sources/**`, `lib/domain/project_health/**`, Firestore-shaped projection DTOs/validators, and legacy Clerk/GitHub service concepts.
+- Existing code foundations include `lib/shipglows/**`, `lib/data/shipglows_sources/**`, `lib/domain/project_health/**`, and Firestore-shaped projection DTOs/validators. Dormant Clerk/GitHub modules are not current integration proof.
 - Canonical design-system authority is `shipglows_data/technical/design-system-authority.md` with Flutter carrier `lib/presentation/theme/app_theme.dart`.
 
 # Invariants
@@ -421,7 +421,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 - Active runtime: `lib/shipglows/**` becomes server-backed and no longer depends on browser-inaccessible local filesystem reads for the primary Cockpit.
 - Local source readers: remain useful for managed runner parsing and local diagnostics but are not the Web authority.
 - Project health: current dependency posture evolves into the five-dimension contract while preserving explicit source-gap states.
-- Legacy runtime: Clerk/GitHub/API concepts can be extracted narrowly; legacy ContentFlow routes and state graphs remain excluded.
+- Runtime boundary: `lib/main.dart` always launches `ShipGlowsApp`; dormant routes, providers, and service graphs remain outside the product entrypoint.
 - Foundational architecture: hidden managed clone, GitHub-wins, repository/Markdown authority, opaque project IDs, and redaction remain active; the read-only/agent-excluded V1 limit is superseded only by this bounded runner contract.
 - Dashboard projection: existing DTO/validator patterns remain reusable, but the active client consumes a versioned runner API rather than assuming hosted Firestore is already wired.
 - Future trackers: completed runs produce proposed normalized tracker changes; a later write-back/PR contract decides how they become canonical.
@@ -530,20 +530,22 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Action: Keep one provider-neutral Dart auth interface, integrate Firebase Flutter sessions across Web/Android/Windows, add typed Dio API clients plus authenticated fetch-style SSE/PTY streaming, proactive token refresh and one bounded `401` refresh retry, `Last-Event-ID` cursor resume, stable error mapping, idempotent command retries and Riverpod state ownership. Do not use browser `EventSource`, because the stream requires an authorization header.
   - User story link: Makes sign-in and managed server conversations available in the active Flutter app.
   - Depends on: Tasks 1-2 and API fixtures from Task 6.
-  - Validate with: Web bridge tests, Android adapter contract tests, token-refresh tests, reconnect/idempotency tests, and no-legacy-route dependency scan.
+  - Validate with: Web bridge tests, Android adapter contract tests, token-refresh tests, reconnect/idempotency tests, and single-entrypoint dependency scan.
   - Implementation note (2026-08-11): the local Web/Android/Windows contract is implemented behind Firebase-neutral interfaces. Startup session restoration, expiry-skew refresh, coalesced refresh, one bounded `401` retry, stable idempotency keys across transient retries, authenticated SSE resume with query cursor plus `Last-Event-ID`, bounded conversation reconnect and duplicate-event suppression are covered locally. Linux REST/OIDC and live Firebase authentication remain owned by `firebase-auth-convex-alignment.md`; Task 8 stays partial until those external/platform proofs complete.
-- [ ] Task 9: Reconcile the Flutter design authority and implement the Cockpit shell.
+- [~] Task 9: Reconcile the Flutter design authority and implement the Cockpit shell.
   - Files: `app/lib/presentation/theme/app_theme.dart`, `app/lib/shipglows/app.dart`, `app/lib/shipglows/router.dart`, `app/lib/shipglows/presentation/screens/cockpit_screen.dart`, `app/lib/shipglows/presentation/widgets/cockpit/**`, corresponding widget/golden tests.
   - Action: Make the active ShipGlows theme consume canonical semantic tokens; implement responsive Cockpit navigation, health matrix, redacted per-project run-state summary, project parent tabs, loading/empty/stale/access-lost/error states, keyboard/focus behavior, and accessible labels.
   - User story link: Gives the user one visual command center for every repository.
   - Depends on: Tasks 7-8.
   - Validate with: widget tests at phone/tablet/desktop widths, contrast/focus/semantics checks, golden snapshots, and design-system drift check.
-- [ ] Task 10: Implement agent conversation tabs and action controls.
+  - Implementation note (2026-08-11): the single Flutter theme authority, system light/dark mode, semantic/layout/responsive tokens and server-first Cockpit are implemented locally. The Cockpit covers 390x844, 768x1024 and 1440x900, runner-authoritative projects, local fallback, empty, stale, access-lost, session-expired, error/retry, keyboard semantics and 2x text scale. The drift baseline fell from 134 to 56 findings, all in untouched screens. Golden and authenticated browser proof remain, so Task 9 stays partial.
+- [~] Task 10: Implement agent conversation tabs and action controls.
   - Files: `app/lib/shipglows/presentation/screens/project_workspace_screen.dart`, `app/lib/shipglows/presentation/widgets/conversations/**`, `app/lib/shipglows/providers/conversations/**`, corresponding tests.
   - Action: Render normalized messages/tools/plans/approvals/progress/results plus runtime identity and capability limits; create/open/close tabs, audit/fix buttons, message composer, interrupt/resume/approve/deny controls, auto-scroll rules, unread indicators and reconnection. Keep semantic agent work separate from the operator Workspace and never expose a runtime-specific protocol.
   - User story link: Lets users work with the selected agent directly inside each project tab.
   - Depends on: Tasks 6, 8, and 9.
   - Validate with: widget/state tests for event order, streaming deltas, reconnect, denial, interruption, long output, inaccessible action, concurrent device update, and zero ANSI/terminal rendering in the semantic conversation surface.
+  - Implementation note (2026-08-11): the local semantic conversation surface is implemented with typed event mapping, coalesced deltas, ANSI/control sanitization, monotonic cursors, ID/cursor dedupe, bounded timeline/reconnect, atomic tab replacement, unread/pause behavior and conditional auto-scroll. Create/send/interrupt/resume/approve/deny plus audit and proposed-fix controls use the verified runner routes and stable idempotency keys. Local Flutter proof passes; live Firebase/runner and concurrent-device integration proof remain, so Task 10 stays partial.
 - [~] Task 11: Implement the separately authorized operator Workspace.
   - Files: `runner/src/operator-workspace/**`, `runner/src/pty/**`, `runner/test/operator-workspace/**`, `runner/test/pty/**`, `app/lib/shipglows/presentation/screens/operator_workspace_screen.dart`, `app/lib/shipglows/presentation/widgets/operator_workspace/**`, `app/lib/shipglows/providers/operator_workspace/**`, `app/test/shipglows/operator_workspace/**`, platform runner files for Web/Android/Windows.
   - Action: Issue one project-scoped short-lived capability, attach only to an allowlisted tmux session, bridge PTY input/output and resize through the separate channel, render with the selected Flutter terminal package, reconnect safely, and launch Neovim without persisting scrollback or exposing host paths/credentials.
@@ -675,7 +677,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - High security risk: a managed agent runner can access private code and execute tools; isolation, authorization, redaction, and server-owned policy are release gates.
 - High multi-tenant risk: an opaque ID or event stream bug could expose another user's repository or conversation.
 - High prompt-injection risk: repository content can attempt to influence tools or exfiltrate secrets.
-- High product-trust risk: presenting legacy auth/GitHub concepts as live integration would mislead the operator and users.
+- High product-trust risk: presenting dormant auth/GitHub modules as live integration would mislead the operator and users.
 - Medium architecture risk: raw app-server protocol coupling could make the Flutter client brittle; normalization isolates it.
 - Medium operations risk: agent-runtime process crashes, stale worktrees, SQLite corruption, and token expiry need explicit recovery.
 - Medium architecture risk: distributed-worker recovery could be overstated before ShipGlows has a durable remote provider and distributed lease. This MVP records local execution truth and reports restart interruption; drain/reattach is deferred to a separately reviewed execution-provider slice.
@@ -689,7 +691,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 
 # Execution Notes
 
-- Read order: this spec; `AGENT.md`; `technical/runtime-boundary.md`; foundational architecture; GitHub managed clone spec; dashboard projection spec; design-system authority; active `lib/shipglows/**`; source reader/project-health modules; runner foundation; Supabase/Auth provider notes; legacy inventory; only then narrow legacy auth/GitHub files selected for extraction.
+- Read order: this spec; `AGENT.md`; `technical/runtime-boundary.md`; foundational architecture; GitHub managed clone spec; dashboard projection spec; design-system authority; `lib/shipglows/**`; source reader/project-health modules; runner foundation; and current Firebase/Auth provider notes. Dormant modules are inspected only for a concrete, reviewed integration need.
 - Start with Batch A. Do not wire UI action buttons to real execution until auth, tenant isolation, workspace containment, persistence, and idempotency tests pass.
 - Keep every runtime transport behind `AgentRuntime` and keep Flutter behind the normalized ShipGlows event contract. No Flutter model may import a runtime wire type.
 - Use supervised `codex app-server` stdio locally for the first MVP adapter. Do not let its transport, session identifiers or capabilities leak into routes, policy, health or Flutter; the fake second adapter is mandatory proof.
@@ -800,6 +802,10 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-11 16:05:15 UTC | 103-sg-verify | GPT-5 Codex | Reviewed the delegated Flutter patch, hardened immediate failure for any HTTP `401` stream error, reran the focused auth/API/reconnect suite and full Flutter analysis, and checked metadata/diff hygiene. | locally verified: delegated regression 35/35 plus integrator-focused 16/16 and zero analysis errors | Commit the bounded Flutter slice, then launch the disjoint server-reliability sub-agent |
 | 2026-08-11 16:13:20 UTC | 001-sg-build | GPT-5 Codex + delegated server sub-agent | Implemented Task 12's bounded local reliability slice: minimal liveness, authenticated secret-safe diagnostics, build/commit identity, UTC/Europe-Paris timestamps, online SQLite backup, integrity/schema verification and migration/restore proof. | local operations slice implemented; Sentry, cleanup dry-run and hosted recovery proof remain | Review the delegated security boundaries and run the complete runner gates |
 | 2026-08-11 16:13:20 UTC | 103-sg-verify | GPT-5 Codex | Reviewed authentication and closed schemas, hardened the backup CLI against missing/non-file databases, and independently reran the complete runner regression, typecheck, lint, audit, metadata and diff-hygiene gates. | local Task 12 slice verified; no production/Sentry claim | Commit the scoped reliability slice without unrelated site or tracker work |
+| 2026-08-11 17:27:11 UTC | 001-sg-build | GPT-5 Codex + 5 delegated agents | Implemented the Task 9-10 local Flutter slice: one design authority, responsive server-first Cockpit, typed semantic conversation timeline/tabs and the complete audit/fix/approval action surface. Removed the alternate `APP_TARGET` entrypoint after the operator confirmed there is one ShipGlows product runtime. | local UI slice implemented; live Firebase/runner, concurrent-device, golden and authenticated browser proof remain | Run the complete Flutter and documentation gates, then commit the scoped slice |
+| 2026-08-11 17:27:11 UTC | 103-sg-verify | GPT-5 Codex | Verified the integrated Flutter slice across 194 tests, clean analysis, a release Web build, responsive/accessibility coverage, metadata/diff hygiene and design drift reduced from 134 to 56 findings. | local Tasks 9-10 proof passes; residual drift is confined to untouched screens and hosted proof remains open | Commit without unrelated site or TASKS changes |
+| 2026-08-11 17:27:11 UTC | 300-sg-docs | GPT-5 Codex | Reconciled the single-runtime boundary, code map, runner contract, design authority and active spec with the implemented Cockpit and conversations. | internal contracts aligned; no second or legacy app is part of the product architecture | Keep Tasks 9-10 partial until live and visual evidence exists |
+| 2026-08-11 17:31:41 UTC | 005-sg-ship | GPT-5 Codex | Created the scoped local Task 9-10 commit after complete Flutter and documentation gates, excluding unrelated `site/` and `TASKS.md` changes. | local commit created; push not authorized | Continue hosted and visual proof from the committed baseline |
 
 # Current Chantier Flow
 
@@ -809,4 +815,4 @@ The portfolio architecture decision now supersedes this spec's original Supabase
 
 Historical Supabase task text and run-history evidence below remains a record of what was decided, implemented or deployed at that time; it is not current implementation guidance. The last managed-server proof still used the Supabase deployment and cannot be claimed as Firebase proof. Current completion requirements are owned by `firebase-auth-convex-alignment.md`: Linux REST/OIDC support, live Firebase authentication, deployment migration and a separately specified first Convex product projection remain open.
 
-`100-sg-spec` (amended; agentic-security, health-evaluator and Firebase runtime slices) -> `101-sg-ready` (existing MVP contract ready) -> `001-sg-build` (Task 7 complete; local Task 8 Firebase/API/reconnect and Task 12 reliability slices implemented through sequential delegated agents) -> `103-sg-verify` (Flutter auth/API/reconnect plus runner diagnostics/backup gates pass locally) -> `005-sg-ship` (Task 7 and Flutter slices committed locally; reliability commit pending; push not authorized) -> `004-sg-deploy` (live Firebase, Sentry and public Workspace proofs remain partial/blocked externally)
+`100-sg-spec` (amended; agentic-security, health evaluator, Firebase and single-runtime decisions) -> `101-sg-ready` (existing MVP contract ready) -> `001-sg-build` (Task 7 complete; Tasks 8-10 and 12 locally partial; Task 9-10 UI slice implemented) -> `103-sg-verify` (194 Flutter tests, analysis, Web release build, metadata and drift gates pass locally) -> `005-sg-ship` (Task 7-10 local slices and reliability slice committed; push not authorized) -> `004-sg-deploy` (live Firebase, hosted runner, Sentry, golden/browser and public Workspace proofs remain partial or externally blocked)

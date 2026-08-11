@@ -65,17 +65,45 @@ void main() {
 
       expect(runner.afterCursors, [0]);
       expect(notifier.state.phase, ManagedConversationPhase.failed);
-      expect(notifier.state.errorMessage, 'Sign in again.');
+      expect(notifier.state.errorMessage, contains('Reconnectez-vous'));
+      expect(notifier.state.authRequired, isTrue);
       notifier.dispose();
       await runner.dispose();
     },
   );
+
+  test('fails safely after bounded reconnect attempts are exhausted', () async {
+    final runner = _ReconnectRunner();
+    final notifier = ManagedConversationNotifier(
+      projectId: 'project-1',
+      client: runner,
+      maxReconnectAttempts: 1,
+      reconnectDelay: Duration.zero,
+    );
+
+    await notifier.createConversation();
+    runner.streams.first.addError(
+      const ManagedRunnerException(code: 'offline', message: '/secret/path'),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    runner.streams[1].addError(
+      const ManagedRunnerException(code: 'offline', message: 'token=secret'),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(runner.afterCursors, [0, 0]);
+    expect(notifier.state.phase, ManagedConversationPhase.failed);
+    expect(notifier.state.errorMessage, contains('hors ligne'));
+    expect(notifier.state.errorMessage, isNot(contains('secret')));
+    notifier.dispose();
+    await runner.dispose();
+  });
 }
 
 ManagedConversationEvent _event({
   required int cursor,
   required String id,
-  String type = 'assistant.message.delta',
+  String type = 'message.assistant.delta',
 }) => ManagedConversationEvent(
   cursor: cursor,
   id: id,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../data/conversations/conversation_event_mapper.dart';
 import '../data/managed_runner_api.dart';
 import 'managed_runner_provider.dart';
 
@@ -23,32 +24,42 @@ class ManagedConversationState {
     required this.phase,
     this.conversationId,
     this.events = const <ManagedConversationEvent>[],
+    this.timeline = const <ConversationPresentationItem>[],
     this.pendingApprovalId,
     this.errorMessage,
+    this.authRequired = false,
   });
 
   final ManagedConversationPhase phase;
   final String? conversationId;
   final List<ManagedConversationEvent> events;
+  final List<ConversationPresentationItem> timeline;
   final String? pendingApprovalId;
   final String? errorMessage;
+  final bool authRequired;
+
+  int get lastCursor => events.isEmpty ? 0 : events.last.cursor;
 
   ManagedConversationState copyWith({
     ManagedConversationPhase? phase,
     String? conversationId,
     List<ManagedConversationEvent>? events,
+    List<ConversationPresentationItem>? timeline,
     String? pendingApprovalId,
     bool clearApproval = false,
     String? errorMessage,
     bool clearError = false,
+    bool? authRequired,
   }) => ManagedConversationState(
     phase: phase ?? this.phase,
     conversationId: conversationId ?? this.conversationId,
     events: events ?? this.events,
+    timeline: timeline ?? this.timeline,
     pendingApprovalId: clearApproval
         ? null
         : pendingApprovalId ?? this.pendingApprovalId,
     errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+    authRequired: authRequired ?? this.authRequired,
   );
 }
 
@@ -69,6 +80,7 @@ class ManagedConversationNotifier
     required this.client,
     this.maxReconnectAttempts = 3,
     this.reconnectDelay = const Duration(milliseconds: 500),
+    this.eventMapper = const ConversationEventMapper(),
   }) : super(
          ManagedConversationState(
            phase: client == null
@@ -81,10 +93,14 @@ class ManagedConversationNotifier
   final ManagedRunnerClient? client;
   final int maxReconnectAttempts;
   final Duration reconnectDelay;
+  final ConversationEventMapper eventMapper;
   StreamSubscription<ManagedConversationEvent>? _eventsSubscription;
   Timer? _reconnectTimer;
   var _reconnectAttempts = 0;
   var _disposed = false;
+  var _lastAcceptedCursor = 0;
+  final _acceptedEventIds = <String>{};
+  final _acceptedEventIdOrder = <String>[];
   static int _keyCounter = 0;
 
   Future<void> createConversation() async {
@@ -92,6 +108,7 @@ class ManagedConversationNotifier
     state = state.copyWith(
       phase: ManagedConversationPhase.creating,
       clearError: true,
+      authRequired: false,
     );
     try {
       final result = await client!.createConversation(
@@ -118,6 +135,7 @@ class ManagedConversationNotifier
       phase: _phaseForRunnerState(state),
       conversationId: conversationId,
       clearError: true,
+      authRequired: false,
     );
     _listen();
   }
@@ -131,6 +149,7 @@ class ManagedConversationNotifier
     state = state.copyWith(
       phase: ManagedConversationPhase.sending,
       clearError: true,
+      authRequired: false,
     );
     try {
       await client!.sendMessage(
@@ -183,7 +202,7 @@ class ManagedConversationNotifier
       await client!.resolveApproval(
         projectId: projectId,
         approvalId: approvalId,
-        decision: approved ? 'approved' : 'denied',
+        decision: approved ? 'approve' : 'deny',
         idempotencyKey: _key('approval'),
       );
       state = state.copyWith(
@@ -203,7 +222,7 @@ class ManagedConversationNotifier
         _eventsSubscription != null) {
       return;
     }
-    final cursor = state.events.isEmpty ? 0 : state.events.last.cursor;
+    final cursor = state.lastCursor;
     _eventsSubscription = client!
         .events(
           projectId: projectId,
@@ -220,18 +239,32 @@ class ManagedConversationNotifier
   }
 
   void _acceptEvent(ManagedConversationEvent event) {
-    if (state.events.any((item) => item.id == event.id)) return;
+    if (event.cursor <= _lastAcceptedCursor ||
+        _acceptedEventIds.contains(event.id)) {
+      return;
+    }
+    _lastAcceptedCursor = event.cursor;
+    _acceptedEventIds.add(event.id);
+    _acceptedEventIdOrder.add(event.id);
+    if (_acceptedEventIdOrder.length > maxConversationDeduplicationEntries) {
+      _acceptedEventIds.remove(_acceptedEventIdOrder.removeAt(0));
+    }
     _reconnectAttempts = 0;
-    final events = [...state.events, event];
+    var events = [...state.events, event];
+    if (events.length > maxConversationTimelineItems) {
+      events = events.sublist(events.length - maxConversationTimelineItems);
+    }
     final approvalId = event.type == 'approval.requested'
         ? event.payload['approvalId']?.toString()
         : state.pendingApprovalId;
     state = state.copyWith(
       phase: _phaseForEvent(event.type),
       events: events,
+      timeline: eventMapper.project(events),
       pendingApprovalId: approvalId,
       clearApproval: event.type == 'approval.resolved',
       clearError: true,
+      authRequired: false,
     );
   }
 
@@ -239,7 +272,7 @@ class ManagedConversationNotifier
     'approval.requested' => ManagedConversationPhase.waitingApproval,
     'turn.started' ||
     'run.started' ||
-    'assistant.message.delta' => ManagedConversationPhase.streaming,
+    'message.assistant.delta' => ManagedConversationPhase.streaming,
     'turn.completed' || 'run.completed' => ManagedConversationPhase.completed,
     'turn.interrupted' => ManagedConversationPhase.interrupted,
     'turn.failed' || 'run.failed' => ManagedConversationPhase.failed,
@@ -256,10 +289,28 @@ class ManagedConversationNotifier
       };
 
   void _fail(Object error) {
+    final unauthorized =
+        error is ManagedRunnerException &&
+        (error.statusCode == 401 || error.code == 'unauthorized');
     state = state.copyWith(
       phase: ManagedConversationPhase.failed,
-      errorMessage: error.toString(),
+      errorMessage: unauthorized
+          ? 'Votre session a expiré. Reconnectez-vous pour continuer.'
+          : _safeErrorMessage(error),
+      authRequired: unauthorized,
     );
+  }
+
+  String _safeErrorMessage(Object error) {
+    if (error is ManagedRunnerException) {
+      return switch (error.code) {
+        'offline' => 'Le runner est hors ligne. Réessayez dans un instant.',
+        'timeout' => 'Le runner met trop de temps à répondre. Réessayez.',
+        'streamDisconnected' => 'La connexion au runner a été interrompue.',
+        _ => 'La conversation ne peut pas continuer pour le moment.',
+      };
+    }
+    return 'La conversation ne peut pas continuer pour le moment.';
   }
 
   void _handleStreamFailure(Object error) {
@@ -312,6 +363,17 @@ class ManagedConversationNotifier
   String _key(String prefix) =>
       '$prefix-${DateTime.now().microsecondsSinceEpoch}-${_keyCounter++}';
 
+  Future<void> pauseEvents() async {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    await _eventsSubscription?.cancel();
+    _eventsSubscription = null;
+  }
+
+  void resumeEvents() => _listen();
+
+  void reportCommandFailure(Object error) => _fail(error);
+
   @override
   void dispose() {
     _disposed = true;
@@ -322,10 +384,15 @@ class ManagedConversationNotifier
 }
 
 class ManagedConversationTab {
-  ManagedConversationTab({required this.title, required this.notifier});
+  ManagedConversationTab({
+    required this.title,
+    required this.notifier,
+    this.unread = false,
+  });
 
   String title;
   final ManagedConversationNotifier notifier;
+  bool unread;
 }
 
 class ManagedConversationWorkspaceState {
@@ -355,12 +422,10 @@ final managedConversationWorkspaceProvider =
       String
     >((ref, projectId) {
       final client = ref.watch(managedRunnerApiProvider);
-      final notifier = ManagedConversationWorkspaceNotifier(
+      return ManagedConversationWorkspaceNotifier(
         projectId: projectId,
         client: client,
       );
-      ref.onDispose(notifier.dispose);
-      return notifier;
     });
 
 class ManagedConversationWorkspaceNotifier
@@ -377,15 +442,27 @@ class ManagedConversationWorkspaceNotifier
 
   final String projectId;
   final ManagedRunnerClient? client;
-  final _tabSubscriptions =
-      <ManagedConversationNotifier, void Function(ManagedConversationState)>{};
+  final _tabSubscriptions = <ManagedConversationNotifier, void Function()>{};
+  static int _taskKeyCounter = 0;
 
   ManagedConversationNotifier get activeNotifier => state.active.notifier;
 
   ManagedConversationState get activeState => state.active.notifier.state;
 
+  bool get supportsManagedTasks => client is ManagedRunnerTaskClient;
+
   void addTab() {
-    final number = state.tabs.length + 1;
+    if (state.tabs.isNotEmpty) {
+      unawaited(state.active.notifier.pauseEvents());
+    }
+    final tab = _createTab(number: state.tabs.length + 1);
+    state = state.copyWith(
+      tabs: [...state.tabs, tab],
+      activeIndex: state.tabs.length,
+    );
+  }
+
+  ManagedConversationTab _createTab({required int number}) {
     final notifier = ManagedConversationNotifier(
       projectId: projectId,
       client: client,
@@ -394,13 +471,20 @@ class ManagedConversationWorkspaceNotifier
       title: 'Conversation $number',
       notifier: notifier,
     );
-    void listener(ManagedConversationState value) => _refresh();
-    notifier.addListener(listener);
-    _tabSubscriptions[notifier] = listener;
-    state = state.copyWith(
-      tabs: [...state.tabs, tab],
-      activeIndex: state.tabs.length,
-    );
+    var knownEventCount = 0;
+    void listener(ManagedConversationState value) {
+      final index = state.tabs.indexOf(tab);
+      if (index >= 0 &&
+          index != state.activeIndex &&
+          value.events.length > knownEventCount) {
+        tab.unread = true;
+      }
+      knownEventCount = value.events.length;
+      _refresh();
+    }
+
+    _tabSubscriptions[notifier] = notifier.addListener(listener);
+    return tab;
   }
 
   Future<void> _restoreTabs() async {
@@ -435,7 +519,40 @@ class ManagedConversationWorkspaceNotifier
     if (index < 0 || index >= state.tabs.length || index == state.activeIndex) {
       return;
     }
-    state = state.copyWith(activeIndex: index);
+    final previous = state.active;
+    unawaited(previous.notifier.pauseEvents());
+    state.tabs[index].unread = false;
+    state = state.copyWith(tabs: [...state.tabs], activeIndex: index);
+    state.active.notifier.resumeEvents();
+  }
+
+  void closeTab(int index) {
+    if (index < 0 || index >= state.tabs.length) return;
+    final removed = state.tabs[index];
+    final tabs = [...state.tabs]..removeAt(index);
+    if (tabs.isEmpty) {
+      final replacement = _createTab(number: 1);
+      state = ManagedConversationWorkspaceState(
+        tabs: [replacement],
+        activeIndex: 0,
+      );
+      _tabSubscriptions.remove(removed.notifier)?.call();
+      removed.notifier.dispose();
+      return;
+    }
+    _tabSubscriptions.remove(removed.notifier)?.call();
+    removed.notifier.dispose();
+    final activeIndex = state.activeIndex > index
+        ? state.activeIndex - 1
+        : state.activeIndex >= tabs.length
+        ? tabs.length - 1
+        : state.activeIndex;
+    tabs[activeIndex].unread = false;
+    state = ManagedConversationWorkspaceState(
+      tabs: tabs,
+      activeIndex: activeIndex,
+    );
+    state.active.notifier.resumeEvents();
   }
 
   Future<void> createConversation() => activeNotifier.createConversation();
@@ -449,11 +566,59 @@ class ManagedConversationWorkspaceNotifier
   Future<void> resolveApproval(bool approved) =>
       activeNotifier.resolveApproval(approved);
 
+  Future<void> runAudit({String scope = 'project-health'}) async {
+    final taskClient = client;
+    if (taskClient is! ManagedRunnerTaskClient) return;
+    final commands = taskClient as ManagedRunnerTaskClient;
+    if (activeState.conversationId != null) addTab();
+    try {
+      final result = await commands.runAudit(
+        projectId: projectId,
+        scope: scope,
+        idempotencyKey: _taskKey('audit'),
+      );
+      activeNotifier.restoreConversation(
+        conversationId: result.conversationId,
+        state: result.state,
+      );
+    } catch (error) {
+      activeNotifier.reportCommandFailure(error);
+    }
+  }
+
+  Future<void> runFix({
+    required String issueId,
+    required String instruction,
+  }) async {
+    final taskClient = client;
+    if (taskClient is! ManagedRunnerTaskClient) return;
+    final commands = taskClient as ManagedRunnerTaskClient;
+    if (activeState.conversationId != null) addTab();
+    try {
+      final result = await commands.runFix(
+        projectId: projectId,
+        issueId: issueId,
+        instruction: instruction,
+        idempotencyKey: _taskKey('fix'),
+      );
+      activeNotifier.restoreConversation(
+        conversationId: result.conversationId,
+        state: result.state,
+      );
+    } catch (error) {
+      activeNotifier.reportCommandFailure(error);
+    }
+  }
+
+  String _taskKey(String prefix) =>
+      '$prefix-${DateTime.now().microsecondsSinceEpoch}-${_taskKeyCounter++}';
+
   void _refresh() => state = state.copyWith(tabs: [...state.tabs]);
 
   @override
   void dispose() {
     for (final entry in _tabSubscriptions.entries) {
+      entry.value();
       entry.key.dispose();
     }
     super.dispose();

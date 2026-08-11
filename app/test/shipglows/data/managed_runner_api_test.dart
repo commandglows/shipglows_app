@@ -188,6 +188,44 @@ void main() {
       expect(adapter.requests.single.headers['Authorization'], 'Bearer token');
     },
   );
+
+  test(
+    'uses verified audit and fix schemas with stable idempotency keys',
+    () async {
+      final adapter = _RecordingAdapter(
+        (request, attempt) => _jsonResponse(202, {
+          'conversationId': 'conversation-1',
+          'runId': 'run-1',
+          'state': 'running',
+        }),
+      );
+      final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+        ..httpClientAdapter = adapter;
+      final api = ManagedRunnerApi(baseUrl: 'https://runner.example', dio: dio);
+
+      await api.runAudit(
+        projectId: 'project-1',
+        scope: 'project-health',
+        idempotencyKey: 'audit-stable',
+      );
+      await api.runFix(
+        projectId: 'project-1',
+        issueId: 'issue-42',
+        instruction: 'Apply the approved isolated fix.',
+        idempotencyKey: 'fix-stable',
+      );
+
+      expect(adapter.requests.first.path, '/v1/projects/project-1/audits');
+      expect(adapter.requests.first.data, {'scope': 'project-health'});
+      expect(adapter.requests.first.headers['Idempotency-Key'], 'audit-stable');
+      expect(adapter.requests.last.path, '/v1/projects/project-1/fixes');
+      expect(adapter.requests.last.data, {
+        'issueId': 'issue-42',
+        'instruction': 'Apply the approved isolated fix.',
+      });
+      expect(adapter.requests.last.headers['Idempotency-Key'], 'fix-stable');
+    },
+  );
 }
 
 ResponseBody _jsonResponse(int status, Map<String, Object?> body) =>

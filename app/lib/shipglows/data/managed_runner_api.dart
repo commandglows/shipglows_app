@@ -358,8 +358,26 @@ abstract interface class ManagedRunnerClient {
   });
 }
 
+abstract interface class ManagedRunnerTaskClient {
+  Future<ManagedConversationResult> runAudit({
+    required String projectId,
+    required String scope,
+    required String idempotencyKey,
+  });
+
+  Future<ManagedConversationResult> runFix({
+    required String projectId,
+    required String issueId,
+    required String instruction,
+    required String idempotencyKey,
+  });
+}
+
 class ManagedRunnerApi
-    implements ManagedRunnerClient, ManagedWorkspaceTransport {
+    implements
+        ManagedRunnerClient,
+        ManagedRunnerTaskClient,
+        ManagedWorkspaceTransport {
   ManagedRunnerApi({
     required String baseUrl,
     this.accessTokenProvider,
@@ -599,6 +617,33 @@ class ManagedRunnerApi
       parser: ManagedConversationResult.fromJson,
     );
   }
+
+  @override
+  Future<ManagedConversationResult> runAudit({
+    required String projectId,
+    required String scope,
+    required String idempotencyKey,
+  }) => _command(
+    'POST',
+    '/v1/projects/$projectId/audits',
+    body: {'scope': scope},
+    idempotencyKey: idempotencyKey,
+    parser: ManagedConversationResult.fromJson,
+  );
+
+  @override
+  Future<ManagedConversationResult> runFix({
+    required String projectId,
+    required String issueId,
+    required String instruction,
+    required String idempotencyKey,
+  }) => _command(
+    'POST',
+    '/v1/projects/$projectId/fixes',
+    body: {'issueId': issueId, 'instruction': instruction},
+    idempotencyKey: idempotencyKey,
+    parser: ManagedConversationResult.fromJson,
+  );
 
   @override
   Future<ManagedApprovalResult> resolveApproval({
