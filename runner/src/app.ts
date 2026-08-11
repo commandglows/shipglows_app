@@ -144,22 +144,17 @@ export function buildRunnerApp({
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       if (store === undefined) return reply.status(503).send({ error: { code: "cockpitUnavailable", message: "Cockpit projection is unavailable." } });
       const projects = store.listCockpitProjects({ tenantId: actor.tenantId, userId: actor.userId });
-      const rank: Record<string, number> = { healthy: 1, warning: 2, stale: 3, critical: 4, unknown: 0 };
       return {
         generatedAt: new Date().toISOString(),
-        projects: projects.map((project: CockpitProjectRecord) => {
-          const dimensions = project.dimensions;
-          const overallStatus = dimensions.reduce((current, item) => (rank[item.status] ?? 0) > (rank[current] ?? 0) ? item.status : current, "unknown");
-          return {
-            id: project.id,
-            name: project.name,
-            repositoryFullName: project.repositoryFullName,
-            accessState: project.accessState,
-            conversationCount: project.conversationCount,
-            activeRunCount: project.activeRunCount,
-            health: { overallStatus, coverage: dimensions.filter((item) => item.status !== "unknown").length / 5, dimensions },
-          };
-        }),
+        projects: projects.map((project: CockpitProjectRecord) => ({
+          id: project.id,
+          name: project.name,
+          repositoryFullName: project.repositoryFullName,
+          accessState: project.accessState,
+          conversationCount: project.conversationCount,
+          activeRunCount: project.activeRunCount,
+          health: project.health,
+        })),
       };
     },
   );

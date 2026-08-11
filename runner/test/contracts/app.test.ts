@@ -78,6 +78,44 @@ describe("runner API foundation", () => {
     assert.equal(response.json().error.code, "unauthorized");
   });
 
+  it("serves the evaluator-owned five-dimension Cockpit projection unchanged", async () => {
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication: { authenticate: async () => actor },
+        cockpitStore: {
+          listCockpitProjects: () => [{
+            id: "prj_000000000001",
+            name: "shipglows/demo",
+            repositoryFullName: "shipglows/demo",
+            accessState: "available",
+            health: {
+              overallStatus: "stale",
+              coverage: 0.2,
+              dimensions: [
+                { dimension: "tech", status: "stale", summary: { text: "Evidence expired." }, producer: "shipglows.test", evidenceCount: 1, sourceCommit: "abc123", checkedAt: "2026-06-01T08:00:00.000Z" },
+                { dimension: "content", status: "notReported", summary: { text: "No evidence reported." }, producer: "none", evidenceCount: 0, sourceCommit: null, checkedAt: null },
+                { dimension: "seo", status: "notReported", summary: { text: "No evidence reported." }, producer: "none", evidenceCount: 0, sourceCommit: null, checkedAt: null },
+                { dimension: "performance", status: "notReported", summary: { text: "No evidence reported." }, producer: "none", evidenceCount: 0, sourceCommit: null, checkedAt: null },
+                { dimension: "security", status: "notReported", summary: { text: "No evidence reported." }, producer: "none", evidenceCount: 0, sourceCommit: null, checkedAt: null },
+              ],
+            },
+            conversationCount: 0,
+            activeRunCount: 0,
+          }],
+        },
+      },
+    });
+
+    const response = await app.inject({ method: "GET", url: "/v1/cockpit" });
+    await app.close();
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.json().projects[0].health.overallStatus, "stale");
+    assert.equal(response.json().projects[0].health.coverage, 0.2);
+    assert.equal(response.json().projects[0].health.dimensions[1].status, "notReported");
+  });
+
   it("keeps the operator Workspace capability tenant-scoped and unavailable by default", async () => {
     const authentication: AuthenticationAdapter = { authenticate: async () => actor };
     const projectAccess: ProjectAccessRepository = { hasProjectAccess: () => true };

@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.2.0"
+artifact_version: "2.3.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-11"
@@ -29,6 +29,7 @@ linked_systems:
   - "app/lib/shipglows/providers/managed_runner_provider.dart"
   - "runner/src/workspaces/cleanup.ts"
   - "runner/src/db/index.ts"
+  - "runner/src/health/index.ts"
   - "runner/src/auth/index.ts"
   - "runner/src/github/index.ts"
   - "runner/src/workspaces/index.ts"
@@ -42,7 +43,7 @@ linked_systems:
   - "eve"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
-    artifact_version: "1.10.0"
+    artifact_version: "1.15.0"
     required_status: "ready"
 supersedes: []
 evidence:
@@ -72,6 +73,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `runner/src/runs/fix.ts`
 - `runner/src/workspaces/cleanup.ts`
 - `runner/src/db/index.ts`
+- `runner/src/health/**`
 - `runner/src/auth/**`
 - `runner/src/projects/**`
 - `runner/src/github/**`
@@ -102,6 +104,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - Run checkpoints are secret-safe and tenant-scoped. A runner restart marks in-flight `running` records and their matching preflight-passed executions as `interrupted` with a bounded recovery reason. The local provider does not claim drain, remote task preservation or reattachment; those need a separate distributed-execution contract.
 - Workspace cleanup records contain only an opaque run id, state, due time, attempt count and bounded error code; managed filesystem paths remain exclusively inside the workspace manager.
 - Runtime sessions, capability decisions, approvals, health evidence and usage summaries are tenant-scoped projections. Health summaries pass the same secret-safety checks as event payloads, and usage values are bounded non-negative counters.
+- `ShipGlowsHealthEvaluator` is the single runner authority for the five-dimensional Cockpit projection. It always emits tech, content, SEO, performance and security; absent evidence is `notReported`, malformed or secret-bearing evidence fails closed, and healthy evidence older than 30 days becomes `stale` without downgrading older warning or critical findings. Coverage excludes `unknown` and `notReported`, while the overall status retains the worst reported state.
 - The first protected audit command creates a durable conversation/run, initializes the selected runtime, starts a turn, and records a safe running/failed projection. Event-stream persistence, bounded live fan-out, the state-changing Origin policy, per-tenant admission quota and bounded timeout/interruption reconciliation are implemented. The `POST /fixes` path now validates bounded issue/instruction input, requires a durable `Idempotency-Key`, and, when GitHub App configuration is enabled, revalidates the binding, creates a server-owned isolated fix worktree, starts Codex with that internal workspace, and schedules cleanup without exposing its path; it remains unavailable when the provider is not configured.
 - The operational store replays completed asynchronous audit/fix commands from SQLite and coalesces concurrent duplicate keys inside one process. Both state-changing command routes require a bounded `Idempotency-Key`. The cleanup worker scans all tenant cleanup records every minute, resolves run/project/binding context server-side, removes managed worktrees, and marks bounded success/failure states; no local path is persisted.
 - Conversation commands now use `POST /v1/projects/:projectId/conversations`, `/messages`, `/interrupt` and `/resume`. They resolve sessions and runs server-side, pass message turns through the neutral runtime port, persist normalized events, enforce the shared run quota/timeout boundary, and require durable idempotency keys. Approval decisions use `POST /v1/projects/:projectId/approvals/:approvalId` with the same contract: the runner verifies the tenant/project/run/session boundary, resolves the provider approval, persists the approved/denied projection, publishes a safe `approval.resolved` event, and replays duplicate decisions without calling the runtime twice.

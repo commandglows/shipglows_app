@@ -568,7 +568,7 @@ describe("SQLite operational projection", () => {
       projectId: ids.projectA,
       dimension: "security",
       status: "warning",
-      summary: { issueCount: 1, source: "shipglows-skill" },
+      summary: { text: "One security issue remains.", issueCount: 1, source: "shipglows-skill" },
       sourceCommit: "abc123",
       observedAt: "2026-08-02T09:02:00.000Z",
     });
@@ -578,10 +578,26 @@ describe("SQLite operational projection", () => {
       projectId: ids.projectA,
       dimension: "security",
       status: "warning",
-      summary: { issueCount: 1, source: "shipglows-skill" },
+      summary: { text: "One security issue remains.", issueCount: 1, source: "shipglows-skill" },
       sourceCommit: "abc123",
       observedAt: "2026-08-02T09:02:00.000Z",
     }]);
+    const cockpit = store.listCockpitProjects({
+      tenantId: ids.tenantA,
+      userId: ids.userA,
+      evaluatedAt: "2026-08-02T10:00:00.000Z",
+    });
+    assert.equal(cockpit.length, 1);
+    assert.equal(cockpit[0]?.health.overallStatus, "warning");
+    assert.equal(cockpit[0]?.health.coverage, 0.2);
+    assert.equal(
+      cockpit[0]?.health.dimensions.find((item) => item.dimension === "security")?.evidenceCount,
+      1,
+    );
+    assert.equal(
+      cockpit[0]?.health.dimensions.find((item) => item.dimension === "content")?.status,
+      "notReported",
+    );
     store.saveRunUsage({
       tenantId: ids.tenantA,
       runId: ids.runA,

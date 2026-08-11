@@ -2,6 +2,14 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import { assertSecretSafe, type ResolvedExecutionEnvelope, type SafePayload } from "../contracts/index.js";
 import type { GitHubRepositoryBinding } from "../github/index.js";
+import {
+  ShipGlowsHealthEvaluator,
+  type EvidenceHealthStatus,
+  type HealthDimension,
+  type ProjectHealthProjection,
+} from "../health/index.js";
+
+export type { EvidenceHealthStatus as HealthStatus, HealthDimension } from "../health/index.js";
 
 export class MigrationPolicyError extends Error {}
 export class RepositoryBindingError extends Error {}
@@ -12,8 +20,6 @@ export type RunTaskKind = "audit" | "fix" | "conversation";
 export type WorkspaceCleanupState = "pending" | "completed" | "failed";
 export type RuntimeSessionState = "idle" | "active" | "interrupted" | "completed" | "failed";
 export type ApprovalState = "pending" | "approved" | "denied" | "expired";
-export type HealthDimension = "tech" | "content" | "seo" | "performance" | "security";
-export type HealthStatus = "healthy" | "warning" | "critical" | "unknown";
 
 export interface ProjectAccessInput {
   readonly tenantId: string;
@@ -104,20 +110,10 @@ export interface PersistedHealthEvidence {
   readonly tenantId: string;
   readonly projectId: string;
   readonly dimension: HealthDimension;
-  readonly status: HealthStatus;
+  readonly status: EvidenceHealthStatus;
   readonly summary: SafePayload;
   readonly sourceCommit: string;
   readonly observedAt: string;
-}
-
-export interface CockpitDimensionRecord {
-  readonly dimension: HealthDimension;
-  readonly status: HealthStatus;
-  readonly summary: SafePayload;
-  readonly producer: string;
-  readonly evidenceCount: number;
-  readonly sourceCommit: string | null;
-  readonly checkedAt: string | null;
 }
 
 export interface CockpitProjectRecord {
@@ -125,7 +121,7 @@ export interface CockpitProjectRecord {
   readonly name: string;
   readonly repositoryFullName: string;
   readonly accessState: "available" | "unavailable";
-  readonly dimensions: readonly CockpitDimensionRecord[];
+  readonly health: ProjectHealthProjection;
   readonly conversationCount: number;
   readonly activeRunCount: number;
 }
@@ -259,7 +255,11 @@ export interface OperationalStore {
     readonly tenantId: string;
     readonly conversationId: string;
   }): { readonly id: string; readonly projectId: string; readonly title: string; readonly state: string } | undefined;
-  listCockpitProjects(input: { readonly tenantId: string; readonly userId: string }): readonly CockpitProjectRecord[];
+  listCockpitProjects(input: {
+    readonly tenantId: string;
+    readonly userId: string;
+    readonly evaluatedAt?: string;
+  }): readonly CockpitProjectRecord[];
   listConversations(input: {
     readonly tenantId: string;
     readonly projectId: string;
@@ -453,7 +453,7 @@ function isHealthDimension(value: string): value is HealthDimension {
   return ["tech", "content", "seo", "performance", "security"].includes(value);
 }
 
-function isHealthStatus(value: string): value is HealthStatus {
+function isHealthStatus(value: string): value is EvidenceHealthStatus {
   return ["healthy", "warning", "critical", "unknown"].includes(value);
 }
 
@@ -1267,7 +1267,11 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         capability,
         tenantId,
       ) !== undefined,
-    listCockpitProjects: ({ tenantId, userId }) => {
+    listCockpitProjects: ({ tenantId, userId, evaluatedAt }) => {
+      const evaluationTime = evaluatedAt === undefined ? new Date() : new Date(evaluatedAt);
+      if (!Number.isFinite(evaluationTime.getTime())) {
+        throw new RunStateError("Cockpit evaluation time is invalid.");
+      }
       const projectRows = allRows(
         db,
         `SELECT DISTINCT p.id, COALESCE(g.full_name, p.id) AS repositoryFullName
@@ -1278,7 +1282,7 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         tenantId,
         userId,
       );
-      const dimensions: readonly HealthDimension[] = ["tech", "content", "seo", "performance", "security"];
+      const evaluator = new ShipGlowsHealthEvaluator();
       return projectRows.map((project) => {
         const projectId = readString(project, "id");
         const evidenceRows = allRows(
@@ -1289,19 +1293,24 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
           tenantId,
           projectId,
         );
-        const latest = new Map<string, Record<string, unknown>>();
-        for (const row of evidenceRows) {
+        const health = evaluator.evaluate(evidenceRows.map((row) => {
           const dimension = readString(row, "dimension");
-          if (!latest.has(dimension)) latest.set(dimension, row);
-        }
-        const projectDimensions = dimensions.map((dimension) => {
-          const row = latest.get(dimension);
-          if (row === undefined) return { dimension, status: "unknown" as const, summary: { text: "No evidence reported." }, producer: "none", evidenceCount: 0, sourceCommit: null, checkedAt: null };
-          return { dimension, status: readString(row, "status") as HealthStatus, summary: parsePayload(readString(row, "summary")), producer: "shipglows-runner", evidenceCount: 1, sourceCommit: readString(row, "sourceCommit"), checkedAt: readString(row, "observedAt") };
-        });
+          const status = readString(row, "status");
+          if (!isHealthDimension(dimension) || !isHealthStatus(status)) {
+            throw new RunStateError("Cockpit health evidence is invalid.");
+          }
+          return {
+            dimension,
+            status,
+            summary: parsePayload(readString(row, "summary")),
+            producer: "shipglows-runner",
+            sourceCommit: readString(row, "sourceCommit"),
+            observedAt: readString(row, "observedAt"),
+          };
+        }), evaluationTime);
         const conversationCount = readNumber(oneRow(db, "SELECT COUNT(*) AS count FROM conversations WHERE tenant_id = ? AND project_id = ?", tenantId, projectId) ?? { count: 0 }, "count");
         const activeRunCount = readNumber(oneRow(db, "SELECT COUNT(*) AS count FROM runs WHERE tenant_id = ? AND project_id = ? AND state IN ('queued', 'running')", tenantId, projectId) ?? { count: 0 }, "count");
-        return { id: projectId, name: readString(project, "repositoryFullName"), repositoryFullName: readString(project, "repositoryFullName"), accessState: "available" as const, dimensions: projectDimensions, conversationCount, activeRunCount };
+        return { id: projectId, name: readString(project, "repositoryFullName"), repositoryFullName: readString(project, "repositoryFullName"), accessState: "available" as const, health, conversationCount, activeRunCount };
       });
     },
     getConversation: ({ tenantId, conversationId }) => {
