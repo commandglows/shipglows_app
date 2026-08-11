@@ -8,6 +8,14 @@ import {
   type HealthDimension,
   type ProjectHealthProjection,
 } from "../health/index.js";
+import {
+  PROJECT_CONTEXT_SCHEMA_VERSION,
+  SKILL_EVIDENCE_SCHEMA_VERSION,
+  validateSkillEvidenceEnvelope,
+  type ProjectContextBundle,
+  type SkillEvidenceEnvelope,
+  type VersionedSkillRun,
+} from "../skills/contracts.js";
 
 export type { EvidenceHealthStatus as HealthStatus, HealthDimension } from "../health/index.js";
 
@@ -114,6 +122,8 @@ export interface PersistedHealthEvidence {
   readonly summary: SafePayload;
   readonly sourceCommit: string;
   readonly observedAt: string;
+  readonly skillRunId: string | null;
+  readonly contextBundleId: string | null;
 }
 
 export interface CockpitProjectRecord {
@@ -232,6 +242,15 @@ export interface OperationalStore {
     readonly resolvedAt: string;
   }): void;
   appendHealthEvidence(input: PersistedHealthEvidence): void;
+  persistSkillEvidenceEnvelope(input: SkillEvidenceEnvelope): void;
+  getProjectContextBundle(input: {
+    readonly tenantId: string;
+    readonly bundleId: string;
+  }): ProjectContextBundle | undefined;
+  getSkillRun(input: {
+    readonly tenantId: string;
+    readonly skillRunId: string;
+  }): VersionedSkillRun | undefined;
   listHealthEvidence(input: {
     readonly tenantId: string;
     readonly projectId: string;
@@ -487,6 +506,8 @@ function readHealthEvidence(row: Record<string, unknown>): PersistedHealthEviden
     summary: parsePayload(readString(row, "summary")),
     sourceCommit: readString(row, "sourceCommit"),
     observedAt: readString(row, "observedAt"),
+    skillRunId: row["skillRunId"] === null ? null : readString(row, "skillRunId"),
+    contextBundleId: row["contextBundleId"] === null ? null : readString(row, "contextBundleId"),
   };
 }
 
@@ -715,7 +736,41 @@ function createSchema(db: DatabaseSync): void {
     `);
     migratedVersion = 7;
   }
-  if (migratedVersion !== 7) {
+  if (migratedVersion === 7) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS project_context_bundles(
+        id TEXT PRIMARY KEY,
+        schema_version TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        source_commit TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        sources TEXT NOT NULL,
+        redaction_count INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS project_context_bundles_tenant_project_idx
+        ON project_context_bundles(tenant_id, project_id, created_at DESC);
+      CREATE TABLE IF NOT EXISTS skill_runs(
+        id TEXT PRIMARY KEY,
+        schema_version TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        skill_id TEXT NOT NULL,
+        skill_version TEXT NOT NULL,
+        context_bundle_id TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        completed_at TEXT NOT NULL,
+        outcome TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS skill_runs_tenant_project_idx
+        ON skill_runs(tenant_id, project_id, completed_at DESC);
+      ALTER TABLE health_evidence ADD COLUMN skill_run_id TEXT;
+      ALTER TABLE health_evidence ADD COLUMN context_bundle_id TEXT;
+      UPDATE meta SET version = 8;
+    `);
+    migratedVersion = 8;
+  }
+  if (migratedVersion !== 8) {
     throw new Error(`Unsupported SQLite schema version ${migratedVersion}`);
   }
 }
@@ -1139,7 +1194,7 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         approvalId,
       );
     },
-    appendHealthEvidence: ({ id, tenantId, projectId, dimension, status, summary, sourceCommit, observedAt }) => {
+    appendHealthEvidence: ({ id, tenantId, projectId, dimension, status, summary, sourceCommit, observedAt, skillRunId, contextBundleId }) => {
       validateOpaqueValue(id, "Health evidence identifier");
       validateOpaqueValue(tenantId, "Tenant identifier");
       validateOpaqueValue(projectId, "Project identifier");
@@ -1149,12 +1204,15 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
       if (!/^[A-Za-z0-9._/-]{1,200}$/.test(sourceCommit)) throw new RunStateError("Health source commit is invalid.");
       validateTimestamp(observedAt, "Health observedAt");
       assertSecretSafe(summary);
+      if (skillRunId !== null || contextBundleId !== null) {
+        throw new RunStateError("Provenanced health evidence must be persisted as a validated skill envelope.");
+      }
       const project = oneRow(db, "SELECT id FROM projects WHERE id = ? AND tenant_id = ?", projectId, tenantId);
       if (project === undefined) throw new RunStateError("Project is unavailable for this tenant.");
       run(
         db,
-        `INSERT INTO health_evidence(id, tenant_id, project_id, dimension, status, summary, source_commit, observed_at)
-         VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO health_evidence(id, tenant_id, project_id, dimension, status, summary, source_commit, observed_at, skill_run_id, context_bundle_id)
+         VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         id,
         tenantId,
         projectId,
@@ -1163,13 +1221,132 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         JSON.stringify(summary),
         sourceCommit,
         observedAt,
+        skillRunId,
+        contextBundleId,
       );
+    },
+    persistSkillEvidenceEnvelope: (envelope) => {
+      validateSkillEvidenceEnvelope(envelope);
+      const { context, run: skillRun, evidence } = envelope;
+      const project = oneRow(
+        db,
+        "SELECT id FROM projects WHERE id = ? AND tenant_id = ?",
+        context.projectId,
+        context.tenantId,
+      );
+      if (project === undefined) throw new RunStateError("Project is unavailable for this tenant.");
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        run(
+          db,
+          `INSERT INTO project_context_bundles(id, schema_version, tenant_id, project_id, source_commit, created_at, sources, redaction_count)
+           VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
+          context.bundleId,
+          context.schemaVersion,
+          context.tenantId,
+          context.projectId,
+          context.sourceCommit,
+          context.createdAt,
+          JSON.stringify(context.sources),
+          context.redactionCount,
+        );
+        run(
+          db,
+          `INSERT INTO skill_runs(id, schema_version, tenant_id, project_id, skill_id, skill_version, context_bundle_id, started_at, completed_at, outcome)
+           VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          skillRun.skillRunId,
+          skillRun.schemaVersion,
+          skillRun.tenantId,
+          skillRun.projectId,
+          skillRun.skillId,
+          skillRun.skillVersion,
+          skillRun.contextBundleId,
+          skillRun.startedAt,
+          skillRun.completedAt,
+          skillRun.outcome,
+        );
+        for (const item of evidence) {
+          run(
+            db,
+            `INSERT INTO health_evidence(id, tenant_id, project_id, dimension, status, summary, source_commit, observed_at, skill_run_id, context_bundle_id)
+             VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            item.evidenceId,
+            context.tenantId,
+            context.projectId,
+            item.dimension,
+            item.status,
+            JSON.stringify(item.summary),
+            item.sourceCommit,
+            item.observedAt,
+            item.skillRunId,
+            item.contextBundleId,
+          );
+        }
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    },
+    getProjectContextBundle: ({ tenantId, bundleId }) => {
+      const row = oneRow(
+        db,
+        `SELECT id, schema_version AS schemaVersion, tenant_id AS tenantId, project_id AS projectId,
+                source_commit AS sourceCommit, created_at AS createdAt, sources, redaction_count AS redactionCount
+         FROM project_context_bundles WHERE tenant_id = ? AND id = ?`,
+        tenantId,
+        bundleId,
+      );
+      if (row === undefined) return undefined;
+      const schemaVersion = readString(row, "schemaVersion");
+      if (schemaVersion !== PROJECT_CONTEXT_SCHEMA_VERSION) throw new RunStateError("Project context schema version is invalid.");
+      const sources = JSON.parse(readString(row, "sources")) as ProjectContextBundle["sources"];
+      return {
+        schemaVersion,
+        bundleId: readString(row, "id"),
+        tenantId: readString(row, "tenantId"),
+        projectId: readString(row, "projectId"),
+        sourceCommit: readString(row, "sourceCommit"),
+        createdAt: readString(row, "createdAt"),
+        sources,
+        redactionCount: readNumber(row, "redactionCount"),
+      };
+    },
+    getSkillRun: ({ tenantId, skillRunId }) => {
+      const row = oneRow(
+        db,
+        `SELECT id, schema_version AS schemaVersion, tenant_id AS tenantId, project_id AS projectId,
+                skill_id AS skillId, skill_version AS skillVersion, context_bundle_id AS contextBundleId,
+                started_at AS startedAt, completed_at AS completedAt, outcome
+         FROM skill_runs WHERE tenant_id = ? AND id = ?`,
+        tenantId,
+        skillRunId,
+      );
+      if (row === undefined) return undefined;
+      const schemaVersion = readString(row, "schemaVersion");
+      const outcome = readString(row, "outcome");
+      if (schemaVersion !== SKILL_EVIDENCE_SCHEMA_VERSION || (outcome !== "completed" && outcome !== "failed")) {
+        throw new RunStateError("Skill run projection is invalid.");
+      }
+      return {
+        schemaVersion,
+        skillRunId: readString(row, "id"),
+        tenantId: readString(row, "tenantId"),
+        projectId: readString(row, "projectId"),
+        skillId: readString(row, "skillId"),
+        skillVersion: readString(row, "skillVersion"),
+        contextBundleId: readString(row, "contextBundleId"),
+        startedAt: readString(row, "startedAt"),
+        completedAt: readString(row, "completedAt"),
+        outcome,
+      };
     },
     listHealthEvidence: ({ tenantId, projectId }) =>
       allRows(
         db,
         `SELECT id, tenant_id AS tenantId, project_id AS projectId, dimension, status,
-                summary, source_commit AS sourceCommit, observed_at AS observedAt
+                summary, source_commit AS sourceCommit, observed_at AS observedAt,
+                skill_run_id AS skillRunId, context_bundle_id AS contextBundleId
          FROM health_evidence WHERE tenant_id = ? AND project_id = ? ORDER BY observed_at, id`,
         tenantId,
         projectId,
@@ -1287,7 +1464,8 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         const projectId = readString(project, "id");
         const evidenceRows = allRows(
           db,
-          `SELECT dimension, status, summary, source_commit AS sourceCommit, observed_at AS observedAt
+          `SELECT dimension, status, summary, source_commit AS sourceCommit, observed_at AS observedAt,
+                  skill_run_id AS skillRunId, context_bundle_id AS contextBundleId
            FROM health_evidence WHERE tenant_id = ? AND project_id = ?
            ORDER BY observed_at DESC`,
           tenantId,
@@ -1306,6 +1484,8 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
             producer: "shipglows-runner",
             sourceCommit: readString(row, "sourceCommit"),
             observedAt: readString(row, "observedAt"),
+            skillRunId: row["skillRunId"] === null ? null : readString(row, "skillRunId"),
+            contextBundleId: row["contextBundleId"] === null ? null : readString(row, "contextBundleId"),
           };
         }), evaluationTime);
         const conversationCount = readNumber(oneRow(db, "SELECT COUNT(*) AS count FROM conversations WHERE tenant_id = ? AND project_id = ?", tenantId, projectId) ?? { count: 0 }, "count");

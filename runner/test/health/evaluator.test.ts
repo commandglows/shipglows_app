@@ -55,6 +55,8 @@ describe("ShipGlows health evaluator", () => {
       evidenceCount: 2,
       sourceCommit: "abc123",
       checkedAt: "2026-08-10T08:00:00.000Z",
+      skillRunId: null,
+      contextBundleId: null,
     });
   });
 

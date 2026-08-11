@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "0.11.0"
+artifact_version: "0.12.0"
 project: "shipglows_app"
 created: "2026-05-08"
 updated: "2026-08-11"

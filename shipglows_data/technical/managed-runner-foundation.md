@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.4.0"
+artifact_version: "2.5.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-11"
@@ -44,7 +44,7 @@ linked_systems:
   - "eve"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
-    artifact_version: "1.16.0"
+    artifact_version: "1.17.0"
     required_status: "ready"
 supersedes: []
 evidence:
@@ -101,13 +101,14 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `AgentRuntime` is the product-owned contract for sessions, turns, interruption, approval support and semantic event streams.
 - `ExecutionProvider`, `CapabilityBroker` and `ModelGateway` are separate ports. The local `managed-disposable` provider is selected through a registry and validates required capabilities without fallback. Every audit, conversation turn and fix now persists a server-resolved, manual-only execution envelope before provider preflight; it contains only opaque identifiers, provider/runtime selection, bounded capabilities, duration budget and deadline.
 - Codex is now the first contract-tested adapter behind `AgentRuntime`, using a server-owned local JSONL app-server connection; Eve remains a future adapter while its beta API and deployment posture remain in flux.
-- The SQLite store holds a reconstructable operational projection: tenants, memberships, projects, canonical cross-namespace project identity bindings, GitHub repository bindings, conversations, durable run states/checkpoints, secret-safe execution envelopes, runtime session mappings, capability decisions, approvals, health evidence, usage summaries, event cursors, idempotency records and workspace-cleanup state. Schema v7 stores operational metadata only; repository and Markdown content remain canonical.
+- The SQLite store holds a reconstructable operational projection: tenants, memberships, projects, canonical cross-namespace project identity bindings, GitHub repository bindings, conversations, durable run states/checkpoints, secret-safe execution envelopes, runtime session mappings, capability decisions, approvals, project-context bundles, versioned skill runs, health evidence, usage summaries, event cursors, idempotency records and workspace-cleanup state. Schema v8 stores operational metadata only; repository and Markdown content remain canonical.
 - Provider preflight always occurs before a worktree, runtime session or turn is created. A failed preflight has a stable bounded execution failure and cannot change provider, runtime, policy or permission. The envelope excludes prompts, environment variables, tokens and workspace paths; cancellation accepts only opaque run and execution identifiers. Its state moves monotonically from preflight to the same terminal outcome as the run.
 - Run checkpoints are secret-safe and tenant-scoped. A runner restart marks in-flight `running` records and their matching preflight-passed executions as `interrupted` with a bounded recovery reason. The local provider does not claim drain, remote task preservation or reattachment; those need a separate distributed-execution contract.
 - Workspace cleanup records contain only an opaque run id, state, due time, attempt count and bounded error code; managed filesystem paths remain exclusively inside the workspace manager.
 - Runtime sessions, capability decisions, approvals, health evidence and usage summaries are tenant-scoped projections. Health summaries pass the same secret-safety checks as event payloads, and usage values are bounded non-negative counters.
 - `ShipGlowsHealthEvaluator` is the single runner authority for the five-dimensional Cockpit projection. It always emits tech, content, SEO, performance and security; absent evidence is `notReported`, malformed or secret-bearing evidence fails closed, and healthy evidence older than 30 days becomes `stale` without downgrading older warning or critical findings. Coverage excludes `unknown` and `notReported`, while the overall status retains the worst reported state.
 - Versioned `ProjectContextBundle`, skill-run and skill-evidence contracts bind every accepted result to one tenant, project, source commit and bounded redacted source set. Validation rejects unsupported versions, cross-project or detached provenance, invalid chronology, secret-bearing summaries, failed runs that publish evidence, unknown source kinds and duplicate dimension results before persistence.
+- Schema v8 persists a validated context bundle, its skill run and all emitted health evidence in one SQLite transaction. A failed insert rolls the complete envelope back; tenant-scoped readers expose the provenance identifiers to the evaluator and Cockpit without exposing repository paths or raw source content. The legacy evidence writer cannot claim provenance.
 - The first protected audit command creates a durable conversation/run, initializes the selected runtime, starts a turn, and records a safe running/failed projection. Event-stream persistence, bounded live fan-out, the state-changing Origin policy, per-tenant admission quota and bounded timeout/interruption reconciliation are implemented. The `POST /fixes` path now validates bounded issue/instruction input, requires a durable `Idempotency-Key`, and, when GitHub App configuration is enabled, revalidates the binding, creates a server-owned isolated fix worktree, starts Codex with that internal workspace, and schedules cleanup without exposing its path; it remains unavailable when the provider is not configured.
 - The operational store replays completed asynchronous audit/fix commands from SQLite and coalesces concurrent duplicate keys inside one process. Both state-changing command routes require a bounded `Idempotency-Key`. The cleanup worker scans all tenant cleanup records every minute, resolves run/project/binding context server-side, removes managed worktrees, and marks bounded success/failure states; no local path is persisted.
 - Conversation commands now use `POST /v1/projects/:projectId/conversations`, `/messages`, `/interrupt` and `/resume`. They resolve sessions and runs server-side, pass message turns through the neutral runtime port, persist normalized events, enforce the shared run quota/timeout boundary, and require durable idempotency keys. Approval decisions use `POST /v1/projects/:projectId/approvals/:approvalId` with the same contract: the runner verifies the tenant/project/run/session boundary, resolves the provider approval, persists the approved/denied projection, publishes a safe `approval.resolved` event, and replays duplicate decisions without calling the runtime twice.

@@ -13,6 +13,8 @@ export interface HealthEvidenceSignal {
   readonly producer: string;
   readonly sourceCommit: string;
   readonly observedAt: string;
+  readonly skillRunId?: string | null;
+  readonly contextBundleId?: string | null;
 }
 
 export interface HealthDimensionProjection {
@@ -23,6 +25,8 @@ export interface HealthDimensionProjection {
   readonly evidenceCount: number;
   readonly sourceCommit: string | null;
   readonly checkedAt: string | null;
+  readonly skillRunId: string | null;
+  readonly contextBundleId: string | null;
 }
 
 export interface ProjectHealthProjection {
@@ -108,6 +112,8 @@ export class ShipGlowsHealthEvaluator {
           evidenceCount: 0,
           sourceCommit: null,
           checkedAt: null,
+          skillRunId: null,
+          contextBundleId: null,
         };
       }
       return {
@@ -118,6 +124,8 @@ export class ShipGlowsHealthEvaluator {
         evidenceCount: matching.length,
         sourceCommit: latest.signal.sourceCommit,
         checkedAt: new Date(latest.observedAt).toISOString(),
+        skillRunId: latest.signal.skillRunId ?? null,
+        contextBundleId: latest.signal.contextBundleId ?? null,
       };
     });
     const reported = dimensions.filter((item) => item.status !== "unknown" && item.status !== "notReported");

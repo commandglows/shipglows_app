@@ -117,6 +117,7 @@ export function validateSkillEvidenceEnvelope(envelope: SkillEvidenceEnvelope): 
       throw new SkillEvidenceContractError("Project context source is invalid.");
     }
   }
+  assertSecretSafe(context.sources);
   const contextCreatedAt = timestamp(context.createdAt, "Context creation time");
   const startedAt = timestamp(run.startedAt, "Skill run start time");
   const completedAt = timestamp(run.completedAt, "Skill run completion time");

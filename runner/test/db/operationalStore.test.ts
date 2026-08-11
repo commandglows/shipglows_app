@@ -11,6 +11,11 @@ import {
   openOperationalStore,
   RepositoryBindingError,
 } from "../../src/db/index.js";
+import {
+  PROJECT_CONTEXT_SCHEMA_VERSION,
+  SKILL_EVIDENCE_SCHEMA_VERSION,
+  type SkillEvidenceEnvelope,
+} from "../../src/skills/contracts.js";
 
 const ids = {
   tenantA: "ten_000000000001",
@@ -24,6 +29,8 @@ const ids = {
   sessionA: "ses_000000000001",
   approvalA: "apr_000000000001",
   evidenceA: "evi_000000000001",
+  contextA: "ctx_000000000001",
+  skillRunA: "skr_000000000001",
 };
 
 async function databasePath(name: string): Promise<string> {
@@ -67,6 +74,54 @@ function seed(store: Awaited<ReturnType<typeof openOperationalStore>>): void {
     createdBy: ids.userA,
     title: "Foundation proof",
   });
+}
+
+function skillEvidenceEnvelope(overrides: {
+  readonly contextId?: string;
+  readonly skillRunId?: string;
+  readonly evidenceId?: string;
+} = {}): SkillEvidenceEnvelope {
+  const contextId = overrides.contextId ?? ids.contextA;
+  const skillRunId = overrides.skillRunId ?? ids.skillRunA;
+  return {
+    context: {
+      schemaVersion: PROJECT_CONTEXT_SCHEMA_VERSION,
+      bundleId: contextId,
+      tenantId: ids.tenantA,
+      projectId: ids.projectA,
+      sourceCommit: "abc123",
+      createdAt: "2026-08-02T09:00:00.000Z",
+      sources: [{
+        kind: "repositorySnapshot",
+        reference: "repository:default-branch",
+        sha256: "a".repeat(64),
+      }],
+      redactionCount: 1,
+    },
+    run: {
+      schemaVersion: SKILL_EVIDENCE_SCHEMA_VERSION,
+      skillRunId,
+      tenantId: ids.tenantA,
+      projectId: ids.projectA,
+      skillId: "103-sg-verify",
+      skillVersion: "1.0.0",
+      contextBundleId: contextId,
+      startedAt: "2026-08-02T09:01:00.000Z",
+      completedAt: "2026-08-02T09:03:00.000Z",
+      outcome: "completed",
+    },
+    evidence: [{
+      schemaVersion: SKILL_EVIDENCE_SCHEMA_VERSION,
+      evidenceId: overrides.evidenceId ?? ids.evidenceA,
+      skillRunId,
+      contextBundleId: contextId,
+      dimension: "security",
+      status: "warning",
+      summary: { text: "One security issue remains." },
+      sourceCommit: "abc123",
+      observedAt: "2026-08-02T09:02:00.000Z",
+    }],
+  };
 }
 
 describe("SQLite operational projection", () => {
@@ -222,7 +277,7 @@ describe("SQLite operational projection", () => {
         defaultBranch: "main",
       },
     });
-    assert.equal(store.schemaVersion(), 7);
+    assert.equal(store.schemaVersion(), 8);
     assert.deepEqual(
       store.getGitHubRepositoryBinding({ tenantId: ids.tenantA, projectId: ids.projectA }),
       {
@@ -378,7 +433,7 @@ describe("SQLite operational projection", () => {
     const path = await databasePath("restart");
     let store = await openOperationalStore(path);
     seed(store);
-    assert.equal(store.schemaVersion(), 7);
+    assert.equal(store.schemaVersion(), 8);
     assert.throws(() => store.migrateDown(), MigrationPolicyError);
     store.close();
 
@@ -461,7 +516,7 @@ describe("SQLite operational projection", () => {
     legacy.close();
 
     const store = await openOperationalStore(path);
-    assert.equal(store.schemaVersion(), 7);
+    assert.equal(store.schemaVersion(), 8);
     seed(store);
     assert.equal(
       store.createRun({
@@ -571,6 +626,8 @@ describe("SQLite operational projection", () => {
       summary: { text: "One security issue remains.", issueCount: 1, source: "shipglows-skill" },
       sourceCommit: "abc123",
       observedAt: "2026-08-02T09:02:00.000Z",
+      skillRunId: null,
+      contextBundleId: null,
     });
     assert.deepEqual(store.listHealthEvidence({ tenantId: ids.tenantA, projectId: ids.projectA }), [{
       id: ids.evidenceA,
@@ -581,6 +638,8 @@ describe("SQLite operational projection", () => {
       summary: { text: "One security issue remains.", issueCount: 1, source: "shipglows-skill" },
       sourceCommit: "abc123",
       observedAt: "2026-08-02T09:02:00.000Z",
+      skillRunId: null,
+      contextBundleId: null,
     }]);
     const cockpit = store.listCockpitProjects({
       tenantId: ids.tenantA,
@@ -615,6 +674,51 @@ describe("SQLite operational projection", () => {
       estimatedCostMinor: 3,
     });
     assert.equal(store.getApproval({ tenantId: ids.tenantB, approvalId: ids.approvalA }), undefined);
+    store.close();
+  });
+
+  it("atomically persists skill context, run, evidence, and Cockpit provenance", async () => {
+    const store = await openOperationalStore(await databasePath("skill-evidence-provenance"));
+    seed(store);
+    const envelope = skillEvidenceEnvelope();
+
+    store.persistSkillEvidenceEnvelope(envelope);
+
+    assert.deepEqual(
+      store.getProjectContextBundle({ tenantId: ids.tenantA, bundleId: ids.contextA }),
+      envelope.context,
+    );
+    assert.deepEqual(
+      store.getSkillRun({ tenantId: ids.tenantA, skillRunId: ids.skillRunA }),
+      envelope.run,
+    );
+    assert.equal(
+      store.listHealthEvidence({ tenantId: ids.tenantA, projectId: ids.projectA })[0]?.skillRunId,
+      ids.skillRunA,
+    );
+    const security = store.listCockpitProjects({
+      tenantId: ids.tenantA,
+      userId: ids.userA,
+      evaluatedAt: "2026-08-02T10:00:00.000Z",
+    })[0]?.health.dimensions.find((item) => item.dimension === "security");
+    assert.equal(security?.skillRunId, ids.skillRunA);
+    assert.equal(security?.contextBundleId, ids.contextA);
+    assert.equal(store.getSkillRun({ tenantId: ids.tenantB, skillRunId: ids.skillRunA }), undefined);
+
+    const rollbackEnvelope = skillEvidenceEnvelope({
+      contextId: "ctx_000000000002",
+      skillRunId: "skr_000000000002",
+      evidenceId: ids.evidenceA,
+    });
+    assert.throws(() => store.persistSkillEvidenceEnvelope(rollbackEnvelope));
+    assert.equal(
+      store.getProjectContextBundle({ tenantId: ids.tenantA, bundleId: "ctx_000000000002" }),
+      undefined,
+    );
+    assert.equal(
+      store.getSkillRun({ tenantId: ids.tenantA, skillRunId: "skr_000000000002" }),
+      undefined,
+    );
     store.close();
   });
 
