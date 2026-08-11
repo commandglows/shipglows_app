@@ -81,14 +81,14 @@ function opaque(value: string, label: string): void {
   if (!opaquePattern.test(value)) throw new SkillEvidenceContractError(`${label} is invalid.`);
 }
 
+function supportedVersion(value: string, expected: string, label: string): void {
+  if (value !== expected) throw new SkillEvidenceContractError(`${label} schema version is unsupported.`);
+}
+
 export function validateSkillEvidenceEnvelope(envelope: SkillEvidenceEnvelope): void {
   const { context, run, evidence } = envelope;
-  if (context.schemaVersion !== PROJECT_CONTEXT_SCHEMA_VERSION) {
-    throw new SkillEvidenceContractError("Project context schema version is unsupported.");
-  }
-  if (run.schemaVersion !== SKILL_EVIDENCE_SCHEMA_VERSION) {
-    throw new SkillEvidenceContractError("Skill run schema version is unsupported.");
-  }
+  supportedVersion(context.schemaVersion, PROJECT_CONTEXT_SCHEMA_VERSION, "Project context");
+  supportedVersion(run.schemaVersion, SKILL_EVIDENCE_SCHEMA_VERSION, "Skill run");
   for (const [value, label] of [
     [context.bundleId, "Context bundle identifier"],
     [context.tenantId, "Tenant identifier"],
@@ -136,9 +136,7 @@ export function validateSkillEvidenceEnvelope(envelope: SkillEvidenceEnvelope): 
     throw new SkillEvidenceContractError("A skill run may publish at most one result per health dimension.");
   }
   for (const item of evidence) {
-    if (item.schemaVersion !== SKILL_EVIDENCE_SCHEMA_VERSION) {
-      throw new SkillEvidenceContractError("Skill evidence schema version is unsupported.");
-    }
+    supportedVersion(item.schemaVersion, SKILL_EVIDENCE_SCHEMA_VERSION, "Skill evidence");
     opaque(item.evidenceId, "Evidence identifier");
     if (item.skillRunId !== run.skillRunId || item.contextBundleId !== context.bundleId) {
       throw new SkillEvidenceContractError("Health evidence provenance does not match.");

@@ -647,14 +647,16 @@ describe("SQLite operational projection", () => {
       evaluatedAt: "2026-08-02T10:00:00.000Z",
     });
     assert.equal(cockpit.length, 1);
-    assert.equal(cockpit[0]?.health.overallStatus, "warning");
-    assert.equal(cockpit[0]?.health.coverage, 0.2);
+    const cockpitProject = cockpit[0];
+    assert.ok(cockpitProject);
+    assert.equal(cockpitProject.health.overallStatus, "warning");
+    assert.equal(cockpitProject.health.coverage, 0.2);
     assert.equal(
-      cockpit[0]?.health.dimensions.find((item) => item.dimension === "security")?.evidenceCount,
+      cockpitProject.health.dimensions.find((item) => item.dimension === "security")?.evidenceCount,
       1,
     );
     assert.equal(
-      cockpit[0]?.health.dimensions.find((item) => item.dimension === "content")?.status,
+      cockpitProject.health.dimensions.find((item) => item.dimension === "content")?.status,
       "notReported",
     );
     store.saveRunUsage({
@@ -701,8 +703,9 @@ describe("SQLite operational projection", () => {
       userId: ids.userA,
       evaluatedAt: "2026-08-02T10:00:00.000Z",
     })[0]?.health.dimensions.find((item) => item.dimension === "security");
-    assert.equal(security?.skillRunId, ids.skillRunA);
-    assert.equal(security?.contextBundleId, ids.contextA);
+    assert.ok(security);
+    assert.equal(security.skillRunId, ids.skillRunA);
+    assert.equal(security.contextBundleId, ids.contextA);
     assert.equal(store.getSkillRun({ tenantId: ids.tenantB, skillRunId: ids.skillRunA }), undefined);
 
     const rollbackEnvelope = skillEvidenceEnvelope({

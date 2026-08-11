@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.5.0"
+artifact_version: "2.6.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-11"
@@ -31,6 +31,7 @@ linked_systems:
   - "runner/src/db/index.ts"
   - "runner/src/health/index.ts"
   - "runner/src/skills/contracts.ts"
+  - "runner/src/skills/sandbox.ts"
   - "runner/src/auth/index.ts"
   - "runner/src/github/index.ts"
   - "runner/src/workspaces/index.ts"
@@ -44,7 +45,7 @@ linked_systems:
   - "eve"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
-    artifact_version: "1.17.0"
+    artifact_version: "1.18.0"
     required_status: "ready"
 supersedes: []
 evidence:
@@ -109,6 +110,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `ShipGlowsHealthEvaluator` is the single runner authority for the five-dimensional Cockpit projection. It always emits tech, content, SEO, performance and security; absent evidence is `notReported`, malformed or secret-bearing evidence fails closed, and healthy evidence older than 30 days becomes `stale` without downgrading older warning or critical findings. Coverage excludes `unknown` and `notReported`, while the overall status retains the worst reported state.
 - Versioned `ProjectContextBundle`, skill-run and skill-evidence contracts bind every accepted result to one tenant, project, source commit and bounded redacted source set. Validation rejects unsupported versions, cross-project or detached provenance, invalid chronology, secret-bearing summaries, failed runs that publish evidence, unknown source kinds and duplicate dimension results before persistence.
 - Schema v8 persists a validated context bundle, its skill run and all emitted health evidence in one SQLite transaction. A failed insert rolls the complete envelope back; tenant-scoped readers expose the provenance identifiers to the evaluator and Cockpit without exposing repository paths or raw source content. The legacy evidence writer cannot claim provenance.
+- The first real health producer runs the fixed `shipglows.tech.snapshot@1.0.0` read-only audit in `just-bash` 3.2.0 against an in-memory, pre-redacted snapshot only. Host filesystem access, network, JavaScript and Python are not enabled; the command registry, file/byte counts, output grammar, execution count/depth and wall-clock duration are bounded. Only a normalized status, issue count, source hashes and opaque provenance are persisted. Because the published 3.2.0 npm tarball omits several declaration files re-exported by its public types, the adapter uses one local minimal CommonJS type boundary rather than disabling project-wide library checking.
 - The first protected audit command creates a durable conversation/run, initializes the selected runtime, starts a turn, and records a safe running/failed projection. Event-stream persistence, bounded live fan-out, the state-changing Origin policy, per-tenant admission quota and bounded timeout/interruption reconciliation are implemented. The `POST /fixes` path now validates bounded issue/instruction input, requires a durable `Idempotency-Key`, and, when GitHub App configuration is enabled, revalidates the binding, creates a server-owned isolated fix worktree, starts Codex with that internal workspace, and schedules cleanup without exposing its path; it remains unavailable when the provider is not configured.
 - The operational store replays completed asynchronous audit/fix commands from SQLite and coalesces concurrent duplicate keys inside one process. Both state-changing command routes require a bounded `Idempotency-Key`. The cleanup worker scans all tenant cleanup records every minute, resolves run/project/binding context server-side, removes managed worktrees, and marks bounded success/failure states; no local path is persisted.
 - Conversation commands now use `POST /v1/projects/:projectId/conversations`, `/messages`, `/interrupt` and `/resume`. They resolve sessions and runs server-side, pass message turns through the neutral runtime port, persist normalized events, enforce the shared run quota/timeout boundary, and require durable idempotency keys. Approval decisions use `POST /v1/projects/:projectId/approvals/:approvalId` with the same contract: the runner verifies the tenant/project/run/session boundary, resolves the provider approval, persists the approved/denied projection, publishes a safe `approval.resolved` event, and replays duplicate decisions without calling the runtime twice.

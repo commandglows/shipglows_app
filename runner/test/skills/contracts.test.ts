@@ -51,6 +51,18 @@ function envelope(): SkillEvidenceEnvelope {
   };
 }
 
+function firstEvidence(value: SkillEvidenceEnvelope): SkillEvidenceEnvelope["evidence"][number] {
+  const item = value.evidence[0];
+  assert.ok(item);
+  return item;
+}
+
+function firstSource(value: SkillEvidenceEnvelope): SkillEvidenceEnvelope["context"]["sources"][number] {
+  const item = value.context.sources[0];
+  assert.ok(item);
+  return item;
+}
+
 describe("versioned ShipGlows skill evidence contracts", () => {
   it("accepts a bounded run whose evidence is attributable to one project context", () => {
     assert.doesNotThrow(() => validateSkillEvidenceEnvelope(envelope()));
@@ -69,7 +81,7 @@ describe("versioned ShipGlows skill evidence contracts", () => {
     assert.throws(
       () => validateSkillEvidenceEnvelope({
         ...detachedEvidence,
-        evidence: [{ ...detachedEvidence.evidence[0]!, skillRunId: "skr_other" }],
+        evidence: [{ ...firstEvidence(detachedEvidence), skillRunId: "skr_other" }],
       }),
       SkillEvidenceContractError,
     );
@@ -89,7 +101,7 @@ describe("versioned ShipGlows skill evidence contracts", () => {
     assert.throws(
       () => validateSkillEvidenceEnvelope({
         ...tooManySources,
-        context: { ...tooManySources.context, sources: Array(129).fill(tooManySources.context.sources[0]) },
+        context: { ...tooManySources.context, sources: Array(129).fill(firstSource(tooManySources)) },
       }),
       SkillEvidenceContractError,
     );
@@ -108,8 +120,8 @@ describe("versioned ShipGlows skill evidence contracts", () => {
     assert.throws(
       () => validateSkillEvidenceEnvelope({
         ...duplicate,
-        evidence: [duplicate.evidence[0]!, {
-          ...duplicate.evidence[0]!,
+        evidence: [firstEvidence(duplicate), {
+          ...firstEvidence(duplicate),
           evidenceId: "evd_000000000002",
         }],
       }),
@@ -121,7 +133,7 @@ describe("versioned ShipGlows skill evidence contracts", () => {
         context: {
           ...unknownSource.context,
           sources: [{
-            ...unknownSource.context.sources[0]!,
+            ...firstSource(unknownSource),
             kind: "clientUpload" as "repositorySnapshot",
           }],
         },
@@ -135,7 +147,7 @@ describe("versioned ShipGlows skill evidence contracts", () => {
     assert.throws(
       () => validateSkillEvidenceEnvelope({
         ...secret,
-        evidence: [{ ...secret.evidence[0]!, summary: { accessToken: "hidden" } }],
+        evidence: [{ ...firstEvidence(secret), summary: { accessToken: "hidden" } }],
       }),
       /restricted secret/i,
     );

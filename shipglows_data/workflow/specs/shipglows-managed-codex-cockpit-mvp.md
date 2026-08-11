@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.17.0"
+artifact_version: "1.18.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-11"
-updated_at: "2026-08-11 15:37:40 UTC"
+updated_at: "2026-08-11 15:46:38 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -299,6 +299,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Fresh Warp Oz documentation checked 2026-08-03 describes cloud-agent triggers, scheduling, parallelism, observability, multiple harnesses and persistent team memory. This spec adopts only bounded orchestration requirements; Warp/Oz remains outside the runtime dependency graph.
 - Official Supabase Flutter and Auth documentation checked 2026-08-01 supports the selected cross-platform session baseline; server-side JWT/JWKS verification remains behind the runner AuthProvider adapter.
 - Official GitHub App documentation checked 2026-07-18 supports short-lived installation access tokens, narrowed repository/permission scope, and HTTP Git authentication when Contents permission is granted.
+- Official `just-bash` repository and threat model rechecked 2026-08-11: 3.2.0 supports an in-memory filesystem, disabled-by-default network/JavaScript/Python, a restricted command registry, abort signals and execution limits. Its npm tarball currently omits several declaration files referenced by the package entrypoint, so ShipGlows isolates the runtime behind a narrow local typed adapter without enabling `skipLibCheck`.
 - Existing code foundations include `lib/shipglows/**`, `lib/data/shipglows_sources/**`, `lib/domain/project_health/**`, Firestore-shaped projection DTOs/validators, and legacy Clerk/GitHub service concepts.
 - Canonical design-system authority is `shipglows_data/technical/design-system-authority.md` with Flutter carrier `lib/presentation/theme/app_theme.dart`.
 
@@ -517,13 +518,13 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Depends on: Tasks 1, 4, 5 and the existing Task 6 routes.
   - Validate with: contract/registry tests; manual-only/no-fallback/preflight-before-side-effects tests; audit/fix/conversation regression tests; SQLite v6-to-v7 migration, tenant-isolation, state-transition and secret-redaction tests; typecheck, full runner test suite and diff hygiene.
   - Implementation note (2026-08-07): the local `managed-disposable` registry, immutable execution admission, schema v7 envelope persistence, preflight ordering, opaque cancellation and terminal execution-state synchronization are implemented and locally verified. A restart interrupts both the active run and matching admitted execution. Remote dispatch, drain and reattach remain explicitly out of scope.
-- [~] Task 7: Establish the proprietary ShipGlows health evaluator and five-dimensional Cockpit projection.
+- [x] Task 7: Establish the proprietary ShipGlows health evaluator and five-dimensional Cockpit projection.
   - Files: `runner/src/skills/**`, `runner/src/health/**`, `runner/test/skills/**`, `runner/test/health/**`, `app/lib/domain/project_health/**`, `app/lib/shipglows/data/cockpit/**`, `app/test/domain/project_health/**`, `app/test/shipglows/data/cockpit/**`.
   - Action: Define versioned skill-run/evidence and `ProjectContextBundle` contracts, execute one bounded read-only skill through `just-bash` against a controlled snapshot, map evaluator outcomes into tech/content/SEO/performance/security models, preserve explicit unknown/not-reported states, and link each result to its producing run and context provenance.
   - User story link: Provides the global visual health view across tech, content, SEO, performance, and security.
   - Depends on: Task 1 contracts; can use fixtures before Task 6 is live.
   - Validate with: deterministic evaluator fixtures, sandbox limits, coverage, stale evidence, source-gap, malformed payload, and worst-state tests; prove that no absent evidence becomes healthy.
-  - Implementation note (2026-08-11): the runner-owned deterministic evaluator and Cockpit projection foundation are implemented. It emits all five dimensions, distinguishes `notReported`, `unknown` and `stale`, counts evidence, retains the latest source provenance, rejects malformed or secret-bearing payloads, and computes conservative coverage plus worst state. Versioned skill-run/evidence and `ProjectContextBundle` contracts bind accepted results to one tenant, project, source commit, bounded source set and valid chronology; schema v8 persists that envelope atomically and returns its run/context provenance through the Cockpit. The bounded `just-bash` producer and linkage to a real skill execution remain.
+  - Implementation note (2026-08-11): complete for the MVP contract. The runner-owned evaluator emits all five dimensions, distinguishes `notReported`, `unknown` and `stale`, rejects malformed or secret-bearing payloads, and computes conservative coverage plus worst state. Versioned skill-run/evidence and `ProjectContextBundle` contracts bind accepted results to one tenant, project, source commit, bounded source set and valid chronology; schema v8 persists that envelope atomically and returns its run/context provenance through the Cockpit. The first fixed read-only tech audit executes through `just-bash` 3.2.0 against a controlled in-memory snapshot with no host filesystem, network, JavaScript or Python capability, bounded commands/resources/output, and normalized evidence only.
 - [ ] Task 8: Integrate the active-runtime identity and runner API adapters.
   - Files: `app/lib/shipglows/auth/**`, `app/lib/shipglows/data/api/**`, `app/lib/shipglows/providers/**`, `app/web_auth/**`, `app/android/**`, `app/windows/**`, `app/test/shipglows/auth/**`, `app/test/shipglows/data/api/**`.
   - Action: Define one Dart auth interface, integrate the Supabase Flutter session contract across Web/Android/Windows, retain legacy auth only behind an adapter, add typed Dio API clients plus authenticated fetch-style SSE/PTY streaming, token refresh, `Last-Event-ID` cursor resume, error mapping, and Riverpod state ownership. Do not use browser `EventSource`, because the stream requires an authorization header.
@@ -791,6 +792,8 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-11 15:31:57 UTC | 103-sg-verify | GPT-5 Codex | Verified the versioned provenance contracts against acceptance, cross-project, detached-evidence, chronology, source-bound, duplicate-dimension, failed-run and secret-bearing fixtures plus the complete runner quality gates. | locally verified: 104 runner tests, typecheck, lint, zero high dependency vulnerabilities, metadata and diff hygiene pass | Commit the scoped provenance-contract slice |
 | 2026-08-11 15:37:40 UTC | 001-sg-build | GPT-5 Codex | Added SQLite schema v8 and atomic persistence for project context, versioned skill run and linked health evidence; exposed tenant-scoped provenance through the evaluator-owned Cockpit projection and kept the legacy writer unable to fabricate provenance. | persistence linkage implemented; bounded sandbox producer remains | Verify the migration, rollback, tenant-isolation and Flutter compatibility gates, then commit this slice |
 | 2026-08-11 15:38:59 UTC | 103-sg-verify | GPT-5 Codex | Verified schema v8 migration, atomic rollback, tenant-isolated provenance, legacy-writer restrictions and Cockpit propagation against the complete runner gates plus Flutter health compatibility. | locally verified: 105 runner tests, 8 targeted Flutter tests, typecheck, lint, audit, analysis, metadata and diff hygiene pass | Commit the scoped persistence slice, then continue the bounded producer |
+| 2026-08-11 15:46:38 UTC | 001-sg-build | GPT-5 Codex | Implemented the first fixed read-only ShipGlows tech audit through `just-bash` 3.2.0 using only a bounded in-memory snapshot, normalized its result into the versioned evidence envelope and connected the producer to atomic persistence. | Task 7 implementation complete; full quality gates pending for this final slice | Verify sandbox isolation, deterministic outcomes, dependency health and the complete runner regression suite, then commit Task 7 closure |
+| 2026-08-11 15:48:05 UTC | 103-sg-verify | GPT-5 Codex | Verified the bounded producer against healthy/warning fixtures, traversal/empty/oversize rejection, normalized-output secrecy, exact persistence handoff, complete runner regression, strict typecheck/lint, dependency audit and metadata hygiene. | Task 7 locally verified: 109 runner tests pass and `just-bash` 3.2.0 has zero reported high vulnerabilities; published declaration gap remains isolated locally without weakening strict checks | Commit the scoped Task 7 closure; continue the broader MVP from the next ready task |
 
 # Current Chantier Flow
 
@@ -800,4 +803,4 @@ The portfolio architecture decision now supersedes this spec's original Supabase
 
 Historical Supabase task text and run-history evidence below remains a record of what was decided, implemented or deployed at that time; it is not current implementation guidance. The last managed-server proof still used the Supabase deployment and cannot be claimed as Firebase proof. Current completion requirements are owned by `firebase-auth-convex-alignment.md`: Linux REST/OIDC support, live Firebase authentication, deployment migration and a separately specified first Convex product projection remain open.
 
-`100-sg-spec` (amended; agentic-security and health-evaluator slices) -> `101-sg-ready` (existing MVP contract ready) -> `001-sg-build` (Task 7 evaluator, versioned provenance and atomic persistence implemented; sandbox producer remains) -> `103-sg-verify` (105 runner tests plus Flutter compatibility, typecheck, lint, audit, analysis and metadata pass) -> `005-sg-ship` (two scoped local commits created; persistence commit pending; push not authorized) -> `004-sg-deploy` (not required for these local slices; broader hosted proof remains partial)
+`100-sg-spec` (amended; agentic-security and health-evaluator slices) -> `101-sg-ready` (existing MVP contract ready) -> `001-sg-build` (Task 7 evaluator, versioned provenance, atomic persistence and bounded producer implemented) -> `103-sg-verify` (109 runner tests, strict typecheck/lint, dependency audit and metadata pass) -> `005-sg-ship` (three scoped local commits created; Task 7 closure commit pending; push not authorized) -> `004-sg-deploy` (not required for Task 7; broader hosted proof remains partial)
