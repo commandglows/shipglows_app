@@ -140,6 +140,48 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('reflows safely at 320dp with 2x text', (tester) async {
+      await _pumpCockpit(
+        tester,
+        size: const Size(320, 568),
+        dashboard: _dashboard(),
+        managed: ManagedCockpitState.server(_snapshot()),
+        textScaleFactor: 2,
+      );
+
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.dragUntilVisible(
+        find.byType(OutlinedButton),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
+      final actionSize = tester.getSize(find.byType(OutlinedButton));
+      expect(actionSize.height, greaterThanOrEqualTo(48));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('exposes each health dimension to assistive technology', (
+      tester,
+    ) async {
+      await _pumpCockpit(
+        tester,
+        size: const Size(768, 1024),
+        dashboard: _dashboard(),
+        managed: ManagedCockpitState.server(_snapshot()),
+      );
+
+      expect(find.bySemanticsLabel('tech: warning'), findsOneWidget);
+      expect(find.bySemanticsLabel('content: not reported'), findsOneWidget);
+      expect(find.bySemanticsLabel('seo: not reported'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('performance: not reported'),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('security: not reported'), findsOneWidget);
+    });
   });
 }
 

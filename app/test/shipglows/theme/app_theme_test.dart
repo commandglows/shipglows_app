@@ -40,25 +40,73 @@ void main() {
       expect(darkTheme().textTheme.bodyMedium?.fontFamily, 'Inter');
     });
 
-    test('key semantic and focus colors keep non-text contrast', () {
+    test('semantic and focus colors keep contrast on rendered surfaces', () {
       for (final theme in [lightTheme(), darkTheme()]) {
         final tokens = theme.extension<AppThemeTokens>()!;
-        final background = theme.scaffoldBackgroundColor;
-        final colors = <Color>[
-          tokens.focus.ring,
-          tokens.health.healthy,
-          tokens.health.warning,
-          tokens.health.critical,
-          tokens.execution.running,
-          tokens.access.lost,
+        final palette = theme.extension<AppThemePalette>()!;
+        final checks = <(Color, Color, String)>[
+          (tokens.focus.ring, theme.colorScheme.surface, 'focus on surface'),
+          (tokens.focus.ring, theme.colorScheme.primary, 'focus on primary'),
+          (
+            tokens.health.warning,
+            palette.mutedSurface,
+            'warning on status panel',
+          ),
+          (
+            tokens.health.critical,
+            palette.mutedSurface,
+            'critical on status panel',
+          ),
+          (
+            tokens.execution.running,
+            palette.mutedSurface,
+            'running on status panel',
+          ),
+          (
+            tokens.access.granted,
+            theme.colorScheme.surfaceContainerHighest,
+            'access granted on chip',
+          ),
+          (
+            tokens.access.suspended,
+            theme.colorScheme.surfaceContainerHighest,
+            'access suspended on chip',
+          ),
+          (
+            tokens.access.lost,
+            theme.colorScheme.surfaceContainerHighest,
+            'access lost on chip',
+          ),
         ];
 
-        for (final color in colors) {
+        for (final (foreground, background, label) in checks) {
           expect(
-            _contrastRatio(color, background),
+            _contrastRatio(foreground, background),
             greaterThanOrEqualTo(3),
-            reason: '$color lacks 3:1 contrast against $background',
+            reason: '$label lacks 3:1 contrast',
           );
+        }
+      }
+    });
+
+    test('interactive component themes expose the canonical focus ring', () {
+      for (final theme in [lightTheme(), darkTheme()]) {
+        final tokens = theme.extension<AppThemeTokens>()!;
+        const focused = {WidgetState.focused};
+        final chipSide = theme.chipTheme.side;
+        final sides = [
+          theme.filledButtonTheme.style?.side?.resolve(focused),
+          theme.outlinedButtonTheme.style?.side?.resolve(focused),
+          theme.textButtonTheme.style?.side?.resolve(focused),
+          theme.iconButtonTheme.style?.side?.resolve(focused),
+          chipSide is WidgetStateBorderSide
+              ? chipSide.resolve(focused)
+              : chipSide,
+        ];
+
+        for (final side in sides) {
+          expect(side?.color, tokens.focus.ring);
+          expect(side?.width, tokens.focus.width);
         }
       }
     });

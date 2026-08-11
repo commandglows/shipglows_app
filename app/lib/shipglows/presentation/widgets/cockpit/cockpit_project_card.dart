@@ -30,54 +30,51 @@ class CockpitProjectCard extends StatelessWidget {
               '?runnerProjectId=${Uri.encodeComponent(server.id)}';
     final actionsEnabled = server?.actionsEnabled ?? true;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: tokens.cockpit.cardMinWidth),
-      child: Card(
-        child: Padding(
-          padding: EdgeInsets.all(tokens.spacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: tokens.spacing.sm,
-                runSpacing: tokens.spacing.xs,
-                children: [
-                  Text(name, style: Theme.of(context).textTheme.titleMedium),
-                  if (server case final project?)
-                    _AccessBadge(state: project.accessState),
-                ],
-              ),
-              SizedBox(height: tokens.spacing.xs),
-              Text(
-                server?.repositoryFullName ?? 'Local repository projection',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              SizedBox(height: tokens.spacing.md),
-              ProjectHealthMatrixView(projectName: name, health: health),
-              SizedBox(height: tokens.spacing.md),
-              _CoverageSummary(health: health),
-              if (server case final project?) ...[
-                SizedBox(height: tokens.spacing.sm),
-                Text(
-                  '${project.conversationCount} conversations · '
-                  '${project.activeRunCount} active runs',
-                ),
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(tokens.spacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: tokens.spacing.sm,
+              runSpacing: tokens.spacing.xs,
+              children: [
+                Text(name, style: Theme.of(context).textTheme.titleMedium),
+                if (server case final project?)
+                  _AccessBadge(state: project.accessState),
               ],
-              SizedBox(height: tokens.spacing.md),
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: OutlinedButton.icon(
-                  onPressed: actionsEnabled ? () => context.go(location) : null,
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                  label: Text(
-                    server == null ? 'Open local view' : 'Open workspace',
-                  ),
-                ),
+            ),
+            SizedBox(height: tokens.spacing.xs),
+            Text(
+              server?.repositoryFullName ?? 'Local repository projection',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            SizedBox(height: tokens.spacing.md),
+            ProjectHealthMatrixView(projectName: name, health: health),
+            SizedBox(height: tokens.spacing.md),
+            _CoverageSummary(health: health),
+            if (server case final project?) ...[
+              SizedBox(height: tokens.spacing.sm),
+              Text(
+                '${project.conversationCount} conversations · '
+                '${project.activeRunCount} active runs',
               ),
             ],
-          ),
+            SizedBox(height: tokens.spacing.md),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: OutlinedButton.icon(
+                onPressed: actionsEnabled ? () => context.go(location) : null,
+                icon: const Icon(Icons.arrow_forward_rounded),
+                label: Text(
+                  server == null ? 'Open local view' : 'Open workspace',
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

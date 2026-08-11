@@ -18,7 +18,7 @@ class ProjectHealthMatrixView extends StatelessWidget {
     final tokens = AppTheme.tokensOf(context);
     return Semantics(
       container: true,
-      excludeSemantics: true,
+      explicitChildNodes: true,
       label: '$projectName health: ${_label(health.overallStatus)}',
       child: Wrap(
         spacing: tokens.spacing.xs,
@@ -57,6 +57,8 @@ class _HealthCell extends StatelessWidget {
     };
     final status = ProjectHealthMatrixView._label(item.status);
     return Semantics(
+      container: true,
+      excludeSemantics: true,
       label: '${item.dimension.wireName}: $status',
       child: ConstrainedBox(
         constraints: BoxConstraints(

@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.21.0"
+artifact_version: "1.22.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-11"
-updated_at: "2026-08-11 17:27:11 UTC"
+updated_at: "2026-08-11 17:46:09 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -532,13 +532,13 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Depends on: Tasks 1-2 and API fixtures from Task 6.
   - Validate with: Web bridge tests, Android adapter contract tests, token-refresh tests, reconnect/idempotency tests, and single-entrypoint dependency scan.
   - Implementation note (2026-08-11): the local Web/Android/Windows contract is implemented behind Firebase-neutral interfaces. Startup session restoration, expiry-skew refresh, coalesced refresh, one bounded `401` retry, stable idempotency keys across transient retries, authenticated SSE resume with query cursor plus `Last-Event-ID`, bounded conversation reconnect and duplicate-event suppression are covered locally. Linux REST/OIDC and live Firebase authentication remain owned by `firebase-auth-convex-alignment.md`; Task 8 stays partial until those external/platform proofs complete.
-- [~] Task 9: Reconcile the Flutter design authority and implement the Cockpit shell.
+- [x] Task 9: Reconcile the Flutter design authority and implement the Cockpit shell.
   - Files: `app/lib/presentation/theme/app_theme.dart`, `app/lib/shipglows/app.dart`, `app/lib/shipglows/router.dart`, `app/lib/shipglows/presentation/screens/cockpit_screen.dart`, `app/lib/shipglows/presentation/widgets/cockpit/**`, corresponding widget/golden tests.
   - Action: Make the active ShipGlows theme consume canonical semantic tokens; implement responsive Cockpit navigation, health matrix, redacted per-project run-state summary, project parent tabs, loading/empty/stale/access-lost/error states, keyboard/focus behavior, and accessible labels.
   - User story link: Gives the user one visual command center for every repository.
   - Depends on: Tasks 7-8.
   - Validate with: widget tests at phone/tablet/desktop widths, contrast/focus/semantics checks, golden snapshots, and design-system drift check.
-  - Implementation note (2026-08-11): the single Flutter theme authority, system light/dark mode, semantic/layout/responsive tokens and server-first Cockpit are implemented locally. The Cockpit covers 390x844, 768x1024 and 1440x900, runner-authoritative projects, local fallback, empty, stale, access-lost, session-expired, error/retry, keyboard semantics and 2x text scale. The drift baseline fell from 134 to 56 findings, all in untouched screens. Golden and authenticated browser proof remain, so Task 9 stays partial.
+  - Implementation note (2026-08-11): complete for the Task 9 contract. The single Flutter theme authority, system light/dark mode, semantic/layout/responsive tokens and server-first Cockpit cover runner-authoritative projects, local fallback, empty, stale, access-lost, session-expired and error/retry states. Three deterministic goldens cover compact light managed, medium dark stale/suspended and expanded light fallback composition. Widget proof now includes 320x568 with 2x text, 390x844, 768x1024 and 1440x900, per-dimension semantics, rendered-surface contrast, canonical focus borders and minimum action targets. Release-build Chrome proof passes at 390x844 and 1440x900 with responsive accessible navigation and zero console errors; the obsolete Clerk Web bootstrap was removed. Changed-file design drift is zero. Live Firebase/runner proof remains with Tasks 8, 10 and 13, not Task 9.
 - [~] Task 10: Implement agent conversation tabs and action controls.
   - Files: `app/lib/shipglows/presentation/screens/project_workspace_screen.dart`, `app/lib/shipglows/presentation/widgets/conversations/**`, `app/lib/shipglows/providers/conversations/**`, corresponding tests.
   - Action: Render normalized messages/tools/plans/approvals/progress/results plus runtime identity and capability limits; create/open/close tabs, audit/fix buttons, message composer, interrupt/resume/approve/deny controls, auto-scroll rules, unread indicators and reconnection. Keep semantic agent work separate from the operator Workspace and never expose a runtime-specific protocol.
@@ -806,6 +806,12 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-11 17:27:11 UTC | 103-sg-verify | GPT-5 Codex | Verified the integrated Flutter slice across 194 tests, clean analysis, a release Web build, responsive/accessibility coverage, metadata/diff hygiene and design drift reduced from 134 to 56 findings. | local Tasks 9-10 proof passes; residual drift is confined to untouched screens and hosted proof remains open | Commit without unrelated site or TASKS changes |
 | 2026-08-11 17:27:11 UTC | 300-sg-docs | GPT-5 Codex | Reconciled the single-runtime boundary, code map, runner contract, design authority and active spec with the implemented Cockpit and conversations. | internal contracts aligned; no second or legacy app is part of the product architecture | Keep Tasks 9-10 partial until live and visual evidence exists |
 | 2026-08-11 17:31:41 UTC | 005-sg-ship | GPT-5 Codex | Created the scoped local Task 9-10 commit after complete Flutter and documentation gates, excluding unrelated `site/` and `TASKS.md` changes. | local commit created; push not authorized | Continue hosted and visual proof from the committed baseline |
+| 2026-08-11 17:46:09 UTC | 006-sg-design | GPT-5 Codex + 2 delegated read-only auditors | Audited the Cockpit visual contract, corrected per-dimension semantics, 320dp reflow, rendered-surface contrast, canonical focus treatment and duplicate status announcements, then established three deterministic light/dark responsive goldens. | Task 9 design and accessibility contract passes locally; native goldens remain composition proof rather than production-font proof | Collect release-build Chrome evidence before closing Task 9 |
+| 2026-08-11 17:46:09 UTC | 001-sg-build | GPT-5 Codex | Integrated the visual corrections, 320x568 at 2x text proof, three golden fixtures and the single-runtime Web bootstrap cleanup. | implementation complete for Task 9; full Flutter and browser gates pass | Record browser evidence and documentation coherence, then create the scoped local commit |
+| 2026-08-11 17:46:09 UTC | 108-sg-browser | GPT-5 Codex | Served the release Web build locally and verified the real Flutter canvas in Chrome at 390x844 and 1440x900. Enabled semantics to inspect heading, recovery panel, 48px mobile controls, bottom navigation and expanded rail. Removed the obsolete Clerk script after its initial 404 and repeated the proof with zero errors or warnings. | non-authenticated responsive Web shell proof passes; live Firebase/runner remains outside Task 9 | Keep authenticated hosted proof in Tasks 8, 10 and 13 |
+| 2026-08-11 17:46:09 UTC | 103-sg-verify | GPT-5 Codex | Verified 200 Flutter tests, clean analysis, release Web build, three stable goldens, zero changed-file design drift, metadata/diff hygiene and clean Chrome console after Web bootstrap cleanup. | Task 9 complete; broader MVP remains active | Commit the scoped visual-proof slice without unrelated site or TASKS changes |
+| 2026-08-11 17:46:09 UTC | 300-sg-docs | GPT-5 Codex | Updated the design authority, runtime boundary, code map and active MVP contract with the exact local visual, accessibility and browser proof boundary. | internal documentation aligned; no hosted authentication claim added | Preserve Task 9 closure while continuing Tasks 8, 10-13 |
+| 2026-08-11 17:47:40 UTC | 005-sg-ship | GPT-5 Codex | Created the scoped local Task 9 visual-contract commit with code, deterministic goldens and internal proof documentation, excluding unrelated `site/` and `TASKS.md` changes. | local commit created; push not authorized | Continue the broader MVP from the committed Task 9 baseline |
 
 # Current Chantier Flow
 
@@ -815,4 +821,4 @@ The portfolio architecture decision now supersedes this spec's original Supabase
 
 Historical Supabase task text and run-history evidence below remains a record of what was decided, implemented or deployed at that time; it is not current implementation guidance. The last managed-server proof still used the Supabase deployment and cannot be claimed as Firebase proof. Current completion requirements are owned by `firebase-auth-convex-alignment.md`: Linux REST/OIDC support, live Firebase authentication, deployment migration and a separately specified first Convex product projection remain open.
 
-`100-sg-spec` (amended; agentic-security, health evaluator, Firebase and single-runtime decisions) -> `101-sg-ready` (existing MVP contract ready) -> `001-sg-build` (Task 7 complete; Tasks 8-10 and 12 locally partial; Task 9-10 UI slice implemented) -> `103-sg-verify` (194 Flutter tests, analysis, Web release build, metadata and drift gates pass locally) -> `005-sg-ship` (Task 7-10 local slices and reliability slice committed; push not authorized) -> `004-sg-deploy` (live Firebase, hosted runner, Sentry, golden/browser and public Workspace proofs remain partial or externally blocked)
+`100-sg-spec` (amended; agentic-security, health evaluator, Firebase and single-runtime decisions) -> `101-sg-ready` (existing MVP contract ready) -> `001-sg-build` (Tasks 7 and 9 complete; Tasks 8, 10 and 12 locally partial) -> `103-sg-verify` (200 Flutter tests, analysis, Web release, goldens, browser, metadata and zero changed-file drift pass locally) -> `005-sg-ship` (Task 9 visual-proof commit created locally; push not authorized) -> `004-sg-deploy` (live Firebase, hosted runner, Sentry and public Workspace proofs remain partial or externally blocked)

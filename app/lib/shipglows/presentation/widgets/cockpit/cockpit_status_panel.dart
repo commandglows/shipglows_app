@@ -30,7 +30,6 @@ class CockpitStatusPanel extends StatelessWidget {
     return Semantics(
       liveRegion: true,
       container: true,
-      label: '$title. $message',
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: palette.mutedSurface,
@@ -45,24 +44,28 @@ class CockpitStatusPanel extends StatelessWidget {
             spacing: tokens.spacing.md,
             runSpacing: tokens.spacing.sm,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(_icon, color: color),
-                  SizedBox(width: tokens.spacing.sm),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        Text(message),
-                      ],
+              Semantics(
+                label: '$title. $message',
+                excludeSemantics: true,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_icon, color: color),
+                    SizedBox(width: tokens.spacing.sm),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          Text(message),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               ?action,
             ],

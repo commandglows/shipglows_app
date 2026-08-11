@@ -145,7 +145,11 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.secondary.withValues(alpha: 0.14),
-        side: BorderSide(color: colorScheme.outline),
+        side: WidgetStateBorderSide.resolveWith(
+          (states) => states.contains(WidgetState.focused)
+              ? BorderSide(color: tokens.focus.ring, width: tokens.focus.width)
+              : BorderSide(color: colorScheme.outline),
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(tokens.radii.pill),
         ),
@@ -178,34 +182,80 @@ class AppTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-          minimumSize: Size(0, tokens.minimumTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(tokens.radii.control),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: tokens.spacing.md),
-        ),
+        style:
+            FilledButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              minimumSize: Size(0, tokens.minimumTarget),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(tokens.radii.control),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: tokens.spacing.md),
+            ).copyWith(
+              side: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.focused)
+                    ? BorderSide(
+                        color: tokens.focus.ring,
+                        width: tokens.focus.width,
+                      )
+                    : BorderSide.none,
+              ),
+            ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: colorScheme.onSurface,
-          minimumSize: Size(0, tokens.minimumTarget),
-          side: BorderSide(color: colorScheme.outline),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(tokens.radii.control),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: tokens.spacing.md),
-        ),
+        style:
+            OutlinedButton.styleFrom(
+              foregroundColor: colorScheme.onSurface,
+              minimumSize: Size(0, tokens.minimumTarget),
+              side: BorderSide(color: colorScheme.outline),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(tokens.radii.control),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: tokens.spacing.md),
+            ).copyWith(
+              side: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.focused)
+                    ? BorderSide(
+                        color: tokens.focus.ring,
+                        width: tokens.focus.width,
+                      )
+                    : BorderSide(color: colorScheme.outline),
+              ),
+            ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: colorScheme.onSurfaceVariant,
-          minimumSize: Size(0, tokens.minimumTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(tokens.radii.control),
+        style:
+            TextButton.styleFrom(
+              foregroundColor: colorScheme.onSurfaceVariant,
+              minimumSize: Size(0, tokens.minimumTarget),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(tokens.radii.control),
+              ),
+            ).copyWith(
+              side: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.focused)
+                    ? BorderSide(
+                        color: tokens.focus.ring,
+                        width: tokens.focus.width,
+                      )
+                    : BorderSide.none,
+              ),
+            ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          minimumSize: WidgetStatePropertyAll(
+            Size.square(tokens.minimumTarget),
           ),
+          side: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.focused)
+                ? BorderSide(
+                    color: tokens.focus.ring,
+                    width: tokens.focus.width,
+                  )
+                : BorderSide.none,
+          ),
+          shape: const WidgetStatePropertyAll(CircleBorder()),
         ),
       ),
       listTileTheme: ListTileThemeData(
@@ -288,7 +338,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       minimumTarget: 48,
       cockpit: const AppCockpitTokens(),
       conversation: const AppConversationTokens(),
-      focus: AppFocusTokens(ring: info),
+      focus: const AppFocusTokens(ring: Color(0xFF0070F3)),
       health: AppHealthColors(
         healthy: healthy,
         warning: warning,

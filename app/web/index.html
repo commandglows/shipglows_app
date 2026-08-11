@@ -46,32 +46,25 @@
   -->
   <script>
     (function () {
-      if (window.location.pathname.startsWith('/api/') && window.location.hash.startsWith('#/')) {
-        var normalized = '/' + window.location.hash;
-        if (window.location.search) normalized += window.location.search;
-        window.history.replaceState(null, '', normalized);
-      }
-
       var params = new URLSearchParams(window.location.search);
       var shouldEnable =
-        params.get('eruda') === '1' || localStorage.getItem('contentflow:eruda') === '1';
+        params.get('eruda') === '1' || localStorage.getItem('shipglows:eruda') === '1';
 
       if (!shouldEnable) return;
 
-      localStorage.setItem('contentflow:eruda', '1');
+      localStorage.setItem('shipglows:eruda', '1');
 
       var script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/eruda';
       script.onload = function () {
         if (window.eruda) {
           window.eruda.init();
-          console.log('[ContentFlow] Eruda enabled');
+          console.log('[ShipGlows] Eruda enabled');
         }
       };
       document.head.appendChild(script);
     })();
   </script>
-  <script src="clerk-runtime.js" defer></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

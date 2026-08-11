@@ -1,7 +1,7 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.1.0"
+artifact_version: "1.2.0"
 project: "shipglows_app"
 created: "2026-06-11"
 updated: "2026-08-11"
@@ -16,19 +16,22 @@ docs_impact: yes
 linked_systems:
   - "app/lib/presentation/theme/app_theme.dart"
   - "app/lib/shipglows/app.dart"
+  - "app/test/shipglows/presentation/cockpit/cockpit_golden_test.dart"
   - "site/src/styles/global.css"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
-    artifact_version: "1.20.0"
+    artifact_version: "1.22.0"
     required_status: ready
 supersedes:
-  - "shipglows_data/technical/design-system-authority.md@1.0.0"
+  - "shipglows_data/technical/design-system-authority.md@1.1.0"
 evidence:
   - "ShipGlowsApp consumes AppTheme.lightTheme and AppTheme.darkTheme directly and follows ThemeMode.system."
   - "AppThemeTokens exposes named layout, responsive, focus, semantic-state, and motion tokens for the Cockpit and conversation lots."
   - "Flutter theme tests cover light/dark construction, token availability, key non-text contrast, and the absence of a second theme builder in ShipGlowsApp."
+  - "Three deterministic Flutter goldens cover compact light managed, medium dark stale/suspended, and expanded light local-fallback composition."
+  - "Chrome proof at 390x844 and 1440x900 confirms readable production typography, responsive navigation, accessible structure, 48px primary mobile controls, and zero console errors after removing the dormant Clerk bootstrap."
 next_review: "2026-09-11"
-next_step: "Migrate Task 9 Cockpit and conversation widgets to consume AppThemeTokens, with drift delta and visual proof."
+next_step: "Extend the same token and proof contract to the remaining project, diagnostics, settings, and conversation surfaces."
 ---
 
 # Design-System Authority
@@ -106,6 +109,7 @@ Run the following from the repository root or `app/` as appropriate:
 cd app
 dart format lib/presentation/theme/app_theme.dart lib/shipglows/app.dart test/shipglows/theme
 flutter test test/shipglows/theme
+flutter test test/shipglows/presentation/cockpit/cockpit_golden_test.dart
 flutter analyze
 
 python3 /home/claude/shipglows/tools/design_system_drift_check.py \
@@ -114,7 +118,9 @@ python3 /home/claude/shipglows/tools/design_system_drift_check.py \
   --format markdown
 ```
 
-The drift report is an adoption baseline. Existing findings remain debt for the following Task 9–10 lots; a change must not add unexplained drift.
+The broader drift report is an adoption baseline. The Task 9 visual-proof change set has zero changed-file findings; existing findings in untouched screens remain separate debt.
+
+The native goldens intentionally use Flutter's deterministic test font and prove composition, responsive structure, theme roles, and regression. They do not prove production typography. Chrome proof against the release Web build owns readable typography and browser rendering.
 
 ## Stop Conditions
 
@@ -128,5 +134,6 @@ The drift report is an adoption baseline. Existing findings remain debt for the 
 
 - Token source: updated.
 - ShipGlows root theme consumption: complete.
-- Screen/widget token consumption: partial; the pre-existing Task 9–10 drift baseline remains.
-- Visual proof: not part of this carrier-only lot; required when consuming screens/widgets adopt the carrier.
+- Cockpit token consumption: complete for Task 9, including focus, semantic-state, responsive and minimum-target behavior.
+- Other screen/widget token consumption: partial; untouched project, diagnostics, settings, and conversation debt remains.
+- Cockpit visual proof: complete locally through three deterministic goldens plus release-build Chrome evidence at compact and expanded widths.

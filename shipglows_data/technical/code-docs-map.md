@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.1.0"
 project: "shipglows_app"
 created: "2026-05-08"
 updated: "2026-08-11"
@@ -20,10 +20,11 @@ linked_systems:
   - "shipglows_data/workflow/specs/"
 depends_on: []
 supersedes:
-  - "shipglows_data/technical/code-docs-map.md@0.14.0"
+  - "shipglows_data/technical/code-docs-map.md@1.0.0"
 evidence:
   - "app/lib/main.dart has one product entrypoint: ShipGlowsApp."
   - "Task 9-10 Cockpit and semantic conversation surfaces are covered by Flutter tests."
+  - "Task 9 visual proof adds deterministic goldens and release-build Chrome evidence."
 next_review: "2026-09-11"
 next_step: "/sg-docs technical audit"
 ---
@@ -41,6 +42,7 @@ This map links current ShipGlows code areas to their primary technical documenta
 ## Entrypoints
 
 - `app/lib/main.dart`
+- `app/web/index.html`
 - `app/lib/shipglows/router.dart`
 - `app/test/widget_test.dart`
 
@@ -48,7 +50,7 @@ This map links current ShipGlows code areas to their primary technical documenta
 
 | Code area | Current role | Primary doc | Validation | Update trigger |
 | --- | --- | --- | --- | --- |
-| `app/lib/main.dart` | Single ShipGlows product entrypoint and optional public Firebase bootstrap | `shipglows_data/technical/runtime-boundary.md` | `cd app && flutter analyze && flutter test test/widget_test.dart test/shipglows/auth/auth_provider_test.dart` | Any change to app boot, public auth configuration, or provider overrides |
+| `app/lib/main.dart` + `app/web/index.html` | Single ShipGlows product entrypoint, optional public Firebase bootstrap, and direct Flutter Web bootstrap without alternate auth runtime | `shipglows_data/technical/runtime-boundary.md` | `cd app && flutter analyze && flutter test test/widget_test.dart test/shipglows/auth/auth_provider_test.dart && flutter build web --release --no-wasm-dry-run` | Any change to native/Web app boot, public auth configuration, scripts, or provider overrides |
 | `app/lib/shipglows/` | ShipGlows Cockpit, project, conversation, and operator Workspace product runtime | `shipglows_data/technical/runtime-boundary.md` and `shipglows_data/technical/managed-runner-foundation.md` | `cd app && flutter test test/shipglows` | Any product route, screen, provider, managed API, Cockpit, conversation, or Workspace behavior change |
 | `app/lib/shipglows/auth/**` + `app/test/shipglows/auth/**` | Provider-neutral identity/session adapter; Firebase Auth is the active implementation | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/technical/runtime-boundary.md` | `flutter analyze && flutter test app/test/shipglows/auth/auth_provider_test.dart` | Any authentication provider, session refresh, compile-time configuration, identity mapping, token use, or platform auth behavior change |
 | `app/lib/shipglows/data/managed_runner_api.dart` + Cockpit/conversation/Workspace providers, screens, widgets, and matching tests | Typed server-first Cockpit, normalized semantic conversations with audit/fix controls, and a separate authorized operator Workspace; explicit local-only, empty, stale, access-lost, session-expired, reconnect, and error states | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md` | `cd app && flutter analyze && flutter test` | Any runner API path, Cockpit projection, conversation event/action, approval UX, auth-token attachment, SSE/WebSocket behavior, project identity mapping, or interactive terminal rendering change |
