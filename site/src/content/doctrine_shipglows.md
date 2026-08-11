@@ -13,16 +13,16 @@ patcher, tester, retester et verifier dans un perimetre clair.
 Le parallelisme ne doit apparaitre que lorsqu'une spec contient des lots
 d'execution prets et sans conflit d'ecriture.
 
-Pour `sf-bug`, la doctrine cible est donc:
+Pour `sg-bug`, la doctrine cible est donc:
 
 - recevoir le probleme utilisateur;
 - creer ou retrouver le dossier bug;
-- choisir la preuve manquante via `sf-test`, `sf-browser` ou `sf-auth-debug`;
-- deleguer la correction a `sf-fix` ou a un sous-agent borne quand c'est utile;
+- choisir la preuve manquante via `sg-test`, `sg-browser` ou `sg-auth-debug`;
+- deleguer la correction a `sg-fix` ou a un sous-agent borne quand c'est utile;
 - router le retest;
 - router la verification;
 - router le ship si le bug ne bloque plus.
 
-`sf-bug` ne devrait pas etre seulement un GPS qui indique quelle commande taper
+`sg-bug` ne devrait pas etre seulement un GPS qui indique quelle commande taper
 ensuite quand le contexte permet de continuer. Elle ne devrait pas non plus
 patcher directement dans son propre fil master.

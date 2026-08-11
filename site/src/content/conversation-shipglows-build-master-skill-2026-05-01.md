@@ -1,11 +1,11 @@
 ---
-title: "Export conversation - SF Build Autonomous Master Skill"
+title: "Export conversation - ShipGlows Build Autonomous Master Skill"
 date: "2026-05-01"
 status: "conversation-export"
 scope: "Transcript utilisateur visible et synthese operationnelle"
 ---
 
-# Export conversation - SF Build Autonomous Master Skill
+# Export conversation - ShipGlows Build Autonomous Master Skill
 
 Date d'export : 2026-05-01
 
@@ -16,25 +16,25 @@ Note : cet export reprend le contexte visible de la conversation courante. Les m
 ### Message 1
 
 ```text
-$sf-ready sf-build autonomous master skill
+$sg-ready shipglows-build autonomous master skill
 ```
 
 ### Message 2
 
 ```text
-$sf-spec  sf-build Autonomous Master Skill
+$sg-spec  shipglows-build Autonomous Master Skill
 ```
 
 ### Message 3
 
 ```text
-$sf-spec  sf-build Autonomous Master Skill
+$sg-spec  shipglows-build Autonomous Master Skill
 ```
 
 ### Message 4
 
 ```text
-$sf-ready
+$sg-ready
 ```
 
 ### Message 5
@@ -56,17 +56,17 @@ explique moi ça : The spec now blocks automatic subagent spawning, unsafe singl
 ### Message 7
 
 ```text
-Pourquoi SF Build ne peut pas lancer des sous-agents automatiquement?
+Pourquoi ShipGlows Build ne peut pas lancer des sous-agents automatiquement?
 ```
 
 ### Message 8
 
 ```text
-$sf-explore  A propos du scope et de la sécurité est-ce que tu peux faire un audit un petit peu sur l'état actuel des choses, parce que c'est très important ce que tu dis? Il faut qu'on n'ait aucun risque de conflit d'édition dans notre workflow. C'est pas un truc qu'on veut laisser de porte d'entrée à ça.
+$sg-explore  A propos du scope et de la sécurité est-ce que tu peux faire un audit un petit peu sur l'état actuel des choses, parce que c'est très important ce que tu dis? Il faut qu'on n'ait aucun risque de conflit d'édition dans notre workflow. C'est pas un truc qu'on veut laisser de porte d'entrée à ça.
 
-C'est pour ça que normalement SF Spec doit recommander des lots précis d'exécution qui touchent des fichiers différents. Donc après, je ne sais pas si Codex peut lancer plusieurs agents en même temps. Si oui, je crois que oui. C'est là qu'il faut des lots d'exécution qui sont exclusifs, qui ont aucune nécessité, qui n'ont pas d'overlap. Est-ce que tu vois ce que je veux dire?
+C'est pour ça que normalement ShipGlows Spec doit recommander des lots précis d'exécution qui touchent des fichiers différents. Donc après, je ne sais pas si Codex peut lancer plusieurs agents en même temps. Si oui, je crois que oui. C'est là qu'il faut des lots d'exécution qui sont exclusifs, qui ont aucune nécessité, qui n'ont pas d'overlap. Est-ce que tu vois ce que je veux dire?
 
-Et sinon il faut les faire dans l'ordre, les uns après les autres, et il faut aussi regarder s'il y a un graphe de dépendance. Est-ce qu'il y a des choses qui doivent être faites après d'autres? Et ça, je ne sais pas si SF Spec respecte bien ce concept de dépendance et de zéro risque de conflit et également qu'on cherche quand même à optimiser la rapidité. Donc on veut lancer des agents en même temps mais uniquement si c'est 100 % safe. Est-ce que tu peux auditer un petit peu cette question?
+Et sinon il faut les faire dans l'ordre, les uns après les autres, et il faut aussi regarder s'il y a un graphe de dépendance. Est-ce qu'il y a des choses qui doivent être faites après d'autres? Et ça, je ne sais pas si ShipGlows Spec respecte bien ce concept de dépendance et de zéro risque de conflit et également qu'on cherche quand même à optimiser la rapidité. Donc on veut lancer des agents en même temps mais uniquement si c'est 100 % safe. Est-ce que tu peux auditer un petit peu cette question?
 ```
 
 ### Message 9
@@ -144,13 +144,13 @@ ok:vazy
 ### Message 19
 
 ```text
-èsf-spec sf-build Autonomous Master Skill wuth delegated sequential by default and spec-gated parallelism
+èsg-spec shipglows-build Autonomous Master Skill wuth delegated sequential by default and spec-gated parallelism
 ```
 
 ### Message 20
 
 ```text
-$sf-spec  sf-build Autonomous Master Skill wuth delegated sequential by default and spec-gated parallelism
+$sg-spec  shipglows-build Autonomous Master Skill wuth delegated sequential by default and spec-gated parallelism
 ```
 
 ### Message 21
@@ -187,12 +187,12 @@ est ce que tu peux exporter notre conversation actuelle dans un fichier .md dans
 
 ### Vision confirmee
 
-- SF Build doit privilegier la delegation pour garder la conversation principale lisible et conserver un contexte frais pour l'execution.
+- ShipGlows Build doit privilegier la delegation pour garder la conversation principale lisible et conserver un contexte frais pour l'execution.
 - La delegation ne doit pas devenir une porte d'entree vers des conflits d'edition.
 - Le comportement par defaut doit etre sequentiel.
 - Le parallelisme ne doit etre autorise que lorsqu'une spec explicite prouve que les lots d'execution sont independants, sans overlap de fichiers, sans dependance bloquante et avec un plan de verification.
 - Si une demande est assez grosse pour poser la question du parallelisme, elle doit probablement passer par une spec avant execution.
-- Avant de creer une nouvelle spec, SF Spec doit verifier s'il faut continuer un chantier existant.
+- Avant de creer une nouvelle spec, ShipGlows Spec doit verifier s'il faut continuer un chantier existant.
 - Les roles d'agents doivent etre explicites et documentes dans des fichiers separes.
 
 ### Regles de securite a integrer

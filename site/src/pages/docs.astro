@@ -14,7 +14,7 @@ const coreDocs = [
   ["shipglows_data/technical/operator-guides/skill-launch-cheatsheet.md", "Markdown reference for master skills, supporting skills, and argument modes."],
   ["shipglows_data/technical/operator-guides/focus-tags-cheatsheet.md", "Public cheatsheet for lightweight recentering tags across business, content, governance, execution, and system focus."],
   ["README.md (compat)", "Public overview, positioning, onboarding, and high-level framework story."],
-  ["shipglows_data/workflow/playbooks/spec-driven-workflow.md", "The execution doctrine behind sf-spec, sf-ready, sf-start, and sf-verify."]
+  ["shipglows_data/workflow/playbooks/spec-driven-workflow.md", "The execution doctrine that frames substantial work, makes proof expectations explicit, and guides it to a verified handoff."]
 ];
 
 const layoutMap = [
@@ -85,7 +85,7 @@ const editorialPath = "/docs#editorial-governance";
     <section class="section" id="artifact-corpus">
       <div class="section-heading">
         <p class="eyebrow">Docs Overview</p>
-        <h1 class="page-title">The docs are built for fast agent navigation, not for encyclopedic sprawl.</h1>
+        <h1 class="page-title">Give a new agent enough context to begin without making you reconstruct the project.</h1>
         <p>
           ShipGlows documentation is structured so a fresh agent can find the
           right context, understand the decision surface, and execute against
@@ -113,12 +113,12 @@ const editorialPath = "/docs#editorial-governance";
     <section class="section">
       <div class="doc-grid">
         <article class="doc-card">
-          <h3>Quality is a contract, not a mood</h3>
+          <h3>Keep shortcuts from silently becoming the default</h3>
           <p>
-            ShipGlows now carries an explicit decision-quality contract. Agents
-            should prefer bounded professional work over shortcuts, and treat
-            speed or cost as tie-breakers only after correctness, security,
-            maintainability, relevant performance, and proof are already safe.
+            ShipGlows uses an explicit decision-quality contract. It asks agents
+            to treat speed or cost as tie-breakers only after correctness,
+            security, maintainability, relevant performance, and proof have
+            been considered for the work.
           </p>
           <a class="doc-action" href={decisionDocsPath}>
             Read the decision contracts
@@ -126,12 +126,24 @@ const editorialPath = "/docs#editorial-governance";
         </article>
 
         <article class="doc-card">
-          <h3>Skill launch cheatsheet</h3>
+          <h3>Security and quality checks stay proportional</h3>
           <p>
-            The public mode page now shows which master skill to launch first,
-            which focused skills own narrower proof lanes, and which arguments
-            switch a workflow instead of describing the task. The Markdown
-            reference lives in <code>shipglows_data/technical/operator-guides/skill-launch-cheatsheet.md</code>.
+            ShipGlows makes edge-case, code-quality, and security checks
+            explicit when a change warrants them. Internet-facing or
+            privileged work is reviewed through the OWASP Top 10 awareness
+            lens and selected verifiable controls; this is not a claim of
+            certification or guaranteed security.
+          </p>
+          <a class="doc-action" href="/faq">Read the security boundary</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Start with the result you need</h3>
+          <p>
+            The public mode page shows which métier can own a job from start to
+            finish, which focused skills cover narrower proof lanes, and which
+            arguments switch a workflow. The technical reference lives in
+            <code>shipglows_data/technical/operator-guides/skill-launch-cheatsheet.md</code>.
           </p>
           <a class="doc-action" href="/skill-modes">Open the cheatsheet</a>
         </article>
@@ -242,14 +254,15 @@ const editorialPath = "/docs#editorial-governance";
         </article>
 
         <article class="doc-card">
-          <h3>Platform support needs parity proof</h3>
+          <h3>Platform claims need parity evidence</h3>
           <p>
-            <code>sf-platform-parity</code> checks product and technical parity across
-            supported surfaces before public docs claim platform support,
-            especially for Flutter and shared-code products.
+            Before public docs claim support across product surfaces,
+            <code>sg-engineering parity</code> can compare the relevant product
+            and technical behavior, especially for Flutter and shared-code
+            products.
           </p>
           <a class="doc-action" href="/skills/sg-platform-parity">
-            Open sf-platform-parity
+            Open sg-engineering
           </a>
         </article>
 
@@ -280,14 +293,14 @@ const editorialPath = "/docs#editorial-governance";
         </article>
 
         <article class="doc-card">
-          <h3>Direct fixes still leave bug memory</h3>
+          <h3>Fast fixes can still leave useful bug memory</h3>
           <p>
-            `sf-fix` can patch a local bug quickly, but the default is still a
+            <code>sg-bug fix</code> can patch a local bug quickly, but the default is still a
             durable `BUG-ID`, compact `shipglows_data/workflow/BUGS.md` pointer, and detailed
             `shipglows_data/workflow/bugs/BUG-ID.md` dossier unless the issue is a narrow minor
             exception.
           </p>
-          <a class="doc-action" href="/skills/sg-fix">Open sf-fix</a>
+          <a class="doc-action" href="/skills/sg-bug">Open sg-bug</a>
         </article>
 
         <article class="doc-card">
@@ -348,8 +361,7 @@ const editorialPath = "/docs#editorial-governance";
             The installer provisions the TUI for configured users. After
             <code>sudo ./cli/install.sh</code> and a fresh shell, the daily command is
             <code>tui</code>. Longer aliases remain available as
-            <code>sftui</code>, <code>sf-tui</code>, and
-            <code>shipglows-tui</code>.
+            <code>sg-tui</code> and <code>shipglows-tui</code>.
           </p>
         </article>
 
@@ -414,11 +426,11 @@ const editorialPath = "/docs#editorial-governance";
         <article class="doc-card">
           <h3>The skill route is explicit</h3>
           <p>
-            Use <code>sf-docs migrate-layout</code> to inventory root legacy
+            Use <code>sg-docs migrate-layout</code> to inventory root legacy
             files, detect collisions, move safe artifacts, update references,
             and run ShipGlows metadata compliance checks.
           </p>
-          <a class="doc-action" href="/skills/sg-docs">Open sf-docs</a>
+          <a class="doc-action" href="/skills/sg-docs">Open sg-docs</a>
         </article>
       </div>
 

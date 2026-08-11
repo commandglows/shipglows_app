@@ -1,15 +1,15 @@
 ---
-title: "sg-priorities"
+title: "sg-planning — mode: priorities"
 slug: "sg-priorities"
 tagline: "Reorder the backlog by impact and effort before momentum turns into scattered activity."
-summary: "A local-first prioritization skill for sorting active and pending work with a more explicit impact-versus-effort lens."
+summary: "The priorities mode of sg-planning sorts active and pending work with a more explicit impact-versus-effort lens."
 category: "Plan & Decide"
 audience:
   - "Founders with too many plausible next tasks"
   - "Operators who need a clearer sequencing discipline"
 problem: "A backlog can stay full of reasonable ideas while still lacking a hard view of which items deserve attention first."
-outcome: "You get a more explicit ranking of what is high leverage, what is expensive, and what should wait."
-founder_angle: "This skill is useful when the bottleneck is no longer idea generation but disciplined sequencing."
+outcome: "The priorities mode of sg-planning gives you a more explicit ranking of what is high leverage, what is expensive, and what should wait."
+founder_angle: "This sg-planning mode is useful when the bottleneck is no longer idea generation but disciplined sequencing."
 when_to_use:
   - "When the backlog has become noisy or flat"
   - "When several tasks compete for the next implementation slot"
@@ -23,15 +23,15 @@ what_you_get:
   - "A better distinction between leverage and distraction"
   - "Less random switching between attractive but low-impact work"
 example_prompts:
-  - "/sg-priorities"
-  - "/sg-priorities current launch backlog"
-  - "/sg-priorities tasks for this week"
+  - "/sg-planning priorities"
+  - "/sg-planning priorities current launch backlog"
+  - "/sg-planning priorities tasks for this week"
 limits:
-  - "It improves ranking, not execution capacity"
+  - "This mode improves ranking, not execution capacity"
   - "Bad input assumptions will still distort the output order"
 related_skills:
-  - "sg-backlog"
-  - "sg-tasks"
+  - "sg-planning"
+  - "sg-build"
   - "sg-marketing"
 featured: false
 order: 420

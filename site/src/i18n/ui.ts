@@ -132,16 +132,16 @@ export const homeCopy = {
   en: {
     title: "ShipGlows | Ship with agents without losing context",
     description:
-      "ShipGlows is a unified framework for server delivery and AI-assisted execution discipline for solo founders and autonomous builders.",
+      "ShipGlows helps solo founders give AI agents clear work, visible completion evidence, and connected delivery context.",
     hero: {
       eyebrow: "For Solo Founders Shipping With Agents",
-      title: "AI made building faster. It also made weak handoffs more expensive.",
+      title: "Give AI agents a clearer path through important work—with evidence you can inspect.",
       body:
-        "ShipGlows gives each agent run a context map, a task contract, a quality bar, verification gates, and the server controls needed to ship real projects. The point is not to make agents move faster at any cost. The point is to stop handing serious work to a blank thread and hoping it reconstructs the system correctly.",
+        "ShipGlows helps you hand off serious work without repeatedly reconstructing the project or mistaking a confident answer for a finished result. Context maps, task contracts, proportional quality and security checks, verification gates, and server controls keep the supporting evidence close to the work.",
       points: [
-        "fresh agents start from a known map, not chat residue",
-        "non-trivial work gets shaped before code starts",
-        "shortcuts lose to correctness, security, maintainability, and proof"
+        "new agents can start without making you reconstruct the project",
+        "important work is framed before the product changes",
+        "completion considers relevant behavior, risks, and evidence—not only speed"
       ],
       actions: [
         ["Explore Skills", "/skills", "button button-primary"],
@@ -149,35 +149,35 @@ export const homeCopy = {
         ["How It Works", "/#how-it-works", "button button-secondary"]
       ],
       blocks: [
-        ["Without a system", "Same repo explanation, vague prompt, confident output, stale docs."],
-        ["With ShipGlows", "Entry point, context map, scoped task, quality contract, verification loop."],
-        ["Real shipping", "Flox environments, PM2 processes, Caddy routing, SSH access."]
+        ["Without a shared path", "Repeated repo explanations, vague requests, confident output, and documentation that drifts."],
+        ["With ShipGlows", "A clearer handoff: entry point, context map, scoped task, decision-quality contract, and verification loop."],
+        ["When it is time to deliver", "The delivery context stays visible through Flox environments, PM2 processes, Caddy routing, and SSH access."]
       ],
-      note: "One operating layer for the work AI writes and the systems that run it."
+      note: "One operating layer for the work AI assists with and the systems that deliver it."
     },
     features: {
       eyebrow: "Why ShipGlows Exists",
       title: "The problem is no longer typing code. It is directing the system around it.",
       body:
-        "AI can scaffold the easy parts quickly. The hard part is deciding what deserves a professional solution, feeding the right context, catching drift, and keeping the deployment path connected to the promise you made.",
+        "AI can scaffold easy parts quickly. The harder work is making the intended change clear, giving the right context, surfacing drift, and keeping delivery connected to the promise you made.",
       items: [
-        ["Context becomes infrastructure", "A fresh thread gets a point of entry, an operational map, and explicit contracts instead of rebuilding the same story from memory."],
-        ["Planning happens before prompting", "Specs, readiness checks, and task boundaries turn a loose request into work an agent can execute without guessing the product."],
-        ["Quality beats the shortest path", "Model choice, routing, implementation, and verification optimize for correctness, security, maintainability, relevant performance, and proof before speed or convenience."],
-        ["Review has something to test against", "Verification is not optimism after a green build. It checks behavior, docs, and contract drift against what the work was supposed to change."],
-        ["The server path stays in the loop", "ShipGlows also keeps operational reality visible: environments, processes, tunnels, publishing, health, and the server state around real delivery."]
+        ["New agents can start without a full project recap", "An operational context map gives a fresh agent relevant entry points, constraints, and documents instead of asking you to rebuild the story from memory."],
+        ["Important work is clearer before code changes", "Task contracts, specs, readiness checks, and boundaries make the intended change explicit before an agent has to interpret it."],
+        ["Trade-offs stay visible when speed is tempting", "The decision-quality contract prioritizes relevant correctness, security posture, maintainability, performance, and proof rather than treating the shortest path as the default."],
+        ["A green build is not the only completion signal", "Verification compares the stated behavior with relevant edge-case, code-quality, security, documentation, and contract-drift checks; it does not turn those checks into a guarantee."],
+        ["Delivery context stays connected to the work", "ShipGlows keeps relevant environments, processes, tunnels, publishing, health, and server state visible around real delivery."]
       ]
     },
     agentLoop: {
       eyebrow: "The Agent Loop",
-      title: "ShipGlows covers the work around the agent, not only the prompt you send it.",
+      title: "ShipGlows helps you direct and inspect the work around an agent—not only the prompt you send it.",
       body:
-        "The useful question is not whether AI can write code. It can. The useful question is whether your system can direct, inspect, run, and explain that work without rewarding the fastest fragile path.",
+        "The useful question is not whether AI can write code. It can. The useful question is whether the work is clear enough to direct, inspect, run, and explain without rewarding a fragile shortcut.",
       items: [
-        ["01", "Frame the work before the agent starts", "Turn a loose request into context, scope, acceptance criteria, and constraints the agent can actually follow."],
-        ["02", "Choose the professional path before editing", "Give the agent the repo map, the active contracts, the quality bar, the relevant docs, and the operational commands before it edits."],
-        ["03", "Verify against the promise and the quality bar", "Check behavior, docs, public claims, edge cases, security posture, and workflow impact before treating a change as done."],
-        ["04", "Ship with the server state still visible", "Keep environments, processes, tunnels, publishing, health, and logs close enough to the agent workflow to act on them."]
+        ["01", "Make important work clear before changes begin", "Turn a loose request into a task contract with context, scope, acceptance criteria, constraints, and a proof path."],
+        ["02", "Give the agent relevant context before editing", "Use the repository map, active contracts, quality bar, relevant docs, and operational commands to reduce avoidable reconstruction."],
+        ["03", "Make completion evidence visible", "Compare stated behavior with relevant documentation, public claims, edge cases, security posture, and workflow impact before calling a change complete."],
+        ["04", "Keep delivery context visible", "Keep environments, processes, tunnels, publishing, health, and logs close enough to the workflow to inspect and act on them."]
       ]
     },
     ctaCards: [
@@ -216,16 +216,16 @@ export const homeCopy = {
   fr: {
     title: "ShipGlows | Livrer avec des agents sans perdre le contexte",
     description:
-      "ShipGlows est un framework unifié pour la livraison serveur et la discipline d’exécution assistée par IA, pensé pour les fondateurs solo et les builders autonomes.",
+      "ShipGlows aide les fondateurs solo à confier un travail clair aux agents IA, à rendre la preuve de fin visible et à garder le contexte de livraison connecté.",
     hero: {
       eyebrow: "Pour les fondateurs solo qui livrent avec des agents",
-      title: "L’IA a accéléré la construction. Elle a aussi rendu les mauvais passages de relais plus coûteux.",
+      title: "Donnez aux agents IA un chemin plus clair pour avancer sur un travail important — avec des preuves que vous pouvez inspecter.",
       body:
-        "ShipGlows donne à chaque exécution d’agent une carte de contexte, un contrat de tâche, un niveau d’exigence, des portes de vérification et les contrôles serveur nécessaires pour livrer de vrais projets. Le but n’est pas de faire aller les agents plus vite à tout prix. Le but est d’arrêter de confier du travail sérieux à un fil vide en espérant qu’il reconstruise correctement le système.",
+        "ShipGlows vous aide à confier du travail sérieux sans reconstruire le projet à chaque passage de relais ni prendre une réponse assurée pour un résultat terminé. Cartes de contexte, contrats de tâche, contrôles qualité et sécurité proportionnés, portes de vérification et contrôles serveur gardent les éléments de preuve près du travail.",
       points: [
-        "les nouveaux agents partent d’une carte connue, pas de résidus de chat",
-        "le travail non trivial est cadré avant le code",
-        "les raccourcis passent après la correction, la sécurité, la maintenabilité et la preuve"
+        "les nouveaux agents peuvent commencer sans vous faire reconstruire le projet",
+        "les changements importants sont cadrés avant de modifier le produit",
+        "la fin du travail considère comportement, risques pertinents et preuves — pas seulement la vitesse"
       ],
       actions: [
         ["Explorer les skills", "/skills", "button button-primary"],
@@ -233,35 +233,35 @@ export const homeCopy = {
         ["Voir le fonctionnement", "/#how-it-works", "button button-secondary"]
       ],
       blocks: [
-        ["Sans système", "Même explication du dépôt, prompt vague, sortie assurée, docs périmées."],
-        ["Avec ShipGlows", "Point d’entrée, carte de contexte, tâche cadrée, contrat qualité, boucle de vérification."],
-        ["Livraison réelle", "Environnements Flox, processus PM2, routage Caddy, accès SSH."]
+        ["Sans chemin partagé", "Explications répétées du dépôt, demandes floues, sortie assurée et documentation qui dérive."],
+        ["Avec ShipGlows", "Un passage de relais plus clair : point d’entrée, carte de contexte, tâche cadrée, contrat de qualité de décision et boucle de vérification."],
+        ["Quand il faut livrer", "Le contexte de livraison reste visible avec les environnements Flox, processus PM2, routage Caddy et accès SSH."]
       ],
-      note: "Une seule couche opérationnelle pour le travail écrit par l’IA et les systèmes qui l’exécutent."
+      note: "Une seule couche opérationnelle pour le travail auquel l’IA contribue et les systèmes qui le livrent."
     },
     features: {
       eyebrow: "Pourquoi ShipGlows existe",
       title: "Le problème n’est plus de taper du code. C’est de diriger le système autour.",
       body:
-        "L’IA peut échafauder rapidement les parties faciles. Le plus difficile est de décider ce qui mérite une solution professionnelle, de fournir le bon contexte, de détecter les dérives et de garder le chemin de déploiement relié à la promesse faite.",
+        "L’IA peut échafauder rapidement les parties faciles. Le travail plus difficile consiste à rendre le changement attendu clair, fournir le bon contexte, faire remonter les dérives et garder la livraison reliée à la promesse faite.",
       items: [
-        ["Le contexte devient une infrastructure", "Un nouveau fil reçoit un point d’entrée, une carte opérationnelle et des contrats explicites au lieu de reconstruire la même histoire de mémoire."],
-        ["La planification précède le prompt", "Les specs, les vérifications de préparation et les limites de tâche transforment une demande floue en travail exécutable sans deviner le produit."],
-        ["La qualité passe avant le chemin le plus court", "Le choix du modèle, le routage, l’implémentation et la vérification optimisent la correction, la sécurité, la maintenabilité, la performance utile et la preuve avant la vitesse ou la commodité."],
-        ["La revue a quelque chose à tester", "La vérification n’est pas de l’optimisme après un build vert. Elle contrôle le comportement, les docs et les dérives de contrat face à ce que le travail devait changer."],
-        ["Le chemin serveur reste dans la boucle", "ShipGlows garde aussi la réalité opérationnelle visible : environnements, processus, tunnels, publication, santé et état serveur autour de la livraison réelle."]
+        ["Les nouveaux agents peuvent commencer sans récapitulatif complet du projet", "Une carte de contexte opérationnelle donne à un nouvel agent les points d’entrée, contraintes et documents pertinents au lieu de vous faire reconstruire l’histoire de mémoire."],
+        ["Les changements importants sont plus clairs avant le code", "Les contrats de tâche, specs, vérifications de préparation et limites rendent le changement attendu explicite avant que l’agent doive l’interpréter."],
+        ["Les arbitrages restent visibles lorsque la vitesse tente", "Le contrat de qualité de décision donne la priorité à la correction pertinente, la posture sécurité, la maintenabilité, la performance et la preuve, plutôt que de faire du chemin le plus court la norme."],
+        ["Un build vert n’est pas le seul signal de fin", "La vérification compare le comportement attendu avec des contrôles pertinents sur les cas limites, la qualité du code, la sécurité, la documentation et les dérives de contrat ; elle ne transforme pas ces contrôles en garantie."],
+        ["Le contexte de livraison reste relié au travail", "ShipGlows garde les environnements, processus, tunnels, publication, santé et état serveur pertinents visibles autour de la livraison réelle."]
       ]
     },
     agentLoop: {
       eyebrow: "La boucle agent",
-      title: "ShipGlows couvre le travail autour de l’agent, pas seulement le prompt envoyé.",
+      title: "ShipGlows vous aide à diriger et inspecter le travail autour de l’agent, pas seulement le prompt envoyé.",
       body:
-        "La question utile n’est pas de savoir si l’IA peut écrire du code. Elle le peut. La question utile est de savoir si votre système peut diriger, inspecter, exécuter et expliquer ce travail sans récompenser le chemin fragile le plus rapide.",
+        "La question utile n’est pas de savoir si l’IA peut écrire du code. Elle le peut. La question utile est de savoir si le travail est assez clair pour être dirigé, inspecté, exécuté et expliqué sans récompenser un raccourci fragile.",
       items: [
-        ["01", "Cadrer le travail avant le départ de l’agent", "Transformer une demande floue en contexte, périmètre, critères d’acceptation et contraintes réellement suivables."],
-        ["02", "Choisir le chemin professionnel avant l’édition", "Donner à l’agent la carte du dépôt, les contrats actifs, le niveau d’exigence, les docs pertinentes et les commandes opérationnelles avant qu’il modifie les fichiers."],
-        ["03", "Vérifier face à la promesse et au niveau d’exigence", "Contrôler le comportement, les docs, les claims publics, les cas limites, la posture sécurité et l’impact workflow avant de considérer le changement terminé."],
-        ["04", "Livrer avec l’état serveur toujours visible", "Garder les environnements, processus, tunnels, publications, états de santé et logs assez proches du workflow agent pour agir dessus."]
+        ["01", "Rendre les changements importants clairs avant de commencer", "Transformer une demande floue en contrat de tâche avec contexte, périmètre, critères d’acceptation, contraintes et chemin de preuve."],
+        ["02", "Donner à l’agent le contexte pertinent avant l’édition", "Utiliser la carte du dépôt, les contrats actifs, le niveau d’exigence, les docs pertinentes et les commandes opérationnelles pour limiter les reconstructions évitables."],
+        ["03", "Rendre la preuve de fin visible", "Comparer le comportement attendu avec les docs, claims publics, cas limites, posture sécurité et impact workflow pertinents avant de considérer un changement terminé."],
+        ["04", "Garder le contexte de livraison visible", "Garder environnements, processus, tunnels, publications, états de santé et logs assez proches du workflow pour les inspecter et agir dessus."]
       ]
     },
     ctaCards: [
@@ -303,25 +303,26 @@ export const sharedHomeSections = {
   en: {
     product: {
       eyebrow: "What ShipGlows Is",
-      title: "The operating model around AI-generated work.",
+      title: "A practical way to direct and check AI-assisted work.",
       body:
-        "AI can produce code faster than your old process can safely absorb it. ShipGlows connects the agent workflow, the decision contracts, and the server lifecycle so the output has somewhere disciplined to land.",
+        "ShipGlows helps turn an agent’s output into work you can understand, inspect, and carry through delivery. It connects the agent workflow, decision contracts, verification, and server lifecycle without asking you to treat automation as proof.",
       panels: [
-        ["Delivery discipline for agents", ["route a fresh agent to the right context fast", "shape non-trivial work before coding starts", "verify against contracts instead of hope", "keep business, product, and docs traceable"]],
-        ["Server control for real shipping", ["run isolated environments with Flox", "manage processes and lifecycle with PM2", "publish through Caddy and DuckDNS", "use tunnels, checks, and runtime operations without duct tape"]]
+        ["Help agents start with the right context", ["give a fresh agent a route to relevant context", "frame non-trivial work before coding starts", "compare completion with explicit contracts", "keep business, product, and documentation traceable"]],
+        ["Keep delivery context visible", ["run isolated environments with Flox", "manage processes and lifecycle with PM2", "publish through Caddy and DuckDNS", "inspect tunnels, checks, and runtime operations without duct tape"]]
       ]
     },
     proof: {
       eyebrow: "Proof, Not Hype",
-      title: "The mechanism is visible before you buy the story.",
+      title: "Inspect the mechanisms behind the promise.",
       body:
-        "ShipGlows should not ask you to trust vague automation claims. The proof is in the files, workflows, gates, and operations you can inspect.",
+        "ShipGlows does not ask you to trust vague automation claims. The supporting evidence is in the files, workflows, checks, and operations you can inspect; those checks are visible signals, not guarantees.",
       pills: [
         "AGENT.md + operational context",
-        "sf-spec -> sf-ready -> sf-start -> sf-verify",
+        "sg-spec -> sg-ready -> sg-start -> sg-verify",
         "decision-quality contract",
         "artifact templates",
         "Python stdlib metadata linter",
+        "edge-case, code-quality, and security gates",
         "verification and audit skills",
         "PM2 + Flox + Caddy operations"
       ]
@@ -349,9 +350,9 @@ export const sharedHomeSections = {
     },
     cta: {
       eyebrow: "Start Here",
-      title: "If your agents move fast but your handoffs keep leaking context, start here.",
+      title: "If agent handoffs keep losing context, start with a clearer path.",
       body:
-        "Start with the repo, read the docs like working contracts, and inspect how ShipGlows turns context, execution, verification, and server operations into one practical system.",
+        "Start with the repository, read the docs as working contracts, and inspect how ShipGlows connects context, execution, verification, and delivery operations in one practical system.",
       actions: [
         ["Open The Repository", "https://github.com/dianedef/ShipGlows", "button button-primary"],
         ["Read The Docs", "/docs", "button button-secondary"]
@@ -377,25 +378,26 @@ export const sharedHomeSections = {
   fr: {
     product: {
       eyebrow: "Ce qu’est ShipGlows",
-      title: "Le modèle opérationnel autour du travail généré par IA.",
+      title: "Une façon pratique de diriger et vérifier le travail assisté par IA.",
       body:
-        "L’IA peut produire du code plus vite que votre ancien processus ne peut l’absorber en sécurité. ShipGlows relie le workflow agent, les contrats de décision et le cycle de vie serveur pour que la sortie ait un cadre discipliné où atterrir.",
+        "ShipGlows aide à transformer la sortie d’un agent en travail que vous pouvez comprendre, inspecter et mener jusqu’à la livraison. Il relie le workflow agent, les contrats de décision, la vérification et le cycle de vie serveur sans prendre l’automatisation pour une preuve.",
       panels: [
-        ["Discipline de livraison pour agents", ["orienter vite un nouvel agent vers le bon contexte", "cadrer le travail non trivial avant le code", "vérifier face aux contrats plutôt qu’espérer", "garder business, produit et docs traçables"]],
-        ["Contrôle serveur pour livrer réellement", ["exécuter des environnements isolés avec Flox", "gérer les processus et leur cycle de vie avec PM2", "publier via Caddy et DuckDNS", "utiliser tunnels, contrôles et opérations runtime sans bricolage"]]
+        ["Aider les agents à partir du bon contexte", ["donner à un nouvel agent un chemin vers le contexte pertinent", "cadrer le travail non trivial avant le code", "comparer la fin du travail à des contrats explicites", "garder business, produit et documentation traçables"]],
+        ["Garder le contexte de livraison visible", ["exécuter des environnements isolés avec Flox", "gérer les processus et leur cycle de vie avec PM2", "publier via Caddy et DuckDNS", "inspecter tunnels, contrôles et opérations runtime sans bricolage"]]
       ]
     },
     proof: {
       eyebrow: "Preuve, pas storytelling",
-      title: "Le mécanisme est visible avant d’acheter l’histoire.",
+      title: "Inspectez les mécanismes qui soutiennent la promesse.",
       body:
-        "ShipGlows ne devrait pas vous demander de croire des promesses d’automatisation vagues. La preuve est dans les fichiers, workflows, portes et opérations inspectables.",
+        "ShipGlows ne vous demande pas de croire des promesses d’automatisation vagues. Les éléments qui soutiennent la promesse sont dans les fichiers, workflows, contrôles et opérations inspectables ; ces contrôles sont des signaux visibles, pas des garanties.",
       pills: [
         "AGENT.md + contexte opérationnel",
-        "sf-spec -> sf-ready -> sf-start -> sf-verify",
+        "sg-spec -> sg-ready -> sg-start -> sg-verify",
         "contrat de qualité de décision",
         "templates d’artefacts",
         "linter de métadonnées en bibliothèque standard Python",
+        "portes de cas limites, qualité du code et sécurité",
         "skills de vérification et d’audit",
         "opérations PM2 + Flox + Caddy"
       ]
@@ -423,9 +425,9 @@ export const sharedHomeSections = {
     },
     cta: {
       eyebrow: "Commencer ici",
-      title: "Si vos agents vont vite mais que vos passages de relais perdent le contexte, commencez ici.",
+      title: "Si vos passages de relais perdent le contexte, commencez par un chemin plus clair.",
       body:
-        "Commencez par le dépôt, lisez les docs comme des contrats de travail et inspectez comment ShipGlows transforme contexte, exécution, vérification et opérations serveur en système pratique.",
+        "Commencez par le dépôt, lisez les docs comme des contrats de travail et inspectez comment ShipGlows relie contexte, exécution, vérification et opérations de livraison dans un système pratique.",
       actions: [
         ["Ouvrir le dépôt", "https://github.com/dianedef/ShipGlows", "button button-primary"],
         ["Lire les docs", "/docs", "button button-secondary"]

@@ -15,7 +15,7 @@ const coreDocs = [
   ["shipglows_data/technical/operator-guides/skill-launch-cheatsheet.md", "Référence Markdown pour les skills maîtres, les skills de support et les modes d’arguments."],
   ["shipglows_data/technical/operator-guides/focus-tags-cheatsheet.md", "Cheatsheet publique pour les tags de recentrage légers couvrant le business, le contenu, la gouvernance, l’exécution et le système."],
   ["README.md (compat)", "Vue d’ensemble publique, positionnement, onboarding et histoire framework de haut niveau."],
-  ["shipglows_data/workflow/playbooks/spec-driven-workflow.md", "Doctrine d’exécution derrière sf-spec, sf-ready, sf-start et sf-verify."]
+  ["shipglows_data/workflow/playbooks/spec-driven-workflow.md", "Doctrine d’exécution qui cadre le travail important, rend les attentes de preuve explicites et le guide vers un handoff vérifié."]
 ];
 
 const decisionDocs = [
@@ -52,7 +52,7 @@ const focusTagCombos = [
     <section class="section" id="artifact-corpus">
       <div class="section-heading">
         <p class="eyebrow">Vue d’ensemble des docs</p>
-        <h1 class="page-title">Les docs sont conçues pour l’orientation rapide des agents, pas pour l’accumulation encyclopédique.</h1>
+        <h1 class="page-title">Donnez à un nouvel agent assez de contexte pour commencer sans vous faire reconstruire le projet.</h1>
         <p>
           La documentation ShipGlows est structurée pour qu’un nouvel agent
           trouve le bon contexte, comprenne la surface de décision et exécute
@@ -65,21 +65,36 @@ const focusTagCombos = [
     <section class="section">
       <div class="doc-grid">
         <article class="doc-card">
-          <h3>La qualité est un contrat, pas une humeur</h3>
+          <h3>Ne laissez pas les raccourcis devenir la norme en silence</h3>
           <p>
-            ShipGlows porte un contrat explicite de qualité de décision. Les
-            agents doivent préférer un travail professionnel borné aux
-            raccourcis, et traiter vitesse ou coût comme des critères de départage.
+            ShipGlows utilise un contrat explicite de qualité de décision. Il
+            demande aux agents de traiter vitesse ou coût comme des critères de
+            départage seulement après avoir considéré correction, sécurité,
+            maintenabilité, performance pertinente et preuve pour le travail.
           </p>
           <a class="doc-action" href="#decision-contracts">Lire les contrats de décision</a>
         </article>
 
         <article class="doc-card">
-          <h3>Aide au lancement des skills</h3>
+          <h3>Les contrôles qualité et sécurité restent proportionnés</h3>
           <p>
-            La page de modes explique quel skill maître lancer, quels skills
-            ciblés possèdent les voies de preuve et quels arguments changent un
-            workflow au lieu de décrire la tâche.
+            ShipGlows rend explicites les contrôles de cas limites, de qualité
+            du code et de sécurité quand le changement le justifie. Les
+            surfaces exposées ou privilégiées sont relues avec la grille OWASP
+            Top 10 et des contrôles vérifiables sélectionnés ; ce n’est ni une
+            certification ni une promesse de sécurité garantie.
+          </p>
+          <a class="doc-action" href={pathFor("/faq", locale)}>Lire la limite de sécurité</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Commencez par le résultat dont vous avez besoin</h3>
+          <p>
+            La page de modes indique quel métier peut porter un travail de bout
+            en bout, quels skills ciblés couvrent des voies de preuve plus
+            étroites et quels arguments changent un workflow. La référence
+            technique reste disponible dans
+            <code>shipglows_data/technical/operator-guides/skill-launch-cheatsheet.md</code>.
           </p>
           <a class="doc-action" href={pathFor("/skill-modes", locale)}>Ouvrir l’aide</a>
         </article>

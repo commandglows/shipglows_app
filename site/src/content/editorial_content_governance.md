@@ -20,15 +20,15 @@ Le Reader n’est plus seulement “celui qui lit le code” : il       devient 
 
 
 
-L’état actuel est déjà bon sur la base : CONTENT_MAP.md existe, sf-docs sait l’auditer, sf-
-  audit-copy vérifie les promesses publiques, et sf-redact / sf-enrich savent produire ou
+L’état actuel est déjà bon sur la base : CONTENT_MAP.md existe, sg-docs sait l’auditer, sg-
+  audit-copy vérifie les promesses publiques, et sg-redact / sg-enrich savent produire ou
   améliorer du contenu. Le manque, c’est une couche durable qui dit : quand le code change,
   quelles surfaces éditoriales doivent être revues, quels claims publics sont autorisés, et qui
   met à jour quoi sans conflit.
 
   Je proposerais une spec dédiée :
 
-  $sf-spec ShipGlows Editorial Content Governance Layer for AI Agents
+  $sg-spec ShipGlows Editorial Content Governance Layer for AI Agents
                                                                                                   Le plan de tête :
 
   1. Garder CONTENT_MAP.md comme carte canonique des surfaces éditoriales : landing pages, docs

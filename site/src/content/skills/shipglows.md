@@ -5,7 +5,7 @@ tagline: "Start with one plain instruction and let ShipGlows choose the right wo
 summary: "The primary non-technical router for answering questions, executing deterministic micro-edits directly, or handing substantive work to the right ShipGlows skill."
 category: "Plan & Decide"
 audience:
-  - "Founders who do not want to memorize every sf-* command"
+  - "Founders who do not want to memorize internal command paths"
   - "Operators who know the outcome but not the right workflow route"
   - "Teams that want routing decisions kept visible in the main thread"
 problem: "A user can lose momentum before work starts by having to choose between build, bug, maintenance, content, design, deploy, skill, and audit workflows."
@@ -59,6 +59,17 @@ Use `shipglows <instruction>` when you want ShipGlows to choose the route. It is
 for the first moment of a request, before you know whether the work is a build,
 bug loop, maintenance run, release proof, content task, design task, skill change, audit, or
 just a question.
+
+## URL Shortcuts: Watch, Competitor, Inspiration
+
+For a single URL, start the instruction with the intent you want:
+
+- `shipglows veille <URL>` analyses the source and proposes the relevant follow-up; it does not add it to a register automatically.
+- `shipglows concurrent <URL>` verifies the source and adds it to the project's internal competitor register if it is not already present.
+- `shipglows inspiration <URL>` does the same for the internal inspiration register.
+- `shipglows veille concurrent <URL>` or `shipglows veille inspiration <URL>` remains analysis-first: `veille` takes priority.
+
+Add `prix`, `comparatif`, `positionnement`, `recommandation`, or `roadmap` when you want a deeper market study rather than source triage or a register update.
 
 ## Named Profiles And Focus Tags
 

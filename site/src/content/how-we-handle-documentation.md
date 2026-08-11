@@ -6,7 +6,7 @@
   51   │ Pendant wave                                                                                                                                     50   │ -> Executors modifient le code                                                                                                                   49   │
   48   │ Fin de wave                                                                                                                                      47   │ -> Executors rendent leurs résumés                                                                                                               46   │ -> Reader produit / met à jour Documentation Update Plan                                                                                         45   │ -> Sequential Executor applique les docs techniques concernées                                                                                   44   │ -> Reader relit les docs                                                         -> Integrator valide la wave                                    43   │                                                                                                                                                  42   │ Wave suivante                                                                                                                                    41   │                                                                                                                                                  40   │ Donc les docs sont mises à jour :
   39   │
-  38   │ - après chaque wave parallèle, avant de lancer la wave suivante ;                - après chaque gros bloc séquentiel, avant de passer à une           autre surface ;       - avant sf-end, avec une dernière passe Reader pour vérifier qu’il ne reste pas
+  38   │ - après chaque wave parallèle, avant de lancer la wave suivante ;                - après chaque gros bloc séquentiel, avant de passer à une           autre surface ;       - avant sg-end, avec une dernière passe Reader pour vérifier qu’il ne reste pas
   37   │ │ de drift code-docs.
   36   │ │
   35   │ Exception : si la doc dépend d’un comportement encore instable, on peut la
@@ -35,5 +35,5 @@
   63   │ - La wave suivante est bloquée tant que les docs impactées ne sont pas mises à
    1   │ │ jour.
    2   │ - Exception : un item peut rester pending final integration, mais seulement
-   3   │ │ avec une raison explicite et une condition de résolution avant sf-end.
+   3   │ │ avec une raison explicite et une condition de résolution avant sg-end.
    4

@@ -1,15 +1,15 @@
 ---
-title: "sg-backlog"
+title: "sg-planning — mode: backlog"
 slug: "sg-backlog"
-tagline: "Capture ideas without letting them hijack the current execution thread."
-summary: "A local-first backlog management skill for parking non-urgent work while keeping active delivery focused."
+tagline: "Capture useful work without interrupting the execution path."
+summary: "The backlog mode of sg-planning keeps non-urgent work visible while protecting the focus of the current project or product."
 category: "Plan & Decide"
 audience:
   - "Solo founders with too many ideas landing mid-task"
   - "Operators who want cleaner execution focus"
-problem: "Good ideas often arrive at the wrong moment and derail the task that actually needs to ship now."
-outcome: "You keep the idea, but move it out of the critical path so the current work stays coherent."
-founder_angle: "This skill protects momentum. It is useful whenever an idea is worth saving but not worth interrupting the active build loop."
+problem: "Good ideas often arrive at the wrong moment and derail the work that actually needs attention now."
+outcome: "The backlog mode of sg-planning keeps the idea, moves it out of the critical path, and leaves the active work coherent."
+founder_angle: "This sg-planning mode protects momentum when an idea is worth saving but not worth interrupting the active build loop."
 when_to_use:
   - "When a useful idea appears during unrelated work"
   - "When a thread is becoming noisy with side quests"
@@ -23,16 +23,16 @@ what_you_get:
   - "Less execution drift inside the current task"
   - "A more durable backlog habit"
 example_prompts:
-  - "/sg-backlog add self-serve onboarding ideas"
-  - "/sg-backlog revisit pricing proof section later"
-  - "/sg-backlog capture SEO experiments"
+  - "/sg-planning backlog add self-serve onboarding ideas"
+  - "/sg-planning backlog revisit pricing proof section later"
+  - "/sg-planning backlog capture SEO experiments"
 limits:
-  - "It captures work, not prioritization logic by itself"
+  - "This mode captures work; prioritization still belongs to the priorities mode"
   - "Backlog quality still depends on later review and sequencing"
 related_skills:
-  - "sg-priorities"
-  - "sg-tasks"
-  - "sg-resume"
+  - "sg-planning"
+  - "sg-help"
+  - "sg-build"
 featured: false
 order: 320
 ---

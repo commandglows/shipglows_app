@@ -20,11 +20,13 @@ const locale = "fr";
     <section class="section">
       <div class="section-heading">
         <p class="eyebrow">Pourquoi pas de simples prompts ?</p>
-        <h1 class="page-title">Parce que de meilleurs prompts ne suppriment pas les passages de relais faibles.</h1>
+        <h1 class="page-title">Parce qu’un meilleur prompt ne tient pas une livraison à lui seul.</h1>
         <p>
-          Mieux prompter aide à la marge. Cela ne résout pas le mode d’échec
-          profond : perte de contexte, réexplication répétée, cadrage ambigu et
-          dérive entre intention produit, docs, code et opérations serveur.
+          Un prompt plus précis peut améliorer un échange. Il ne maintient pas
+          le contexte, les décisions, la preuve et les détails de livraison
+          quand le travail avance. C’est là que commencent réexplications,
+          périmètre ambigu et dérive entre intention produit, docs, code et
+          opérations serveur.
         </p>
       </div>
     </section>
@@ -33,7 +35,7 @@ const locale = "fr";
       <div class="pricing-grid">
         <article class="price-card">
           <p class="eyebrow">Ce que les prompts peuvent faire</p>
-          <h2>Améliorer une interaction</h2>
+          <h2>Clarifier une demande</h2>
           <p>
             De meilleurs prompts peuvent clarifier une requête, améliorer la
             précision locale et aider le modèle à produire une meilleure réponse
@@ -43,12 +45,13 @@ const locale = "fr";
 
         <article class="price-card accent-card">
           <p class="eyebrow">Ce que les prompts ne résolvent pas</p>
-          <h2>Le modèle opérationnel autour de l’interaction</h2>
+          <h2>Garder le travail relié après la réponse</h2>
           <p>
-            Ils ne créent pas une couche de contexte persistante, une carte
-            documentaire par rôle, un workflow spec-first, une porte de
-            vérification ou un contrat qualité empêchant le chemin le plus
-            rapide de battre le bon chemin.
+            Les prompts ne créent pas une couche de contexte persistante, une
+            carte documentaire par rôle, un cadrage explicite, une preuve de
+            fin de travail ou un contrat de qualité de décision. Ces mécanismes
+            évitent que le chemin le plus rapide l’emporte automatiquement sur
+            le chemin approprié.
           </p>
         </article>
       </div>
@@ -57,26 +60,27 @@ const locale = "fr";
     <section class="section">
       <div class="doc-grid">
         <article class="doc-card">
-          <h3>ShipGlows ajoute une structure autour du prompt</h3>
+          <h3>Donner au prochain agent un vrai point de départ</h3>
           <p>
-            Il route les agents avec le contrat de point d’entrée et le contexte
-            opérationnel, définit les contrats produit et business, puis fait
-            passer le travail non trivial par sf-spec, sf-ready, sf-start et
-            sf-verify.
+            ShipGlows route le travail vers un métier public avec le contrat de
+            point d’entrée et le contexte opérationnel utiles. Pour un travail
+            non trivial, les contrats de tâche rendent explicites périmètre,
+            contraintes et preuve avant de modifier le produit.
           </p>
         </article>
 
         <article class="doc-card">
-          <h3>Il donne aux agents un niveau d’exigence</h3>
+          <h3>Rendre la preuve de fin de travail visible</h3>
           <p>
-            ShipGlows demande d’optimiser la correction, la sécurité, la
-            maintenabilité, la performance pertinente et la preuve avant la
-            vitesse, le coût ou la commodité.
+            Une réponse ou un build vert n’est pas le seul signal de fin de
+            travail. ShipGlows priorise correction, posture de sécurité
+            pertinente, maintenabilité, performance et preuve avant vitesse,
+            coût ou commodité ; les contrôles restent proportionnés au travail.
           </p>
         </article>
 
         <article class="doc-card">
-          <h3>Il couvre aussi la réalité runtime</h3>
+          <h3>Garder le contexte de livraison visible</h3>
           <p>
             Livrer réellement inclut environnements, processus, ports, chemins
             de publication et contrôles opérationnels. ShipGlows garde cette
