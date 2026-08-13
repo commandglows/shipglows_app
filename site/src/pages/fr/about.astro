@@ -2,13 +2,14 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Footer from "../../components/Footer.astro";
 import NavBar from "../../components/NavBar.astro";
+import { pathFor } from "../../i18n/ui";
 
 const locale = "fr";
 ---
 
 <BaseLayout
-  title="À propos de ShipGlows | Pourquoi il existe"
-  description="Pourquoi ShipGlows existe, à qui il s’adresse et ce qu’il ne cherche pas à devenir."
+  title="À propos de ShipGlows | Partenaire business et delivery"
+  description="Pourquoi ShipGlows agit comme partenaire business et delivery, à qui il s’adresse et comment ses métiers portent le travail jusqu’à la preuve."
   locale={locale}
   canonicalPath="/fr/about"
   alternatePath="/about"
@@ -19,13 +20,12 @@ const locale = "fr";
     <section class="section">
       <div class="section-heading">
         <p class="eyebrow">À propos de ShipGlows</p>
-        <h1 class="page-title">ShipGlows existe parce que la perte de contexte casse encore la livraison assistée par IA.</h1>
+        <h1 class="page-title">Les agents IA ont besoin de plus que des instructions. Ils ont besoin d’une compréhension gouvernée de ce que le produit cherche à accomplir.</h1>
         <p>
-          Le produit n’est pas né d’une ambition générique d’ajouter de l’IA au
-          développement. Il répond à une douleur opérationnelle répétée :
-          fondateurs et builders perdent le contexte, les passages de relais
-          entre agents s’affaiblissent, et le travail dérive entre intention
-          produit, docs, code et changements runtime.
+          ShipGlows existe parce qu’un travail techniquement compétent peut
+          rester le mauvais travail. L’intention produit se perd, le contexte
+          business vieillit, les agents optimisent localement et une réponse
+          soignée est prise pour un résultat réellement porté.
         </p>
       </div>
     </section>
@@ -34,40 +34,72 @@ const locale = "fr";
       <div class="pricing-grid">
         <article class="price-card">
           <p class="eyebrow">Pour qui</p>
-          <h2>Les fondateurs solo d’abord, avec un vrai usage pour les petites équipes techniques</h2>
+          <h2>Les fondateurs solo d’abord, avec un vrai usage pour les petites équipes produit</h2>
           <p>
-            ShipGlows est conçu pour des personnes qui livrent déjà de vrais
-            produits et veulent une manière plus claire et fiable de travailler
-            avec des agents sans transformer chaque fil en reconstruction de
-            contexte.
+            ShipGlows s’adresse aux personnes qui livrent de vrais produits avec
+            des agents et veulent du levier sans devenir coordinatrices à temps
+            plein des prompts, fichiers, spécialistes, contrôles et releases.
           </p>
         </article>
 
         <article class="price-card accent-card">
           <p class="eyebrow">Ce que ça résout</p>
-          <h2>Ambiguïté, passages de relais faibles et boucles fragiles</h2>
+          <h2>L’écart entre l’intention business et un travail techniquement terminé</h2>
           <p>
-            Le produit réduit l’ambiguïté avant le code, renforce les passages
-            de relais par des contrats explicites et rapproche la vérification
-            de la promesse réelle du travail.
+            Le produit relie vérité gouvernée, jugement utile, responsabilité
+            métier, exécution bornée et preuve visible afin qu’un chantier reste
+            attaché au résultat qui le justifie.
           </p>
         </article>
       </div>
     </section>
 
     <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Ce que c’est</p>
+        <h2>Un partenaire business et delivery construit comme un système de métiers responsables.</h2>
+        <p>
+          ShipGlows peut questionner un cadrage faible, comparer des directions
+          crédibles et recommander un choix professionnel. Une fois la direction
+          approuvée, le métier responsable la porte à travers l’exécution et la
+          preuve. Gouvernance, environnements, opérations serveur et contrôles de
+          release soutiennent cette promesse au lieu de lui faire concurrence.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
       <div class="doc-grid">
         {[
-          ["Ce que ShipGlows n’est pas", "Pas un assistant de code de plus. Pas seulement un script serveur PM2 avec quelques helpers. Pas un paquet de prompts. Pas un PaaS ou gestionnaire de plateforme généraliste."],
-          ["Pourquoi les docs comptent autant", "ShipGlows traite business, produit, GTM, marque, architecture et règles techniques comme des contrats de décision parce qu’ils façonnent ce que les agents construisent, vérifient et revendiquent publiquement."],
-          ["Pourquoi les choix d’outillage restent pragmatiques", "ShipGlows choisit le mécanisme qui réduit la friction sur le vrai chemin vers la livraison, plutôt qu’une abstraction plus élégante mais plus coûteuse à exploiter."],
-          ["Pourquoi les corrections rapides restent tracées", "Une correction directe ne doit pas disparaître dans la mémoire du chat. Quand sg-fix change un comportement réel, ShipGlows attend un BUG-ID, un pointeur compact et un dossier de bug exploitable."]
+          ["Pas un exécutant passif", "ShipGlows ne traite pas chaque demande comme un ticket technique. Lorsque la vérité business change le bon mouvement, il la charge, expose la conséquence et garde visible l’autorité du donneur d’ordre."],
+          ["Pas un oracle", "ShipGlows peut recommander et challenger, mais il ne prétend pas fournir des conseils infaillibles ni garantir lancement, croissance, revenu, conversion, sécurité ou livraison sans défaut."],
+          ["Pas une bibliothèque de prompts", "Le produit combine contexte gouverné, responsabilité métier, limites d’approbation, vérification et handoffs durables. La formulation du prompt n’est pas le modèle opératoire."],
+          ["Pas d’abord un produit serveur", "Les capacités d’environnement et de runtime restent une infrastructure de livraison utile. Elles soutiennent la preuve et le levier opérationnel sans devenir la promesse client principale."],
+          ["Pourquoi les contrats comptent", "Business, produit, GTM, marque, architecture et qualité donnent un owner à chaque vérité afin que les agents détectent la dérive au lieu d’inventer une seconde stratégie."],
+          ["Pourquoi les métiers comptent", "Treize métiers publics donnent une responsabilité claire à la création, la qualité, la publication, la croissance, la gouvernance et l’organisation tandis que le cycle interne reste hors du chemin opérateur."]
         ].map(([title, body]) => (
           <article class="doc-card">
             <h3>{title}</h3>
             <p>{body}</p>
           </article>
         ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta-panel">
+        <p class="eyebrow">Commencer par le résultat</p>
+        <h2>Apportez à ShipGlows le résultat voulu — pas le workflow que vous pensez nécessaire.</h2>
+        <p>
+          Explorez les métiers, inspectez les contrats qui gouvernent le travail
+          et mettez la promesse publique à l’épreuve avant de décider si ce
+          partenariat correspond à votre façon de construire.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href={pathFor("/skills", locale)}>Explorer les métiers</a>
+          <a class="button button-secondary" href={pathFor("/docs", locale)}>Inspecter les contrats</a>
+          <a class="button button-secondary" href={pathFor("/faq", locale)}>Lire les limites</a>
+        </div>
       </div>
     </section>
   </main>

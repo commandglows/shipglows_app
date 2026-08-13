@@ -1,6 +1,6 @@
 ---
 interface Props {
-  items: [string, string][];
+  items: readonly (readonly [string, string])[];
 }
 
 const { items } = Astro.props;

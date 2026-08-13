@@ -6,7 +6,19 @@ import NavBar from "../components/NavBar.astro";
 const items = [
   {
     q: "Is ShipGlows a server tool or an AI workflow framework?",
-    a: "Both. It helps you keep the work of building and delivering connected: agents get clearer context and decisions, while delivery work can keep its server evidence in view. Context maps, task contracts, verification, and server-aware delivery are the supporting mechanisms."
+    a: "Neither label captures the product hierarchy. ShipGlows is a business-aware delivery partner first. Agent workflows, governed context, verification, environments, and server operations are capabilities used to carry that promise through proof."
+  },
+  {
+    q: "What does business-aware mean in practice?",
+    a: "ShipGlows connects a request to applicable business, product, market, and brand truth before choosing a solution. It can challenge weak framing, explain material trade-offs, and recommend a direction instead of optimizing only for the easiest technical move."
+  },
+  {
+    q: "Does ‘business partner’ mean consulting or human services?",
+    a: "No. The partnership is software behavior: ShipGlows uses governed context, useful judgment, guided choices, outcome ownership, and proof. It does not offer consulting, diagnostics, implementation missions, or human accompaniment. A possible future Cockpit SaaS does not exist and is not an offer today."
+  },
+  {
+    q: "Does ShipGlows make business decisions for me?",
+    a: "No. It researches discoverable facts, proposes useful interpretations, and asks focused questions when intent, promise, appetite, cost, or authority belongs to you. It does not claim that its advice is always correct or guarantee market, growth, revenue, or conversion outcomes."
   },
   {
     q: "Do all skills work like free-text prompts?",
@@ -89,9 +101,9 @@ const items = [
         <p class="eyebrow">FAQ</p>
         <h1 class="page-title">The common questions, without the soft-focus version.</h1>
         <p>
-          ShipGlows mixes product workflow, documentation discipline, and server
-          delivery. That combination raises the same questions repeatedly. This
-          page answers them directly.
+          ShipGlows combines business-aware judgment, métier ownership, governed
+          execution, and delivery proof. That promise deserves clear boundaries,
+          so this page answers the recurring questions directly.
         </p>
       </div>
     </section>
@@ -106,10 +118,10 @@ const items = [
               {
                 "links" in item && (
                   <p>
-                    {item.links.map(([label, href], index) => (
+                    {item.links?.map(([label, href], index) => (
                       <>
                         <a href={href}>{label}</a>
-                        {index < item.links.length - 1 ? " · " : ""}
+                        {index < (item.links?.length ?? 0) - 1 ? " · " : ""}
                       </>
                     ))}
                   </p>

@@ -8,8 +8,8 @@ const locale = "fr";
 ---
 
 <BaseLayout
-  title="Prix ShipGlows | Hypothèse actuelle"
-  description="Hypothèse actuelle de prix et de packaging pour ShipGlows."
+  title="ShipGlows | Frontière produit et commerciale"
+  description="ShipGlows est un logiciel autonome, pas une offre de services. Le SaaS Cockpit reste une possibilité future, pas une offre actuelle."
   locale={locale}
   canonicalPath="/fr/pricing"
   alternatePath="/pricing"
@@ -19,13 +19,13 @@ const locale = "fr";
 
     <section class="section">
       <div class="section-heading">
-        <p class="eyebrow">Hypothèse tarifaire</p>
-        <h1 class="page-title">Le packaging reste ouvert. Le parcours d’achat doit rester simple.</h1>
+        <p class="eyebrow">Frontière produit</p>
+        <h1 class="page-title">ShipGlows est un logiciel, pas une entreprise de services.</h1>
         <p>
-          ShipGlows est actuellement positionné pour les fondateurs solo, avec
-          un usage adjacent pour petites équipes techniques et builders
-          autonomes. Cela implique un cycle de décision court, une valeur
-          lisible et une histoire produit fondée sur la preuve.
+          La promesse de partenaire business est portée par le produit autonome :
+          contexte gouverné, jugement utile, métiers responsables et preuves
+          observables. Le mot « partenaire » ne cache aucune offre de conseil
+          ou d’implémentation.
         </p>
       </div>
     </section>
@@ -33,23 +33,21 @@ const locale = "fr";
     <section class="section">
       <div class="pricing-grid">
         <article class="price-card">
-          <p class="eyebrow">Offre probable</p>
-          <h2>Le logiciel d’abord</h2>
+          <p class="eyebrow">Disponible aujourd’hui</p>
+          <h2>Le produit ShipGlows</h2>
           <p>
-            La direction la plus forte aujourd’hui est un logiciel packagé avec
-            un chemin self-serve clair, pas un tunnel lourd piloté par du
-            consulting.
+            Évaluez et utilisez ShipGlows grâce à son dépôt, sa documentation,
+            ses métiers, ses contrats de gouvernance et ses outils de livraison.
           </p>
         </article>
 
         <article class="price-card accent-card">
-          <p class="eyebrow">Ce qui justifierait le paiement</p>
-          <h2>Moins d’ambiguïté dans le vrai travail de livraison</h2>
+          <p class="eyebrow">Possible plus tard</p>
+          <h2>Un SaaS Cockpit distinct</h2>
           <p>
-            La valeur n’est pas la nouveauté abstraite de l’IA. C’est moins de
-            passages de relais faibles, moins de reconstruction de contexte, des
-            contrats d’exécution plus clairs et des opérations serveur plus
-            fluides.
+            Cockpit pourra éventuellement devenir le produit SaaS construit sur
+            cette direction. Il n’existe pas aujourd’hui, n’est pas vendu et
+            n’est pas présenté comme disponible.
           </p>
         </article>
       </div>
@@ -57,16 +55,15 @@ const locale = "fr";
 
     <section class="section">
       <div class="cta-panel">
-        <p class="eyebrow">À lire ensuite</p>
-        <h2>Si le prix compte pour vous, lisez les contrats derrière l’offre.</h2>
+        <p class="eyebrow">Commencez par le produit</p>
+        <h2>Inspectez ce que ShipGlows peut prouver aujourd’hui.</h2>
         <p>
-          La logique tarifaire dépend de l’audience, de la proposition de
-          valeur, du périmètre workflow et de la promesse publique déjà définis
-          dans les docs.
+          Le dépôt et la documentation montrent le comportement du produit, son
+          modèle de gouvernance et la frontière de preuve derrière la promesse.
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href={pathFor("/docs", locale)}>Parcourir les docs</a>
-          <a class="button button-secondary" href={pathFor("/docs#decision-contracts", locale)}>Voir les contrats</a>
+          <a class="button button-secondary" href="https://github.com/commandglows/shipglows">Ouvrir GitHub</a>
         </div>
       </div>
     </section>

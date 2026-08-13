@@ -16,7 +16,16 @@ Live URL:
 https://shipglows.com
 ```
 
-This site is the public explanation, docs, FAQ, pricing hypothesis, blog, and skill-discovery surface for ShipGlows. It should stay aligned with the repository README and the canonical monorepo governance corpus under `shipglows_data/`.
+This site is the public explanation, docs, FAQ, product and commercial boundary, blog, and skill-discovery surface for ShipGlows. It should stay aligned with the repository README and the canonical monorepo governance corpus under `shipglows_data/`.
+
+Its public positioning follows ShipGlows decisions `SG-BIZ-2026-08-13-01` and
+`SG-BIZ-2026-08-14-01`:
+business-aware delivery partner first, accountable métiers and governed
+execution second, environment and runtime operations as supporting capability.
+The partnership is autonomous product behavior, not a consulting or human-service
+offer. Cockpit is a distinct possible future SaaS, does not exist as a current
+offer, and must not inherit availability, roadmap, or pricing claims from this
+framework story.
 
 ## Commands
 
@@ -45,7 +54,7 @@ pnpm preview
 - `src/pages/blog/index.astro` and `src/pages/blog/[slug].astro` - indexed blog hub and article pages
 - `src/pages/skills/index.astro` - public skill index
 - `src/pages/skills/[slug].astro` - public skill detail pages
-- `src/pages/pricing.astro` - pricing hypothesis
+- `src/pages/pricing.astro` - product and commercial boundary at the legacy `/pricing` route
 - `src/pages/faq.astro` - public FAQ
 - `src/pages/about.astro` and `src/pages/contact.astro` - trust and contact pages
 - `src/pages/skill-modes.astro` - public skill launch guide
