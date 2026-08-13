@@ -69,7 +69,7 @@ export const navCopy = {
       ["FAQ", "/faq"],
       ["Why not just prompts?", "/why-not-just-prompts"],
       ["How it works", "/#how-it-works"],
-      ["Pricing", "/pricing"],
+      ["Product status", "/pricing"],
       ["Docs", "/docs"],
       ["Contact", "/contact"]
     ],
@@ -88,7 +88,7 @@ export const navCopy = {
       ["FAQ", "/faq"],
       ["Pourquoi pas de simples prompts ?", "/why-not-just-prompts"],
       ["Fonctionnement", "/#how-it-works"],
-      ["Prix", "/pricing"],
+      ["Statut produit", "/pricing"],
       ["Docs", "/docs"],
       ["Contact", "/contact"]
     ],
@@ -316,13 +316,13 @@ export const sharedHomeSections = {
       ]
     },
     pricing: {
-      eyebrow: "Pricing Hypothesis",
-      title: "The commercial model is still open. The buying motion should stay simple.",
+      eyebrow: "Product Boundary",
+      title: "ShipGlows is software, not a service offer.",
       body:
-        "ShipGlows is being framed for solo founders first. That means the offer should stay legible, autonomy-oriented, and compatible with a short decision cycle.",
+        "The business-partner promise is delivered by the autonomous product itself. ShipGlows does not lead to consulting, diagnostics, implementation missions, or human accompaniment.",
       cards: [
-        ["Likely fit", "Productized software, paid access, or a lightweight hybrid with setup and support. The key is a simple founder-friendly path, not an enterprise sales machine."],
-        ["What matters first", "Strong positioning, visible proof, real usage, and a clear reason to trust the framework before pricing pressure becomes the main question."]
+        ["Available today", "A product-led framework you can inspect and use through its repository, documentation, métier skills, governance contracts, and delivery tooling."],
+        ["Possible later", "Cockpit may become a separate SaaS product. It does not exist today and carries no availability, roadmap, pricing, or waitlist promise."]
       ]
     },
     docs: {
@@ -393,13 +393,13 @@ export const sharedHomeSections = {
       ]
     },
     pricing: {
-      eyebrow: "Hypothèse tarifaire",
-      title: "Le modèle commercial reste ouvert. Le parcours d’achat doit rester simple.",
+      eyebrow: "Frontière produit",
+      title: "ShipGlows est un logiciel, pas une offre de services.",
       body:
-        "ShipGlows est d’abord cadré pour les fondateurs solo. L’offre doit donc rester lisible, orientée autonomie et compatible avec un cycle de décision court.",
+        "La promesse de partenaire business est portée par le produit autonome lui-même. ShipGlows ne mène ni vers du conseil, ni vers un diagnostic, une mission d’implémentation ou un accompagnement humain.",
       cards: [
-        ["Ajustement probable", "Logiciel packagé, accès payant ou hybride léger avec setup et support. L’essentiel est un chemin simple pour fondateurs, pas une machine commerciale enterprise."],
-        ["Ce qui compte d’abord", "Positionnement fort, preuve visible, usage réel et raison claire de faire confiance au framework avant que la pression tarifaire devienne la question principale."]
+        ["Disponible aujourd’hui", "Un framework product-led que vous pouvez inspecter et utiliser grâce au dépôt, à la documentation, aux métiers, aux contrats de gouvernance et aux outils de livraison."],
+        ["Possible plus tard", "Cockpit pourra devenir un produit SaaS distinct. Il n’existe pas aujourd’hui et ne porte aucune promesse de disponibilité, de roadmap, de prix ou de liste d’attente."]
       ]
     },
     docs: {
