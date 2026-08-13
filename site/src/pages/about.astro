@@ -5,8 +5,8 @@ import NavBar from "../components/NavBar.astro";
 ---
 
 <BaseLayout
-  title="About ShipGlows | Why it exists"
-  description="Why ShipGlows exists, who it is for, and what it is not trying to be."
+  title="About ShipGlows | Business-aware delivery"
+  description="Why ShipGlows acts as a business-aware delivery partner, who it serves, and how its métiers carry work through proof."
 >
   <main class="page-shell">
     <NavBar />
@@ -14,12 +14,12 @@ import NavBar from "../components/NavBar.astro";
     <section class="section">
       <div class="section-heading">
         <p class="eyebrow">About ShipGlows</p>
-        <h1 class="page-title">ShipGlows exists because context loss keeps breaking AI-assisted delivery.</h1>
+        <h1 class="page-title">AI agents need more than instructions. They need a governed understanding of what the product is trying to achieve.</h1>
         <p>
-          The product was not shaped around a generic ambition to “add AI to
-          development.” It was shaped around a repeated operational pain:
-          founders and builders lose context, agent handoffs get weak, and the
-          work drifts between product intent, docs, code, and runtime changes.
+          ShipGlows exists because technically competent work can still be the
+          wrong work. Product intent gets lost, business context becomes stale,
+          agents optimize locally, and a polished answer is mistaken for an
+          owned result.
         </p>
       </div>
     </section>
@@ -28,23 +28,21 @@ import NavBar from "../components/NavBar.astro";
       <div class="pricing-grid">
         <article class="price-card">
           <p class="eyebrow">Who It Is For</p>
-          <h2>Solo founders first, with a real fit for small technical teams too</h2>
+          <h2>Solo founders first, with a real fit for small product teams</h2>
           <p>
-            ShipGlows is built for people who already ship real products and want
-            a clearer, more reliable way to work with agents without turning
-            every thread into another context rebuild. The primary copy stays
-            centered on solo founders, but small teams should still recognize
-            that the framework is usable for them.
+            ShipGlows is for people shipping real products with agents who want
+            leverage without becoming the full-time coordinator of prompts,
+            files, specialists, checks, and releases.
           </p>
         </article>
 
         <article class="price-card accent-card">
           <p class="eyebrow">What It Solves</p>
-          <h2>Ambiguity, weak handoffs, and fragile loops</h2>
+          <h2>The gap between business intent and technically finished work</h2>
           <p>
-            The product reduces ambiguity before coding, strengthens handoffs
-            through explicit contracts, and keeps verification closer to the
-            actual promise of the work.
+            The product connects governed truth, useful judgment, accountable
+            métier ownership, bounded execution, and visible proof so a chantier
+            stays attached to the outcome that justified it.
           </p>
         </article>
       </div>
@@ -53,103 +51,48 @@ import NavBar from "../components/NavBar.astro";
     <section class="section">
       <div class="section-heading">
         <p class="eyebrow">What It Is</p>
-        <h2>A unified framework between AI delivery and server environment management.</h2>
+        <h2>A business-aware delivery partner built as a system of accountable métiers.</h2>
         <p>
-          ShipGlows helps you launch, publish, and maintain apps, websites, and
-          software on servers. But it also gives agents a stronger execution
-          frame through routing, context, contracts, verification, and
-          documentation discipline. The point is to keep both sides coherent in
-          one operating model.
+          ShipGlows can question weak framing, compare credible directions, and
+          recommend a professional default. Once a direction is approved, the
+          responsible métier carries it through execution and proof. Governance,
+          environments, server operations, and release controls support that
+          promise instead of competing with it.
         </p>
       </div>
     </section>
 
     <section class="section">
       <div class="doc-grid">
-        <article class="doc-card">
-          <h3>What ShipGlows is not</h3>
-          <p>
-            Not another coding assistant. Not just a PM2 server script with a
-            few helpers. Not a bundle of prompts. Not a general-purpose PaaS or
-            platform manager.
-          </p>
-        </article>
-
-        <article class="doc-card">
-          <h3>Why the docs matter so much</h3>
-          <p>
-            ShipGlows treats business, product, GTM, brand, architecture, and
-            technical guidelines as decision contracts because those decisions
-            shape what agents build, verify, and claim publicly.
-          </p>
-        </article>
-
-        <article class="doc-card">
-          <h3>Why the tooling choices stay pragmatic</h3>
-          <p>
-            ShipGlows does not optimize for language elegance in a vacuum. For a
-            small tool like the metadata linter, Python standard library only is
-            the right compromise because Python is more likely to already be
-            present across dev machines, CI, and Linux servers than Ruby.
-          </p>
-        </article>
-
-        <article class="doc-card">
-          <h3>Why that matters to the product story</h3>
-          <p>
-            The same rule applies everywhere else: choose the mechanism that
-            reduces friction on the real path to shipping. That is more aligned
-            with ShipGlows than choosing a “nicer” abstraction that adds runtime
-            cost for founders and operators.
-          </p>
-        </article>
-
-        <article class="doc-card">
-          <h3>Why ShipGlows is strict about trackers too</h3>
-          <p>
-            The same discipline applies to task tracking. A master tracker, a
-            project section in that master, and a local `TASKS.md` file are not
-            the same object. ShipGlows keeps those levels distinct so active
-            backlog stays clean and historical context stays useful without
-            contaminating current execution.
-          </p>
-        </article>
-
-        <article class="doc-card">
-          <h3>Why bug fixes are traced even when they are fast</h3>
-          <p>
-            A direct fix should not disappear into chat memory. When `sg-fix`
-            changes real behavior, ShipGlows expects a `BUG-ID`, a compact
-            index pointer, and a detailed bug dossier so the next agent can see
-            the diagnosis, fix attempt, and retest state.
-          </p>
-        </article>
-
-        <article class="doc-card">
-          <h3>How to steer the AI without rewriting the brief</h3>
-          <p>
-            Use simple fast tags like <code>#offer</code>,
-            <code>#clarity</code>, and <code>#shipglows</code> when you want to
-            recenter the work quickly instead of typing a new long prompt.
-          </p>
-          <a class="doc-action" href="/focus-tags">Open the tag cheatsheet</a>
-        </article>
+        {[
+          ["Not a passive executor", "ShipGlows does not treat every request as a technical ticket. When business truth changes the right move, it loads that truth, exposes the consequence, and keeps the operator’s authority visible."],
+          ["Not an oracle", "ShipGlows can recommend and challenge, but it does not claim infallible advice or guarantee launch, growth, revenue, conversion, security, or defect-free delivery."],
+          ["Not another prompt library", "The product combines governed context, métier ownership, approval boundaries, verification, and durable handoffs. Prompt wording alone is not the operating model."],
+          ["Not a server product first", "Environment and runtime capabilities remain useful delivery infrastructure. They are supporting evidence and operational leverage, not the leading customer promise."],
+          ["Why the contracts matter", "Business, product, GTM, brand, architecture, and quality contracts give each kind of truth one owner so agents can detect drift instead of inventing a second strategy."],
+          ["Why the métiers matter", "Thirteen public métiers give creation, quality, publishing, growth, governance, and organization clear ownership while the internal lifecycle stays out of the operator’s way."]
+        ].map(([title, body]) => (
+          <article class="doc-card">
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
       </div>
     </section>
 
     <section class="section">
       <div class="cta-panel">
-        <p class="eyebrow">Next Step</p>
-        <h2>If this framing matches your pain, start with the docs and the workflow.</h2>
+        <p class="eyebrow">Start With The Outcome</p>
+        <h2>Bring ShipGlows the result you want—not the workflow you think you need.</h2>
         <p>
-          Read how ShipGlows routes agents, structures context, and turns fuzzy
-          requests into explicit contracts before you judge the tool by its CLI
-          surface alone.
+          Explore the métiers, inspect the governing contracts, and challenge
+          the public promise before deciding whether this partnership fits the
+          way you want to build.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="/docs">Open documentation</a>
-          <a class="button button-secondary" href="/faq">Read the FAQ</a>
-          <a class="button button-secondary" href="/skill-modes">Open the launch cheatsheet</a>
+          <a class="button button-primary" href="/skills">Explore the métiers</a>
+          <a class="button button-secondary" href="/docs">Inspect the contracts</a>
+          <a class="button button-secondary" href="/faq">Read the boundaries</a>
         </div>
       </div>
     </section>

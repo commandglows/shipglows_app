@@ -11,7 +11,7 @@ export type PublicSkill = {
  * outside this list: they are selected by the owning métier when needed.
  */
 export const publicSkillCatalog: PublicSkill[] = [
-  { slug: "shipglows", name: "shipglows", domain: "Start here", purpose: "Describe the outcome in plain language and let ShipGlows select the right métier.", modes: "<instruction>" },
+  { slug: "shipglows", name: "shipglows", domain: "Start here", purpose: "Describe the outcome in plain language and let ShipGlows connect governed business truth, useful judgment, and the accountable métier.", modes: "<instruction>" },
   { slug: "sg-build", name: "sg-development", domain: "Create", purpose: "Build a product, feature, integration, or site change from intent to verified result.", modes: "<goal>" },
   { slug: "sg-design", name: "sg-design", domain: "Create", purpose: "Shape UI, design systems, accessibility, and motion without losing implementation proof.", modes: "system · playground · audit · animation · redesign · migration" },
   { slug: "sg-customer", name: "sg-experience", domain: "Create", purpose: "Make journeys, onboarding, trust, recovery, and first success clear for end users.", modes: "audit · flow · onboarding · recovery" },
@@ -27,4 +27,4 @@ export const publicSkillCatalog: PublicSkill[] = [
   { slug: "sg-help", name: "sg-help", domain: "Organize", purpose: "Explain the public catalog, modes, and the next appropriate move.", modes: "help · mode" }
 ];
 
-export const publicDomains = ["Create", "Quality", "Publish", "Grow audience", "Govern", "Organize"] as const;
+export const publicDomains = ["Start here", "Create", "Quality", "Publish", "Grow audience", "Govern", "Organize"] as const;

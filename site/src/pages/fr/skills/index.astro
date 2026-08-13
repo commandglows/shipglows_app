@@ -21,25 +21,25 @@ const entries = await getCollection("skills");
 const publicSkills = publicSkillCatalog.map((publicSkill) => ({ publicSkill, entry: entries.find((entry) => entry.id === publicSkill.slug) })).filter((item) => item.entry);
 ---
 
-<BaseLayout title="Skills ShipGlows | Métiers publics" description="Un routeur et treize métiers pour faire avancer un résultat de A à Z sans micro-manager les étapes." locale={locale} canonicalPath="/fr/skills" alternatePath="/skills">
+<BaseLayout title="Métiers ShipGlows | Responsabilité business-aware jusqu’à la preuve" description="Partez d’un résultat business ou produit, puis laissez l’un des treize métiers ShipGlows porter le travail du contexte gouverné jusqu’à la preuve." locale={locale} canonicalPath="/fr/skills" alternatePath="/skills">
   <main class="page-shell">
     <NavBar locale={locale} currentPath="/skills" />
     <section class="section"><div class="section-heading">
       <p class="eyebrow">Catalogue des skills</p>
-      <h1 class="page-title">Un routeur. Treize métiers. Pas de micro-management du workflow.</h1>
-      <p>Décrivez le résultat attendu. ShipGlows résout le projet, le produit, la surface et la fonctionnalité lorsque le contexte le permet ; il ne pose une question que lorsqu’une décision change réellement le travail, puis l’exécute jusqu’à la preuve et la clôture.</p>
+      <h1 class="page-title">Un partenaire business-aware. Treize métiers responsables.</h1>
+      <p>ShipGlows part du résultat attendu, le relie à la vérité business et produit gouvernée, puis choisit le métier le mieux placé pour le porter. Les choix matériels restent les vôtres ; les mécaniques spécialistes ne deviennent pas un workflow supplémentaire à superviser.</p>
     </div></section>
     <section class="section"><div class="cta-panel">
-      <p class="eyebrow">Le réflexe</p>
-      <h2><code>shipglows &lt;instruction&gt;</code> est la seule commande à retenir.</h2>
-      <p>Appelez un métier directement si vous connaissez déjà l’owner. Sinon, exprimez l’objectif : les moteurs internes de spec, checks, preuve navigateur, recherche et clôture restent derrière le métier responsable.</p>
+      <p class="eyebrow">Le point d’entrée du partenariat</p>
+      <h2><code>shipglows &lt;résultat&gt;</code> est le seul premier mouvement à retenir.</h2>
+      <p>Décrivez le résultat business ou produit en langage courant. ShipGlows résout le contexte, questionne les lacunes matérielles, recommande une direction lorsque les preuves le permettent et confie le résultat au métier responsable.</p>
       <div class="hero-actions"><a class="button button-secondary" href={pathFor("/skill-modes", locale)}>Voir les métiers et leurs modes</a></div>
     </div></section>
     {publicDomains.map((domain) => {
       const skills = publicSkills.filter((item) => item.publicSkill.domain === domain);
       return skills.length > 0 && <section class="section"><div class="section-heading"><p class="eyebrow">{domainCopy[domain]}</p><h2>{domain === "Start here" ? "Laissez ShipGlows choisir le métier." : `${skills.length} métier${skills.length > 1 ? "s" : ""} public${skills.length > 1 ? "s" : ""}.`}</h2></div><div class="skill-grid">{skills.map(({ publicSkill, entry }) => <SkillCard href={`/skills/${entry!.id}`} title={publicSkill.name} category={domainCopy[publicSkill.domain]} tagline={entry!.data.tagline} summary={publicSkill.purpose} relatedSkills={[]} featured={publicSkill.slug === "shipglows"} />)}</div></section>;
     })}
-    <section class="section"><div class="docs-panel"><div><p class="eyebrow">Besoin d’un plan ?</p><h2><code>sg-help mode</code> montre le catalogue public ; le catalogue expert reste disponible sans encombrer le parcours par défaut.</h2><p>Les helpers runtime existent toujours, mais ils sont choisis par le métier owner au lieu de devenir des commandes concurrentes.</p></div><div class="docs-links"><a class="docs-link" href={pathFor("/skill-modes", locale)}>Modes publics</a><a class="docs-link" href={pathFor("/docs", locale)}>Vue documentation</a></div></div></section>
+    <section class="section"><div class="docs-panel"><div><p class="eyebrow">Besoin d’inspecter le système ?</p><h2>Le catalogue public montre qui porte les résultats ; les docs montrent ce qui gouverne leur jugement.</h2><p>Les helpers runtime existent toujours, mais ils servent le métier owner au lieu de concurrencer le résultat business comme première décision.</p></div><div class="docs-links"><a class="docs-link" href={pathFor("/skill-modes", locale)}>Modes publics</a><a class="docs-link" href={pathFor("/docs", locale)}>Voir les contrats</a></div></div></section>
   </main>
   <Footer locale={locale} />
 </BaseLayout>

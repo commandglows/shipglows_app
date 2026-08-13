@@ -1,31 +1,35 @@
 ---
 title: "shipglows"
 slug: "shipglows"
-tagline: "Start with one plain instruction and let ShipGlows choose the right workflow."
-summary: "The primary non-technical router for answering questions, executing deterministic micro-edits directly, or handing substantive work to the right ShipGlows skill."
+tagline: "Start with the outcome and let ShipGlows connect business truth, useful judgment, and accountable delivery."
+summary: "The business-aware entrypoint that resolves context, challenges material ambiguity, recommends a direction when evidence supports one, and gives the outcome to the right ShipGlows métier."
 category: "Plan & Decide"
 audience:
-  - "Founders who do not want to memorize internal command paths"
-  - "Operators who know the outcome but not the right workflow route"
-  - "Teams that want routing decisions kept visible in the main thread"
-problem: "A user can lose momentum before work starts by having to choose between build, bug, maintenance, content, design, deploy, skill, and audit workflows."
-outcome: "You get one first command that answers directly, performs deterministic micro-edits with focused validation, routes substantive work to the right ShipGlows skill, or asks one numbered clarification question when no context-safe route exists."
-founder_angle: "The router keeps the first move simple. You describe the business or product need, and ShipGlows chooses whether the work is conversation, build, maintenance, bug, release, content, design, skill maintenance, or audit. The router also steers requests into product-aware content and docs paths when declared products or public claims are part of the work."
+  - "Founders who want agents to understand the business consequence before optimizing the technical path"
+  - "Operators who know the outcome but not the right métier or workflow route"
+  - "Teams that want one accountable owner from intent through proof"
+problem: "AI-assisted work can be technically competent yet business-irrelevant when context, trade-offs, ownership, and proof are fragmented across prompts and specialist workflows."
+outcome: "You get one first move that resolves the relevant business and product context, surfaces material decisions, recommends a direction when justified, and assigns one métier to carry approved work through proof."
+founder_angle: "Describe the business or product outcome. ShipGlows connects it to governed truth, challenges weak framing, protects operator-owned decisions, and keeps specialist mechanics behind one accountable public métier."
 when_to_use:
   - "When you want the recommended first command and do not know which skill to launch"
   - "When the request might be a feature, bug, maintenance run, content task, design task, deploy proof, skill change, audit, or simple question"
   - "When you want the selected master skill to own its normal lifecycle after routing"
   - "When you want the first answer to preserve product coherence instead of treating claims or surfaces as incidental"
+  - "When you want strategic choices framed around customer value, trust, leverage, risk, and durable priority"
 what_you_give:
   - "A plain-language instruction"
   - "Any known target file, feature, bug symptom, deployment, content surface, or audit concern"
 what_you_get:
+  - "A business-aware interpretation grounded in applicable project truth"
+  - "A useful recommendation when credible directions differ and evidence supports a default"
   - "A direct conversational answer for pure questions"
   - "Direct execution with focused validation for deterministic micro-edits"
   - "A direct main-thread handoff to the selected skill for substantive work"
   - "One numbered question when the route is ambiguous"
   - "No hidden master-skill-in-subagent nesting"
   - "A route that keeps product governance, claims, and surface coherence visible when the task touches shipped or market-facing material"
+  - "One accountable métier carrying the approved outcome through proof"
 example_prompts:
   - "shipglows explain which docs govern skill runtime"
   - "shipglows fix the checkout bug"
@@ -37,6 +41,8 @@ argument_modes:
     consequence: "Routes feature/code/docs to sg-build, mixed build-plus-customer requests to sg-build first with a post-build sg-customer gate, maintenance to sg-maintain, bugs to sg-bug, release/deploy/prod proof to sg-deploy, content to sg-content, design to sg-design, customer-experience work to sg-customer, internal skill maintenance to the internal 900 core workflow, and obvious specialist audits to sg-audit-*."
 limits:
   - "It does not replace the selected skill's lifecycle gates"
+  - "It does not claim infallible advice or guarantee market, growth, revenue, conversion, security, or defect-free outcomes"
+  - "Material business intent, promise, cost, risk, and authority decisions remain with the operator"
   - "It uses context-safe defaults only when they are clear, low-risk, reversible, and verifiable"
   - "It asks a numbered question with the reason and recommended route instead of guessing when routing is ambiguous"
   - "It does not run master skills inside hidden subagents"
@@ -59,6 +65,13 @@ Use `shipglows <instruction>` when you want ShipGlows to choose the route. It is
 for the first moment of a request, before you know whether the work is a build,
 bug loop, maintenance run, release proof, content task, design task, skill change, audit, or
 just a question.
+
+ShipGlows is not a passive dispatcher. For non-trivial work it connects the
+request to the smallest coherent business context, distinguishes discoverable
+facts from operator-owned decisions, and keeps the customer or product outcome
+visible before selecting a technical path. It can question, compare, and
+recommend; it does not replace the operator's authority or promise that its
+judgment is always correct.
 
 ## URL Shortcuts: Watch, Competitor, Inspiration
 

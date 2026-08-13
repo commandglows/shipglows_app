@@ -1,10 +1,10 @@
 ---
 artifact: content_map
 metadata_schema_version: "1.0"
-artifact_version: "0.2.0"
+artifact_version: "0.3.0"
 project: "shipglows_app"
 created: "2026-04-26"
-updated: "2026-08-02"
+updated: "2026-08-14"
 status: "draft"
 source_skill: sf-docs
 scope: content_map
@@ -22,6 +22,7 @@ evidence:
   - "shipglows_data/technical/legacy-contentflow-inventory.md"
   - "shipglows_data/technical/legacy-file-migration-tracker.md"
   - "shipglows_data/technical/product-entitlements.md"
+  - "ShipGlows positioning decision SG-BIZ-2026-08-13-01 and the public-site propagation approved on 2026-08-13."
 depends_on:
   - "shipglows_data/workflow/specs/shipglows-legacy-contentflow-fusion.md@0.1.0"
   - "shipglows_data/technical/code-docs-map.md@0.1.0"
@@ -34,8 +35,8 @@ content_surfaces:
   - "Specs and exploration reports"
   - "Canonical ShipGlows public site under site/"
   - "Legacy ContentFlow runtime retained for classification"
-next_review: "2026-09-02"
-next_step: "/sf-docs update"
+next_review: "2026-09-14"
+next_step: "Validate the business-aware delivery positioning against early user evidence without conflating it with the Flutter Cockpit product."
 ---
 
 # Content Map - shipglows_app
@@ -130,6 +131,23 @@ Markdown and repository files are the source of truth. Future database work is a
 The former `/home/claude/shipglowz/shipglows-site` source was moved into this repository on 2026-08-02. It is not a second authority and must not be recreated. The Vercel project metadata travels with `site/`; deployment configuration never changes source ownership by itself.
 
 Public claims must remain aligned with reviewed ShipGlows business, product, GTM, and brand contracts. Roadmap capabilities must be labeled as in development rather than shipped behavior.
+
+### Public Framework Positioning
+
+The public site presents the ShipGlows framework as a business-aware delivery
+partner for founders working with AI agents. Its ordered public promise is:
+
+1. governed business and product truth;
+2. useful judgment and accountable métier ownership;
+3. bounded execution through visible proof;
+4. environment, runtime, and release operations as supporting capabilities.
+
+This framework positioning is governed by the canonical `commandglows/shipglows`
+business corpus. It does not replace or rewrite this repository's distinct
+Flutter Cockpit product contracts. Public copy must keep the framework and the
+Cockpit distinguishable and must not imply infallible advice, unattended
+delivery, or guaranteed market, growth, revenue, conversion, security, or
+defect-free outcomes.
 
 ## Security-Sensitive Surfaces
 

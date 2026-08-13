@@ -18,6 +18,12 @@ https://shipglows.com
 
 This site is the public explanation, docs, FAQ, pricing hypothesis, blog, and skill-discovery surface for ShipGlows. It should stay aligned with the repository README and the canonical monorepo governance corpus under `shipglows_data/`.
 
+Its public positioning follows ShipGlows decision `SG-BIZ-2026-08-13-01`:
+business-aware delivery partner first, accountable métiers and governed
+execution second, environment and runtime operations as supporting capability.
+This framework story must remain distinct from the Flutter Cockpit product
+governed elsewhere in this repository.
+
 ## Commands
 
 ```bash
