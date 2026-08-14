@@ -5,7 +5,7 @@ set -eu
 
 REPO_URL="${DOTFILES_REPO_URL:-https://github.com/dianedef/dotfiles.git}"
 BRANCH="${DOTFILES_BRANCH:-master}"
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 BOOTSTRAP_LOG="${DOTFILES_BOOTSTRAP_LOG:-$HOME/dotfiles-bootstrap.log}"
 
 log() {
@@ -69,7 +69,7 @@ stash_dotfiles_changes() {
         return 0
     fi
 
-    log "Modifications locales détectées dans ~/dotfiles; sauvegarde temporaire..."
+    log "Modifications locales détectées dans $DOTFILES_DIR; sauvegarde temporaire..."
     run_or_explain "sauvegarde des modifications locales dotfiles" env \
         GIT_AUTHOR_NAME="Dotfiles Bootstrap" \
         GIT_AUTHOR_EMAIL="dotfiles-bootstrap@example.invalid" \
@@ -81,6 +81,11 @@ stash_dotfiles_changes() {
 prepare_log
 log "Préparation de l'installation dotfiles..."
 install_bootstrap_deps
+
+if [ "$DOTFILES_DIR" != "$HOME/dotfiles" ] && [ -e "$HOME/dotfiles" ]; then
+    log "Ancien checkout laissé inchangé: $HOME/dotfiles"
+    log "Utilisez ~/ShipGlows/dotfiles pour le développement et ~/.dotfiles uniquement comme runtime installé."
+fi
 
 if [ -d "$DOTFILES_DIR/.git" ]; then
     log "Mise à jour du dépôt dotfiles..."
