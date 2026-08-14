@@ -6,7 +6,7 @@ param(
     [string]$RepoUrl = $(if ($env:SHIPGLOWS_REPO_URL) { $env:SHIPGLOWS_REPO_URL } else { '' }),
     [Alias('Version', 'Tag', 'Ref')]
     [string]$Branch = $(if ($env:SHIPGLOWS_BRANCH) { $env:SHIPGLOWS_BRANCH } else { '' }),
-    [string]$ShipglowsDir = $(if ($env:SHIPGLOWS_DIR) { $env:SHIPGLOWS_DIR } else { Join-Path $env:USERPROFILE 'shipglows' }),
+    [string]$ShipglowsDir = $(if ($env:SHIPGLOWS_DIR) { $env:SHIPGLOWS_DIR } else { Join-Path (Join-Path $env:USERPROFILE '.shipglows') 'runtime' }),
     [string]$InstallMode,
     [switch]$DownloadOnly
 )
@@ -14,9 +14,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-function Resolve-CompatibleValue([string]$Canonical, [string]$LegacyShipglowz, [string]$LegacyShipflow, [string]$Name) {
+function Resolve-CompatibleValue([string]$Canonical, [string]$LegacyShipflow, [string]$Name) {
     if ($Canonical) { return $Canonical }
-    if ($LegacyShipglowz) { Write-Warn "Deprecated SHIPGLOWZ_$Name detected; migrate to SHIPGLOWS_*."; return $LegacyShipglowz }
     if ($LegacyShipflow) { Write-Warn "Deprecated SHIPFLOW_$Name detected; migrate to SHIPGLOWS_*."; return $LegacyShipflow }
     return ''
 }
@@ -44,11 +43,11 @@ function Select-WindowsInstallMode {
     }
 }
 
-$RepoUrl = Resolve-CompatibleValue $RepoUrl $env:SHIPGLOWZ_REPO_URL $env:SHIPFLOW_REPO_URL 'REPO_URL'
+$RepoUrl = Resolve-CompatibleValue $RepoUrl $env:SHIPFLOW_REPO_URL 'REPO_URL'
 if (-not $RepoUrl) { $RepoUrl = 'https://github.com/commandglows/shipglows.git' }
-$Branch = Resolve-CompatibleValue $Branch $env:SHIPGLOWZ_BRANCH $env:SHIPFLOW_BRANCH 'BRANCH'
+$Branch = Resolve-CompatibleValue $Branch $env:SHIPFLOW_BRANCH 'BRANCH'
 if (-not $Branch) { $Branch = 'main' }
-$InstallMode = Resolve-CompatibleValue $InstallMode $env:SHIPGLOWZ_INSTALL_MODE $env:SHIPFLOW_INSTALL_MODE 'INSTALL_MODE'
+$InstallMode = Resolve-CompatibleValue $InstallMode $env:SHIPFLOW_INSTALL_MODE 'INSTALL_MODE'
 if ($InstallMode -and $InstallMode -notin @('local', 'full')) {
     Fail 'InstallMode must be local or full.'
 }
@@ -92,8 +91,8 @@ function Extract-ShipglowsWindowsFiles([string]$ArchivePath, [string]$Destinatio
         $entries += $installerEntries[0]
     }
     if ($FullMode) {
-        $entries += @($archiveEntries | Where-Object { $_ -match '^[^/]+/cli/windows/(ShipGlows\.DevServer\.psm1|shipglows-devserver\.ps1|install-devserver\.ps1)$' })
-        if ($entries.Count -ne 3) { Fail 'The ShipGlows archive is missing native Windows DevServer files.' }
+        $entries += @($archiveEntries | Where-Object { $_ -match '^[^/]+/cli/windows/(ShipGlows\.DevServer\.psm1|ShipGlows\.CodexMcp\.psm1|shipglows-devserver\.ps1|install-devserver\.ps1)$' })
+        if ($entries.Count -ne 4) { Fail 'The ShipGlows archive is missing native Windows DevServer or Codex MCP files.' }
     }
 
     & $tarPath -xf $ArchivePath -C $DestinationPath $entries
@@ -103,7 +102,7 @@ function Extract-ShipglowsWindowsFiles([string]$ArchivePath, [string]$Destinatio
 
     return $entries
 }
-function Resolve-GitHubSource([string]$RepositoryUrl, [string]$Ref) {
+function Resolve-GitHubSource([string]$RepositoryUrl, [string]$Ref, [string]$CurlPath = 'curl.exe') {
     $archiveBase = $RepositoryUrl.TrimEnd('/') -replace '\.git$', ''
     if ($archiveBase -notmatch '^https://github\.com/([^/]+/[^/]+)$') {
         Fail 'RepoUrl must point to a public GitHub repository for the Windows installation without Git.'
@@ -111,17 +110,21 @@ function Resolve-GitHubSource([string]$RepositoryUrl, [string]$Ref) {
 
     $repositoryPath = $Matches[1]
     $encodedRef = [Uri]::EscapeDataString($Ref)
-    $commitPatchUrl = "https://github.com/$repositoryPath/commit/$encodedRef.patch"
-    $commitResponse = (& curl.exe -fsSL $commitPatchUrl | Out-String)
+    $commitApiUrl = "https://api.github.com/repos/$repositoryPath/commits/$encodedRef"
+    $commitResponse = (& $CurlPath -fsSL --retry 3 --retry-all-errors --retry-delay 2 -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' $commitApiUrl | Out-String)
     if ($LASTEXITCODE -ne 0) {
         Fail "Could not resolve ShipGlows ref: $Ref"
     }
 
-    $commitMatch = [regex]::Match($commitResponse, '(?m)^From ([0-9a-f]{40}) ')
-    if (-not $commitMatch.Success) {
+    try {
+        $commit = $commitResponse | ConvertFrom-Json
+    } catch {
         Fail "GitHub did not return a valid commit for ref: $Ref"
     }
-    $commitSha = $commitMatch.Groups[1].Value
+    $commitSha = [string]$commit.sha
+    if ($commitSha -notmatch '^[0-9a-f]{40}$') {
+        Fail "GitHub did not return a valid commit for ref: $Ref"
+    }
 
     [PSCustomObject]@{
         Commit = $commitSha
@@ -163,10 +166,17 @@ $localInstaller = Join-Path $localDirectory 'install_local.ps1'
 $windowsDirectory = Join-Path $ShipglowsDir 'cli\windows'
 New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
 New-Item -ItemType Directory -Path $extractRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $ShipglowsDir -Force | Out-Null
+$defaultHiddenParent = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE '.shipglows')).TrimEnd('\')
+$defaultRuntimeRoot = [IO.Path]::GetFullPath((Join-Path $defaultHiddenParent 'runtime')).TrimEnd('\')
+if ([IO.Path]::GetFullPath($ShipglowsDir).TrimEnd('\') -eq $defaultRuntimeRoot) {
+    $hiddenParentItem = Get-Item -LiteralPath $defaultHiddenParent -Force
+    $hiddenParentItem.Attributes = $hiddenParentItem.Attributes -bor [IO.FileAttributes]::Hidden
+}
 
 try {
     Write-Info "Downloading ShipGlows Windows files from commit $($source.Commit)..."
-    & curl.exe -fsSL $source.ArchiveUrl -o $archivePath
+    & curl.exe -fsSL --retry 3 --retry-all-errors --retry-delay 2 $source.ArchiveUrl -o $archivePath
     if ($LASTEXITCODE -ne 0) { Fail 'ShipGlows download failed.' }
 
     [void](Extract-ShipglowsWindowsFiles -ArchivePath $archivePath -DestinationPath $extractRoot -FullMode ($InstallMode -eq 'full'))
@@ -207,7 +217,7 @@ if ($InstallMode -eq 'local') {
 }
 
 if ($InstallMode -eq 'full') {
-    foreach ($required in @('ShipGlows.DevServer.psm1','shipglows-devserver.ps1','install-devserver.ps1')) {
+    foreach ($required in @('ShipGlows.DevServer.psm1','ShipGlows.CodexMcp.psm1','shipglows-devserver.ps1','install-devserver.ps1')) {
         Assert-PowerShellSyntax -Path (Join-Path $windowsDirectory $required)
     }
     Write-Info 'Native Windows DevServer files installed.'
