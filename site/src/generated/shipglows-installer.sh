@@ -140,13 +140,19 @@ else
     fi
 fi
 
-SHIPGLOWS_DIR="${SHIPGLOWS_DIR:-${SHIPGLOWS_DIR:-$INSTALL_HOME/shipglows}}"
-BOOTSTRAP_LOG="${SHIPGLOWS_BOOTSTRAP_LOG:-${SHIPGLOWS_BOOTSTRAP_LOG:-$INSTALL_HOME/shipglows-bootstrap.log}}"
+if [ "${SHIPGLOWS_DIR+x}" = x ]; then
+    SHIPGLOWS_DIR_WAS_EXPLICIT=1
+else
+    SHIPGLOWS_DIR_WAS_EXPLICIT=0
+    SHIPGLOWS_DIR="$INSTALL_HOME/.shipglows/runtime"
+fi
+BOOTSTRAP_LOG="${SHIPGLOWS_BOOTSTRAP_LOG:-$INSTALL_HOME/.shipglows/logs/bootstrap.log}"
 
 prepare_log() {
     mkdir -p "$(dirname "$BOOTSTRAP_LOG")" 2>/dev/null || true
     : > "$BOOTSTRAP_LOG" 2>/dev/null || true
     if [ "$CURRENT_UID" -eq 0 ] && [ "$INSTALL_USER" != root ]; then
+        chown "$INSTALL_USER":"$INSTALL_USER" "$(dirname "$BOOTSTRAP_LOG")" 2>/dev/null || true
         chown "$INSTALL_USER":"$INSTALL_USER" "$BOOTSTRAP_LOG" 2>/dev/null || true
     fi
 }
@@ -176,6 +182,50 @@ as_install_user() {
         fi
     else
         "$@"
+    fi
+}
+
+migrate_legacy_directory() {
+    label=$1
+    legacy_path=$2
+    canonical_path=$3
+
+    [ -e "$legacy_path" ] || return 0
+    if [ -e "$canonical_path" ]; then
+        log "Migration ignorée pour $label: la source et la destination existent déjà."
+        log "Source: $legacy_path"
+        log "Destination: $canonical_path"
+        return 0
+    fi
+
+    log "Migration de $label vers $canonical_path..."
+    run_or_explain "préparation de la destination de $label" as_install_user mkdir -p "$(dirname "$canonical_path")" || return 1
+    run_or_explain "migration de $label" as_install_user mv "$legacy_path" "$canonical_path"
+}
+
+migrate_legacy_shipglows_layout() {
+    legacy_runtime="$INSTALL_HOME/shipglows"
+    legacy_private_root="$INSTALL_HOME/.shipglows/private"
+    legacy_runtime_state="$INSTALL_HOME/.shipglows/runtime"
+    canonical_state="$INSTALL_HOME/.shipglows/state"
+    canonical_data="$INSTALL_HOME/.shipglows/data"
+    canonical_inspiration="$INSTALL_HOME/.shipglows/design-inspiration-library"
+
+    if [ "$SHIPGLOWS_DIR_WAS_EXPLICIT" -eq 0 ]; then
+        if [ -d "$legacy_runtime" ] && [ -d "$legacy_runtime_state/caddy" ] && [ ! -e "$legacy_runtime_state/.git" ]; then
+            migrate_legacy_directory "l'état Caddy ShipGlows" "$legacy_runtime_state/caddy" "$canonical_state/caddy" || return 1
+            rmdir "$legacy_runtime_state" 2>/dev/null || true
+        fi
+        migrate_legacy_directory "l'ancien runtime ShipGlows" "$legacy_runtime" "$SHIPGLOWS_DIR" || return 1
+    fi
+    migrate_legacy_directory "les données privées ShipGlows" "$legacy_private_root/data" "$canonical_data" || return 1
+    migrate_legacy_directory "la bibliothèque d'inspiration" "$legacy_private_root/design-inspiration-library" "$canonical_inspiration" || return 1
+
+    private_config="$INSTALL_HOME/.config/shipglows/private-data.env"
+    if [ -f "$private_config" ]; then
+        run_or_explain "mise à jour du chemin privé configuré" as_install_user sed -i \
+            "s|^SHIPGLOWS_PRIVATE_DATA_DIR=$legacy_private_root/data$|SHIPGLOWS_PRIVATE_DATA_DIR=$canonical_data|" \
+            "$private_config" || return 1
     fi
 }
 
@@ -238,6 +288,7 @@ clone_sparse_surface() {
 }
 
 prepare_log
+migrate_legacy_shipglows_layout || exit 1
 log "Préparation de l'installation ShipGlows..."
 log "Mode d'installation: $INSTALL_MODE"
 log "Surface d'installation: $INSTALL_SURFACE"
