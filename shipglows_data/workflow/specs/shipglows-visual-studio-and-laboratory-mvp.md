@@ -1,13 +1,13 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.1.0"
 project: "shipglows_app"
 created: "2026-08-15"
 created_at: "2026-08-15 19:09:04 UTC"
 updated: "2026-08-16"
-updated_at: "2026-08-16 06:36:00 UTC"
-status: ready
+updated_at: "2026-08-16 07:22:00 UTC"
+status: active
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
 scope: "shipglows-visual-studio-and-laboratory-mvp"
@@ -861,6 +861,7 @@ The approved direction is a dedicated self-hosted Linux OCI worker using contain
 | 2026-08-15 19:09:04 | 100-sg-spec | GPT-5 Codex | Converted the approved Studio/Laboratory research and operator decisions into one autonomous implementation contract. | Draft spec created; no implementation or readiness claim. | Run readiness review. |
 | 2026-08-15 19:59:49 | 101-sg-ready | GPT-5 Codex | Challenged browser feasibility, runtime isolation, security mapping, Atlas order, performance proof, retries, and implementation batching. | Not ready: the contract was strengthened, but no approved sandbox can safely execute agent-generated worktree code. | Choose the sandbox direction, update the provider contract, and rerun readiness. |
 | 2026-08-16 06:36:00 | 101-sg-ready | GPT-5 Codex | Applied the approved self-hosted OCI direction, specified the dedicated worker and two-phase gVisor boundary, and reran adversarial readiness. | Ready: a fresh implementation agent has bounded architecture, tasks, stop gates, and proof without needing the conversation; implementation and runtime proof remain pending. | Start Batch A through the governed implementation lifecycle. |
+| 2026-08-16 07:22:00 | sg-development | GPT-5 Codex | Implemented the local Task 1 contract foundation: Atlas v2, Flutter domain state/profile negotiation, runner closed contracts, and fail-closed preview-provider port. | Focused Flutter and runner tests pass; no UI, route, preview launcher, OCI worker, generated execution, or availability claim exists. | Continue Batch A with the separately isolated Linux worker and hostile sandbox proof. |
 
 # Current Chantier Flow
 
@@ -868,9 +869,9 @@ The approved direction is a dedicated self-hosted Linux OCI worker using contain
 | --- | --- | --- |
 | Specification | completed | Durable implementation contract with confirmed product and self-hosted OCI worker decisions |
 | Readiness | ready | Browser/Astro path, worker isolation, security, proof, tasks, stop gates, and consequences are implementation-autonomous |
-| Implementation | pending | Authorized only through a separately approved implementation chantier beginning with Batch A |
+| Implementation | in_progress | Task 1 local contract foundation implemented and locally checked; the isolated Linux worker and hostile sandbox proof remain pending in Batch A |
 | Verification | pending | Requires real Astro preview/Lab/compile evidence |
 | Closure | pending | Requires implementation and independent proof |
 | Shipping | pending | No public delivery or capability claim authorized |
 
-Current next action: start Batch A through the governed implementation lifecycle. Readiness does not provision the worker, implement the feature, authorize external infrastructure changes, or make any availability claim.
+Current next action: continue Batch A with the dedicated Linux OCI worker and hostile sandbox proof. The local contract foundation does not provision the worker, expose a Studio UI or route, execute generated code, or make any availability claim.

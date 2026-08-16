@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.2.0"
+artifact_version: "1.3.0"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-08-11"
+updated: "2026-08-16"
 status: active
 source_skill: 300-sg-docs
 scope: "code-docs-map"
@@ -20,6 +20,7 @@ linked_systems:
   - "shipglows_data/workflow/specs/"
 depends_on: []
 supersedes:
+  - "shipglows_data/technical/code-docs-map.md@1.2.0"
   - "shipglows_data/technical/code-docs-map.md@1.1.0"
 evidence:
   - "app/lib/main.dart has one product entrypoint: ShipGlowsApp."
@@ -56,6 +57,8 @@ This map links current ShipGlows code areas to their primary technical documenta
 | `app/lib/shipglows/data/managed_runner_api.dart` + Cockpit/conversation/Workspace providers, screens, widgets, and matching tests | Typed server-first Cockpit, normalized semantic conversations with audit/fix controls, and a separate authorized operator Workspace; explicit local-only, empty, stale, access-lost, session-expired, reconnect, and error states | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md` | `cd app && flutter analyze && flutter test` | Any runner API path, Cockpit projection, conversation event/action, approval UX, auth-token attachment, SSE/WebSocket behavior, project identity mapping, or interactive terminal rendering change |
 | `app/lib/data/shipglows_sources/` | Active Markdown/source readers | `shipglows_data/technical/markdown-source-of-truth.md` | `flutter test app/test/data/shipglows_sources` | Any parser, allowlist, diagnostics, source file rule, or operational record grammar change |
 | `app/lib/domain/project_health/` | Active project health model | `shipglows_data/technical/markdown-source-of-truth.md` | `flutter test app/test/domain/project_health` | Any project posture, next-command, or health scoring change |
+| `app/lib/domain/studio/` + `app/test/domain/studio/` | Target-neutral Studio state, limits and trusted-profile negotiation; no visual screen or source mutation yet | `shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md` | `cd app && flutter test test/domain/studio/studio_contracts_test.dart` | Any Studio state, capability, limit, profile or client-domain contract change |
+| `runner/src/studio/` + `runner/test/studio/` | Closed Studio wire contracts and fail-closed preview-provider lifecycle port; no runtime launcher or HTTP route yet | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md` | `cd runner && node --import tsx --test test/studio/*.test.ts && npm run typecheck && npx eslint src/studio test/studio` | Any Studio schema, state, target profile, provider admission, lifecycle or isolation rule change |
 | `runner/src/` + `runner/test/` + `runner/scripts/` | Managed TypeScript control plane, including JWKS auth, project authorization, runtime/repository orchestration, versioned skill/context provenance, durable projections, the authoritative five-dimensional health evaluator, closed liveness/authenticated diagnostics, online SQLite backup, semantic HTTP/SSE, and the separate short-lived operator gateway with fixed allowlisted tmux PTY, bounded WebSocket frames, owner-only closure and real Codex smoke | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/technical/operator-guides/managed-agent-runner.md` | `cd runner && npm test && npm run typecheck && npm run lint && npm run audit && npm run smoke:operator-workspace` | Any runtime adapter, API/event schema, diagnostic/build identity, backup/recovery procedure, skill/context contract, health evidence/projection rule, identity-directory binding, auth/access rule, GitHub App policy, PTY/operator-session capability, persistence, secret/redaction, or execution-provider change |
 | Operator Workspace deployment and recovery | Server-only allowlist, loopback deployment, HTTPS/WebSocket publication, actor/project provisioning, smoke proof, reconnect and recovery | `shipglows_data/technical/operator-guides/operator-workspace.md` | `cd runner && npm run smoke:operator-workspace` plus hosted authenticated browser proof | Any Workspace environment variable, reverse-proxy route, capability lifetime, identity provisioning, reconnect, Neovim, platform proof, or incident procedure change |
 | `/home/claude/shipglowz/tui` | ShipGlows-owned terminal dashboard (Bun/OpenTUI), read-only V1 | `/home/claude/shipglowz/shipglows_data/technical/terminal-tui.md` | `cd /home/claude/shipglowz/tui && bun run typecheck && bun test` | Any source policy, reader/parser, operational record grammar, view-model, OpenTUI lifecycle, or keyboard navigation change |

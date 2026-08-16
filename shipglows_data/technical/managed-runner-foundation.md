@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.8.0"
+artifact_version: "2.9.0"
 project: "shipglows_app"
 created: "2026-08-01"
-updated: "2026-08-11"
+updated: "2026-08-16"
 status: draft
 source_skill: "102-sg-start"
 scope: "managed-runner-foundation"
@@ -44,6 +44,8 @@ linked_systems:
   - "runner/src/github/index.ts"
   - "runner/src/workspaces/index.ts"
   - "runner/src/operator-workspace/index.ts"
+  - "runner/src/studio/contracts.ts"
+  - "runner/src/studio/previewRuntimeProvider.ts"
   - "runner/scripts/operator-workspace-smoke.ts"
   - "app/lib/shipglows/presentation/screens/operator_workspace_screen.dart"
   - "app/lib/shipglows/providers/managed_workspace_provider.dart"
@@ -56,6 +58,7 @@ depends_on:
     artifact_version: "1.21.0"
     required_status: "ready"
 supersedes:
+  - "shipglows_data/technical/managed-runner-foundation.md@2.8.0"
   - "shipglows_data/technical/managed-runner-foundation.md@2.7.0"
 evidence:
   - "Managed Agent Cockpit MVP Tasks 1-3 foundation implementation"
@@ -94,9 +97,16 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `runner/src/github/**`
 - `runner/src/workspaces/**`
 - `runner/src/operator-workspace/**`
+- `runner/src/studio/**`
 - `runner/scripts/operator-workspace-smoke.ts`
 - `runner/scripts/backup-operational-store.ts`
 - `runner/test/**`
+
+## Studio Contract Foundation
+
+The runner now owns a versioned, target-neutral Studio contract vocabulary and a separate `PreviewRuntimeProvider` lifecycle port. Target negotiation admits only an exact trusted first-party profile and requested capability subset. Provider admission denies generated previews unless the provider explicitly proves that capability and denies all preview starts when outbound-network denial is absent.
+
+This is a local contract foundation only: no Studio HTTP route, preview process, OCI worker, generated-code execution, Flutter editor, or product availability exists yet. Those boundaries remain disabled until their later implementation and independent isolation proof.
 
 ## Entrypoints
 

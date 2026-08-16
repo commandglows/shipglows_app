@@ -1,10 +1,10 @@
 ---
 artifact: technical_architecture
 metadata_schema_version: "1.0"
-artifact_version: "2.1.0"
+artifact_version: "2.2.0"
 project: "shipglows_app"
 created: "2026-04-26"
-updated: "2026-08-03"
+updated: "2026-08-16"
 status: reviewed
 source_skill: 300-sg-docs
 scope: architecture
@@ -15,7 +15,9 @@ security_impact: yes
 docs_impact: yes
 linked_systems:
   - "app/lib/shipglows/"
+  - "app/lib/domain/studio/"
   - "runner/src/"
+  - "runner/src/studio/"
   - "shipglows_data/technical/managed-runner-foundation.md"
 depends_on:
   - artifact: "shipglows_data/technical/context.md"
@@ -25,6 +27,7 @@ depends_on:
     artifact_version: "1.4.0"
     required_status: ready
 supersedes:
+  - "shipglows_data/technical/architecture.md@2.1.0"
   - "shipglows_data/workflow/archives/contentflow-governance/architecture.md"
 evidence:
   - "Implemented runner contracts, Flutter managed surfaces, and current ready specification."
@@ -78,6 +81,8 @@ The runner is the authority for:
 ## Runtime Neutrality
 
 `AgentRuntime` owns sessions, turns, interruption, approvals, normalized events, and capabilities. Codex app-server is an adapter, not the public API. Unsupported capabilities fail explicitly and do not silently select another runtime.
+
+Studio follows the same separation. Flutter and the runner share a versioned semantic vocabulary, while the runner owns exact target-profile admission and the preview-runtime provider port. The current foundation deliberately exposes no editor route and launches no target code; generated and customer-controlled work remain unavailable until a separate isolated provider is proved.
 
 ## Repository Safety
 
