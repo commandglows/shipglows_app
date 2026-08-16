@@ -28,7 +28,7 @@
   },
   "offlineCache": {
     "fixtureLockPath": "runner/test/fixtures/linux-compilation/astro-web/pnpm-lock.yaml",
-    "fixtureLockSha256": "c0c903df0e56b43623872733e03cc173359813e70a412915a9bfc0e4a1885135",
+    "fixtureLockSha256": "b0a3db4df2755bbf908a769aa51aec8120c1857c68dc24bd550474f7f6dc6d46",
     "contentDigest": null,
     "networkAtRuntime": "deny_all",
     "cacheMissBehavior": "fail_closed"
