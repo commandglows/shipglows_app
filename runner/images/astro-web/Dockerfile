@@ -12,7 +12,7 @@ ENV CI=1 \
     TZ=UTC \
     npm_config_store_dir=/opt/shipglows/pnpm-store
 
-ADD --checksum=sha256:1ca946f0b4d0cd1a81c18d406e0e2cdd0b4748721df750d851256eadc371e14f \
+ADD --checksum=sha256:772f8e00f719afbbe22502717cf974578804630d02e757eb3debbc08a0f8f83a \
     https://registry.npmjs.org/pnpm/-/pnpm-11.15.0.tgz /tmp/pnpm-11.15.0.tgz
 
 RUN npm install --global --ignore-scripts /tmp/pnpm-11.15.0.tgz \

@@ -66,7 +66,7 @@ jobs:
           version: v0.36.1
           install: true
 
-      - name: Build one attested OCI archive
+      - name: Build one attested OCI layout
         id: build
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
@@ -80,36 +80,37 @@ jobs:
             SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
           sbom: true
           provenance: mode=max
-          outputs: type=oci,dest=${{ runner.temp }}/shipglows-${{ matrix.target }}-${{ github.sha }}.tar,oci-mediatypes=true,compression=zstd,compression-level=3,force-compression=true,rewrite-timestamp=true
+          outputs: type=oci,dest=${{ runner.temp }}/shipglows-${{ matrix.target }}-${{ github.sha }}-oci,tar=false,oci-mediatypes=true,compression=zstd,compression-level=3,force-compression=true,rewrite-timestamp=true
 
-      - name: Bind archive, digest, platform, SBOM and provenance
+      - name: Bind layout, digest, platform, SBOM and provenance
         id: artifact
         shell: bash
         env:
           BUILDX_DIGEST: ${{ steps.build.outputs.digest }}
-          OCI_ARCHIVE: ${{ runner.temp }}/shipglows-${{ matrix.target }}-${{ github.sha }}.tar
+          OCI_LAYOUT: ${{ runner.temp }}/shipglows-${{ matrix.target }}-${{ github.sha }}-oci
         run: |
           set -euo pipefail
-          test -s "$OCI_ARCHIVE"
-          tar -xOf "$OCI_ARCHIVE" index.json > evidence/index-${{ matrix.target }}.json
+          test -s "$OCI_LAYOUT/index.json"
+          cp "$OCI_LAYOUT/index.json" evidence/index-${{ matrix.target }}.json
           root_digest="$(jq -er 'if (.manifests | length) == 1 then .manifests[0].digest else error("expected one OCI root descriptor") end' evidence/index-${{ matrix.target }}.json)"
           [[ "$root_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
           test "$root_digest" = "$BUILDX_DIGEST"
           root_hex="${root_digest#sha256:}"
-          tar -xOf "$OCI_ARCHIVE" "blobs/sha256/$root_hex" > evidence/root-manifest-${{ matrix.target }}.json
+          cp "$OCI_LAYOUT/blobs/sha256/$root_hex" evidence/root-manifest-${{ matrix.target }}.json
           test "$(sha256sum evidence/root-manifest-${{ matrix.target }}.json | cut -d' ' -f1)" = "$root_hex"
           jq -e '[.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64")] | length == 1' evidence/root-manifest-${{ matrix.target }}.json >/dev/null
           jq -e '[.manifests[] | select(.annotations["vnd.docker.reference.type"] == "attestation-manifest")] | length >= 1' evidence/root-manifest-${{ matrix.target }}.json >/dev/null
-          archive_sha256="$(sha256sum "$OCI_ARCHIVE" | cut -d' ' -f1)"
-          echo "archive=$OCI_ARCHIVE" >> "$GITHUB_OUTPUT"
-          echo "archive_sha256=$archive_sha256" >> "$GITHUB_OUTPUT"
+          layout_sha256="$(cd "$OCI_LAYOUT" && find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)"
+          echo "layout=$OCI_LAYOUT" >> "$GITHUB_OUTPUT"
+          echo "layout_sha256=$layout_sha256" >> "$GITHUB_OUTPUT"
           echo "root_digest=$root_digest" >> "$GITHUB_OUTPUT"
+          echo "scan_ref=$OCI_LAYOUT@$root_digest" >> "$GITHUB_OUTPUT"
 
-      - name: Scan exact OCI archive before registry access
+      - name: Scan exact OCI layout digest before registry access
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           version: v0.74.0
-          input: ${{ steps.artifact.outputs.archive }}
+          input: ${{ steps.artifact.outputs.scan_ref }}
           format: json
           output: evidence/trivy-${{ matrix.target }}.json
           scanners: vuln,secret,misconfig
@@ -122,7 +123,7 @@ jobs:
       - name: Bind successful scan to the OCI digest
         shell: bash
         env:
-          ARCHIVE_SHA256: ${{ steps.artifact.outputs.archive_sha256 }}
+          LAYOUT_SHA256: ${{ steps.artifact.outputs.layout_sha256 }}
           ROOT_DIGEST: ${{ steps.artifact.outputs.root_digest }}
         run: |
           set -euo pipefail
@@ -130,10 +131,10 @@ jobs:
           jq -e '.SchemaVersion >= 2 and (.Results | type == "array")' "evidence/trivy-${{ matrix.target }}.json" >/dev/null
           scan_sha256="$(sha256sum evidence/trivy-${{ matrix.target }}.json | cut -d' ' -f1)"
           jq -n \
-            --arg archiveSha256 "$ARCHIVE_SHA256" \
+            --arg layoutSha256 "$LAYOUT_SHA256" \
             --arg rootDigest "$ROOT_DIGEST" \
             --arg scanSha256 "$scan_sha256" \
-            '{schemaVersion:"shipglows-vcr-scan-binding-v1",archiveSha256:$archiveSha256,rootDigest:$rootDigest,scanEngine:"trivy-v0.74.0",scanResultSha256:$scanSha256,result:"high-critical-zero"}' \
+            '{schemaVersion:"shipglows-vcr-scan-binding-v1",layoutSha256:$layoutSha256,rootDigest:$rootDigest,scanEngine:"trivy-v0.74.0",scanResultSha256:$scanSha256,result:"high-critical-zero"}' \
             > "evidence/scan-binding-${{ matrix.target }}.json"
 
       - name: Set up pinned ORAS
@@ -167,11 +168,11 @@ jobs:
         shell: bash
         env:
           IMAGE_REF: ${{ steps.destination.outputs.image_ref }}
-          OCI_ARCHIVE: ${{ steps.artifact.outputs.archive }}
+          OCI_LAYOUT: ${{ steps.artifact.outputs.layout }}
           ROOT_DIGEST: ${{ steps.artifact.outputs.root_digest }}
         run: |
           set -euo pipefail
-          oras cp --from-oci-layout "$OCI_ARCHIVE@$ROOT_DIGEST" "$IMAGE_REF"
+          oras cp --from-oci-layout "$OCI_LAYOUT@$ROOT_DIGEST" "$IMAGE_REF"
           remote_digest="$(oras resolve "$IMAGE_REF")"
           test "$remote_digest" = "$ROOT_DIGEST"
           oras manifest fetch --output "evidence/remote-root-manifest-${{ matrix.target }}.json" "$IMAGE_REF@$ROOT_DIGEST"
@@ -184,7 +185,7 @@ jobs:
         env:
           IMAGE_REF: ${{ steps.destination.outputs.image_ref }}
           IMAGE_DIGEST: ${{ steps.push.outputs.digest }}
-          ARCHIVE_SHA256: ${{ steps.artifact.outputs.archive_sha256 }}
+          LAYOUT_SHA256: ${{ steps.artifact.outputs.layout_sha256 }}
         run: |
           set -euo pipefail
           [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
@@ -192,9 +193,9 @@ jobs:
             --arg target "${{ matrix.target }}" \
             --arg image "$IMAGE_REF" \
             --arg digest "$IMAGE_DIGEST" \
-            --arg archiveSha256 "$ARCHIVE_SHA256" \
+            --arg layoutSha256 "$LAYOUT_SHA256" \
             --arg source "$GITHUB_SHA" \
-            '{schemaVersion:"shipglows-vcr-build-proof-v1",target:$target,image:$image,digest:$digest,archiveSha256:$archiveSha256,sourceRevision:$source,platform:"linux/amd64",compression:"zstd",sbom:true,provenance:"mode=max",scan:"trivy-high-critical-zero",transport:"oras-copy-no-rebuild"}' \
+            '{schemaVersion:"shipglows-vcr-build-proof-v1",target:$target,image:$image,digest:$digest,layoutSha256:$layoutSha256,sourceRevision:$source,platform:"linux/amd64",compression:"zstd",sbom:true,provenance:"mode=max",scan:"trivy-high-critical-zero",transport:"oras-copy-no-rebuild"}' \
             > "evidence/proof-${{ matrix.target }}.json"
           echo "digest=$IMAGE_DIGEST" >> "$GITHUB_OUTPUT"
           {
