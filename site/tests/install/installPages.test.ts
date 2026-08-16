@@ -38,6 +38,8 @@ describe("public installer pages", () => {
       "Firebase Device Streaming",
       "hardware acceleration",
       "exact next action",
+      "shared live tool context",
+      "existing agent instructions are preserved",
     ]) {
       expect(english).toContain(marker);
     }
@@ -48,6 +50,8 @@ describe("public installer pages", () => {
       "Firebase Device Streaming",
       "accélération matérielle",
       "prochaine action exacte",
+      "contexte d’outils vivant partagé",
+      "instructions existantes des agents sont préservées",
     ]) {
       expect(french).toContain(marker);
     }
