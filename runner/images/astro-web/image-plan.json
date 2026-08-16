@@ -6,9 +6,9 @@
   "visibility": "private",
   "platform": "linux/amd64",
   "baseImage": {
-    "family": "node-24.19.0-bookworm-slim",
-    "reference": "node:24.19.0-bookworm-slim",
-    "digest": "sha256:65932751ed4073ed02f5c04e494e4b2572a891b7dbea0568a863dc80341bf848"
+    "family": "node-24.19.0-trixie-slim",
+    "reference": "node:24.19.0-trixie-slim",
+    "digest": "sha256:0711b541c1c33a8a530ac4f0d391baa9a15b3d804695b1b24a47daa5fb60e74d"
   },
   "finalImage": {
     "repository": null,
