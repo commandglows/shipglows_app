@@ -65,7 +65,7 @@ installPages.shipglows.en.installed.splice(
 );
 installPages.shipglows.en.installed[5] += " with shared live tool context";
 installPages.shipglows.en.limits[3] =
-  "Large tools and missing agents require confirmation; existing agent instructions are preserved, and ShipGlows never authenticates GitHub, Clerk, coding agents, Firebase or Convex, runs clerk init, or enables Developer Mode itself";
+  "Large tools and missing agents require confirmation; existing agent instructions are preserved, and ShipGlows offers a redacted authentication menu that launches official interactive CLI flows without collecting credentials, never runs clerk init, and never enables Developer Mode itself";
 installPages.shipglows.fr.installed[3] =
   "une proposition groupée des CLIs Codex, Claude, OpenCode, Kilo et Gemini manquants, puis les outils Firebase, FlutterFire, Convex, Vercel, Supabase et Clerk en versions exactes lorsqu’ils sont détectés";
 installPages.shipglows.fr.installed.splice(
@@ -75,4 +75,4 @@ installPages.shipglows.fr.installed.splice(
 );
 installPages.shipglows.fr.installed[5] += " avec un contexte d’outils vivant partagé";
 installPages.shipglows.fr.limits[3] =
-  "Les outils volumineux et agents manquants demandent confirmation ; les instructions existantes des agents sont préservées et ShipGlows n’authentifie ni GitHub, ni Clerk, ni les agents, ni Firebase ou Convex, ne lance pas clerk init et n’active jamais lui-même Developer Mode";
+  "Les outils volumineux et agents manquants demandent confirmation ; les instructions existantes des agents sont préservées et ShipGlows propose un menu d’authentification expurgé qui lance les flux interactifs officiels des CLIs sans collecter d’identifiants, ne lance pas clerk init et n’active jamais lui-même Developer Mode";

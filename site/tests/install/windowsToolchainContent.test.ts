@@ -20,12 +20,16 @@ describe("Windows toolchain public surfaces", () => {
     expect(english).toContain("Flutter for web, Android, and Windows");
     expect(english).toContain("Codex, Claude, OpenCode, Kilo, and Gemini");
     expect(english).toContain("Dart, Playwright, Firebase, Convex, and Clerk MCP readiness");
+    expect(english).toContain("s a");
+    expect(english).toContain("Exact managed Playwright and Chromium revisions");
     expect(english).toContain("official read-only GitHub MCP");
     expect(english).toContain("$shipglows context");
     expect(french).toContain("environnement de développement Windows complet");
     expect(french).toContain("Flutter pour le Web, Android et Windows");
     expect(french).toContain("Codex, Claude, OpenCode, Kilo et Gemini");
     expect(french).toContain("MCP Dart, Playwright, Firebase, Convex et Clerk");
+    expect(french).toContain("s a");
+    expect(french).toContain("révisions exactes");
     expect(french).toContain("MCP GitHub officiel en lecture seule");
     expect(french).toContain("$shipglows context");
   });
@@ -37,6 +41,7 @@ describe("Windows toolchain public surfaces", () => {
     );
     expect(installer).toContain("Flutter for web, Android, and Windows");
     expect(installer).toContain("ShipGlows.AgentInstructions.psm1");
-    expect(installer).toContain("$entries.Count -ne 6");
+    expect(installer).toContain("ShipGlows.Auth.psm1");
+    expect(installer).toContain("$entries.Count -ne 7");
   });
 });
