@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "3.1.1"
+artifact_version: "3.2.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-16"
@@ -50,6 +50,10 @@ linked_systems:
   - "runner/src/studio/routes.ts"
   - "runner/src/studio/session.ts"
   - "runner/src/studio/workerProvider.ts"
+  - "runner/src/studio/providers/managedSandbox.ts"
+  - "runner/src/studio/providers/attestation.ts"
+  - "runner/src/studio/providers/evidenceVerifier.ts"
+  - "runner/src/studio/providers/vercelSandboxProvider.ts"
   - "runner/scripts/operator-workspace-smoke.ts"
   - "app/lib/shipglows/presentation/screens/operator_workspace_screen.dart"
   - "app/lib/shipglows/providers/managed_workspace_provider.dart"
@@ -57,11 +61,13 @@ linked_systems:
   - "Flutter Web"
   - "OpenAI Codex app-server"
   - "eve"
+  - "shipglows_data/technical/platforms/vercel.md"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
     artifact_version: "1.21.0"
     required_status: "ready"
 supersedes:
+  - "shipglows_data/technical/managed-runner-foundation.md@3.1.1"
   - "shipglows_data/technical/managed-runner-foundation.md@3.1.0"
   - "shipglows_data/technical/managed-runner-foundation.md@3.0.0"
   - "shipglows_data/technical/managed-runner-foundation.md@2.8.0"
@@ -77,8 +83,10 @@ evidence:
   - "Final runner Studio proof on 2026-08-16: 35/35 focused tests, TypeScript typecheck, and full lint pass; no OCI worker was provisioned or invoked."
   - "Final cross-surface proof on 2026-08-16: site 13/13 with check/build/exclusion and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
   - "Five focused defects are closed: exact handshake validation, loop/revision ordering, atomic idempotency, distinct 256 KiB total-message and 16 KiB command limits, and late provider cleanup after timeout."
+  - "Provider-neutral managed-sandbox admission and account-free injected Vercel adapter conformance passed independent verification on 2026-08-16: 48/48 focused tests, 73/73 full Studio tests, typecheck, lint, diff check, and zero high-severity findings in the offline dependency audit."
+  - "No Vercel SDK/package, account, credential, provider/network call, production wiring, generated execution, preview, persistence, artifact export, or availability proof exists."
 next_review: "2026-08-30"
-next_step: "Provision and prove the dedicated Linux OCI worker, and retain fail-closed compile admission until that evidence exists."
+next_step: "Obtain separate credential and cost approval for inert real-provider admission/probe/release proof; retain fail-closed compile admission until that evidence exists."
 ---
 
 # Managed Runner Foundation
@@ -121,7 +129,9 @@ Authenticated project-mutation routes now create actor/tenant/project-scoped eph
 
 Session creation idempotency is serialized and replayed atomically under concurrency. Studio enforces separate bounds of 16 KiB per semantic command and 256 KiB for the complete bridge message. Preview-start and worker-preflight timeouts attach late cleanup/release handlers so a provider that resolves after the timeout does not leak an admitted resource.
 
-The compile route freezes one accepted variant into an immutable `CompileIntent`, reattests the base identity, and permits only one idempotent attempt. `StudioCompileAdmissionService` validates a dedicated-worker envelope and an exact capability proof for containerd 2.x, gVisor `runsc`/Systrap, non-root/read-only/no-host-mount/no-runtime-socket isolation, phase separation, network policy, immutable image, quotas, lease, and reconciliation. This is a contract/admission implementation only. `main.ts` injects no OCI worker provider, so compile returns bounded `studioCompileUnavailable`/`503`, creates no worktree, invokes no agent, executes no generated code on the host, produces no patch, and reloads no runtime.
+The compile route freezes one accepted variant into an immutable `CompileIntent`, reattests the base identity, and permits only one idempotent attempt. `StudioCompileAdmissionService` now validates a provider-neutral managed-sandbox envelope against immutable policy, image, phase, expiry, resource/cost budgets, and independently verified capability evidence. Provider self-attestation is insufficient: evidence must bind the provider, adapter, account/project/configuration digests, exact scenario, resource identity, budget, observation and expiry before admission. This is an admission implementation only. `main.ts` injects no managed provider, so compile returns bounded `studioCompileUnavailable`/`503`, creates no worktree, invokes no agent, executes no generated code on the host, produces no patch, and reloads no runtime.
+
+The first adapter, `VercelSandboxProvider`, uses an injected narrow client facade and deterministic local fakes. It adds no Vercel SDK/package or import. The adapter starts each allocation non-persistent with zero ports and deny-all networking; generation can move only to one exact HTTPS root broker policy, while verification stays deny-all without a model capability. It enforces complete immutable budgets, atomic lifecycle-call reservations, shared active/pending/quarantine capacity, provider-wide sliding API limits, same-key preflight coalescing, exact evidence/lease correlation, idempotent release, orphan reconciliation, and quarantine on cleanup uncertainty. No command, source transfer, snapshot, provider preview, persistence, or artifact export method is implemented.
 
 Studio is disabled by default. Configuration rejects partial enablement and refuses Studio enablement in production. No customer-controlled preview, hosted end-to-end proof, or public availability claim exists.
 
@@ -200,7 +210,7 @@ Studio is disabled by default. Configuration rejects partial enablement and refu
 - Active runs are admitted through a shared per-tenant limit and released on terminal event, timeout, or startup failure. The configured maximum duration interrupts the selected runtime; a failed interrupt is projected as a bounded failure code.
 - Every admitted execution is manual-only and immutable after persistence. Provider capability or preflight rejection occurs before side effects and cannot silently fall back to another provider or runtime.
 - The optional operator Workspace is a separate capability from semantic Codex conversations. It remains server-owned, tenant/project-scoped, allowlisted, short-lived, and unavailable by default for projects without an explicit server mapping.
-- Studio never starts generated code on the runner host. Missing or incomplete dedicated OCI proof keeps compile unavailable; Windows cannot stand in as gVisor/Systrap evidence.
+- Studio never starts generated code on the runner host. Missing or incomplete independently verified managed-sandbox evidence keeps compile unavailable; a provider name, marketing claim, SDK response, local fake, or self-reported attestation cannot satisfy admission.
 - Studio repository/runtime identity is server-owned. The target site may prove only its public profile, bridge version, and anchors; it cannot choose or attest the Git revision/digest, path, runtime, provider, image, policy, command, prompt, or proof bypass.
 
 ## Validation
@@ -210,7 +220,7 @@ cd runner
 npm test
 npm run typecheck
 npm run lint
-npx tsx --test test/studio/*.test.ts test/contracts/config.test.ts
+npx tsx --test test/studio/*.test.ts
 npm run audit
 rg -n "@clerk/fastify|RUNNER_UNSAFE_SHELL|RUNNER_PUBLIC_APP_SERVER|RUNNER_ALLOW_CLIENT_PATHS|GITHUB_TOKEN" src test package.json
 cd ../app && flutter analyze && flutter test test/shipglows/auth/auth_provider_test.dart
@@ -225,9 +235,9 @@ cd ../app && flutter analyze && flutter test test/shipglows/auth/auth_provider_t
 - Does a new execution provider remain disposable or explicitly operator-persistent?
 - Does the public route schema omit host paths, raw credentials and terminal output?
 - Does the operator Workspace remain fail-closed for missing authorization, allowlist, capability, TLS, or identity provisioning?
-- Does Studio remain disabled in production and unavailable for a dirty repository, identity/runtime mismatch, unsupported capability, expired session, or missing dedicated worker?
-- Does a compile-related change preserve the no-host-execution invariant and require independent Linux OCI proof before enablement?
+- Does Studio remain disabled in production and unavailable for a dirty repository, identity/runtime mismatch, unsupported capability, expired session, or missing independently verified managed provider?
+- Does a compile-related change preserve the no-host-execution invariant, exact evidence binding, complete budget/cost admission, phase separation, and cleanup reservation before allocation?
 
 ## Maintenance Rule
 
-Update this document whenever the runner gains an adapter, route family, auth provider, persistence schema, execution provider, capability rule or public diagnostic surface. Distinguish contract proof, local integration proof, isolated real-server smoke, loopback deployment, hosted authenticated proof, and public availability. Studio currently has local contract/integration proof only; its OCI worker, generated compile, patch/reload evidence, browser visual proof, and hosted journey remain unproven.
+Update this document whenever the runner gains an adapter, route family, auth provider, persistence schema, execution provider, capability rule or public diagnostic surface. Distinguish contract proof, account-free adapter conformance, independently observed real-provider proof, isolated execution proof, hosted authenticated proof, and public availability. Studio currently has provider-neutral contract and local fake-adapter proof only; its Vercel account/configuration, managed-microVM containment, private ingress, effective network/credential policy, quotas/cost, provider cleanup, generated compile, patch/reload evidence, browser visual proof, and hosted journey remain unproven.

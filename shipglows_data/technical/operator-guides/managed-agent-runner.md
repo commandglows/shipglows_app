@@ -1,7 +1,7 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.1.1"
+artifact_version: "1.1.2"
 project: "shipglows_app"
 created: "2026-08-11"
 updated: "2026-08-16"
@@ -21,24 +21,26 @@ linked_systems:
   - "shipglows_data/technical/operator-guides/studio-oci-worker.md"
 depends_on:
   - artifact: "shipglows_data/technical/managed-runner-foundation.md"
-    artifact_version: "3.1.1"
+    artifact_version: "3.2.0"
     required_status: draft
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
     artifact_version: "1.20.0"
     required_status: ready
 supersedes:
+  - "shipglows_data/technical/operator-guides/managed-agent-runner.md@1.1.1"
   - "shipglows_data/technical/operator-guides/managed-agent-runner.md@1.1.0"
   - "shipglows_data/technical/operator-guides/managed-agent-runner.md@1.0.0"
 evidence:
   - "Local liveness, authenticated diagnostic, redaction, SQLite migration, backup and restore tests on 2026-08-11."
   - "Studio-specific enablement, session, compile-admission, and OCI incident rules moved to the dedicated Studio/OCI operations guide on 2026-08-16."
+  - "The Studio operations guide now owns the provider-neutral managed-sandbox direction and account-free Vercel facade; its legacy OCI filename is retained for compatibility only."
 next_review: "2026-08-25"
 next_step: "Add provider-backed error reporting and execute the hosted recovery drill before claiming production readiness."
 ---
 
 # Managed Agent Runner Operations
 
-Studio enablement and compile/worker incidents are governed separately by `shipglows_data/technical/operator-guides/studio-oci-worker.md`. Do not infer Studio or generated-code readiness from general runner liveness, diagnostics, backup, Workspace, or provider health.
+Studio enablement and managed-sandbox incidents are governed separately by `shipglows_data/technical/operator-guides/studio-oci-worker.md`; the legacy filename is retained for compatibility, while its operative content is provider-neutral. Do not infer Studio, Vercel-account, or generated-code readiness from general runner liveness, diagnostics, backup, Workspace, local fake-provider conformance, or unrelated provider health.
 
 ## Safe status checks
 

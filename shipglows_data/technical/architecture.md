@@ -1,7 +1,7 @@
 ---
 artifact: technical_architecture
 metadata_schema_version: "1.0"
-artifact_version: "2.3.0"
+artifact_version: "2.4.0"
 project: "shipglows_app"
 created: "2026-04-26"
 updated: "2026-08-16"
@@ -18,9 +18,11 @@ linked_systems:
   - "app/lib/domain/studio/"
   - "runner/src/"
   - "runner/src/studio/"
+  - "runner/src/studio/providers/vercelSandboxProvider.ts"
   - "site/src/studio/"
   - "site/src/integrations/studioPreview.ts"
   - "shipglows_data/technical/managed-runner-foundation.md"
+  - "shipglows_data/technical/platforms/vercel.md"
 depends_on:
   - artifact: "shipglows_data/technical/context.md"
     artifact_version: "2.1.0"
@@ -29,6 +31,7 @@ depends_on:
     artifact_version: "1.4.0"
     required_status: ready
 supersedes:
+  - "shipglows_data/technical/architecture.md@2.3.0"
   - "shipglows_data/technical/architecture.md@2.2.0"
   - "shipglows_data/technical/architecture.md@2.1.0"
   - "shipglows_data/workflow/archives/contentflow-governance/architecture.md"
@@ -36,8 +39,9 @@ evidence:
   - "Implemented runner contracts, Flutter managed surfaces, and current ready specification."
   - "The trusted Astro hero now exposes eight development-only semantic anchors through an exact-origin bridge; the production build contains no Studio marker."
   - "Flutter has an authenticated runner-gated, read-only Studio route and inspector; local browser proof remains fail-closed until a capability resolver is deployed."
+  - "Provider-neutral managed-sandbox admission plus an account-free injected Vercel facade passed independent local verification on 2026-08-16; no SDK, provider call, production wiring, execution, preview, persistence, export, or availability proof exists."
 next_review: "2026-09-03"
-next_step: "Publish the existing OperatorSession gateway through authenticated HTTPS and prove browser reconnect."
+next_step: "Obtain separate credential and cost approval for inert real-provider admission/probe/release proof before wiring Studio compilation."
 ---
 
 # Architecture
@@ -82,12 +86,21 @@ The runner is the authority for:
 - redacted event persistence and health projections;
 - project/actor-scoped operator capability issuance and owner-only session closure;
 - allowlisted tmux PTY creation, bounded input/resize frames, reconnect, and cleanup.
+- managed-sandbox capability admission, independent evidence validation, resource/cost budgets, lifecycle reservations, release, and reconciliation.
 
 ## Runtime Neutrality
 
 `AgentRuntime` owns sessions, turns, interruption, approvals, normalized events, and capabilities. Codex app-server is an adapter, not the public API. Unsupported capabilities fail explicitly and do not silently select another runtime.
 
-Studio follows the same separation. Flutter and the runner share a versioned semantic vocabulary, while the runner owns exact target-profile admission and the preview-runtime provider port. The first trusted-base slice exposes an authenticated read-only capability route, a Flutter Web preview/inspector shell, and eight development-only semantic anchors over the real Astro hero. The client cannot choose selectors, paths, commands, revisions, or broader capabilities; a missing or mismatched resolver keeps Studio unavailable. Generated and customer-controlled work remain unavailable until a separate isolated provider is proved.
+Studio follows the same separation. Flutter and the runner share a versioned semantic vocabulary, while the runner owns exact target-profile admission, the preview-runtime provider port, and the provider-neutral managed-sandbox boundary. The first trusted-base slice exposes an authenticated read-only capability route, a Flutter Web preview/inspector shell, and eight development-only semantic anchors over the real Astro hero. The client cannot choose selectors, paths, commands, revisions, providers, images, budgets, credentials, or broader capabilities; a missing or mismatched resolver keeps Studio unavailable. Generated and customer-controlled work remain unavailable until a managed provider is independently proved.
+
+## Managed-Sandbox Boundary
+
+The Studio domain admits capability outcomes, not Vercel wire types or a specific hypervisor/container-runtime brand. Admission requires an immutable phase envelope, complete resource and USD spend reservation, exact policy/image identity, expiring lease, and independently verified evidence bound to the provider, adapter, account/project/configuration scope, scenario, resource, budget, observation, and expiry. Provider self-attestation, product documentation, or a successful fake cannot satisfy real admission.
+
+`VercelSandboxProvider` is the first adapter, implemented against an injected narrow facade without a Vercel SDK/package. Account-free conformance proves fail-closed orchestration only: non-persistent zero-port creation, initial deny-all networking, a single exact generation broker rule, verification deny-all, atomic complete lifecycle-call reservations, shared capacity, idempotent release, reconciliation, and quarantine. The composition root does not inject it, and no execution, source transfer, snapshot, preview, persistence, export, provider/network call, credential, or billable action exists.
+
+The former self-hosted containerd/gVisor worker direction was superseded before provisioning. It remains architecture history for future adapter comparison and is not an operative deployment instruction.
 
 ## Studio Trusted-base Preview
 
@@ -119,4 +132,4 @@ cd ../app && flutter analyze && flutter test
 
 ## Maintenance Rule
 
-Update this document when trust boundaries, runtime contracts, data authority, repository mutation policy, supported platforms, or operator-session architecture changes.
+Update this document when trust boundaries, runtime contracts, managed-provider admission/evidence, resource/cost policy, data authority, repository mutation policy, supported platforms, or operator-session architecture changes. Do not represent local fake-provider conformance as account, containment, availability, or execution proof.

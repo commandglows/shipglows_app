@@ -1,10 +1,14 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { describe, it } from "node:test";
 
 import { STUDIO_PREVIEW_CAPABILITIES, createTrustedBaseStudioCapability, type StudioCapabilityAdmission, type StudioCapabilityResolver } from "../../src/studio/capability.js";
 import { STUDIO_CONTRACT_VERSION, type StudioCapability, type StudioDimension, type VisualCommand } from "../../src/studio/contracts.js";
 import { StudioSessionError, StudioSessionService } from "../../src/studio/session.js";
-import { REQUIRED_STUDIO_WORKER_CAPABILITIES, StudioCompileAdmissionService, type StudioWorkerProvider } from "../../src/studio/workerProvider.js";
+import { REQUIRED_STUDIO_WORKER_CAPABILITIES, StudioCompileAdmissionService, studioWorkerScenarioDigest, type StudioWorkerProvider } from "../../src/studio/workerProvider.js";
+import { MANAGED_SANDBOX_ATTESTATION_VERSION } from "../../src/studio/providers/attestation.js";
+import { createManagedSandboxEvidenceVerifier } from "../../src/studio/providers/evidenceVerifier.js";
+import { type ManagedSandboxResourceBudget } from "../../src/studio/providers/managedSandbox.js";
 
 const actor = { tenantId: "ten_1", userId: "usr_1", projectId: "shipglows_app" };
 const sourceRevision = "a".repeat(40);
@@ -13,6 +17,12 @@ const projection = createTrustedBaseStudioCapability({ projectId: actor.projectI
 assert.ok(projection);
 const admission: StudioCapabilityAdmission = { projection, adapterVersion: "1.0.0", capabilityVersion: "1.0.0", allowedImpactPaths: ["site/src/components/Hero.astro"], requiredEvidence: ["astro.test"] };
 const resolver: StudioCapabilityResolver = { resolve: () => projection, admit: () => admission };
+const workerBudget: ManagedSandboxResourceBudget = {
+  maxDurationMs: 60_000, maxVcpus: 2, maxMemoryBytes: 512 * 1024 * 1024, maxDiskBytes: 2 * 1024 * 1024 * 1024,
+  maxProcesses: 32, maxOutputBytes: 16 * 1024 * 1024, maxConcurrentAllocations: 1, maxProviderApiCalls: 8,
+  providerApiWindowMs: 60_000, maxTransferBytes: 64 * 1024 * 1024, maxModelTokens: 20_000,
+  spendReservation: { currency: "USD", amountMicros: 250_000, reservationId: "spend_1" },
+};
 
 function ids() { let current = 0; return () => (++current).toString(16).padStart(32, "0"); }
 function command(sessionId: string, revision: number, options: { kind?: StudioCapability; dimensions?: StudioDimension[]; nodes?: string[]; idempotencyKey?: string; compactionKey?: string } = {}): VisualCommand {
@@ -21,7 +31,7 @@ function command(sessionId: string, revision: number, options: { kind?: StudioCa
   return { schemaVersion: STUDIO_CONTRACT_VERSION, commandId: `cmd_${revision}`, sessionId, kind, parameters, affectedRuntimeNodeIds: options.nodes ?? ["hero.root"], affectedDimensions: options.dimensions ?? ["design"], provenance: { actorType: "operator", actorId: "operator" }, revision, idempotencyKey: options.idempotencyKey ?? `idem_${revision}`, previewOnly: true, requiredCapability: kind, requiredUnprotectedDimensions: options.dimensions ?? ["design"], ...(options.compactionKey === undefined ? {} : { compactionKey: options.compactionKey }) };
 }
 
-function worker(): StudioWorkerProvider { return { providerId: "oci", preflight: async (request) => ({ available: true, attestation: { providerId: "oci", workerIdentity: "worker_1", runtimeClass: "io.containerd.runsc.v1", platform: "systrap", imageDigest: request.imageDigest, policyDigest: request.policyDigest, capabilities: [...REQUIRED_STUDIO_WORKER_CAPABILITIES], phase: request.phase, expiresAt: request.expiresAt } }) }; }
+function worker(): StudioWorkerProvider { return { providerId: "fake-managed-sandbox", preflight: async (request) => ({ available: true, attestation: { providerId: "fake-managed-sandbox", workerIdentity: "worker_1", imageDigest: request.imageDigest, policyDigest: request.policyDigest, capabilities: [...REQUIRED_STUDIO_WORKER_CAPABILITIES], phase: request.phase, expiresAt: request.expiresAt, managedSandbox: { version: MANAGED_SANDBOX_ATTESTATION_VERSION, providerId: "fake-managed-sandbox", adapterVersion: "fake-1.0.0", accountScopeDigest: "e".repeat(64), projectScopeDigest: "9".repeat(64), observedResourceIdentityDigest: createHash("sha256").update("worker_1").digest("hex"), configurationDigest: "f".repeat(64), policyDigest: "d".repeat(64), imageDigest: "c".repeat(64), scenarioDigest: studioWorkerScenarioDigest(request), evidenceDigest: "1".repeat(64), proofState: "observed", observedBudget: workerBudget, observedAt: "2026-08-16T08:00:00.000Z", expiresAt: request.expiresAt, controls: { lifecycle: "attested", sourceIn: "unproved", artifactOut: "unproved", network: "attested", credentials: "attested", privateIngress: "unproved", persistence: "attested", snapshots: "unproved", quotas: "attested", cleanup: "attested" }, testedScenarios: ["fakeContract"], invalidationConditions: ["configurationChange"] } } }) }; }
 
 describe("Studio session journal and compile boundary", () => {
   it("creates one session for concurrent idempotent admission and clears failed creation locks", async () => {
@@ -84,7 +94,7 @@ describe("Studio session journal and compile boundary", () => {
 
   it("admits one immutable compile intent under replay and concurrency", async () => {
     const now = new Date("2026-08-16T08:00:00Z");
-    const compile = new StudioCompileAdmissionService(worker(), { imageDigest: `sha256:${"c".repeat(64)}`, policyDigest: "d".repeat(64), maxDurationMs: 60_000, maxMemoryBytes: 512 * 1024 * 1024, maxProcesses: 32 }, () => now);
+    const compile = new StudioCompileAdmissionService(worker(), { imageDigest: `sha256:${"c".repeat(64)}`, policyDigest: "d".repeat(64), resourceBudget: workerBudget }, () => now, { evidenceVerifier: createManagedSandboxEvidenceVerifier({ policy: { providerId: "fake-managed-sandbox", adapterVersion: "fake-1.0.0", accountScopeDigest: "e".repeat(64), projectScopeDigest: "9".repeat(64), configurationDigest: "f".repeat(64), policyDigest: "d".repeat(64), imageDigest: "c".repeat(64), requiredCapabilities: REQUIRED_STUDIO_WORKER_CAPABILITIES, resourceBudget: workerBudget }, authority: { verify: ({ evidence }) => evidence.evidenceDigest === "1".repeat(64) } }) });
     const service = new StudioSessionService(resolver, compile, () => now, ids());
     const created = await service.create(actor, "create_4");
     await service.applyCommand(actor, created.sessionId, command(created.sessionId, 1));

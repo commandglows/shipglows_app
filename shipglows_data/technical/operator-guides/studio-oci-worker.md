@@ -1,13 +1,13 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "0.1.1"
+artifact_version: "0.2.0"
 project: "shipglows_app"
 created: "2026-08-16"
 updated: "2026-08-16"
 status: draft
 source_skill: "sg-docs"
-scope: "studio-oci-worker-operations"
+scope: "studio-managed-sandbox-operations"
 owner: "Diane"
 confidence: high
 risk_level: high
@@ -19,33 +19,44 @@ linked_systems:
   - "runner/src/studio/capability.ts"
   - "runner/src/studio/session.ts"
   - "runner/src/studio/workerProvider.ts"
+  - "runner/src/studio/providers/managedSandbox.ts"
+  - "runner/src/studio/providers/attestation.ts"
+  - "runner/src/studio/providers/evidenceVerifier.ts"
+  - "runner/src/studio/providers/vercelSandboxProvider.ts"
   - "runner/test/studio/"
   - "site/src/studio/"
   - "app/lib/shipglows/providers/studio_provider.dart"
+  - "shipglows_data/technical/platforms/vercel.md"
 depends_on:
   - artifact: "shipglows_data/technical/managed-runner-foundation.md"
-    artifact_version: "3.1.1"
+    artifact_version: "3.2.0"
     required_status: draft
   - artifact: "shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md"
-    artifact_version: "1.3.1"
+    artifact_version: "1.4.1"
     required_status: active
 supersedes:
+  - "shipglows_data/technical/operator-guides/studio-oci-worker.md@0.1.1"
   - "shipglows_data/technical/operator-guides/studio-oci-worker.md@0.1.0"
 evidence:
   - "Final Studio proof on 2026-08-16: site 13/13 with check/build/exclusion, runner 35/35 with typecheck/lint, and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
   - "Five focused defect closures cover exact handshake validation, loop/revision ordering, atomic idempotency, distinct 256 KiB total-message and 16 KiB command limits, and late cleanup/release after provider timeout."
   - "No dedicated Linux OCI worker, immutable worker image, mTLS identity, hosted route, generated compile, patch, reload, or visual evidence has been provisioned or proved."
+  - "The former self-hosted containerd/gVisor direction was superseded before provisioning; its requirements remain historical comparison evidence only."
+  - "Provider-neutral managed-sandbox admission and the account-free injected Vercel facade passed independent local verification on 2026-08-16: 48/48 focused tests, 73/73 full Studio tests, typecheck, lint, diff check, and zero high-severity offline audit findings."
+  - "No Vercel SDK/package, account, credential, provider/network call, production wiring, execution, preview, persistence, export, or availability proof exists."
 next_review: "2026-08-23"
-next_step: "Provision and independently verify the dedicated Linux containerd/gVisor worker before injecting any compile provider."
+next_step: "Obtain separate credential and cost approval for bounded real Vercel admission/probe/release proof before production wiring or compile execution."
 ---
 
-# Studio And OCI Worker Operations
+# Studio Managed-Sandbox Operations
+
+The filename is retained as a compatibility path for existing links. The operative direction in this guide is the provider-neutral managed-sandbox architecture below; self-hosted OCI/containerd/gVisor is superseded historical evidence, not the current implementation instruction.
 
 ## Current operating state
 
-Studio is a local trusted-base implementation, disabled by default and forbidden by configuration in production. The Astro preview, bridge, Flutter session surface, semantic journal, undo/redo, Laboratory policy, variants, repository/runtime attestation, and worker admission contracts have focused local tests.
+Studio is a local trusted-base implementation, disabled by default and forbidden by configuration in production. The Astro preview, bridge, Flutter session surface, semantic journal, undo/redo, Laboratory policy, variants, repository/runtime attestation, provider-neutral admission boundary, and account-free Vercel adapter facade have focused local tests.
 
-Compilation is not operational. The runner composition root injects no `StudioWorkerProvider`; compile requests therefore fail closed with bounded `studioCompileUnavailable`/HTTP `503`. This state must be preserved until a dedicated Linux worker independently proves every required isolation capability. Windows, Docker Desktop, an ordinary container, or a successful TypeScript fake does not prove gVisor `runsc`/Systrap.
+Compilation is not operational. The runner composition root injects no managed-sandbox provider; compile requests therefore fail closed with bounded `studioCompileUnavailable`/HTTP `503`. No Vercel SDK or package is installed, and no account, credential, network, billable, sandbox, or hosted action has occurred. Preserve this state until independently observed real-provider evidence satisfies every required control.
 
 ## Trusted-base enablement gate
 
@@ -77,31 +88,49 @@ Do not enable Studio while the working tree contains implementation or documenta
 
 Flutter and runner now share the closed compile-intent boundary: Flutter sends only `{ "variantId": "..." }` with a stable `Idempotency-Key`, and parses the runner-owned immutable `CompileIntent`. Session creation, commands, undo/redo, and variant operations are synchronized through the same authenticated, tenant/project-scoped routes. Preserve these schemas; do not add client-selected worker, image, path, prompt, runtime, policy, or proof fields.
 
-## Dedicated worker admission gate
+## Managed-sandbox admission gate
 
-Before a real provider can be injected, independent Linux evidence must prove all required properties for the exact provider, runtime class, image digest, and policy digest:
+The domain contract requires capabilities, not a provider-specific hypervisor or container-runtime brand. Before any real provider can be injected, independent evidence must bind one exact provider, adapter version, account/project/configuration, managed resource identity, image digest, policy digest, scenario, resource/cost budget, observation, expiry, tested scenarios, invalidation conditions, and control-state matrix.
 
-- dedicated failure domain using containerd 2.x and gVisor `io.containerd.runsc.v1` with Systrap;
-- non-root process, read-only root filesystem, no host mounts, no container-runtime socket, bounded devices/processes/memory/duration;
-- default-deny networking, with only a single-job model-gateway capability during generation;
-- a separate fresh verification sandbox with no model/provider capability, credential, shared mutable generation volume, or outbound network;
-- immutable signed image/envelope identity, short expiry, single-job scope, expiring lease, idempotent cleanup, startup reconciliation, and quarantine on uncertainty;
-- hostile filesystem, process, socket, device, credential, network, cross-job, quota, timeout, cancellation, and worker-restart fixtures;
-- proof that generated source, install/build hooks, dependencies, and runtime output never execute on the primary runner host.
+Required outcomes include:
 
-Passing provider-interface unit tests is necessary but insufficient. Do not inject a provider merely because its returned attestation object names these capabilities; the deployment and hostile fixtures must independently demonstrate them.
+- one fresh managed-microVM failure domain per job phase, with no runner-host execution or cross-job state;
+- an immutable bounded envelope and complete CPU, memory, disk, process, output, duration, concurrency, API-call/window, transfer, model-token, currency, and spend reservation;
+- generation egress restricted to one brokered model-gateway path without exposing the raw credential in the guest;
+- a separate verification sandbox with no model capability, provider credential, shared mutable generation state, or outbound network;
+- no public provider port/domain before an authenticated private-ingress proof;
+- non-persistence by default, no snapshot reuse, expiring leases, idempotent release, orphan reconciliation, and quarantine on uncertainty;
+- hostile filesystem, process, device/socket, credential, ingress, egress, cross-job, quota, timeout, cancellation, evidence-tampering, and cleanup/restart fixtures;
+- proof that source, generated code, install/build hooks, dependencies, and runtime output never execute on the primary runner host.
+
+Passing local provider-interface tests is necessary but insufficient. A provider name, product page, SDK response, or provider-created attestation cannot verify itself.
+
+## Current Vercel adapter contract
+
+`VercelSandboxProvider` is implemented against an injected narrow client facade and deterministic test doubles. Its local rules are:
+
+- default construction without independently verified evidence remains `unproved` and performs no client call;
+- create requests are non-persistent, open zero ports, and start with deny-all networking;
+- generation may update networking only to one exact HTTPS root broker, then re-inspects the resource; verification remains deny-all;
+- generation atomically reserves seven provider lifecycle calls and verification reserves five before allocation;
+- active, pending, and quarantined resources share the concurrency limit; same-key concurrent preflights coalesce and mismatched replays fail closed;
+- the provider-wide sliding API window includes reconciliation; cleanup slots cannot be consumed by another admission;
+- cleanup uncertainty quarantines the resource and prevents identifier reuse;
+- no command, file transfer, snapshot, provider preview, persistence, patch export, or runtime execution surface exists.
+
+The canonical project-specific state, sources, and future proof route are in `shipglows_data/technical/platforms/vercel.md`.
 
 ## Compile and incident behavior
 
-- Worker unavailable or incompatible: preserve the accepted variant, return bounded unavailable, start nothing, and never fall back to host execution.
+- Provider unconfigured, unproved, unavailable, incompatible, over quota, cost-blocked, or lacking complete lifecycle capacity: preserve the accepted variant, return bounded unavailable, start nothing, and never fall back to host execution.
 - Dirty repository, changed HEAD/tree digest, unhealthy runtime, or bridge mismatch: deny capability/compile and require a new clean, freshly attested session.
-- Expired or reused envelope: deny admission and issue no replacement capability inside the same compile attempt.
+- Expired, reused, mutable, or evidence-mismatched envelope: deny admission and issue no replacement capability inside the same compile attempt.
 - Timeout, cancellation, cleanup uncertainty, or restart: revoke capabilities, quarantine uncertain resources, deny reuse, and retain only bounded operational metadata. Preview-start and worker-preflight promises that resolve after timeout must still run their attached late cleanup/release path.
-- Failed generation or verification after a future worker exists: produce no verified state, commit, push, merge, deploy, or baseline update.
+- Failed generation or verification after a future managed execution slice exists: produce no verified state, commit, push, merge, deploy, or baseline update.
 
 ## Local validation evidence
 
-The following checks describe the current local contract proof, not worker or hosted proof:
+The following checks describe the current local contract proof, not real-provider or hosted proof:
 
 ```bash
 cd site
@@ -114,19 +143,29 @@ flutter analyze
 flutter test test/domain/studio test/shipglows/studio test/shipglows/theme
 
 cd ../runner
-npx tsx --test test/studio/*.test.ts test/contracts/config.test.ts
+npx tsx --test test/studio/workerProvider.test.ts test/studio/managedSandboxAttestation.test.ts test/studio/vercelSandboxProvider.test.ts
+npx tsx --test test/studio/*.test.ts
 npm run typecheck
 npm run lint
+npm audit --audit-level=high --offline
 ```
 
-Evidence recorded on 2026-08-16: site 13/13 with clean check/build and zero production Studio markers; runner Studio 35/35 with clean typecheck/lint; Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format. Focused fixtures close exact handshake validation, loop/revision ordering, atomic idempotency under concurrency, the 256 KiB complete-message/16 KiB command split, and late cleanup/release after provider timeout. Live `127.0.0.1:3003` confirms the exact profile and eight anchors. Live `127.0.0.1:3005` loads the Flutter Studio bundle without browser console warnings, but screenshot and semantics capture are unavailable, so visual/browser composition proof remains absent.
+Evidence recorded on 2026-08-16: site 13/13 with clean check/build and zero production Studio markers; Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format; managed-sandbox focused tests 48/48 and the full runner Studio surface 73/73 with clean typecheck, lint, diff check, and zero high-severity offline dependency-audit findings. The final managed-sandbox fixtures cover independent evidence binding, immutable complete budgets, generation/verification policy separation, atomic lifecycle reservations, shared capacity, concurrent idempotency, sliding API windows, cleanup capacity, quarantine, release, and reconciliation. These are fake-provider proofs only.
 
-The full runner suite reached 144/146; Windows denied the existing symlink fixture with `EPERM` and normalized one worktree fixture to CRLF. The full Flutter suite reached 213 passing tests before eight pre-existing source-reader/indexer and Cockpit-golden failures. The broader site command reached one pre-existing installer-parity failure. None of these failures proves or disproves the OCI worker, and none may be hidden in a readiness report.
+Live `127.0.0.1:3003` confirms the exact profile and eight anchors. Live `127.0.0.1:3005` loads the Flutter Studio bundle without browser console warnings, but screenshot and semantics capture are unavailable, so visual/browser composition proof remains absent.
+
+The earlier broader runner suite reached 144/146; Windows denied the existing symlink fixture with `EPERM` and normalized one worktree fixture to CRLF. The full Flutter suite reached 213 passing tests before eight pre-existing source-reader/indexer and Cockpit-golden failures. The broader site command reached one pre-existing installer-parity failure. None of these failures proves or disproves a real managed provider, and none may be hidden in a readiness report.
 
 ## Availability boundary
 
-Do not describe Studio as hosted, production-ready, publicly available, or capable of compiling to code until all of the following exist: provisioned dedicated-worker proof, generated compile and reviewable patch, isolated runtime reload, viewport/state/accessibility/performance evidence, authenticated hosted browser proof, and an explicit release/editorial decision.
+Do not describe Studio as hosted, production-ready, publicly available, or capable of compiling to code until all of the following exist: independently observed account/project-scoped provider proof, generated compile and reviewable patch, isolated runtime reload, viewport/state/accessibility/performance evidence, authenticated hosted browser proof, and an explicit release/editorial decision.
+
+The next permissible expansion is a separately approved, cost-bounded real-provider admission/probe/release batch. It must not run project or generated code, issue a model call, expose a provider preview, enable persistence, or export a patch. Compile execution/export remains a later approval after that proof.
+
+## Superseded historical direction
+
+The former plan required a ShipGlows-operated Linux worker using containerd 2.x and gVisor `runsc`/Systrap. It was superseded before provisioning and produced no worker, image, mTLS identity, runtime, or hostile-workload evidence. Keep its source references only as architecture history and future provider-comparison material; do not provision or enable it from this guide.
 
 ## Maintenance Rule
 
-Update this guide whenever Studio enablement, identity/digest derivation, session retention/limits, compile schemas, worker runtime/image/policy, network or credential boundaries, leases/cleanup/recovery, hosted routing, or proof status changes.
+Update this guide whenever Studio enablement, identity/digest derivation, session retention/limits, compile schemas, managed-provider adapter/runtime/image/policy, independent evidence, account/project scope, budgets/cost, network or credential boundaries, persistence/snapshots, private ingress, leases/cleanup/recovery, hosted routing, or proof status changes. Keep the compatibility filename until all canonical links can be changed in one approved migration.
