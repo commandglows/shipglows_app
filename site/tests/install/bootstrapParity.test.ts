@@ -7,7 +7,9 @@ const siteRoot = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
 const shipglowsRoot = process.env.SHIPGLOWS_ROOT
   ? resolve(process.env.SHIPGLOWS_ROOT)
   : resolve(siteRoot, "../../shipglows");
-const dotfilesRoot = resolve(siteRoot, "../../dotfiles");
+const dotfilesRoot = process.env.DOTFILES_ROOT
+  ? resolve(process.env.DOTFILES_ROOT)
+  : resolve(siteRoot, "../../dotfiles");
 
 describe("generated installer parity", () => {
   it.each([

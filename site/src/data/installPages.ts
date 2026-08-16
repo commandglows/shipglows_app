@@ -55,3 +55,24 @@ export const installPages: Record<"shipglows" | "dotfiles", Record<Locale, Insta
     fr: { slug: "dotfiles", kicker: "Configuration du poste utilisateur", title: "Installez les dotfiles sans commencer par cloner le dépôt.", description: "Bootstrappez le dépôt Dotfiles canonique pour configurer éditeur, shell et terminal. Windows natif commence par un profil sûr et ciblé.", fitTitle: "Idéal pour", fit: ["postes Linux", "Windows natif sans WSL", "mises à jour reproductibles"], installedTitle: "Installé par le profil", installed: ["Linux : le profil shell et éditeur canonique", "Windows : le checkout public et la configuration WezTerm optionnelle", "configuration terminal sauvegardée avant remplacement"], limitsTitle: "Limite claire", limits: ["Windows ne lance pas l’ancien catalogue complet d’applications", "le profil PowerShell et les secrets privés ne sont jamais modifiés", "le setup système ShipGlows garde son propre installateur"], copyLabel: "Copier la commande", copiedLabel: "Copié", rawLabel: "Ouvrir le script brut", repositoryLabel: "Dépôt Dotfiles", repositoryUrl: "https://github.com/dianedef/dotfiles", rawUrl: "/dotfiles-script", variants: [{ id: "unix-local", platform: "unix", mode: "local", command: dotfiles, note: "Clone ou met à jour ~/dotfiles, puis lance l’installateur canonique.", available: true }, { id: "windows-local", platform: "windows", mode: "local", command: dotfilesWindows, note: "Clone ou met à jour le profil public, puis propose WezTerm. Ni WSL ni modification du profil PowerShell.", available: true }] },
   },
 };
+
+installPages.shipglows.en.installed[3] =
+  "a grouped proposal for missing Codex, Claude, OpenCode, Kilo and Gemini CLIs, plus exact-version Firebase, FlutterFire, Convex, Vercel, Supabase and Clerk tooling when detected";
+installPages.shipglows.en.installed.splice(
+  4,
+  0,
+  "verified Dart, Playwright, Firebase, Convex and Clerk MCP readiness plus official read-only GitHub MCP for installed agents",
+);
+installPages.shipglows.en.installed[5] += " with shared live tool context";
+installPages.shipglows.en.limits[3] =
+  "Large tools and missing agents require confirmation; existing agent instructions are preserved, and ShipGlows never authenticates GitHub, Clerk, coding agents, Firebase or Convex, runs clerk init, or enables Developer Mode itself";
+installPages.shipglows.fr.installed[3] =
+  "une proposition groupée des CLIs Codex, Claude, OpenCode, Kilo et Gemini manquants, puis les outils Firebase, FlutterFire, Convex, Vercel, Supabase et Clerk en versions exactes lorsqu’ils sont détectés";
+installPages.shipglows.fr.installed.splice(
+  4,
+  0,
+  "un état MCP vérifié pour Dart, Playwright, Firebase, Convex et Clerk, plus le MCP GitHub officiel en lecture seule, dans chaque agent installé",
+);
+installPages.shipglows.fr.installed[5] += " avec un contexte d’outils vivant partagé";
+installPages.shipglows.fr.limits[3] =
+  "Les outils volumineux et agents manquants demandent confirmation ; les instructions existantes des agents sont préservées et ShipGlows n’authentifie ni GitHub, ni Clerk, ni les agents, ni Firebase ou Convex, ne lance pas clerk init et n’active jamais lui-même Developer Mode";
