@@ -1,0 +1,22 @@
+{
+  "name": "shipglows-astro-web-compilation-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.19.0"
+  },
+  "packageManager": "pnpm@11.15.0",
+  "dependencies": {
+    "@astrojs/vercel": "^11.0.5",
+    "astro": "^6.4.6"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.2.0",
+    "vitest": "^4.1.10"
+  }
+}

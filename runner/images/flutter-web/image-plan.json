@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "shipglows-toolchain-image-plan-v1",
+  "target": "flutter_web",
+  "status": "build_candidate_unproven",
+  "routable": false,
+  "visibility": "private",
+  "platform": "linux/amd64",
+  "baseImage": {
+    "family": "debian-bookworm-slim",
+    "reference": "debian:bookworm-slim",
+    "digest": "sha256:362e64223cc0da95422b3b13c045186fc0a81250e765d31c025fbddf257f6143"
+  },
+  "finalImage": {
+    "repository": null,
+    "digest": null,
+    "maximumBytes": 16106127360
+  },
+  "toolchain": {
+    "flutterVersion": "3.41.7",
+    "flutterRevision": "cc0734ac716fbb8b90f3f9db8020958b1553afa7",
+    "dartVersion": "3.11.5",
+    "flutterLinuxX64Archive": "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.7-stable.tar.xz",
+    "flutterLinuxX64Sha256": "f344d5057db52abc2a63cd3a7c7370957b7685d1fca5e5fbe2ce4dfe74657a79",
+    "webArtifactsDigest": null,
+    "toolchainDigest": null
+  },
+  "offlineCache": {
+    "fixtureLockPath": "runner/test/fixtures/linux-compilation/flutter-web/pubspec.lock",
+    "fixtureLockSha256": "8caa807432869181a7064683dcf5d28c3199ca34611f8920017bc2878c47146a",
+    "contentDigest": null,
+    "networkAtRuntime": "deny_all",
+    "cacheMissBehavior": "fail_closed"
+  },
+  "execution": {
+    "workingDirectory": "/workspace",
+    "user": "65532:65532",
+    "environment": {
+      "CI": "1",
+      "HOME": "/tmp/shipglows-home",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "PUB_CACHE": "/opt/shipglows/pub-cache",
+      "TZ": "UTC"
+    },
+    "commands": [
+      ["flutter", "pub", "get", "--offline", "--enforce-lockfile"],
+      ["flutter", "build", "web", "--release", "--no-pub"]
+    ],
+    "outputRoot": "build/web",
+    "timeoutMs": 600000,
+    "persistent": false,
+    "ports": 0,
+    "runtimeNetwork": "deny_all",
+    "guestCredentials": false
+  },
+  "attestation": {
+    "sbomDigest": null,
+    "provenanceDigest": null,
+    "vulnerabilityResultDigest": null,
+    "createdAt": null,
+    "retireAt": null
+  },
+  "blockers": [
+    "private_final_repository_unresolved",
+    "final_image_digest_unresolved",
+    "flutter_web_artifacts_unmaterialized",
+    "offline_store_unmaterialized",
+    "sbom_unavailable",
+    "provenance_unavailable",
+    "vulnerability_result_unavailable"
+  ]
+}
