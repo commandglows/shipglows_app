@@ -18,8 +18,12 @@ describe("Windows toolchain public surfaces", () => {
 
     expect(english).toContain("complete Windows development environment");
     expect(english).toContain("Flutter for web, Android, and Windows");
+    expect(english).toContain("Codex, Claude, OpenCode, and Kilo");
+    expect(english).toContain("$shipglows context");
     expect(french).toContain("environnement de développement Windows complet");
     expect(french).toContain("Flutter pour le Web, Android et Windows");
+    expect(french).toContain("Codex, Claude, OpenCode et Kilo");
+    expect(french).toContain("$shipglows context");
   });
 
   it("serves an installer whose introduction names every Flutter target", async () => {
@@ -28,5 +32,7 @@ describe("Windows toolchain public surfaces", () => {
       "utf8",
     );
     expect(installer).toContain("Flutter for web, Android, and Windows");
+    expect(installer).toContain("ShipGlows.AgentInstructions.psm1");
+    expect(installer).toContain("$entries.Count -ne 6");
   });
 });
