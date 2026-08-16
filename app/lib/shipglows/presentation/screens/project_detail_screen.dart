@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/project_health/project_health_models.dart';
+import '../../../presentation/theme/app_theme.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/managed_project_identity_provider.dart';
+import '../../providers/studio_provider.dart';
 import '../widgets/dependency_posture_chip.dart';
 import '../widgets/managed_conversation_panel.dart';
 import '../widgets/shipglows_scaffold.dart';
@@ -102,6 +104,8 @@ class _ServerProjectDetailBody extends StatelessWidget {
         projectName: projectName,
         projectId: runnerProjectId,
       ),
+      SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
+      _StudioButton(projectName: projectName, projectId: runnerProjectId),
     ],
   );
 }
@@ -195,6 +199,11 @@ class _ProjectDetailBody extends StatelessWidget {
         if (runnerProjectId != null) ...[
           const SizedBox(height: 12),
           _OperatorWorkspaceButton(
+            projectName: project.project,
+            projectId: runnerProjectId!,
+          ),
+          SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
+          _StudioButton(
             projectName: project.project,
             projectId: runnerProjectId!,
           ),
@@ -317,6 +326,32 @@ class _OperatorWorkspaceButton extends StatelessWidget {
     icon: const Icon(Icons.desktop_windows_outlined),
     label: const Text('Ouvrir le Workspace opérateur'),
   );
+}
+
+class _StudioButton extends ConsumerWidget {
+  const _StudioButton({required this.projectName, required this.projectId});
+
+  final String projectName;
+  final String projectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final capability = ref.watch(managedStudioCapabilityProvider(projectId));
+    return capability.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (value) => value == null
+          ? const SizedBox.shrink()
+          : FilledButton.icon(
+              onPressed: () => context.push(
+                '/project/${Uri.encodeComponent(projectName)}/studio'
+                '?runnerProjectId=${Uri.encodeComponent(projectId)}',
+              ),
+              icon: const Icon(Icons.auto_awesome_outlined),
+              label: const Text('Ouvrir le Studio'),
+            ),
+    );
+  }
 }
 
 class _DetailStat extends StatelessWidget {

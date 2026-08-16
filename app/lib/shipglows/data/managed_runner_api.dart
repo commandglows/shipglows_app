@@ -6,6 +6,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'cockpit/cockpit_dto_mapper.dart';
 import 'cockpit/cockpit_models.dart';
+import '../../domain/studio/studio_contracts.dart';
 
 typedef ManagedRunnerAccessTokenProvider =
     Future<String?> Function({bool forceRefresh});
@@ -146,6 +147,10 @@ abstract interface class ManagedWorkspaceTransport {
   });
   WebSocketChannel connectOperatorSession(ManagedOperatorSession session);
   Future<void> closeOperatorSession({required String sessionId});
+}
+
+abstract interface class ManagedStudioTransport {
+  Future<StudioPreviewCapability> studioCapability({required String projectId});
 }
 
 class ManagedApprovalResult {
@@ -377,7 +382,8 @@ class ManagedRunnerApi
     implements
         ManagedRunnerClient,
         ManagedRunnerTaskClient,
-        ManagedWorkspaceTransport {
+        ManagedWorkspaceTransport,
+        ManagedStudioTransport {
   ManagedRunnerApi({
     required String baseUrl,
     this.accessTokenProvider,
@@ -398,6 +404,95 @@ class ManagedRunnerApi
 
   final Dio _dio;
   final ManagedRunnerAccessTokenProvider? accessTokenProvider;
+
+  @override
+  Future<StudioPreviewCapability> studioCapability({
+    required String projectId,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/projects/$projectId/studio/capability',
+        options: Options(headers: await _headers()),
+      );
+      final data = response.data;
+      if (data is! Map) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid Studio capability.',
+        );
+      }
+      final json = Map<String, dynamic>.from(data);
+      final origin = Uri.tryParse(json['previewOrigin']?.toString() ?? '');
+      final rawSurfaces = json['surfaces'];
+      final exactProfile =
+          json['supported'] == true &&
+          json['reason'] == 'trustedFirstPartyBase' &&
+          json['contractVersion'] == studioContractVersion &&
+          json['profileId'] == 'shipglows.astro.hero.v1' &&
+          json['bridgeVersion'] == 'shipglows.studio.bridge.v1' &&
+          json['capabilities'] is List &&
+          (json['capabilities'] as List).length == 1 &&
+          (json['capabilities'] as List).single == 'inspect';
+      final exactOrigin =
+          origin != null &&
+          origin.scheme == 'http' &&
+          origin.host == '127.0.0.1' &&
+          origin.port == 3003 &&
+          origin.path.isEmpty &&
+          !origin.hasQuery &&
+          !origin.hasFragment;
+      if (!exactProfile ||
+          !exactOrigin ||
+          rawSurfaces is! List ||
+          rawSurfaces.isEmpty ||
+          rawSurfaces.length > 10) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message:
+              'The managed runner returned an unsupported Studio capability.',
+        );
+      }
+      final surfaces = rawSurfaces
+          .map((raw) {
+            if (raw is! Map || raw.length != 3) {
+              throw const ManagedRunnerException(
+                code: 'invalidResponse',
+                message: 'The Studio surface projection is invalid.',
+              );
+            }
+            final surface = Map<String, dynamic>.from(raw);
+            if (surface['id'] is! String ||
+                surface['label'] is! String ||
+                surface['sourceConfidence'] != 'exact') {
+              throw const ManagedRunnerException(
+                code: 'invalidResponse',
+                message: 'The Studio surface projection is invalid.',
+              );
+            }
+            return StudioSurfaceSummary(
+              id: surface['id'] as String,
+              label: surface['label'] as String,
+              sourceConfidence: surface['sourceConfidence'] as String,
+            );
+          })
+          .toList(growable: false);
+      if (surfaces.map((surface) => surface.id).toSet().length !=
+          surfaces.length) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The Studio surface projection contains duplicate ids.',
+        );
+      }
+      return StudioPreviewCapability(
+        profileId: json['profileId'] as String,
+        bridgeVersion: json['bridgeVersion'] as String,
+        previewOrigin: origin,
+        surfaces: surfaces,
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
 
   @override
   Future<ManagedOperatorSession> createOperatorSession({

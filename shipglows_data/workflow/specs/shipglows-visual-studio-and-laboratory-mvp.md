@@ -1,7 +1,7 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.1.0"
+artifact_version: "1.2.0"
 project: "shipglows_app"
 created: "2026-08-15"
 created_at: "2026-08-15 19:09:04 UTC"
@@ -53,7 +53,7 @@ evidence:
   - "Readiness review corrected the runtime, attachment, ASVS, Atlas, performance, retry, and batching contracts but found no installed or selected sandbox capable of safely executing agent-generated worktree code."
   - "Operator approved a dedicated self-hosted Linux OCI worker as the sandbox direction for generated worktrees."
   - "Architecture review selected a ShipGlows-owned OCI provider contract backed in the MVP by containerd 2.x and gVisor runsc/Systrap, with separate generation and verification sandboxes and no host-process fallback."
-next_step: "Start implementation from Batch A through the governed implementation lifecycle; do not provision or expose the worker outside that approved implementation scope."
+next_step: "Wire the trusted-base capability resolver into an authenticated local runner and prove the embedded Astro selection loop; continue the separate Batch A worker/isolation proof before any generated preview or compile path."
 ---
 
 # Spec: ShipGlows Visual Studio And Laboratory MVP
@@ -163,9 +163,9 @@ Penpot contributes architectural lessons only: stable identities, typed reversib
 - Compact Flutter viewport: session status, variant comparison, approval, failure, and proof review; no precision canvas promise in MVP.
 - Windows, Android, iPhone/iPad, and Flutter-target preview adapters remain compatible future consumers of the same domain contracts, not MVP delivery claims.
 
-## Planned Atlas impact
+## Atlas impact
 
-The project currently has no canonical `approved-surfaces.json`. Implementation must create or refresh the Atlas through its owning workflow before treating these IDs as canonical. Proposed draft IDs, all with `unknown` assessment and no automatic protection, are:
+The canonical `shipglows_data/workflow/atlas/approved-surfaces.json` now maps these Studio IDs and the first implementation paths. All assessments remain `unknown` with no automatic protection:
 
 - surfaces: `project.studio`, `project.studio.preview`, `project.studio.inspector`, `project.studio.laboratory`;
 - functions: `studio.open`, `studio.select-surface`, `studio.preview-command`, `studio.manage-variant`, `studio.compile-variant`, `studio.verify-compile`.
@@ -862,6 +862,7 @@ The approved direction is a dedicated self-hosted Linux OCI worker using contain
 | 2026-08-15 19:59:49 | 101-sg-ready | GPT-5 Codex | Challenged browser feasibility, runtime isolation, security mapping, Atlas order, performance proof, retries, and implementation batching. | Not ready: the contract was strengthened, but no approved sandbox can safely execute agent-generated worktree code. | Choose the sandbox direction, update the provider contract, and rerun readiness. |
 | 2026-08-16 06:36:00 | 101-sg-ready | GPT-5 Codex | Applied the approved self-hosted OCI direction, specified the dedicated worker and two-phase gVisor boundary, and reran adversarial readiness. | Ready: a fresh implementation agent has bounded architecture, tasks, stop gates, and proof without needing the conversation; implementation and runtime proof remain pending. | Start Batch A through the governed implementation lifecycle. |
 | 2026-08-16 07:22:00 | sg-development | GPT-5 Codex | Implemented the local Task 1 contract foundation: Atlas v2, Flutter domain state/profile negotiation, runner closed contracts, and fail-closed preview-provider port. | Focused Flutter and runner tests pass; no UI, route, preview launcher, OCI worker, generated execution, or availability claim exists. | Continue Batch A with the separately isolated Linux worker and hostile sandbox proof. |
+| 2026-08-16 08:14:34 | sg-development | GPT-5 Codex | Implemented the first read-only Astro preview slice: eight development-only hero anchors, exact-origin bridge, authenticated runner capability projection, and Flutter Web preview/inspector shell. | Focused Astro, runner, and Flutter checks pass; production Astro output excludes Studio markers and the live Flutter app remains fail-closed without an authenticated capability resolver. | Wire the resolver into an authenticated local runner and prove real embedded selection; keep preview mutation and generated execution disabled. |
 
 # Current Chantier Flow
 
@@ -869,9 +870,9 @@ The approved direction is a dedicated self-hosted Linux OCI worker using contain
 | --- | --- | --- |
 | Specification | completed | Durable implementation contract with confirmed product and self-hosted OCI worker decisions |
 | Readiness | ready | Browser/Astro path, worker isolation, security, proof, tasks, stop gates, and consequences are implementation-autonomous |
-| Implementation | in_progress | Task 1 local contract foundation implemented and locally checked; the isolated Linux worker and hostile sandbox proof remain pending in Batch A |
+| Implementation | in_progress | Task 1 contracts plus the first inspect-only portions of Tasks 3-4 are locally implemented; authenticated embedded-preview proof, visual commands, Laboratory, and the isolated worker remain pending |
 | Verification | pending | Requires real Astro preview/Lab/compile evidence |
 | Closure | pending | Requires implementation and independent proof |
 | Shipping | pending | No public delivery or capability claim authorized |
 
-Current next action: continue Batch A with the dedicated Linux OCI worker and hostile sandbox proof. The local contract foundation does not provision the worker, expose a Studio UI or route, execute generated code, or make any availability claim.
+Current next action: connect a server-owned resolver for the exact trusted base revision and prove the authenticated Flutter-to-Astro selection loop. In parallel sequencing, Batch A still requires the dedicated Linux OCI worker and hostile sandbox proof before any generated preview or compile path can exist. The current slice is read-only, local, and unavailable by default; it performs no source mutation, generated execution, commit, push, merge, deploy, or public availability claim.

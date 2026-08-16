@@ -245,3 +245,29 @@ class VisualCommand {
     }
   }
 }
+
+class StudioSurfaceSummary {
+  const StudioSurfaceSummary({
+    required this.id,
+    required this.label,
+    required this.sourceConfidence,
+  });
+
+  final String id;
+  final String label;
+  final String sourceConfidence;
+}
+
+class StudioPreviewCapability {
+  const StudioPreviewCapability({
+    required this.profileId,
+    required this.bridgeVersion,
+    required this.previewOrigin,
+    required this.surfaces,
+  });
+
+  final String profileId;
+  final String bridgeVersion;
+  final Uri previewOrigin;
+  final List<StudioSurfaceSummary> surfaces;
+}

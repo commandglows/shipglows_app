@@ -1,7 +1,7 @@
 ---
 artifact: technical_architecture
 metadata_schema_version: "1.0"
-artifact_version: "2.2.0"
+artifact_version: "2.3.0"
 project: "shipglows_app"
 created: "2026-04-26"
 updated: "2026-08-16"
@@ -18,6 +18,8 @@ linked_systems:
   - "app/lib/domain/studio/"
   - "runner/src/"
   - "runner/src/studio/"
+  - "site/src/studio/"
+  - "site/src/integrations/studioPreview.ts"
   - "shipglows_data/technical/managed-runner-foundation.md"
 depends_on:
   - artifact: "shipglows_data/technical/context.md"
@@ -27,10 +29,13 @@ depends_on:
     artifact_version: "1.4.0"
     required_status: ready
 supersedes:
+  - "shipglows_data/technical/architecture.md@2.2.0"
   - "shipglows_data/technical/architecture.md@2.1.0"
   - "shipglows_data/workflow/archives/contentflow-governance/architecture.md"
 evidence:
   - "Implemented runner contracts, Flutter managed surfaces, and current ready specification."
+  - "The trusted Astro hero now exposes eight development-only semantic anchors through an exact-origin bridge; the production build contains no Studio marker."
+  - "Flutter has an authenticated runner-gated, read-only Studio route and inspector; local browser proof remains fail-closed until a capability resolver is deployed."
 next_review: "2026-09-03"
 next_step: "Publish the existing OperatorSession gateway through authenticated HTTPS and prove browser reconnect."
 ---
@@ -82,7 +87,13 @@ The runner is the authority for:
 
 `AgentRuntime` owns sessions, turns, interruption, approvals, normalized events, and capabilities. Codex app-server is an adapter, not the public API. Unsupported capabilities fail explicitly and do not silently select another runtime.
 
-Studio follows the same separation. Flutter and the runner share a versioned semantic vocabulary, while the runner owns exact target-profile admission and the preview-runtime provider port. The current foundation deliberately exposes no editor route and launches no target code; generated and customer-controlled work remain unavailable until a separate isolated provider is proved.
+Studio follows the same separation. Flutter and the runner share a versioned semantic vocabulary, while the runner owns exact target-profile admission and the preview-runtime provider port. The first trusted-base slice exposes an authenticated read-only capability route, a Flutter Web preview/inspector shell, and eight development-only semantic anchors over the real Astro hero. The client cannot choose selectors, paths, commands, revisions, or broader capabilities; a missing or mismatched resolver keeps Studio unavailable. Generated and customer-controlled work remain unavailable until a separate isolated provider is proved.
+
+## Studio Trusted-base Preview
+
+The Astro adapter exists only during `astro dev`. It injects a fixed bridge for the exact Flutter parent origin and emits semantic selection messages from reviewed anchors; Astro production output is scanned to ensure the bridge and anchor markers are absent. Flutter embeds the admitted loopback origin with `HtmlElementView`, a sandboxed iframe, no referrer, exact source/origin/channel checks, and a server-projected anchor allowlist. This slice is inspect-only: it performs no preview mutation, source write, worktree creation, generation, commit, push, merge, or deployment.
+
+The capability route still requires ordinary runner authentication and project-read authorization. Its resolver must bind the exact first-party project, source revision, repository digest, origin, and `inspect` capability. The local browser currently proves the Flutter product remains healthy and fail-closed without that deployment configuration; authenticated embedded-preview proof remains a separate gate.
 
 ## Repository Safety
 

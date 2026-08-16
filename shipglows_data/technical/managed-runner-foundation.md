@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.9.0"
+artifact_version: "3.0.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-16"
@@ -104,14 +104,17 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 
 ## Studio Contract Foundation
 
-The runner now owns a versioned, target-neutral Studio contract vocabulary and a separate `PreviewRuntimeProvider` lifecycle port. Target negotiation admits only an exact trusted first-party profile and requested capability subset. Provider admission denies generated previews unless the provider explicitly proves that capability and denies all preview starts when outbound-network denial is absent.
+The runner owns a versioned, target-neutral Studio contract vocabulary and a separate `PreviewRuntimeProvider` lifecycle port. Target negotiation admits only an exact trusted first-party profile and requested capability subset. Provider admission denies generated previews unless the provider explicitly proves that capability and denies all preview starts when outbound-network denial is absent.
 
-This is a local contract foundation only: no Studio HTTP route, preview process, OCI worker, generated-code execution, Flutter editor, or product availability exists yet. Those boundaries remain disabled until their later implementation and independent isolation proof.
+`GET /v1/projects/:projectId/studio/capability` is now the authenticated discovery boundary for the inspect-only Astro pilot. It requires project read authorization and returns only the exact profile/bridge versions, the admitted loopback preview origin, `inspect`, and eight reviewed semantic surface summaries. The injected resolver must bind the exact project, source revision, repository digest, origin, and capability; absent or mismatched input returns bounded `studioUnavailable` rather than widening or falling back.
+
+This remains a trusted-base local preview slice: the route does not start a process, select a path or command, create a worktree, execute generated code, or enable mutation. No OCI worker or customer-controlled preview is available, and no hosted/end-to-end capability claim exists until the resolver and authenticated deployment path are independently proved.
 
 ## Entrypoints
 
 - `npm start` starts the runner on loopback by default.
 - `GET /v1/version` returns no filesystem paths, credentials or provider configuration. `GET /v1/projects/:projectId/authorization` is a read-only protected-route probe: it proves authentication plus tenant-scoped project membership and returns only the opaque project id and granted read capability.
+- `GET /v1/projects/:projectId/studio/capability` is a read-only authenticated projection. It returns `503 studioUnavailable` unless a server-owned resolver admits the exact trusted Astro base revision and loopback origin.
 - `loadConfig` refuses flags that would expose a public app-server, accept client-selected paths, or enable an unsafe shell.
 - `RUNNER_OPERATOR_WORKSPACES` accepts only a server-owned JSON map from bounded project ids to absolute working directories and bounded tmux names. Neither value is returned to Flutter.
 - `npm run smoke:operator-workspace` creates an isolated real PTY/tmux session, proves resize and input/output with the installed Codex executable, scans the bounded transcript for obvious secret markers, and cleans the temporary tmux session.
@@ -150,6 +153,7 @@ This is a local contract foundation only: no Studio HTTP route, preview process,
 - Semantic conversations map normalized runner events into typed message, tool, plan, approval, progress and result items; assistant deltas coalesce, ANSI/control bytes are removed, cursors remain monotonic, duplicate events are suppressed and retained timelines are bounded. Tabs expose unread state, pause inactive streams, and replace the final closed tab atomically.
 - Conversation controls cover create, message, interrupt, resume, approve, deny, audit and proposed fix. Audit/fix routes use the verified runner payloads and stable idempotency keys. Runtime identity and capability limits appear only when represented by safe typed values; the semantic surface never renders PTY or terminal output.
 - Flutter now exposes a dedicated operator Workspace route from a server-backed project detail. It creates the short-lived session over authenticated HTTP, connects through `web_socket_channel`, renders output and captures keyboard input with `xterm`, forwards bounded resize frames, and closes the session on screen disposal. Unavailable and interrupted states remain explicit; no SSH credential, server path, PTY handle or tmux identifier is presented. Cockpit and semantic Codex conversations remain the normal user surface.
+- Flutter now also exposes a capability-gated Studio route for the trusted Astro base. It parses only the exact inspect-only projection, embeds the admitted origin in a sandboxed Web iframe, accepts selection only from the exact iframe origin/source/channel and server-projected surface IDs, and otherwise remains unavailable. The current slice has no visual command, source write, Laboratory, compile, or runtime-launch path.
 - The composition root now opens the server-owned SQLite projection, optionally enables Firebase ID-token authentication and Codex stdio, and closes the store with the app lifecycle. The protected event route emits a bounded, tenant-scoped SSE replay with cursor resume and heartbeat; `live=true` adds tenant/conversation-scoped in-process fan-out, a 30-second idle bound, and disconnect cleanup.
 - All persisted event, run checkpoint, and idempotency payloads are checked for credentials, cookies, authorization material, clone paths and recognizable token values.
 - Firebase Auth is the identity adapter. The runner verifies an access token with the project's JWKS, accepts only RS256 ID tokens with its expected issuer and audience, then resolves the JWT subject through a tenant membership lookup.

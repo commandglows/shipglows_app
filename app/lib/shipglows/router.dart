@@ -6,6 +6,7 @@ import 'presentation/screens/overview_screen.dart';
 import 'presentation/screens/project_detail_screen.dart';
 import 'presentation/screens/operator_workspace_screen.dart';
 import 'presentation/screens/settings_screen.dart';
+import 'presentation/screens/studio_screen.dart';
 
 GoRouter createShipGlowsRouter() {
   return GoRouter(
@@ -32,6 +33,17 @@ GoRouter createShipGlowsRouter() {
         path: '/project/:project/workspace',
         pageBuilder: (context, state) => MaterialPage(
           child: OperatorWorkspaceScreen(
+            projectName: Uri.decodeComponent(
+              state.pathParameters['project'] ?? '',
+            ),
+            projectId: state.uri.queryParameters['runnerProjectId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/project/:project/studio',
+        pageBuilder: (context, state) => MaterialPage(
+          child: StudioScreen(
             projectName: Uri.decodeComponent(
               state.pathParameters['project'] ?? '',
             ),
