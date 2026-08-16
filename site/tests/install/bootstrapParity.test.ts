@@ -4,7 +4,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const siteRoot = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
-const shipglowsRoot = resolve(siteRoot, "../../shipglows");
+const shipglowsRoot = process.env.SHIPGLOWS_ROOT
+  ? resolve(process.env.SHIPGLOWS_ROOT)
+  : resolve(siteRoot, "../../shipglows");
 const dotfilesRoot = resolve(siteRoot, "../../dotfiles");
 
 describe("generated installer parity", () => {

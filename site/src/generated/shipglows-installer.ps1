@@ -29,7 +29,7 @@ function Select-WindowsInstallMode {
     Write-Host '  1) SSH tunnel only (local)'
     Write-Host '     Connect this Windows PC to projects already running on another server.'
     Write-Host '  2) Local DevServer (full, recommended)'
-    Write-Host '     Clone and run Astro, Python/FastAPI, and Flutter Web projects on this PC.'
+    Write-Host '     Clone and run Astro, Python/FastAPI, and Flutter for web, Android, and Windows on this PC.'
     Write-Host '  0) Cancel'
     while ($true) {
         $choice = Read-Host 'Choose 1 or 2'
@@ -91,8 +91,8 @@ function Extract-ShipglowsWindowsFiles([string]$ArchivePath, [string]$Destinatio
         $entries += $installerEntries[0]
     }
     if ($FullMode) {
-        $entries += @($archiveEntries | Where-Object { $_ -match '^[^/]+/cli/windows/(ShipGlows\.DevServer\.psm1|ShipGlows\.CodexMcp\.psm1|shipglows-devserver\.ps1|install-devserver\.ps1)$' })
-        if ($entries.Count -ne 4) { Fail 'The ShipGlows archive is missing native Windows DevServer or Codex MCP files.' }
+        $entries += @($archiveEntries | Where-Object { $_ -match '^[^/]+/cli/windows/(ShipGlows\.DevServer\.psm1|ShipGlows\.CodexMcp\.psm1|ShipGlows\.MobileToolchain\.psm1|shipglows-devserver\.ps1|install-devserver\.ps1)$' })
+        if ($entries.Count -ne 5) { Fail 'The ShipGlows archive is missing native Windows DevServer, mobile toolchain, or Codex MCP files.' }
     }
 
     & $tarPath -xf $ArchivePath -C $DestinationPath $entries
@@ -217,7 +217,7 @@ if ($InstallMode -eq 'local') {
 }
 
 if ($InstallMode -eq 'full') {
-    foreach ($required in @('ShipGlows.DevServer.psm1','ShipGlows.CodexMcp.psm1','shipglows-devserver.ps1','install-devserver.ps1')) {
+    foreach ($required in @('ShipGlows.DevServer.psm1','ShipGlows.CodexMcp.psm1','ShipGlows.MobileToolchain.psm1','shipglows-devserver.ps1','install-devserver.ps1')) {
         Assert-PowerShellSyntax -Path (Join-Path $windowsDirectory $required)
     }
     Write-Info 'Native Windows DevServer files installed.'

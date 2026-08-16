@@ -16,6 +16,8 @@ const localizedPaths: Record<string, Record<Locale, string>> = {
   "/blog": { en: "/blog", fr: "/fr/blog" },
   "/faq": { en: "/faq", fr: "/fr/faq" },
   "/install": { en: "/install", fr: "/fr/install" },
+  "/shipglows": { en: "/shipglows", fr: "/fr/shipglows" },
+  "/fr/shipglows": { en: "/shipglows", fr: "/fr/shipglows" },
   "/focus-tags": { en: "/focus-tags", fr: "/fr/focus-tags" },
   "/pricing": { en: "/pricing", fr: "/fr/pricing" },
   "/skills": { en: "/skills", fr: "/fr/skills" },
