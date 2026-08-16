@@ -31,6 +31,7 @@ import type { RunnerDiagnostics } from "./observability/index.js";
 import type { StudioCapabilityResolver } from "./studio/capability.js";
 import type { StudioSessionService } from "./studio/session.js";
 import { registerStudioRoutes } from "./studio/routes.js";
+import { registerCompilationRoutingRoutes, type CompilationRoutingProjectionResolver } from "./studio/compilationRoutingRoutes.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -105,6 +106,7 @@ export interface RunnerAppDependencies {
   readonly diagnostics?: RunnerDiagnostics;
   readonly studioCapability?: StudioCapabilityResolver;
   readonly studioSessions?: StudioSessionService;
+  readonly studioCompilationRouting?: CompilationRoutingProjectionResolver;
 }
 
 function eventFrame(event: PersistedEvent): string {
@@ -159,6 +161,11 @@ export function buildRunnerApp({
     allowedOrigins: config.server.allowedOrigins,
     ...(dependencies.studioCapability === undefined ? {} : { capability: dependencies.studioCapability }),
     ...(dependencies.studioSessions === undefined ? {} : { sessions: dependencies.studioSessions }),
+  });
+  registerCompilationRoutingRoutes(app, {
+    authentication,
+    projectAccess,
+    ...(dependencies.studioCompilationRouting === undefined ? {} : { resolver: dependencies.studioCompilationRouting }),
   });
 
   app.get(

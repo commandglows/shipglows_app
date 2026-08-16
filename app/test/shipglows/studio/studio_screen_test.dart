@@ -173,10 +173,41 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     final edit = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Ajouter un ajustement sémantique'),
+      find.widgetWithText(
+        FilledButton,
+        'Ajouter un ajustement sémantique',
+        skipOffstage: false,
+      ),
     );
     expect(edit.onPressed, isNull);
+    expect(find.textContaining('Mode compact : Astro Web'), findsOneWidget);
   });
+
+  testWidgets(
+    'projects an accessible expanded artifact route without compiling',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        _app(
+          capability: inspectOnlyCapability,
+          previewBuilder: _previewHarness,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Routage de l’artefact'), findsOneWidget);
+      expect(find.text('Cible d’artefact'), findsOneWidget);
+      expect(find.bySemanticsLabel('Routage de l’artefact'), findsWidgets);
+      expect(
+        find.textContaining('Aucun fournisseur ne peut être choisi'),
+        findsOneWidget,
+      );
+      expect(find.text('Compiler en code'), findsOneWidget);
+    },
+  );
 }
 
 Widget _previewHarness(

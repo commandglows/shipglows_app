@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/studio/studio_contracts.dart';
+import '../../../domain/studio/studio_compilation_routing.dart';
 import '../../../domain/studio/studio_session.dart';
 import '../../../presentation/theme/app_theme.dart';
 import '../../providers/studio_provider.dart';
@@ -197,6 +198,7 @@ class _StudioWorkspace extends ConsumerWidget {
           state: state,
           compact: compact,
           onSelected: notifier.selectSurface,
+          onArtifactTargetSelected: notifier.selectArtifactTarget,
           onApplyEdit: notifier.applySemanticEdit,
         );
 
@@ -577,12 +579,14 @@ class _StudioInspector extends StatelessWidget {
     required this.state,
     required this.compact,
     required this.onSelected,
+    required this.onArtifactTargetSelected,
     required this.onApplyEdit,
   });
 
   final StudioSessionState state;
   final bool compact;
   final ValueChanged<String> onSelected;
+  final ValueChanged<StudioArtifactTarget?> onArtifactTargetSelected;
   final Future<void> Function({
     required StudioCapability capability,
     required Map<String, Object> parameters,
@@ -666,6 +670,12 @@ class _StudioInspector extends StatelessWidget {
               ),
             ),
         ],
+        _CompilationRouteProjection(
+          routing: state.routing,
+          selectedTarget: state.selectedArtifactTarget,
+          compact: compact,
+          onSelected: onArtifactTargetSelected,
+        ),
         SizedBox(height: tokens.spacing.lg),
         Text('Compilation', style: Theme.of(context).textTheme.titleMedium),
         SizedBox(height: tokens.spacing.xs),
@@ -722,6 +732,77 @@ class _StudioInspector extends StatelessWidget {
         },
       },
       compactionKey: '${surface.id}:${studioCapabilityWireName(capability)}',
+    );
+  }
+}
+
+class _CompilationRouteProjection extends StatelessWidget {
+  const _CompilationRouteProjection({
+    required this.routing,
+    required this.selectedTarget,
+    required this.compact,
+    required this.onSelected,
+  });
+
+  final StudioCompilationRoutingProjection routing;
+  final StudioArtifactTarget? selectedTarget;
+  final bool compact;
+  final ValueChanged<StudioArtifactTarget?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = selectedTarget == null
+        ? null
+        : routing.routeFor(selectedTarget!);
+    final summary = selected == null
+        ? 'Aucune cible d’artefact n’est sélectionnée. La sélection ne lance aucune compilation.'
+        : selected.accessibilitySummary;
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      liveRegion: true,
+      label: 'Routage de l’artefact',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Routage de l’artefact',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 4),
+          if (compact)
+            Semantics(
+              liveRegion: true,
+              label: summary,
+              child: Text('Mode compact : $summary'),
+            )
+          else ...[
+            DropdownButtonFormField<StudioArtifactTarget?>(
+              initialValue: selectedTarget,
+              decoration: const InputDecoration(
+                labelText: 'Cible d’artefact',
+                helperText:
+                    'L’environnement est sélectionné automatiquement. Aucun fournisseur ne peut être choisi ici.',
+              ),
+              hint: const Text('Choisir une cible'),
+              items: [
+                const DropdownMenuItem<StudioArtifactTarget?>(
+                  value: null,
+                  child: Text('Aucune cible'),
+                ),
+                for (final route in routing.routes)
+                  DropdownMenuItem<StudioArtifactTarget?>(
+                    value: route.target,
+                    child: Text(studioArtifactTargetLabel(route.target)),
+                  ),
+              ],
+              onChanged: onSelected,
+            ),
+            const SizedBox(height: 4),
+            Semantics(liveRegion: true, label: summary, child: Text(summary)),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' as legacy;
 
 import '../../domain/studio/studio_contracts.dart';
+import '../../domain/studio/studio_compilation_routing.dart';
 import '../../domain/studio/studio_session.dart';
 import '../data/managed_runner_api.dart';
 import 'managed_runner_provider.dart';
@@ -48,6 +49,8 @@ class StudioSessionState {
     required this.activeVariantId,
     required this.manualLaboratory,
     required this.compile,
+    required this.routing,
+    required this.selectedArtifactTarget,
     this.runnerSession,
     this.synchronizing = false,
     this.authorityBlocked = false,
@@ -55,7 +58,10 @@ class StudioSessionState {
     this.safeMessage,
   });
 
-  factory StudioSessionState.initial(StudioPreviewCapability capability) {
+  factory StudioSessionState.initial(
+    StudioPreviewCapability capability,
+    StudioCompilationRoutingProjection routing,
+  ) {
     const pendingVariant = StudioVariant(
       id: 'pending',
       name: 'Initialisation…',
@@ -69,6 +75,8 @@ class StudioSessionState {
       activeVariantId: pendingVariant.id,
       manualLaboratory: false,
       synchronizing: true,
+      routing: routing,
+      selectedArtifactTarget: routing.implicitTarget,
       compile: StudioCompileProjection(
         status: StudioCompileStatus.unavailable,
         message: capability.compileAdmission.message,
@@ -83,6 +91,8 @@ class StudioSessionState {
   final String activeVariantId;
   final bool manualLaboratory;
   final StudioCompileProjection compile;
+  final StudioCompilationRoutingProjection routing;
+  final StudioArtifactTarget? selectedArtifactTarget;
   final StudioRunnerSession? runnerSession;
   final bool synchronizing;
   final bool authorityBlocked;
@@ -154,6 +164,9 @@ class StudioSessionState {
     String? activeVariantId,
     bool? manualLaboratory,
     StudioCompileProjection? compile,
+    StudioCompilationRoutingProjection? routing,
+    StudioArtifactTarget? selectedArtifactTarget,
+    bool clearArtifactTarget = false,
     StudioRunnerSession? runnerSession,
     bool? synchronizing,
     bool? authorityBlocked,
@@ -170,6 +183,10 @@ class StudioSessionState {
     activeVariantId: activeVariantId ?? this.activeVariantId,
     manualLaboratory: manualLaboratory ?? this.manualLaboratory,
     compile: compile ?? this.compile,
+    routing: routing ?? this.routing,
+    selectedArtifactTarget: clearArtifactTarget
+        ? null
+        : selectedArtifactTarget ?? this.selectedArtifactTarget,
     runnerSession: runnerSession ?? this.runnerSession,
     synchronizing: synchronizing ?? this.synchronizing,
     authorityBlocked: authorityBlocked ?? this.authorityBlocked,
@@ -202,7 +219,13 @@ class StudioSessionNotifier extends legacy.StateNotifier<StudioSessionState> {
     required this.projectId,
     required StudioPreviewCapability capability,
     required this.transport,
-  }) : super(StudioSessionState.initial(capability));
+    StudioCompilationRoutingProjection? routing,
+  }) : super(
+         StudioSessionState.initial(
+           capability,
+           routing ?? StudioCompilationRoutingProjection.astroBridgeOnly(),
+         ),
+       );
 
   final String projectId;
   final ManagedStudioTransport? transport;
@@ -210,6 +233,17 @@ class StudioSessionNotifier extends legacy.StateNotifier<StudioSessionState> {
   var _sequence = 0;
   var _compileAttempted = false;
   var _released = false;
+
+  /// This changes the local route projection only. The current API has no
+  /// artifact-target field, so it cannot start or alter a compile request.
+  void selectArtifactTarget(StudioArtifactTarget? target) {
+    if (target != null) state.routing.routeFor(target);
+    if (state.selectedArtifactTarget == target) return;
+    state = state.copyWith(
+      selectedArtifactTarget: target,
+      clearArtifactTarget: target == null,
+    );
+  }
 
   Future<void> initialize() async {
     final remote = transport;
@@ -223,6 +257,24 @@ class StudioSessionNotifier extends legacy.StateNotifier<StudioSessionState> {
       return;
     }
     try {
+      if (remote is ManagedCompilationRoutingTransport) {
+        try {
+          final routingTransport = remote as ManagedCompilationRoutingTransport;
+          final routing = await routingTransport.studioCompilationRouting(
+            projectId: projectId,
+            sourceRevision: state.capability.sourceRevision,
+            repositoryDigest: state.capability.repositoryDigest,
+          );
+          state = state.copyWith(
+            routing: routing,
+            selectedArtifactTarget: routing.implicitTarget,
+            clearArtifactTarget: routing.implicitTarget == null,
+          );
+        } catch (_) {
+          // Routing remains locally unavailable. The existing Astro preview
+          // session can still initialize, but no compiler becomes available.
+        }
+      }
       final session = await remote.createStudioSession(
         projectId: projectId,
         idempotencyKey: _id('session'),

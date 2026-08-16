@@ -7,6 +7,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'cockpit/cockpit_dto_mapper.dart';
 import 'cockpit/cockpit_models.dart';
 import '../../domain/studio/studio_contracts.dart';
+import '../../domain/studio/studio_compilation_routing.dart';
 import '../../domain/studio/studio_session.dart';
 
 typedef ManagedRunnerAccessTokenProvider =
@@ -187,6 +188,14 @@ abstract interface class ManagedStudioTransport {
   Future<StudioCompileProjection> compileStudioIntent({
     required String projectId,
     required StudioCompileIntent intent,
+  });
+}
+
+abstract interface class ManagedCompilationRoutingTransport {
+  Future<StudioCompilationRoutingProjection> studioCompilationRouting({
+    required String projectId,
+    required String sourceRevision,
+    required String repositoryDigest,
   });
 }
 
@@ -758,6 +767,313 @@ StudioRunnerSession _requireStudioSessionIdentity(
   return session;
 }
 
+StudioCompilationRoutingProjection _parseCompilationRoutingProjection(
+  dynamic raw, {
+  required String projectId,
+  required String sourceRevision,
+  required String repositoryDigest,
+}) {
+  if (raw is! Map) {
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message: 'The managed runner returned invalid compilation routing.',
+    );
+  }
+  final json = Map<String, dynamic>.from(raw);
+  const rootKeys = {
+    'contractVersion',
+    'projectId',
+    'projectKind',
+    'sourceRevision',
+    'repositoryDigest',
+    'projectEvidenceDigest',
+    'artifactDigests',
+    'observedAt',
+    'expiresAt',
+    'routes',
+  };
+  final observedAt = DateTime.tryParse(
+    json['observedAt']?.toString() ?? '',
+  )?.toUtc();
+  final expiresAt = DateTime.tryParse(
+    json['expiresAt']?.toString() ?? '',
+  )?.toUtc();
+  final now = DateTime.now().toUtc();
+  if (json.length != rootKeys.length ||
+      json.keys.any((key) => !rootKeys.contains(key)) ||
+      json['contractVersion'] != 'shipglows.compilation-routing.v1' ||
+      json['projectId'] != projectId ||
+      json['sourceRevision'] != sourceRevision ||
+      json['repositoryDigest'] != repositoryDigest ||
+      json['projectEvidenceDigest'] is! String ||
+      !RegExp(
+        r'^[a-fA-F0-9]{64}$',
+      ).hasMatch(json['projectEvidenceDigest'] as String) ||
+      observedAt == null ||
+      expiresAt == null ||
+      observedAt.isAfter(now) ||
+      !expiresAt.isAfter(now) ||
+      !expiresAt.isAfter(observedAt) ||
+      expiresAt.difference(observedAt) > const Duration(minutes: 15) ||
+      json['artifactDigests'] is! List ||
+      json['routes'] is! List) {
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message:
+          'The compilation routing identity or validity window is invalid.',
+    );
+  }
+  final projectKind = switch (json['projectKind']) {
+    'astro' => StudioProjectKind.astro,
+    'flutter' => StudioProjectKind.flutter,
+    _ => null,
+  };
+  if (projectKind == null) {
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message: 'The compilation routing project kind is invalid.',
+    );
+  }
+  final artifactDigests = <StudioProjectArtifactDigest>[];
+  final artifactPaths = <String>{};
+  final rawArtifacts = json['artifactDigests'] as List;
+  if (rawArtifacts.length > 16) {
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message: 'The project artifact digest set exceeds its closed limit.',
+    );
+  }
+  for (final rawArtifact in rawArtifacts) {
+    if (rawArtifact is! Map) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'A project artifact digest is invalid.',
+      );
+    }
+    final artifact = Map<String, dynamic>.from(rawArtifact);
+    final path = artifact['path'];
+    final digest = artifact['digest'];
+    if (artifact.length != 2 ||
+        artifact.keys.any((key) => key != 'path' && key != 'digest') ||
+        path is! String ||
+        digest is! String ||
+        !RegExp(r'^(?:site|app)/[A-Za-z0-9._/-]{1,192}$').hasMatch(path) ||
+        path.split('/').contains('..') ||
+        !RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(digest) ||
+        !artifactPaths.add(path)) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'A project artifact digest violates the closed schema.',
+      );
+    }
+    artifactDigests.add(
+      StudioProjectArtifactDigest(path: path, digest: digest),
+    );
+  }
+  if (artifactDigests.length < 2 ||
+      !List.generate(
+        artifactDigests.length - 1,
+        (index) =>
+            artifactDigests[index].path.compareTo(
+              artifactDigests[index + 1].path,
+            ) <
+            0,
+      ).every((ordered) => ordered)) {
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message: 'Project artifact digests are incomplete or unordered.',
+    );
+  }
+  final rawRoutes = json['routes'] as List;
+  if (rawRoutes.length != StudioArtifactTarget.values.length) {
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message: 'The compilation routing target matrix is incomplete.',
+    );
+  }
+  const expected =
+      <
+        String,
+        ({
+          StudioArtifactTarget target,
+          StudioExecutionEnvironment environment,
+          String executionClass,
+          String toolchain,
+        })
+      >{
+        'astroWeb': (
+          target: StudioArtifactTarget.astroWeb,
+          environment: StudioExecutionEnvironment.web,
+          executionClass: 'linuxSandbox',
+          toolchain: 'astroNodePnpm',
+        ),
+        'flutterWeb': (
+          target: StudioArtifactTarget.flutterWeb,
+          environment: StudioExecutionEnvironment.web,
+          executionClass: 'linuxSandbox',
+          toolchain: 'flutterWeb',
+        ),
+        'flutterAndroid': (
+          target: StudioArtifactTarget.android,
+          environment: StudioExecutionEnvironment.android,
+          executionClass: 'linuxSandbox',
+          toolchain: 'flutterAndroidGradle',
+        ),
+        'flutterWindows': (
+          target: StudioArtifactTarget.windows,
+          environment: StudioExecutionEnvironment.windows,
+          executionClass: 'windowsVm',
+          toolchain: 'flutterWindowsMsvc',
+        ),
+        'flutterIos': (
+          target: StudioArtifactTarget.ios,
+          environment: StudioExecutionEnvironment.apple,
+          executionClass: 'macosXcode',
+          toolchain: 'flutterIosXcode',
+        ),
+      };
+  const environmentCodes = {
+    'astroWeb': 'linuxNode',
+    'flutterWeb': 'linuxFlutter',
+    'flutterAndroid': 'linuxAndroid',
+    'flutterWindows': 'windowsFlutter',
+    'flutterIos': 'macosFlutter',
+  };
+  const routeKeys = {
+    'target',
+    'projectSupported',
+    'compilerAvailability',
+    'environment',
+    'executionClass',
+    'toolchain',
+    'reason',
+  };
+  const unavailableReasons = {
+    'targetNotDeclared',
+    'workerUnconfigured',
+    'workerUnproved',
+    'toolchainUnproved',
+    'incompatibleWorker',
+  };
+  final routes = <StudioArtifactRoute>[];
+  final seen = <StudioArtifactTarget>{};
+  for (final rawRoute in rawRoutes) {
+    if (rawRoute is! Map) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'A compilation route is invalid.',
+      );
+    }
+    final route = Map<String, dynamic>.from(rawRoute);
+    final targetCode = route['target'];
+    final contract = targetCode is String ? expected[targetCode] : null;
+    final supported = route['projectSupported'];
+    final availability = route['compilerAvailability'];
+    final reason = route['reason'];
+    if (route.length != routeKeys.length ||
+        route.keys.any((key) => !routeKeys.contains(key)) ||
+        contract == null ||
+        !seen.add(contract.target) ||
+        supported is! bool ||
+        (availability != 'available' && availability != 'unavailable') ||
+        route['environment'] != environmentCodes[targetCode] ||
+        route['executionClass'] != contract.executionClass ||
+        route['toolchain'] != contract.toolchain ||
+        (availability == 'available' && (!supported || reason != null)) ||
+        (availability == 'unavailable' &&
+            (reason is! String || !unavailableReasons.contains(reason))) ||
+        (!supported && reason != 'targetNotDeclared')) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'A compilation route violates the closed target matrix.',
+      );
+    }
+    routes.add(
+      StudioArtifactRoute(
+        target: contract.target,
+        projectSupport: supported
+            ? StudioProjectSupport.supported
+            : StudioProjectSupport.unavailable,
+        compilerAvailability: availability == 'available'
+            ? StudioCompilerAvailability.available
+            : StudioCompilerAvailability.unavailable,
+        environment: contract.environment,
+        message: availability == 'available'
+            ? 'Le compilateur compatible est attesté pour cette cible.'
+            : 'Le projet ou le compilateur compatible reste indisponible.',
+      ),
+    );
+  }
+  final supportedTargets = routes
+      .where((route) => route.projectSupported)
+      .map((route) => route.target)
+      .toSet();
+  bool exactArtifacts(Set<String> expectedPaths) =>
+      artifactPaths.length == expectedPaths.length &&
+      artifactPaths.containsAll(expectedPaths);
+  if (projectKind == StudioProjectKind.astro) {
+    if (supportedTargets.length != 1 ||
+        !supportedTargets.contains(StudioArtifactTarget.astroWeb) ||
+        !exactArtifacts({'site/package.json', 'site/pnpm-lock.yaml'})) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'Astro project evidence is inconsistent with its routes.',
+      );
+    }
+  } else {
+    if (supportedTargets.isEmpty ||
+        supportedTargets.contains(StudioArtifactTarget.astroWeb)) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'Flutter project routes are inconsistent.',
+      );
+    }
+    final androidMarkers = {
+      'app/android/settings.gradle',
+      'app/android/settings.gradle.kts',
+    }.intersection(artifactPaths);
+    final androidSupported = supportedTargets.contains(
+      StudioArtifactTarget.android,
+    );
+    if ((androidSupported && androidMarkers.length != 1) ||
+        (!androidSupported && androidMarkers.isNotEmpty)) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'Flutter Android evidence is inconsistent with its route.',
+      );
+    }
+    final expectedPaths = <String>{'app/pubspec.lock', 'app/pubspec.yaml'};
+    if (supportedTargets.contains(StudioArtifactTarget.flutterWeb)) {
+      expectedPaths.add('app/web/index.html');
+    }
+    if (androidSupported) expectedPaths.add(androidMarkers.single);
+    if (supportedTargets.contains(StudioArtifactTarget.windows)) {
+      expectedPaths.add('app/windows/CMakeLists.txt');
+    }
+    if (supportedTargets.contains(StudioArtifactTarget.ios)) {
+      expectedPaths.add('app/ios/Runner.xcodeproj/project.pbxproj');
+    }
+    if (!exactArtifacts(expectedPaths)) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'Flutter artifact evidence is inconsistent with its routes.',
+      );
+    }
+  }
+  return StudioCompilationRoutingProjection(
+    routes: routes,
+    contractVersion: json['contractVersion'] as String,
+    projectId: json['projectId'] as String,
+    projectKind: projectKind,
+    sourceRevision: json['sourceRevision'] as String,
+    repositoryDigest: json['repositoryDigest'] as String,
+    projectEvidenceDigest: json['projectEvidenceDigest'] as String,
+    artifactDigests: List.unmodifiable(artifactDigests),
+    observedAt: observedAt,
+    expiresAt: expiresAt,
+  );
+}
+
 class ManagedApprovalResult {
   const ManagedApprovalResult({required this.approvalId, required this.state});
 
@@ -988,7 +1304,8 @@ class ManagedRunnerApi
         ManagedRunnerClient,
         ManagedRunnerTaskClient,
         ManagedWorkspaceTransport,
-        ManagedStudioTransport {
+        ManagedStudioTransport,
+        ManagedCompilationRoutingTransport {
   ManagedRunnerApi({
     required String baseUrl,
     this.accessTokenProvider,
@@ -1009,6 +1326,28 @@ class ManagedRunnerApi
 
   final Dio _dio;
   final ManagedRunnerAccessTokenProvider? accessTokenProvider;
+
+  @override
+  Future<StudioCompilationRoutingProjection> studioCompilationRouting({
+    required String projectId,
+    required String sourceRevision,
+    required String repositoryDigest,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/projects/$projectId/studio/compilation-routing',
+        options: Options(headers: await _headers()),
+      );
+      return _parseCompilationRoutingProjection(
+        response.data,
+        projectId: projectId,
+        sourceRevision: sourceRevision,
+        repositoryDigest: repositoryDigest,
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
 
   @override
   Future<StudioPreviewCapability> studioCapability({

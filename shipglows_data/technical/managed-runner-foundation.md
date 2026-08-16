@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "3.2.0"
+artifact_version: "3.3.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-16"
@@ -54,6 +54,11 @@ linked_systems:
   - "runner/src/studio/providers/attestation.ts"
   - "runner/src/studio/providers/evidenceVerifier.ts"
   - "runner/src/studio/providers/vercelSandboxProvider.ts"
+  - "runner/src/studio/projectTargetDetector.ts"
+  - "runner/src/studio/compilationRouter.ts"
+  - "runner/src/studio/compilationRoutingRoutes.ts"
+  - "runner/test/studio/compilationRoutingRoute.test.ts"
+  - "app/lib/domain/studio/studio_compilation_routing.dart"
   - "runner/scripts/operator-workspace-smoke.ts"
   - "app/lib/shipglows/presentation/screens/operator_workspace_screen.dart"
   - "app/lib/shipglows/providers/managed_workspace_provider.dart"
@@ -67,6 +72,7 @@ depends_on:
     artifact_version: "1.21.0"
     required_status: "ready"
 supersedes:
+  - "shipglows_data/technical/managed-runner-foundation.md@3.2.0"
   - "shipglows_data/technical/managed-runner-foundation.md@3.1.1"
   - "shipglows_data/technical/managed-runner-foundation.md@3.1.0"
   - "shipglows_data/technical/managed-runner-foundation.md@3.0.0"
@@ -81,12 +87,13 @@ evidence:
   - "GitHub App and Git worktree official documentation check on 2026-08-02"
   - "Flutter Task 9-10 local proof on 2026-08-11: 194 tests, clean analysis, and release Web build."
   - "Final runner Studio proof on 2026-08-16: 35/35 focused tests, TypeScript typecheck, and full lint pass; no OCI worker was provisioned or invoked."
-  - "Final cross-surface proof on 2026-08-16: site 13/13 with check/build/exclusion and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
+  - "Earlier trusted-base cross-surface proof on 2026-08-16: site 13/13 with check/build/exclusion and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
   - "Five focused defects are closed: exact handshake validation, loop/revision ordering, atomic idempotency, distinct 256 KiB total-message and 16 KiB command limits, and late provider cleanup after timeout."
-  - "Provider-neutral managed-sandbox admission and account-free injected Vercel adapter conformance passed independent verification on 2026-08-16: 48/48 focused tests, 73/73 full Studio tests, typecheck, lint, diff check, and zero high-severity findings in the offline dependency audit."
+  - "Earlier provider-neutral managed-sandbox admission and account-free injected Vercel adapter conformance passed independent verification on 2026-08-16: 48/48 focused tests, 73/73 then-current Studio tests, typecheck, lint, diff check, and zero high-severity findings in the offline dependency audit."
   - "No Vercel SDK/package, account, credential, provider/network call, production wiring, generated execution, preview, persistence, artifact export, or availability proof exists."
-next_review: "2026-08-30"
-next_step: "Obtain separate credential and cost approval for inert real-provider admission/probe/release proof; retain fail-closed compile admission until that evidence exists."
+  - "Universal routing local proof on 2026-08-16: five closed targets, authenticated revision/digest-bound projection, canonical artifact evidence, independent worker-evidence verification, Runner 96 pass/1 Windows symlink skip, Flutter Studio 32/32, clean static/offline-audit gates, and independent P0/P1/P2=0."
+next_review: "2026-09-13"
+next_step: "Keep all compilation unavailable until separately authorized real Linux, Windows, and macOS execution-class proofs exist."
 ---
 
 # Managed Runner Foundation
@@ -134,6 +141,14 @@ The compile route freezes one accepted variant into an immutable `CompileIntent`
 The first adapter, `VercelSandboxProvider`, uses an injected narrow client facade and deterministic local fakes. It adds no Vercel SDK/package or import. The adapter starts each allocation non-persistent with zero ports and deny-all networking; generation can move only to one exact HTTPS root broker policy, while verification stays deny-all without a model capability. It enforces complete immutable budgets, atomic lifecycle-call reservations, shared active/pending/quarantine capacity, provider-wide sliding API limits, same-key preflight coalescing, exact evidence/lease correlation, idempotent release, orphan reconciliation, and quarantine on cleanup uncertainty. No command, source transfer, snapshot, provider preview, persistence, or artifact export method is implemented.
 
 Studio is disabled by default. Configuration rejects partial enablement and refuses Studio enablement in production. No customer-controlled preview, hosted end-to-end proof, or public availability claim exists.
+
+### Universal routing projection
+
+`projectTargetDetector.ts` parses repository evidence as bounded data without executing manifests or project commands. Its capability digest covers the exact source revision, repository digest, declared targets, and sorted artifact digests. Astro requires `site/package.json` plus `site/pnpm-lock.yaml`. Flutter requires `app/pubspec.yaml`, `app/pubspec.lock`, and exactly the platform markers corresponding to advertised Web, Android, Windows, and iOS targets; Android accepts exactly one server-detected Gradle settings form.
+
+`compilationRouter.ts` owns the exhaustive target-to-execution-class/toolchain table. `compilationRoutingRoutes.ts` exposes the separate authenticated read-only `GET /v1/projects/:projectId/studio/compilation-routing` projection with `private, no-store`. Its optional resolver must provide an independent `CompilationWorkerEvidenceVerifier`; absence, exception, stale evidence, cross-tenant/project/target replay, artifact drift, ambiguity, or mismatch produces unavailable and never falls back to the runner host. The Dart parser applies the same closed five-route and artifact-evidence invariants before the Flutter provider displays them.
+
+The endpoint is not registered with a resolver in `main.ts`. Its local fake-verifier success proves contract correlation only, not a real worker or compiler. The existing Astro capability route and compile-intent body remain unchanged, and compilation still accepts no client-selected artifact target.
 
 ## Entrypoints
 
@@ -241,3 +256,5 @@ cd ../app && flutter analyze && flutter test test/shipglows/auth/auth_provider_t
 ## Maintenance Rule
 
 Update this document whenever the runner gains an adapter, route family, auth provider, persistence schema, execution provider, capability rule or public diagnostic surface. Distinguish contract proof, account-free adapter conformance, independently observed real-provider proof, isolated execution proof, hosted authenticated proof, and public availability. Studio currently has provider-neutral contract and local fake-adapter proof only; its Vercel account/configuration, managed-microVM containment, private ingress, effective network/credential policy, quotas/cost, provider cleanup, generated compile, patch/reload evidence, browser visual proof, and hosted journey remain unproven.
+
+The universal routing contract must be updated whenever project evidence, target names, execution classes, toolchains, route schemas, verifier correlation, or Flutter parsing changes. Platform prerequisites are sourced from official [Flutter deployment documentation](https://docs.flutter.dev/deployment) and [Astro build documentation](https://docs.astro.build/en/guides/deploy/); those references never substitute for ShipGlows runtime evidence.

@@ -1,7 +1,7 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "0.2.0"
+artifact_version: "0.3.0"
 project: "shipglows_app"
 created: "2026-08-16"
 updated: "2026-08-16"
@@ -23,29 +23,36 @@ linked_systems:
   - "runner/src/studio/providers/attestation.ts"
   - "runner/src/studio/providers/evidenceVerifier.ts"
   - "runner/src/studio/providers/vercelSandboxProvider.ts"
+  - "runner/src/studio/projectTargetDetector.ts"
+  - "runner/src/studio/compilationRouter.ts"
+  - "runner/src/studio/compilationRoutingRoutes.ts"
   - "runner/test/studio/"
   - "site/src/studio/"
   - "app/lib/shipglows/providers/studio_provider.dart"
+  - "app/lib/domain/studio/studio_compilation_routing.dart"
+  - "app/lib/shipglows/data/managed_runner_api.dart"
   - "shipglows_data/technical/platforms/vercel.md"
 depends_on:
   - artifact: "shipglows_data/technical/managed-runner-foundation.md"
-    artifact_version: "3.2.0"
+    artifact_version: "3.3.0"
     required_status: draft
   - artifact: "shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md"
     artifact_version: "1.4.1"
     required_status: active
 supersedes:
+  - "shipglows_data/technical/operator-guides/studio-oci-worker.md@0.2.0"
   - "shipglows_data/technical/operator-guides/studio-oci-worker.md@0.1.1"
   - "shipglows_data/technical/operator-guides/studio-oci-worker.md@0.1.0"
 evidence:
-  - "Final Studio proof on 2026-08-16: site 13/13 with check/build/exclusion, runner 35/35 with typecheck/lint, and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
+  - "Earlier trusted-base Studio proof on 2026-08-16: site 13/13 with check/build/exclusion, runner 35/35 with typecheck/lint, and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
   - "Five focused defect closures cover exact handshake validation, loop/revision ordering, atomic idempotency, distinct 256 KiB total-message and 16 KiB command limits, and late cleanup/release after provider timeout."
   - "No dedicated Linux OCI worker, immutable worker image, mTLS identity, hosted route, generated compile, patch, reload, or visual evidence has been provisioned or proved."
   - "The former self-hosted containerd/gVisor direction was superseded before provisioning; its requirements remain historical comparison evidence only."
-  - "Provider-neutral managed-sandbox admission and the account-free injected Vercel facade passed independent local verification on 2026-08-16: 48/48 focused tests, 73/73 full Studio tests, typecheck, lint, diff check, and zero high-severity offline audit findings."
+  - "Earlier provider-neutral managed-sandbox admission and the account-free injected Vercel facade passed independent local verification on 2026-08-16: 48/48 focused tests, 73/73 then-current Studio tests, typecheck, lint, diff check, and zero high-severity offline audit findings."
   - "No Vercel SDK/package, account, credential, provider/network call, production wiring, execution, preview, persistence, export, or availability proof exists."
-next_review: "2026-08-23"
-next_step: "Obtain separate credential and cost approval for bounded real Vercel admission/probe/release proof before production wiring or compile execution."
+  - "The universal compilation router and Flutter projection passed local adversarial verification at P0/P1/P2=0 for five closed targets; this proves routing behavior only and no compiler/worker/provider availability."
+next_review: "2026-08-30"
+next_step: "Keep routing read-only and unavailable until separately authorized real execution-class evidence is obtained."
 ---
 
 # Studio Managed-Sandbox Operations
@@ -57,6 +64,30 @@ The filename is retained as a compatibility path for existing links. The operati
 Studio is a local trusted-base implementation, disabled by default and forbidden by configuration in production. The Astro preview, bridge, Flutter session surface, semantic journal, undo/redo, Laboratory policy, variants, repository/runtime attestation, provider-neutral admission boundary, and account-free Vercel adapter facade have focused local tests.
 
 Compilation is not operational. The runner composition root injects no managed-sandbox provider; compile requests therefore fail closed with bounded `studioCompileUnavailable`/HTTP `503`. No Vercel SDK or package is installed, and no account, credential, network, billable, sandbox, or hosted action has occurred. Preserve this state until independently observed real-provider evidence satisfies every required control.
+
+Universal compilation routing is also local-only and unconfigured. The code recognizes five contract targets—Astro Web, Flutter Web, Flutter Android, Flutter Windows, and Flutter iOS—and can describe their required Linux, Windows/MSVC, or macOS/Xcode execution class. `main.ts` injects no compilation-routing resolver, independent worker verifier, worker, or compiler. A missing resolver/verifier returns HTTP `503`; a supported project target must never be shown as an available compiler without exact independent worker evidence.
+
+## Universal routing inspection
+
+The separate read-only endpoint is:
+
+```text
+GET /v1/projects/:projectId/studio/compilation-routing
+```
+
+It requires ordinary authentication and project-read authorization and returns `private, no-store`. Its projection is bound to the exact project, source revision, repository digest, expiry window, and sorted digest list for every manifest, lock, and advertised platform marker. It contains all five routes and never chooses an artifact target for the operator.
+
+Expected execution requirements are:
+
+| Target | Required class | Required toolchain family |
+| --- | --- | --- |
+| Astro Web | Linux isolated worker | Node, package manager, Astro |
+| Flutter Web | Linux isolated worker | Flutter/Dart with Web support |
+| Flutter Android | Linux isolated worker | Flutter/Dart, Java, Gradle, Android SDK |
+| Flutter Windows | Windows isolated worker | Flutter/Dart, Visual Studio Build Tools, MSVC, Windows SDK, CMake/Ninja |
+| Flutter iOS | macOS isolated worker | Flutter/Dart, Xcode, iOS SDK, CocoaPods policy |
+
+Project support is not compiler availability. Do not troubleshoot an unavailable route by running locally installed Flutter, Android, Node, Visual Studio, or Xcode on the runner/host. Do not inject a fake verifier outside tests. Never add target, worker, toolchain, provider, image, signing, or command fields to the existing compile-intent request.
 
 ## Trusted-base enablement gate
 
@@ -150,7 +181,7 @@ npm run lint
 npm audit --audit-level=high --offline
 ```
 
-Evidence recorded on 2026-08-16: site 13/13 with clean check/build and zero production Studio markers; Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format; managed-sandbox focused tests 48/48 and the full runner Studio surface 73/73 with clean typecheck, lint, diff check, and zero high-severity offline dependency-audit findings. The final managed-sandbox fixtures cover independent evidence binding, immutable complete budgets, generation/verification policy separation, atomic lifecycle reservations, shared capacity, concurrent idempotency, sliding API windows, cleanup capacity, quarantine, release, and reconciliation. These are fake-provider proofs only.
+Evidence recorded on 2026-08-16: site 13/13 with clean check/build and zero production Studio markers; Flutter Studio 32/32 with clean analysis/format; the full runner Studio surface 96 pass/1 Windows symlink skip with clean typecheck, lint, diff check, and zero offline dependency-audit findings. Independent adversarial review closed the manifest-race, artifact-evidence, verifier, tenant/project/target replay, and Dart-mirror defects and finished at P0/P1/P2=0. These are contract and fake-evidence proofs only.
 
 Live `127.0.0.1:3003` confirms the exact profile and eight anchors. Live `127.0.0.1:3005` loads the Flutter Studio bundle without browser console warnings, but screenshot and semantics capture are unavailable, so visual/browser composition proof remains absent.
 
@@ -162,10 +193,12 @@ Do not describe Studio as hosted, production-ready, publicly available, or capab
 
 The next permissible expansion is a separately approved, cost-bounded real-provider admission/probe/release batch. It must not run project or generated code, issue a model call, expose a provider preview, enable persistence, or export a patch. Compile execution/export remains a later approval after that proof.
 
+Official prerequisite references: [Flutter deployment overview](https://docs.flutter.dev/deployment), [Flutter Windows build requirements](https://docs.flutter.dev/platform-integration/windows/building), [Flutter iOS deployment](https://docs.flutter.dev/deployment/ios), and [Astro deployment/build guidance](https://docs.astro.build/en/guides/deploy/). They help evaluate a future worker image but are not operational evidence.
+
 ## Superseded historical direction
 
 The former plan required a ShipGlows-operated Linux worker using containerd 2.x and gVisor `runsc`/Systrap. It was superseded before provisioning and produced no worker, image, mTLS identity, runtime, or hostile-workload evidence. Keep its source references only as architecture history and future provider-comparison material; do not provision or enable it from this guide.
 
 ## Maintenance Rule
 
-Update this guide whenever Studio enablement, identity/digest derivation, session retention/limits, compile schemas, managed-provider adapter/runtime/image/policy, independent evidence, account/project scope, budgets/cost, network or credential boundaries, persistence/snapshots, private ingress, leases/cleanup/recovery, hosted routing, or proof status changes. Keep the compatibility filename until all canonical links can be changed in one approved migration.
+Update this guide whenever Studio enablement, identity/digest derivation, project artifact markers, target/execution-class/toolchain routing, resolver/verifier wiring, session retention/limits, compile schemas, managed-provider adapter/runtime/image/policy, independent evidence, account/project scope, budgets/cost, network or credential boundaries, signing, persistence/snapshots, private ingress, leases/cleanup/recovery, hosted routing, or proof status changes. Keep the compatibility filename until all canonical links can be changed in one approved migration.
