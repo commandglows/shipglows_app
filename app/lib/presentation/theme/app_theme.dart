@@ -305,6 +305,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
     required this.access,
     required this.execution,
     required this.motion,
+    required this.studio,
   });
 
   final AppSpacingTokens spacing;
@@ -320,6 +321,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
   final AppAccessColors access;
   final AppExecutionColors execution;
   final AppMotionTokens motion;
+  final AppStudioTokens studio;
 
   factory AppThemeTokens.forBrightness(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
@@ -358,6 +360,14 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
         failed: critical,
       ),
       motion: const AppMotionTokens(),
+      studio: AppStudioTokens(
+        neutral: muted,
+        recommended: warning,
+        active: isDark ? const Color(0xFFC4B5FD) : const Color(0xFF6D28D9),
+        compiling: info,
+        verified: healthy,
+        conflict: critical,
+      ),
     );
   }
 
@@ -376,6 +386,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
     AppAccessColors? access,
     AppExecutionColors? execution,
     AppMotionTokens? motion,
+    AppStudioTokens? studio,
   }) {
     return AppThemeTokens(
       spacing: spacing ?? this.spacing,
@@ -391,6 +402,7 @@ class AppThemeTokens extends ThemeExtension<AppThemeTokens> {
       access: access ?? this.access,
       execution: execution ?? this.execution,
       motion: motion ?? this.motion,
+      studio: studio ?? this.studio,
     );
   }
 
@@ -525,6 +537,28 @@ class AppMotionTokens {
   final Duration fast = const Duration(milliseconds: 120);
   final Duration standard = const Duration(milliseconds: 200);
   final Duration deliberate = const Duration(milliseconds: 320);
+}
+
+class AppStudioTokens {
+  const AppStudioTokens({
+    required this.neutral,
+    required this.recommended,
+    required this.active,
+    required this.compiling,
+    required this.verified,
+    required this.conflict,
+  });
+
+  final Color neutral;
+  final Color recommended;
+  final Color active;
+  final Color compiling;
+  final Color verified;
+  final Color conflict;
+  final double surfaceRailWidth = 224;
+  final double inspectorWidth = 360;
+  final double previewMinHeight = 280;
+  final double statusIconSize = 20;
 }
 
 class AppThemePalette extends ThemeExtension<AppThemePalette> {

@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.2.0"
+artifact_version: "1.3.1"
 project: "shipglows_app"
 created: "2026-08-15"
 created_at: "2026-08-15 19:09:04 UTC"
 updated: "2026-08-16"
-updated_at: "2026-08-16 07:22:00 UTC"
+updated_at: "2026-08-16 10:03:28 UTC"
 status: active
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -24,10 +24,16 @@ linked_systems:
   - "site/src/components/Hero.astro"
   - "site/src/styles/global.css"
   - "runner/src/app.ts"
+  - "runner/src/studio/session.ts"
+  - "runner/src/studio/workerProvider.ts"
   - "runner/src/workspaces/index.ts"
+  - "app/lib/shipglows/presentation/screens/studio_screen.dart"
+  - "app/lib/shipglows/providers/studio_provider.dart"
+  - "site/src/studio/heroContract.ts"
   - "shipglows_data/business/product.md"
   - "shipglows_data/technical/design-system-authority.md"
   - "shipglows_data/technical/managed-runner-foundation.md"
+  - "shipglows_data/technical/operator-guides/studio-oci-worker.md"
   - "shipglows_data/workflow/explorations/2026-08-15-open-source-design-workflow-alternatives.md"
   - "shipglows_data/workflow/explorations/2026-08-15-penpot-visual-editor-architecture-study.md"
 depends_on:
@@ -35,15 +41,17 @@ depends_on:
     artifact_version: "2.2.0"
     required_status: reviewed
   - artifact: "shipglows_data/technical/design-system-authority.md"
-    artifact_version: "1.2.0"
+    artifact_version: "1.3.1"
     required_status: active
   - artifact: "shipglows_data/technical/managed-runner-foundation.md"
-    artifact_version: "2.8.0"
+    artifact_version: "3.1.1"
     required_status: draft
   - artifact: "shipglows_data/workflow/explorations/2026-08-15-penpot-visual-editor-architecture-study.md"
     artifact_version: "1.0.1"
     required_status: draft
-supersedes: []
+supersedes:
+  - "shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md@1.3.0"
+  - "shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md@1.2.0"
 evidence:
   - "Operator decision: ShipGlows has two product promises, safe agent/project control and visual creation of the real product with production-ready code output."
   - "Operator decision: Studio remains tied to the actual Astro or Flutter runtime instead of becoming an autonomous design-file authority."
@@ -53,7 +61,11 @@ evidence:
   - "Readiness review corrected the runtime, attachment, ASVS, Atlas, performance, retry, and batching contracts but found no installed or selected sandbox capable of safely executing agent-generated worktree code."
   - "Operator approved a dedicated self-hosted Linux OCI worker as the sandbox direction for generated worktrees."
   - "Architecture review selected a ShipGlows-owned OCI provider contract backed in the MVP by containerd 2.x and gVisor runsc/Systrap, with separate generation and verification sandboxes and no host-process fallback."
-next_step: "Wire the trusted-base capability resolver into an authenticated local runner and prove the embedded Astro selection loop; continue the separate Batch A worker/isolation proof before any generated preview or compile path."
+  - "Final Studio defect-fix proof on 2026-08-16: site 13/13 plus check/build/production exclusion; runner 35/35 plus typecheck/lint; Flutter 24 Studio plus five theme tests (29/29 combined) plus analyze/format."
+  - "The final audit closed five bounded defects: exact bridge handshake, loop/revision ordering, atomic idempotency, separate 256 KiB bridge-envelope and 16 KiB command limits, and cleanup of late provider results after timeout."
+  - "Live local evidence confirms the exact Studio profile and eight anchors at 127.0.0.1:3003, and the 127.0.0.1:3005 Studio route loads the Flutter bundle without browser console warnings; screenshot and semantics capture remain unavailable, so visual proof is pending."
+  - "Full-suite evidence remains qualified: runner 144/146 with Windows symlink and line-ending failures; Flutter 213 passes then eight pre-existing source-reader/indexer and Cockpit-golden failures; the site full command reaches one pre-existing installer-parity failure."
+next_step: "Provision and independently prove the dedicated Linux OCI worker, then run generated compile/reload/visual evidence before any availability claim."
 ---
 
 # Spec: ShipGlows Visual Studio And Laboratory MVP
@@ -64,7 +76,7 @@ ShipGlows Visual Studio And Laboratory MVP
 
 # Status
 
-Ready for implementation. The product direction, browser/Astro feasibility, and generated-code isolation architecture are resolved. The approved MVP uses a dedicated self-hosted Linux OCI worker, separate from the primary runner, with containerd 2.x and gVisor `runsc`/Systrap behind a ShipGlows-owned provider contract. Readiness authorizes implementation only: no worker has been provisioned, no feature has been implemented or verified, and no public capability or production availability is implied.
+Implementation is in progress. The trusted first-party Astro preview, semantic bridge, Flutter Studio session UI, closed runner command journal, undo/redo, bounded variants, Laboratory policy, runtime/repository attestation, and immutable compile-admission contracts are implemented and locally tested. The approved dedicated Linux OCI worker has not been provisioned or proved. Compile therefore remains admission-only and fail-closed: no generated source executes, no worktree patch is produced, no compiled runtime reload or visual proof exists, and no hosted or public capability is implied.
 
 # User Story
 
@@ -405,7 +417,7 @@ Every route resolves actor, tenant, project, capability, source revision, and se
 
 The iframe URL contains only a non-authorizing preview origin and opaque channel handle. A one-time attachment secret is sent only in an authenticated POST body or header to bind that channel server-side; it never appears in a URL, query string, fragment, browser history, redirect, referrer, log, target DOM, or target-runtime message. The browser bridge receives only the resulting bounded channel capability. The actual runtime process and bridge channel remain private behind the runner/reverse-proxy boundary.
 
-Default MVP limits are server-owned and returned in the capability response: 256 projected Studio nodes, 128 compacted commands per variant, eight variants, three viewport profiles, one compile run per session, a 16 KiB command/request body, 30 minutes idle, and four hours absolute session duration. Exceeding a limit fails explicitly; it never truncates source, intent, evidence, or history silently.
+Default MVP limits are server-owned and returned in the capability response: 256 projected Studio nodes, 128 compacted commands per variant, eight variants, three viewport profiles, one compile run per session, 16 KiB per semantic command, 256 KiB for the complete bridge message, 30 minutes idle, and four hours absolute session duration. Exceeding a limit fails explicitly; it never truncates source, intent, evidence, or history silently.
 
 # Compile Boundary
 
@@ -625,23 +637,23 @@ Each batch is independently reviewable and leaves the repository in a valid stat
 
 # Documentation Coherence
 
-## Updated with this draft
+## Current documentation truth
 
-- `shipglows_data/business/product.md`: records the second promise as planned and explicitly unimplemented.
+- `shipglows_data/business/product.md`: records the second promise as planned; it is not a public availability claim.
 - Penpot architecture study: points to this spec/readiness rather than asking for a future spec.
+- `shipglows_data/technical/code-docs-map.md`: routes the implemented Astro, Flutter, and runner Studio surfaces and their focused checks.
+- `shipglows_data/technical/design-system-authority.md`: owns the Studio-specific Flutter token group and records local widget/state proof without claiming browser visual proof.
+- `shipglows_data/technical/managed-runner-foundation.md`: records session, journal, Laboratory, attestation, and compile-admission behavior.
+- `shipglows_data/technical/operator-guides/studio-oci-worker.md`: records enablement and incident gates while explicitly treating the OCI worker as unprovisioned.
 
-## Required during implementation
+## Still required before closure
 
-- `shipglows_data/technical/code-docs-map.md`
-- `shipglows_data/technical/design-system-authority.md`
-- `shipglows_data/technical/managed-runner-foundation.md`
-- a dedicated OCI worker architecture/operations contract recording identity, image policy, capacity, monitoring, rotation, cleanup, recovery, and incident ownership;
 - a Studio technical context/behavior index if the final module split creates non-trivial recovery cost;
-- project Atlas and protection mapping;
-- operator guide for enablement, unsupported states, session retention, compile review, and recovery;
+- completed project Atlas/protection adoption for compile paths;
+- provisioned-worker identity, image, capacity, monitoring, rotation, cleanup, recovery, and incident evidence;
 - dependency/platform usage note only if the chosen embedding/runtime dependency changes local proof or security decisions.
 
-Public documentation remains unchanged because the feature is planned, not implemented or verified.
+Public documentation remains unchanged. Local implementation proof does not establish hosted availability, generated-code execution, patch review, reload proof, or a user-visible production promise.
 
 # Edge Cases
 
@@ -745,11 +757,22 @@ Additional cases:
 - Validation: metadata lint, topology audit, link/path checks, documented validation commands, and no premature public claims.
 - Constraint: distinguish planned, implemented, locally verified, hosted verified, and publicly available.
 
+# Implementation Truth At 2026-08-16
+
+| Area | Current evidence | Explicit limit |
+| --- | --- | --- |
+| Astro adapter | Development-only hero anchors and bridge are implemented; 13/13 focused tests, `pnpm check`, `pnpm build`, and the production-exclusion scan pass. Live `127.0.0.1:3003` confirms the exact profile and eight anchors. | No generated worktree/runtime is served and the broader site test command still reaches one pre-existing installer-parity failure. |
+| Flutter Studio | Real iframe carrier, selection handshake, semantic command/session state, Laboratory/variant controls, canonical Studio tokens, and runner-aligned create/command/undo/redo/variant/compile-intent DTOs are implemented; 24 Studio tests plus five theme tests pass, for 29/29 in the combined focused command, with analysis and format clean. Live `127.0.0.1:3005` loads the Flutter bundle on the Studio route without browser console warnings. | Screenshot and semantics capture are unavailable; no visual/browser composition or accessibility proof is claimed. |
+| Runner Studio | Repository/runtime attestation, authenticated tenant-scoped capability/session routes, closed command schemas, journal compaction, undo/redo, expiry, variants, Laboratory policy, immutable compile intent, and OCI admission contracts are implemented. The final 35/35 focused tests, typecheck, and lint pass. | Main injects no real OCI worker. Compile returns fail-closed `503`; it creates no worktree, runs no generated code, emits no patch, and reloads no compiled runtime. |
+| Defect-fix audit | Focused tests close exact handshake validation, bridge loop/revision ordering, atomic idempotency under concurrency, the 256 KiB total-message/16 KiB per-command split, and late cleanup/release after provider timeout. | These are local contract proofs; they do not prove a deployed OCI worker, generated-code containment, or hosted recovery. |
+| Full suites | Runner reaches 144/146 and Flutter reaches 213 passing tests before unrelated failures. | Runner is blocked by Windows symlink `EPERM` and LF/CRLF worktree expectations; Flutter has eight pre-existing source-reader/indexer and Cockpit-golden failures. These are not Studio verification. |
+| Hosted/public delivery | None. | No authenticated hosted flow, public route, production availability, generated compile, visual diff, or release claim exists. |
+
 # Acceptance Criteria
 
 - [ ] An authorized operator opens Studio from a project whose runner capability is supported.
-- [ ] The MVP capability is offered only for the pinned first-party `shipglows_app/site` profile; another repository fails closed until a sandboxed provider is independently proved.
-- [ ] The local trusted provider can render only the reviewed base revision; agent-generated worktrees require a proved sandbox and never execute through a host-process fallback.
+- [x] The MVP capability is offered only for the pinned first-party `shipglows_app/site` profile; another repository fails closed until a sandboxed provider is independently proved.
+- [x] The local trusted provider can render only the reviewed base revision; agent-generated worktrees require a proved sandbox and never execute through a host-process fallback.
 - [ ] The center surface is the real instrumented Astro runtime.
 - [ ] Meaningful surfaces can be selected with visible source confidence and supported property groups.
 - [ ] A property edit changes the preview and `git status` remains unchanged.
@@ -765,7 +788,7 @@ Additional cases:
 - [ ] Generation and verification use separate fresh sandboxes; verification has no model/provider capability, credential, shared mutable generation volume, or outbound network.
 - [ ] No generated source, build hook, dependency, or runtime output executes on the primary runner host, and there is no host bind mount or exposed container runtime socket.
 - [ ] Hostile filesystem/process/socket/device/credential/network/cross-job/quota fixtures and worker-restart cleanup reconciliation fail closed before compilation is enabled.
-- [ ] A terminal compile result cannot be retried inside the same session; a new attempt requires an explicitly refreshed session and revision.
+- [x] A terminal compile result cannot be retried inside the same session; a new attempt requires an explicitly refreshed session and revision.
 - [ ] Project content, DOM text, comments, and agent output cannot select commands, paths, runtimes, providers, prompts, permissions, or proof bypass.
 - [ ] A stale base revision blocks compile with no overwrite or automatic rebase.
 - [ ] Compile success produces a reviewable patch but no commit, push, merge, deploy, or baseline approval.
@@ -775,11 +798,11 @@ Additional cases:
 - [ ] Cross-tenant, forged-ticket, forged-node, expired-session, malformed-command, duplicate, oversized, and origin-mismatch cases fail closed.
 - [ ] Preview attachment secrets are absent from URLs, fragments, history, referrers, logs, DOM, target-runtime messages, and safe diagnostics.
 - [ ] Raw screenshots, project content, prompts, credentials, absolute paths, and provider events do not enter SQLite or safe diagnostics.
-- [ ] Production Astro output contains no Studio bridge.
+- [x] Production Astro output contains no Studio bridge.
 - [ ] Fixed-profile command latency, frame time, journal operation, runtime-start, layout-shift, and before/after regression budgets pass.
 - [ ] Flutter Studio UI consumes the canonical design system and passes token drift and representative golden/browser proof.
 - [ ] Penpot code/assets are absent and provenance records point only to research sources and independent requirements.
-- [ ] Product/public documentation labels the capability accurately as planned, implemented, verified, or available according to actual evidence.
+- [x] Product/public documentation labels the capability accurately as planned, implemented, verified, or available according to actual evidence.
 
 # Test Strategy
 
@@ -863,6 +886,8 @@ The approved direction is a dedicated self-hosted Linux OCI worker using contain
 | 2026-08-16 06:36:00 | 101-sg-ready | GPT-5 Codex | Applied the approved self-hosted OCI direction, specified the dedicated worker and two-phase gVisor boundary, and reran adversarial readiness. | Ready: a fresh implementation agent has bounded architecture, tasks, stop gates, and proof without needing the conversation; implementation and runtime proof remain pending. | Start Batch A through the governed implementation lifecycle. |
 | 2026-08-16 07:22:00 | sg-development | GPT-5 Codex | Implemented the local Task 1 contract foundation: Atlas v2, Flutter domain state/profile negotiation, runner closed contracts, and fail-closed preview-provider port. | Focused Flutter and runner tests pass; no UI, route, preview launcher, OCI worker, generated execution, or availability claim exists. | Continue Batch A with the separately isolated Linux worker and hostile sandbox proof. |
 | 2026-08-16 08:14:34 | sg-development | GPT-5 Codex | Implemented the first read-only Astro preview slice: eight development-only hero anchors, exact-origin bridge, authenticated runner capability projection, and Flutter Web preview/inspector shell. | Focused Astro, runner, and Flutter checks pass; production Astro output excludes Studio markers and the live Flutter app remains fail-closed without an authenticated capability resolver. | Wire the resolver into an authenticated local runner and prove real embedded selection; keep preview mutation and generated execution disabled. |
+| 2026-08-16 09:40:09 | sg-docs | GPT-5 Codex | Reconciled the Studio spec and mapped technical/operator guidance with the integrated Astro, Flutter, and runner implementation evidence. | Local preview/session/journal/Laboratory contracts and the aligned cross-surface compile-intent DTO are documented as implemented and locally tested; compile remains admission-only and unavailable without a proved OCI worker, with no generated patch, reload, visual proof, hosted proof, or public claim. | Provision the dedicated Linux worker and execute independent compile/reload/visual proof. |
+| 2026-08-16 10:03:28 | sg-docs | GPT-5 Codex | Refreshed the mapped evidence after the final Studio defect-fix pass and live local route checks. | Site 13/13, runner 35/35, and Flutter 24 Studio plus five theme tests (29/29 combined) pass; five audit defects are closed, the live profile/eight anchors and Flutter bundle/no-console-warning route are confirmed, while screenshot/semantics and all generated-worker proof remain pending. | Provision the dedicated Linux worker, then produce generated compile/reload and visual/semantics proof. |
 
 # Current Chantier Flow
 
@@ -870,9 +895,9 @@ The approved direction is a dedicated self-hosted Linux OCI worker using contain
 | --- | --- | --- |
 | Specification | completed | Durable implementation contract with confirmed product and self-hosted OCI worker decisions |
 | Readiness | ready | Browser/Astro path, worker isolation, security, proof, tasks, stop gates, and consequences are implementation-autonomous |
-| Implementation | in_progress | Task 1 contracts plus the first inspect-only portions of Tasks 3-4 are locally implemented; authenticated embedded-preview proof, visual commands, Laboratory, and the isolated worker remain pending |
-| Verification | pending | Requires real Astro preview/Lab/compile evidence |
+| Implementation | in_progress | Tasks 1, 3, 4, and the local session/journal/Laboratory portion of Tasks 2 and 5 are implemented; Task 6 stops at immutable compile admission and Task 7 has not started |
+| Verification | in_progress | Final focused site 13/13, runner 35/35, and Flutter 24 Studio plus five theme tests (29/29 combined) pass with their static gates; live 3003 profile/eight anchors and live 3005 bundle/no-console-warning route are confirmed; screenshot/semantics, dedicated-worker, generated compile, patch, reload, and evidence-matrix proof remain pending |
 | Closure | pending | Requires implementation and independent proof |
 | Shipping | pending | No public delivery or capability claim authorized |
 
-Current next action: connect a server-owned resolver for the exact trusted base revision and prove the authenticated Flutter-to-Astro selection loop. In parallel sequencing, Batch A still requires the dedicated Linux OCI worker and hostile sandbox proof before any generated preview or compile path can exist. The current slice is read-only, local, and unavailable by default; it performs no source mutation, generated execution, commit, push, merge, deploy, or public availability claim.
+Current next action: provision and independently prove the dedicated Linux OCI worker before enabling compilation. The current local Studio can attest and display the trusted Astro base, exchange semantic selection/command messages, synchronize ephemeral sessions, undo/redo, Laboratory reasons and variants, and submit `{variantId}` with `Idempotency-Key` to parse the runner's closed immutable `CompileIntent`. Compile remains disabled by default and fail-closed; it performs no generated execution, worktree mutation, patch, compiled reload, commit, push, merge, deploy, hosted delivery, or public availability claim.

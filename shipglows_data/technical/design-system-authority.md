@@ -1,10 +1,10 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.2.0"
+artifact_version: "1.3.1"
 project: "shipglows_app"
 created: "2026-06-11"
-updated: "2026-08-11"
+updated: "2026-08-16"
 status: active
 source_skill: 001-sg-build
 scope: "design-system-authority"
@@ -17,21 +17,27 @@ linked_systems:
   - "app/lib/presentation/theme/app_theme.dart"
   - "app/lib/shipglows/app.dart"
   - "app/test/shipglows/presentation/cockpit/cockpit_golden_test.dart"
+  - "app/lib/shipglows/presentation/screens/studio_screen.dart"
+  - "app/lib/shipglows/presentation/widgets/studio/"
+  - "app/test/shipglows/studio/"
   - "site/src/styles/global.css"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
     artifact_version: "1.22.0"
     required_status: ready
 supersedes:
+  - "shipglows_data/technical/design-system-authority.md@1.3.0"
   - "shipglows_data/technical/design-system-authority.md@1.1.0"
+  - "shipglows_data/technical/design-system-authority.md@1.2.0"
 evidence:
   - "ShipGlowsApp consumes AppTheme.lightTheme and AppTheme.darkTheme directly and follows ThemeMode.system."
   - "AppThemeTokens exposes named layout, responsive, focus, semantic-state, and motion tokens for the Cockpit and conversation lots."
   - "Flutter theme tests cover light/dark construction, token availability, key non-text contrast, and the absence of a second theme builder in ShipGlowsApp."
   - "Three deterministic Flutter goldens cover compact light managed, medium dark stale/suspended, and expanded light local-fallback composition."
   - "Chrome proof at 390x844 and 1440x900 confirms readable production typography, responsive navigation, accessible structure, 48px primary mobile controls, and zero console errors after removing the dormant Clerk bootstrap."
+  - "Studio uses the canonical AppTheme Studio token group and passed 24 Studio plus five theme tests (29/29 combined), clean Flutter analysis, and format on 2026-08-16; browser screenshot and semantics proof remain unavailable."
 next_review: "2026-09-11"
-next_step: "Extend the same token and proof contract to the remaining project, diagnostics, settings, and conversation surfaces."
+next_step: "Add deterministic Studio goldens and complete browser screenshot/accessibility proof before treating its visual adoption as verified."
 ---
 
 # Design-System Authority
@@ -50,6 +56,7 @@ The public Astro site is a separate surface with its own CSS carrier. The app an
 - the Material color schemes, typography, component defaults, and padded tap-target policy;
 - `AppThemePalette` for surface roles;
 - `AppThemeTokens` for spacing and density, radii, responsive breakpoints and window classes, navigation dimensions, minimum targets, Cockpit and conversation dimensions, focus, health/access/execution states, and motion.
+- `AppThemeTokens.studio` for Studio rails, inspector, preview minimum height, and Laboratory/compile/verified/conflict semantic states.
 
 `app/lib/shipglows/app.dart` consumes these two canonical themes and uses `ThemeMode.system`. It must not contain a second `ThemeData` builder.
 
@@ -94,7 +101,7 @@ The canonical extension exposes these stable groups:
 | `breakpoints` | compact, medium, and expanded window behavior |
 | `navigation` | mobile bar and navigation rail sizing |
 | `minimumTarget` | touch, pointer, and keyboard-operable controls |
-| `cockpit`, `conversation` | Task 9–10 layouts without local dimensions |
+| `cockpit`, `conversation`, `studio` | Product layouts and Studio semantic states without local dimensions or colors |
 | `focus` | visible keyboard focus treatment |
 | `health`, `access`, `execution` | semantic project and run states |
 | `motion` | bounded interface transitions |
@@ -110,6 +117,7 @@ cd app
 dart format lib/presentation/theme/app_theme.dart lib/shipglows/app.dart test/shipglows/theme
 flutter test test/shipglows/theme
 flutter test test/shipglows/presentation/cockpit/cockpit_golden_test.dart
+flutter test test/domain/studio test/shipglows/studio
 flutter analyze
 
 python3 /home/claude/shipglows/tools/design_system_drift_check.py \
@@ -121,6 +129,8 @@ python3 /home/claude/shipglows/tools/design_system_drift_check.py \
 The broader drift report is an adoption baseline. The Task 9 visual-proof change set has zero changed-file findings; existing findings in untouched screens remain separate debt.
 
 The native goldens intentionally use Flutter's deterministic test font and prove composition, responsive structure, theme roles, and regression. They do not prove production typography. Chrome proof against the release Web build owns readable typography and browser rendering.
+
+Studio currently has focused state, transport, widget, and semantics tests but no completed golden/browser visual proof. The live Studio route at `127.0.0.1:3005` loaded the Flutter bundle with no browser console warnings, but screenshot and semantics capture were unavailable. This is a route/bootstrap observation, not a visual-rendering or accessibility-success claim.
 
 ## Stop Conditions
 
@@ -135,5 +145,6 @@ The native goldens intentionally use Flutter's deterministic test font and prove
 - Token source: updated.
 - ShipGlows root theme consumption: complete.
 - Cockpit token consumption: complete for Task 9, including focus, semantic-state, responsive and minimum-target behavior.
+- Studio token consumption: implemented locally for its responsive shell, rails, inspector, and Laboratory state cues; 24 Studio plus five theme tests (29/29 combined), analysis, and format pass, while representative golden/browser proof remains pending.
 - Other screen/widget token consumption: partial; untouched project, diagnostics, settings, and conversation debt remains.
 - Cockpit visual proof: complete locally through three deterministic goldens plus release-build Chrome evidence at compact and expanded widths.

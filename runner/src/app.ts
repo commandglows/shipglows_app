@@ -29,6 +29,8 @@ import { stateChangingOriginGuard } from "./security/requestPolicy.js";
 import { OperatorWorkspaceError, type OperatorWorkspaceGateway } from "./operator-workspace/index.js";
 import type { RunnerDiagnostics } from "./observability/index.js";
 import type { StudioCapabilityResolver } from "./studio/capability.js";
+import type { StudioSessionService } from "./studio/session.js";
+import { registerStudioRoutes } from "./studio/routes.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -102,6 +104,7 @@ export interface RunnerAppDependencies {
   readonly executionAdmission?: ExecutionAdmissionService;
   readonly diagnostics?: RunnerDiagnostics;
   readonly studioCapability?: StudioCapabilityResolver;
+  readonly studioSessions?: StudioSessionService;
 }
 
 function eventFrame(event: PersistedEvent): string {
@@ -150,50 +153,13 @@ export function buildRunnerApp({
     () => ({ status: "ok" as const }),
   );
 
-  app.get<{ Params: { projectId: string } }>(
-    "/v1/projects/:projectId/studio/capability",
-    {
-      preHandler: [authenticationGuard(authentication), projectAuthorizationGuard(projectAccess, "read")],
-      schema: {
-        params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
-        response: {
-          200: Type.Object({
-            supported: Type.Literal(true),
-            reason: Type.Literal("trustedFirstPartyBase"),
-            contractVersion: Type.Literal("shipglows.studio.v1"),
-            bridgeVersion: Type.Literal("shipglows.studio.bridge.v1"),
-            profileId: Type.Literal("shipglows.astro.hero.v1"),
-            previewOrigin: Type.String({ format: "uri" }),
-            capabilities: Type.Tuple([Type.Literal("inspect")]),
-            surfaces: Type.Array(Type.Object({
-              id: Type.String({ minLength: 1, maxLength: 128 }),
-              label: Type.String({ minLength: 1, maxLength: 128 }),
-              sourceConfidence: Type.Literal("exact"),
-            }, { additionalProperties: false }), { minItems: 1, maxItems: 10 }),
-          }, { $id: "shipglows.studio.v1.capability.response", additionalProperties: false }),
-          503: Type.Object({ error: Type.Object({ code: Type.Literal("studioUnavailable"), message: Type.String() }, { additionalProperties: false }) }, { additionalProperties: false }),
-        },
-      },
-    },
-    async (request, reply) => {
-      const actor = request.shipglowsActor;
-      if (actor === undefined) throw new Error("Authenticated actor is missing.");
-      const projection = await dependencies.studioCapability?.resolve({
-        tenantId: actor.tenantId,
-        userId: actor.userId,
-        projectId: request.params.projectId,
-      });
-      if (projection === undefined || projection === null) {
-        return reply.status(503).send({
-          error: {
-            code: "studioUnavailable",
-            message: "Studio preview is unavailable for this project and revision.",
-          },
-        });
-      }
-      return projection;
-    },
-  );
+  registerStudioRoutes(app, {
+    authentication,
+    projectAccess,
+    allowedOrigins: config.server.allowedOrigins,
+    ...(dependencies.studioCapability === undefined ? {} : { capability: dependencies.studioCapability }),
+    ...(dependencies.studioSessions === undefined ? {} : { sessions: dependencies.studioSessions }),
+  });
 
   app.get(
     "/v1/version",

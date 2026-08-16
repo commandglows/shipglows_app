@@ -76,5 +76,109 @@ void main() {
         throwsA(isA<StudioContractException>()),
       );
     });
+
+    test('parses the exact closed ready and selected anchor fixtures', () {
+      const surfaces = [
+        StudioSurfaceSummary(
+          id: 'hero.title',
+          label: 'Title',
+          sourceConfidence: 'exact',
+          sourceSymbol: 'Hero.title',
+          capabilities: {
+            StudioCapability.opacitySet,
+            StudioCapability.transformSet,
+            StudioCapability.visibilitySet,
+            StudioCapability.motionDuration,
+            StudioCapability.motionEasing,
+          },
+        ),
+      ];
+      final ready = parseStudioReadyAnchors([
+        {
+          'id': 'hero.title',
+          'label': 'Title',
+          'sourceSymbol': 'Hero.title',
+          'capabilities': [
+            'opacity.set',
+            'transform.set',
+            'visibility.set',
+            'motion.duration',
+            'motion.easing',
+          ],
+        },
+      ], surfaces);
+      expect(ready.single.id, 'hero.title');
+      final selected = parseStudioSelectedAnchor({
+        'id': 'hero.title',
+        'label': 'Title',
+        'sourceSymbol': 'Hero.title',
+        'capabilities': [
+          'opacity.set',
+          'transform.set',
+          'visibility.set',
+          'motion.duration',
+          'motion.easing',
+        ],
+        'bounds': {'x': 1, 'y': 2, 'width': 300, 'height': 80},
+      }, surfaces);
+      expect(selected.bounds.width, 300);
+      expect(
+        () => parseStudioReadyAnchors([
+          {
+            'id': 'hero.title',
+            'label': 'Title',
+            'sourceSymbol': 'Hero.title',
+            'capabilities': [
+              'opacity.set',
+              'transform.set',
+              'visibility.set',
+              'motion.duration',
+              'motion.easing',
+            ],
+            'source': {'path': 'site/src/components/Hero.astro'},
+          },
+        ], surfaces),
+        throwsA(isA<StudioContractException>()),
+      );
+      expect(
+        () => parseStudioSelectedAnchor({
+          'id': 'hero.title',
+          'label': 'Title',
+          'sourceSymbol': 'Hero.title',
+          'capabilities': ['inspect'],
+          'bounds': {'x': 1, 'y': 2, 'width': 300, 'height': 80},
+        }, surfaces),
+        throwsA(isA<StudioContractException>()),
+      );
+    });
+
+    test('enforces the shared total bridge budget in UTF-8 at N and N+1', () {
+      final overhead = studioBridgeMessageBytes({'pad': ''});
+      expect(
+        isWithinStudioBridgeMessageLimit({
+          'pad': 'a' * (StudioLimits.maxBridgeMessageBytes - overhead),
+        }),
+        isTrue,
+      );
+      expect(
+        isWithinStudioBridgeMessageLimit({
+          'pad': 'a' * (StudioLimits.maxBridgeMessageBytes - overhead + 1),
+        }),
+        isFalse,
+      );
+      expect(studioBridgeMessageBytes({'pad': 'é'}), greaterThan(11));
+      expect(
+        isWithinStudioCommandLimit({
+          'pad': 'a' * (StudioLimits.maxRequestBytes - overhead),
+        }),
+        isTrue,
+      );
+      expect(
+        isWithinStudioCommandLimit({
+          'pad': 'a' * (StudioLimits.maxRequestBytes - overhead + 1),
+        }),
+        isFalse,
+      );
+    });
   });
 }

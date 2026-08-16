@@ -1,9 +1,10 @@
 import type { AstroIntegration } from "astro";
 
+import { STUDIO_PARENT_ORIGIN } from "../studio/heroContract";
+
 export const STUDIO_BRIDGE_MODULE = "/src/studio/heroBridge.ts";
 
-export function studioPreviewIntegration(parentOrigin: string): AstroIntegration {
-  const normalizedParentOrigin = new URL(parentOrigin).origin;
+export function studioPreviewIntegration(): AstroIntegration {
   return {
     name: "shipglows-studio-preview",
     hooks: {
@@ -11,7 +12,7 @@ export function studioPreviewIntegration(parentOrigin: string): AstroIntegration
         if (command !== "dev") return;
         injectScript(
           "page",
-          `window.__SHIPGLOWS_STUDIO_PARENT_ORIGIN__=${JSON.stringify(normalizedParentOrigin)};import ${JSON.stringify(STUDIO_BRIDGE_MODULE)};`,
+          `import { installHeroStudioBridge } from ${JSON.stringify(STUDIO_BRIDGE_MODULE)};installHeroStudioBridge({parentOrigin:${JSON.stringify(STUDIO_PARENT_ORIGIN)}});`,
         );
       },
     },

@@ -29,6 +29,7 @@ describe("runner configuration", () => {
       codexEnabled: false,
       eveEnabled: false,
       operatorWorkspaceCount: 0,
+      studioEnabled: false,
     });
   });
 
@@ -75,6 +76,23 @@ describe("runner configuration", () => {
         error.issues.includes("FIREBASE_AUTH_ENABLED=true is required in production") &&
         error.issues.includes("RUNNER_ALLOWED_ORIGINS is required in production"),
     );
+  });
+
+  it("keeps Studio disabled by default and rejects production or incomplete enablement", () => {
+    assert.equal(loadConfig({ RUNNER_ENV: "test" }).studio.enabled, false);
+    assert.throws(() => loadConfig({ RUNNER_ENV: "production", RUNNER_STUDIO_ENABLED: "true" }), /forbidden in production/);
+    assert.throws(() => loadConfig({ RUNNER_ENV: "development", RUNNER_STUDIO_ENABLED: "true" }), /RUNNER_STUDIO_PROJECT_ID/);
+    const config = loadConfig({
+      RUNNER_ENV: "development",
+      RUNNER_STUDIO_ENABLED: "true",
+      RUNNER_STUDIO_PROJECT_ID: "shipglows_app",
+      RUNNER_STUDIO_ORIGIN: "http://127.0.0.1:3003",
+      RUNNER_STUDIO_SOURCE_REVISION: "a".repeat(40),
+      RUNNER_STUDIO_REPOSITORY_DIGEST: "b".repeat(64),
+      RUNNER_STUDIO_ADAPTER_VERSION: "1.0.0",
+      RUNNER_STUDIO_CAPABILITY_VERSION: "1.0.0",
+    });
+    assert.equal(config.studio.enabled, true);
   });
 
   it("requires GitHub App credentials and rejects classic GitHub tokens", () => {

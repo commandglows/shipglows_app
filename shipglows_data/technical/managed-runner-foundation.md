@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "3.0.0"
+artifact_version: "3.1.1"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-16"
@@ -45,7 +45,11 @@ linked_systems:
   - "runner/src/workspaces/index.ts"
   - "runner/src/operator-workspace/index.ts"
   - "runner/src/studio/contracts.ts"
+  - "runner/src/studio/capability.ts"
   - "runner/src/studio/previewRuntimeProvider.ts"
+  - "runner/src/studio/routes.ts"
+  - "runner/src/studio/session.ts"
+  - "runner/src/studio/workerProvider.ts"
   - "runner/scripts/operator-workspace-smoke.ts"
   - "app/lib/shipglows/presentation/screens/operator_workspace_screen.dart"
   - "app/lib/shipglows/providers/managed_workspace_provider.dart"
@@ -58,6 +62,8 @@ depends_on:
     artifact_version: "1.21.0"
     required_status: "ready"
 supersedes:
+  - "shipglows_data/technical/managed-runner-foundation.md@3.1.0"
+  - "shipglows_data/technical/managed-runner-foundation.md@3.0.0"
   - "shipglows_data/technical/managed-runner-foundation.md@2.8.0"
   - "shipglows_data/technical/managed-runner-foundation.md@2.7.0"
 evidence:
@@ -68,8 +74,11 @@ evidence:
   - "eve Apache-2.0 beta repository review on 2026-08-01"
   - "GitHub App and Git worktree official documentation check on 2026-08-02"
   - "Flutter Task 9-10 local proof on 2026-08-11: 194 tests, clean analysis, and release Web build."
-next_review: "2026-08-16"
-next_step: "Complete public Caddy/TLS routing and actor/project provisioning, then prove the Workspace from Flutter Web."
+  - "Final runner Studio proof on 2026-08-16: 35/35 focused tests, TypeScript typecheck, and full lint pass; no OCI worker was provisioned or invoked."
+  - "Final cross-surface proof on 2026-08-16: site 13/13 with check/build/exclusion and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
+  - "Five focused defects are closed: exact handshake validation, loop/revision ordering, atomic idempotency, distinct 256 KiB total-message and 16 KiB command limits, and late provider cleanup after timeout."
+next_review: "2026-08-30"
+next_step: "Provision and prove the dedicated Linux OCI worker, and retain fail-closed compile admission until that evidence exists."
 ---
 
 # Managed Runner Foundation
@@ -104,17 +113,24 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 
 ## Studio Contract Foundation
 
-The runner owns a versioned, target-neutral Studio contract vocabulary and a separate `PreviewRuntimeProvider` lifecycle port. Target negotiation admits only an exact trusted first-party profile and requested capability subset. Provider admission denies generated previews unless the provider explicitly proves that capability and denies all preview starts when outbound-network denial is absent.
+The runner owns the versioned Studio contract, repository/runtime identity, session journal, Laboratory policy, and compile-admission boundary. Target negotiation admits only `shipglows.astro.hero.v1`, the exact configured clean Git HEAD/tree digest, an HTTP loopback origin, bridge v1, all eight reviewed anchors, and the read-only `inspect` capability. Exact handshake validation and loop/revision ordering are covered by the final focused pass. Repository dirtiness, revision/digest drift, runtime health failure, origin credentials, bridge/profile/anchor mismatch, timeout, or resolver exception returns unavailable without fallback.
 
-`GET /v1/projects/:projectId/studio/capability` is now the authenticated discovery boundary for the inspect-only Astro pilot. It requires project read authorization and returns only the exact profile/bridge versions, the admitted loopback preview origin, `inspect`, and eight reviewed semantic surface summaries. The injected resolver must bind the exact project, source revision, repository digest, origin, and capability; absent or mismatched input returns bounded `studioUnavailable` rather than widening or falling back.
+`GET /v1/projects/:projectId/studio/capability` is the authenticated discovery boundary for the inspect-only Astro pilot. It requires project read authorization and returns only the exact contract/profile/bridge versions, runner-attested source revision and repository digest, loopback preview origin, `inspect`, and eight semantic surface summaries. The site is not trusted to declare repository identity and provides no revision/digest header.
 
-This remains a trusted-base local preview slice: the route does not start a process, select a path or command, create a worktree, execute generated code, or enable mutation. No OCI worker or customer-controlled preview is available, and no hosted/end-to-end capability claim exists until the resolver and authenticated deployment path are independently proved.
+Authenticated project-mutation routes now create actor/tenant/project-scoped ephemeral sessions, apply closed semantic `VisualCommand` schemas, compact compatible commands, preserve ordered undo/redo, expose bounded events, enforce 30-minute idle and four-hour absolute expiry, manage up to eight variants, and activate Laboratory from hard/soft policy triggers. Commands, events, and projections contain no host path, raw project content, prompt, credential, provider event, or executable text.
+
+Session creation idempotency is serialized and replayed atomically under concurrency. Studio enforces separate bounds of 16 KiB per semantic command and 256 KiB for the complete bridge message. Preview-start and worker-preflight timeouts attach late cleanup/release handlers so a provider that resolves after the timeout does not leak an admitted resource.
+
+The compile route freezes one accepted variant into an immutable `CompileIntent`, reattests the base identity, and permits only one idempotent attempt. `StudioCompileAdmissionService` validates a dedicated-worker envelope and an exact capability proof for containerd 2.x, gVisor `runsc`/Systrap, non-root/read-only/no-host-mount/no-runtime-socket isolation, phase separation, network policy, immutable image, quotas, lease, and reconciliation. This is a contract/admission implementation only. `main.ts` injects no OCI worker provider, so compile returns bounded `studioCompileUnavailable`/`503`, creates no worktree, invokes no agent, executes no generated code on the host, produces no patch, and reloads no runtime.
+
+Studio is disabled by default. Configuration rejects partial enablement and refuses Studio enablement in production. No customer-controlled preview, hosted end-to-end proof, or public availability claim exists.
 
 ## Entrypoints
 
 - `npm start` starts the runner on loopback by default.
 - `GET /v1/version` returns no filesystem paths, credentials or provider configuration. `GET /v1/projects/:projectId/authorization` is a read-only protected-route probe: it proves authentication plus tenant-scoped project membership and returns only the opaque project id and granted read capability.
 - `GET /v1/projects/:projectId/studio/capability` is a read-only authenticated projection. It returns `503 studioUnavailable` unless a server-owned resolver admits the exact trusted Astro base revision and loopback origin.
+- `POST /v1/projects/:projectId/studio-sessions` and its command, undo/redo, variant, event, interrupt, close, and compile-intent routes require authenticated project scope; mutations also require the trusted-Origin policy and bounded idempotency.
 - `loadConfig` refuses flags that would expose a public app-server, accept client-selected paths, or enable an unsafe shell.
 - `RUNNER_OPERATOR_WORKSPACES` accepts only a server-owned JSON map from bounded project ids to absolute working directories and bounded tmux names. Neither value is returned to Flutter.
 - `npm run smoke:operator-workspace` creates an isolated real PTY/tmux session, proves resize and input/output with the installed Codex executable, scans the bounded transcript for obvious secret markers, and cleans the temporary tmux session.
@@ -153,7 +169,7 @@ This remains a trusted-base local preview slice: the route does not start a proc
 - Semantic conversations map normalized runner events into typed message, tool, plan, approval, progress and result items; assistant deltas coalesce, ANSI/control bytes are removed, cursors remain monotonic, duplicate events are suppressed and retained timelines are bounded. Tabs expose unread state, pause inactive streams, and replace the final closed tab atomically.
 - Conversation controls cover create, message, interrupt, resume, approve, deny, audit and proposed fix. Audit/fix routes use the verified runner payloads and stable idempotency keys. Runtime identity and capability limits appear only when represented by safe typed values; the semantic surface never renders PTY or terminal output.
 - Flutter now exposes a dedicated operator Workspace route from a server-backed project detail. It creates the short-lived session over authenticated HTTP, connects through `web_socket_channel`, renders output and captures keyboard input with `xterm`, forwards bounded resize frames, and closes the session on screen disposal. Unavailable and interrupted states remain explicit; no SSH credential, server path, PTY handle or tmux identifier is presented. Cockpit and semantic Codex conversations remain the normal user surface.
-- Flutter now also exposes a capability-gated Studio route for the trusted Astro base. It parses only the exact inspect-only projection, embeds the admitted origin in a sandboxed Web iframe, accepts selection only from the exact iframe origin/source/channel and server-projected surface IDs, and otherwise remains unavailable. The current slice has no visual command, source write, Laboratory, compile, or runtime-launch path.
+- Flutter now exposes a capability-gated Studio route for the trusted Astro base. It parses the exact inspect-only projection, embeds the admitted origin in a sandboxed Web iframe, accepts only exact-origin/source/channel bridge messages and server-projected surfaces, and synchronizes semantic commands, ephemeral session state, undo/redo, Laboratory reasons, and variants with the runner. Compile submission now sends only `{variantId}` with a stable `Idempotency-Key` and parses the runner's closed immutable `CompileIntent`; worker admission still fails closed because no real provider is injected.
 - The composition root now opens the server-owned SQLite projection, optionally enables Firebase ID-token authentication and Codex stdio, and closes the store with the app lifecycle. The protected event route emits a bounded, tenant-scoped SSE replay with cursor resume and heartbeat; `live=true` adds tenant/conversation-scoped in-process fan-out, a 30-second idle bound, and disconnect cleanup.
 - All persisted event, run checkpoint, and idempotency payloads are checked for credentials, cookies, authorization material, clone paths and recognizable token values.
 - Firebase Auth is the identity adapter. The runner verifies an access token with the project's JWKS, accepts only RS256 ID tokens with its expected issuer and audience, then resolves the JWT subject through a tenant membership lookup.
@@ -184,6 +200,8 @@ This remains a trusted-base local preview slice: the route does not start a proc
 - Active runs are admitted through a shared per-tenant limit and released on terminal event, timeout, or startup failure. The configured maximum duration interrupts the selected runtime; a failed interrupt is projected as a bounded failure code.
 - Every admitted execution is manual-only and immutable after persistence. Provider capability or preflight rejection occurs before side effects and cannot silently fall back to another provider or runtime.
 - The optional operator Workspace is a separate capability from semantic Codex conversations. It remains server-owned, tenant/project-scoped, allowlisted, short-lived, and unavailable by default for projects without an explicit server mapping.
+- Studio never starts generated code on the runner host. Missing or incomplete dedicated OCI proof keeps compile unavailable; Windows cannot stand in as gVisor/Systrap evidence.
+- Studio repository/runtime identity is server-owned. The target site may prove only its public profile, bridge version, and anchors; it cannot choose or attest the Git revision/digest, path, runtime, provider, image, policy, command, prompt, or proof bypass.
 
 ## Validation
 
@@ -192,6 +210,7 @@ cd runner
 npm test
 npm run typecheck
 npm run lint
+npx tsx --test test/studio/*.test.ts test/contracts/config.test.ts
 npm run audit
 rg -n "@clerk/fastify|RUNNER_UNSAFE_SHELL|RUNNER_PUBLIC_APP_SERVER|RUNNER_ALLOW_CLIENT_PATHS|GITHUB_TOKEN" src test package.json
 cd ../app && flutter analyze && flutter test test/shipglows/auth/auth_provider_test.dart
@@ -206,7 +225,9 @@ cd ../app && flutter analyze && flutter test test/shipglows/auth/auth_provider_t
 - Does a new execution provider remain disposable or explicitly operator-persistent?
 - Does the public route schema omit host paths, raw credentials and terminal output?
 - Does the operator Workspace remain fail-closed for missing authorization, allowlist, capability, TLS, or identity provisioning?
+- Does Studio remain disabled in production and unavailable for a dirty repository, identity/runtime mismatch, unsupported capability, expired session, or missing dedicated worker?
+- Does a compile-related change preserve the no-host-execution invariant and require independent Linux OCI proof before enablement?
 
 ## Maintenance Rule
 
-Update this document whenever the runner gains an adapter, route family, auth provider, persistence schema, execution provider, capability rule or public diagnostic surface. Distinguish contract proof, isolated real-server smoke, loopback deployment, and public authenticated proof. The operator PTY has isolated real-server proof and the runner is supervised on loopback; GitHub App/provider execution and the browser-to-runner Workspace journey remain unproven.
+Update this document whenever the runner gains an adapter, route family, auth provider, persistence schema, execution provider, capability rule or public diagnostic surface. Distinguish contract proof, local integration proof, isolated real-server smoke, loopback deployment, hosted authenticated proof, and public availability. Studio currently has local contract/integration proof only; its OCI worker, generated compile, patch/reload evidence, browser visual proof, and hosted journey remain unproven.

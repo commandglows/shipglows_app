@@ -20,8 +20,17 @@ import { OperatorWorkspaceGateway } from "./operator-workspace/index.js";
 import { ExecutionAdmissionService, LocalManagedExecutionProvider } from "./runs/execution.js";
 import { ExecutionProviderRegistry } from "./contracts/index.js";
 import { createBuildIdentity, RunnerDiagnostics } from "./observability/index.js";
+import { GitStudioRepositoryAttestor, HttpStudioRuntimeAttestor, createTrustedBaseStudioResolver } from "./studio/capability.js";
+import { StudioSessionService } from "./studio/session.js";
 
 const config = loadConfig();
+const studioCapability = config.studio.enabled ? createTrustedBaseStudioResolver({
+  configuration: config.studio,
+  repository: new GitStudioRepositoryAttestor(config.cwd),
+  runtime: new HttpStudioRuntimeAttestor(),
+}) : undefined;
+const studioSessions = studioCapability === undefined ? undefined : new StudioSessionService(studioCapability);
+
 const databasePath = process.env["RUNNER_DB_PATH"] ?? resolve(config.cwd, ".shipglows-runner.sqlite");
 const store = await openOperationalStore(databasePath);
 const diagnostics = new RunnerDiagnostics({
@@ -85,6 +94,8 @@ const dependencies = {
   runAdmission,
   executionAdmission,
   diagnostics,
+  ...(studioCapability === undefined ? {} : { studioCapability }),
+  ...(studioSessions === undefined ? {} : { studioSessions }),
   ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime.executor }),
   ...(authentication === undefined ? {} : { authentication }),
   ...(agentRuntime === undefined ? {} : { agentRuntime }),
