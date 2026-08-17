@@ -33,7 +33,11 @@ describe("runtime-neutral agent contract", () => {
     ]);
 
     const selected = registry.select("eve-spike", ["sessions", "turns", "semanticEvents"]);
-    const session = await selected.createSession({ conversationId: opaque("cnv_000000000001") });
+    const session = await selected.createSession({
+      conversationId: opaque("cnv_000000000001"),
+      accessMode: "readOnly",
+      workspace: { root: "C:\\project", kind: "project" },
+    });
     const turn = await selected.startTurn({ runtimeSessionId: session.runtimeSessionId, message: "Audit this project" });
 
     assert.equal(session.state, "idle");

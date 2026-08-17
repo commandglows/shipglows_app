@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.27.0"
+artifact_version: "1.30.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-17"
-updated_at: "2026-08-17 10:43:10 UTC"
+updated_at: "2026-08-17 21:37:06 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -23,8 +23,8 @@ linked_systems:
   - "Flutter Windows"
   - "ShipGlows managed runner"
   - "ShipGlows AgentRuntime contract"
-  - "OpenAI Codex app-server adapter"
-  - "OpenCode / ACP adapter path"
+  - "ACP TypeScript SDK and local stdio adapter"
+  - "Codex ACP agent"
   - "Kilo Code adapter path"
   - "Firebase Auth"
   - "Convex target product data layer"
@@ -114,6 +114,7 @@ evidence:
   - "Repository inspection 2026-08-01: the Flutter prototype already exists under `app/lib/shipglows/`, including overview, project detail, settings, health models, repositories, providers, and tests; this spec extends that prototype rather than creating a new app."
   - "Fresh external documentation check 2026-08-01: xterm.dart supports Flutter Web, Android, and Windows terminal rendering; just-bash provides a TypeScript virtual Bash sandbox with bounded filesystem and network capabilities."
   - "CTO architecture reframe 2026-08-01: ShipGlows owns the multi-agent control plane; Codex app-server is the first runtime adapter, while OpenCode, Kilo and ACP must remain possible behind the same normalized contract."
+  - "Operator validation 2026-08-17: keep the product/runtime boundary agent-agnostic, implement only ACP for now, and use Codex as the first pinned ACP agent."
   - "Warp Oz review 2026-08-03: cloud-agent orchestration, run observability, controlled triggers and team-scoped memory are useful patterns; ShipGlows retains the product control plane and does not adopt Oz as an MVP dependency."
   - "Warp oz-agent-worker review 2026-08-07: adopt only a ShipGlows-owned resolved execution envelope, provider preflight and explicit execution outcomes; distributed worker transport, Kubernetes, and durable reattach remain outside this MVP slice."
   - "Local integration proof 2026-08-17: the new Flutter runtime exposes one persistent global project selector and one visual Settings project panel backed by a closed, in-memory development catalog containing exactly `shipglows_app` and `gocharbon`; no database provisioning, GitHub access, or mutation capability is granted."
@@ -131,7 +132,7 @@ ShipGlows Managed Agent Cockpit MVP
 
 # Status
 
-Amended on 2026-08-17 after the local project-management integration. The existing Flutter prototype is the implementation base. Its active runtime owns one persistent global project selector, one complete Projects page, and a Settings entry point. In the loopback-only development pilot, the runner owns a persistent workspace-bounded registry seeded with `shipglows_app` and `gocharbon`; it supports connect, active/default selection, rename, reversible archive, and registry-only disconnect through exact-origin authenticated routes. Local repository paths are never returned to Flutter, Git content is never changed by registry actions, built-ins cannot be disconnected, and generic project mutation remains denied. Studio availability is declared per project instead of inferred. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Firebase Auth is the cross-platform identity baseline behind a portable provider boundary; Convex is the target product data layer, while Fastify/SQLite remains the documented execution-plane exception.
+Amended on 2026-08-17 after the local project-management integration and ACP runtime decision. The existing Flutter prototype is the implementation base. Its active runtime owns one persistent global project selector, one complete Projects page, and a Settings entry point. In the loopback-only development pilot, the runner owns a persistent workspace-bounded registry seeded with `shipglows_app` and `gocharbon`; it supports connect, active/default selection, rename, reversible archive, and registry-only disconnect through exact-origin authenticated routes. Local repository paths are never returned to Flutter, Git content is never changed by registry actions, built-ins cannot be disconnected, and generic project mutation remains denied. Studio availability is declared per project instead of inferred. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane and exposes only its normalized `AgentRuntime` contract to product code. The runner uses one generic local-stdio ACP adapter with pinned Codex ACP as its first configured agent; provider wire types remain private, unsupported capabilities fail closed, and the previous Codex app-server adapter stays frozen as a local rollback until ACP proof is complete. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Firebase Auth is the cross-platform identity baseline behind a portable provider boundary; Convex is the target product data layer, while Fastify/SQLite remains the documented execution-plane exception.
 
 # User Story
 
@@ -185,7 +186,7 @@ Build a semantic multi-agent client inside the active Flutter runtime and a dedi
 
 1. The Flutter app authenticates the user, displays the Cockpit and conversation tabs, sends typed commands, and consumes normalized server events.
 2. A Node.js/TypeScript Fastify service validates the selected identity-provider session, verifies project authorization with the GitHub App, owns managed clones/worktrees, persists durable run projections, and selects an agent runtime and execution provider from server-owned policy.
-3. `AgentRuntime` is a ShipGlows-owned port for runtime capability discovery, sessions/threads, turns, interruption, approvals, normalized events and redacted diagnostics. `codex app-server` over local stdio is the first complete adapter; OpenCode, Kilo and ACP are staged adapters, never direct public endpoints.
+3. `AgentRuntime` is a ShipGlows-owned port for runtime capability discovery, sessions/threads, turns, interruption, approvals, normalized events and redacted diagnostics. One generic ACP adapter runs local stdio agents behind that port; pinned Codex ACP is the first configured agent. ACP is never a direct public endpoint.
 4. The public app protocol uses authenticated HTTP commands plus Server-Sent Events with resumable cursors for semantic work. The operator Workspace uses a separate short-lived authenticated PTY capability; raw runtime transports, SSH credentials, host paths and tmux control stay internal.
 5. GitHub repositories and ShipGlows Markdown remain canonical. SQLite on the managed runner stores operational projections such as users, project bindings, runtime/session mappings, run states/checkpoints, event cursors, approvals, capability decisions and idempotency records; it does not become the canonical repository-content store.
 6. Read-only audits use managed clones. Fixes use isolated worktrees/branches and stop at a reviewable local result in this MVP.
@@ -228,7 +229,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - `xterm.dart` is the implemented Flutter terminal renderer for Web, Android and Windows, and `web_socket_channel` carries the dedicated stream. The runner uses `node-pty` with fixed server-owned tmux arguments. Local contracts and an isolated real server smoke pass; hosted and per-platform rendering proof remain.
 - `AgentRuntime`, `ExecutionProvider`, `CapabilityBroker` and `ModelGateway` are ShipGlows-owned ports. They preserve the choice of Codex, OpenCode, Kilo, ACP, self-hosted sandbox, Vercel sandbox, direct model provider or future runtime without changing Flutter, health or authorization contracts.
 - Warp Oz is a reference for cloud-agent orchestration and fleet observability only. Its trigger, memory and model-routing patterns are represented by ShipGlows-owned `RunIntent`, `RunPolicy` and `ProjectContextBundle` contracts; no Oz client, hosted control plane or proprietary runtime API is a dependency.
-- Codex app-server is the first production adapter. The MVP must prove a fake second adapter contract before a real OpenCode/Kilo adapter is claimed; AI SDK HarnessAgent and eve are optional experimental spikes behind the same port, not baseline dependencies.
+- ACP is the only actively developed runtime adapter for this MVP slice. Codex ACP is the first pinned agent; additional agents remain configuration-and-capability work only after the Codex path is proven. The frozen Codex app-server adapter is rollback code, not an independently evolving product path.
 - `just-bash` is an optional sandbox for safe skill checks and previews. It cannot provide SSH, tmux, Neovim or a real server filesystem, and it must not be presented as the operator terminal.
 
 # Scope In
@@ -242,7 +243,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Managed runner API, SSE event stream, persistence, idempotency, quotas, and diagnostics.
 - Redacted operations summary and explicit manual `RunIntent` records for authorized project runs.
 - Tenant/project-scoped, versioned `ProjectContextBundle` provenance for server-supplied runtime context.
-- ShipGlows `AgentRuntime` capability contract, Codex app-server first adapter and normalized event mapping.
+- ShipGlows `AgentRuntime` capability contract, generic ACP local-stdio adapter, pinned Codex ACP agent and normalized event mapping.
 - Fake second-runtime conformance fixture proving Flutter and policy do not branch on Codex-only wire types.
 - Firebase Auth authentication for Web, Android and Windows through one Dart adapter; server-side ID-token/JWKS validation behind the runner's `AuthProvider` interface.
 - GitHub App repository authorization and short-lived installation-token use on the server.
@@ -272,7 +273,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 # Constraints
 
 - The app must never expose a server terminal or require SSH knowledge.
-- Every runtime transport runs on the managed server or inside a server-selected execution provider; Codex app-server local stdio is the first implementation. No ACP stdio, runtime HTTP/SSE endpoint, Unix socket, experimental WebSocket transport or user-provided agent endpoint is a public API dependency.
+- Every runtime transport runs on the managed server or inside a server-selected execution provider; ACP local stdio is the only active adapter transport and Codex ACP is the first configured agent. No ACP message, runtime HTTP/SSE endpoint, Unix socket, experimental WebSocket transport or user-provided agent endpoint is a public API dependency.
 - Public communication is HTTPS plus authenticated SSE. State-changing actions use HTTP requests with idempotency keys and CSRF/origin protection appropriate to the client surface.
 - Interactive terminal communication uses a separate authenticated WebSocket/PTY channel with a short-lived, single-purpose capability. The semantic SSE channel and PTY channel must never share authorization or raw protocol payloads.
 - Every request is authorized server-side from the selected AuthProvider identity, ShipGlows project membership, and fresh GitHub App access when repository-sensitive.
@@ -498,12 +499,13 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Validate with: migration up/down policy tests, transaction/idempotency tests, tenant-isolation tests, restart recovery tests, context-bundle provenance/redaction tests, manual-trigger rejection tests, and backup/restore fixture proof.
   - Implementation note (2026-08-11): schema v8 persists tenant-scoped runs with redacted checkpoints and explicit state transitions, recovers in-flight runs as `interrupted` after restart, tracks workspace cleanup retries without storing local paths, projects runtime sessions, capability decisions, approvals, source-attributed skill runs and health evidence, bounded usage summaries, and server-owned cross-namespace project identity bindings. A validated context/run/evidence envelope is atomic and rolls back completely on insertion failure. Backup/restore fixture proof and broader route integration remain.
 - [~] Task 5: Implement Codex as the first `AgentRuntime` adapter and normalize semantic events.
-  - Files: `runner/src/agent-runtime/**`, `runner/src/agent-runtime/codex/**`, `runner/src/events/**`, `runner/test/agent-runtime/**`, `runner/test/events/**`.
-  - Action: Spawn `codex app-server` as a supervised child process and map its JSON-RPC-over-stdio lifecycle for initialization, capability discovery, thread create/resume, turns, interruption, approvals, authentication state and event streaming to the neutral port. Cap/redact payloads, reject unknown executable semantics, and test a fake second adapter against the same conformance suite.
+  - Files: `runner/src/agent-runtime/**`, `runner/src/events/**`, `runner/test/agent-runtime/**`, `runner/test/events/**`.
+  - Action: Spawn an allowlisted, pinned ACP agent as a supervised child process and map ACP initialization/capabilities, session create/resume, prompts, cancellation, permissions and updates to the neutral port. Cap/redact payloads, reject unsupported capabilities and keep ACP wire types private to the runner adapter.
   - User story link: Displays real agent work directly in the app without exposing a terminal or vendor protocol.
   - Depends on: Tasks 1 and 4.
-  - Validate with: fake app-server transcripts, second-adapter conformance tests, reconnect/order tests, unknown-event tests, output sanitization tests, process restart tests, and one local Codex smoke test with no repository mutation.
+  - Validate with: fake ACP transport transcripts, capability-denial tests, reconnect/order tests, unknown-update tests, output sanitization tests, process restart tests, and one local Codex ACP smoke test with no repository mutation.
   - Implementation note (2026-08-02): a server-owned stdio JSONL adapter now performs the initialize/initialized handshake, starts/resumes threads, starts/interrupts turns, maps safe semantic events, and resolves command/file approvals without forwarding raw app-server payloads. Provider-configured Codex smoke, reconnect/order hardening, and the fake second-adapter conformance fixture remain.
+  - Implementation note (2026-08-17): the runner now selects a generic ACP adapter under the unchanged `AgentRuntime` product boundary and launches pinned `@agentclientprotocol/codex-acp` over local stdio. Every session carries a trusted project/isolated workspace descriptor and explicit read-only/workspace-write policy; the adapter confirms `session/set_mode` and denies broad or unbound workspace fallback. Approval requests are persisted against the active run before publication, expire durably on cancellation/terminal outcomes, and approval maps only to ACP `allow_once`. Raw NDJSON lines, provider updates and retained identifiers are bounded before parsing or projection, with path/token sanitization and normalized events; a framing violation idempotently closes the SDK connection and terminates the child. Overflow uses the same bounded hard-stop primitive as interrupt, closes and removes the session before terminal acknowledgement, preserves approval-expiry and terminal control events, and rejects later prompts/callbacks. Non-`end_turn` stop reasons cannot become successful completion. Child exit/error, bounded interruption, runtime shutdown, startup reconciliation and session cleanup are supervised. A real local Codex ACP smoke proved session creation, one no-tool prompt, streamed agent update and `end_turn`; it did not prove restart resume. The ACP adapter deliberately does not advertise public resume and rejects unsafe cold resume. Durable workspace descriptors across runner restarts require a separately approved data migration. The previous Codex app-server adapter is unchanged and retained only as rollback.
 - [~] Task 6: Implement command API, SSE resume, audit/fix policy, and run orchestration.
   - Files: `runner/src/routes/**`, `runner/src/runs/**`, `runner/src/policies/**`, `runner/test/routes/**`, `runner/test/runs/**`.
   - Action: Add the versioned endpoints, redacted Cockpit operations summary, idempotency, event cursors, heartbeat, quotas, timeout/interrupt behavior, approval flow, server-owned `RunPolicy` resolution, manual-only `RunIntent` validation, explicit context-bundle attachment, allowlisted audit templates, isolated fix templates, and explicit no-push/no-merge gates.
@@ -584,7 +586,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - `AC-002`: Every project displays tech, content, SEO, performance, and security with explicit evidence/freshness; absent evidence is not reported as healthy.
 - `AC-003`: Projects are parent workspaces and agent conversations are child tabs with restorable state.
 - `AC-004`: A user can create/resume a semantic conversation, send a message, and observe real normalized events from the selected runtime without needing a terminal, SSH, tmux, PTY, ANSI emulator, or server path.
-- `AC-004a`: Codex app-server passes the first complete `AgentRuntime` adapter smoke; a fake second adapter passes the same contract suite, proving Flutter, health, authorization and public API behavior do not depend on Codex wire types.
+- `AC-004a`: Codex ACP passes the first complete `AgentRuntime` adapter smoke; normalized contract tests prove Flutter, health, authorization and public API behavior do not depend on ACP or Codex wire types.
 - `AC-004b`: A request whose selected runtime lacks a required capability is rejected before execution with a stable, user-visible capability error; ShipGlows never silently changes runtime or expands permissions.
 - `AC-005`: A user can launch a read-only audit and see queued, running, progress, result, error, interrupted, and retry states.
 - `AC-006`: A user can launch a proposed fix only in an isolated worktree/branch; the MVP cannot automatically push, merge, deploy, or mutate the default branch.
@@ -606,7 +608,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 
 # Test Contract
 
-- `surface`: Flutter Web, Android and Windows active ShipGlows runtime; Node.js/TypeScript managed control plane; `AgentRuntime`/`ExecutionProvider`/`CapabilityBroker` contracts; Codex app-server first adapter plus fake second-adapter conformance proof; Firebase Auth identity adapter; GitHub App access layer; managed clone/worktree layer; SQLite operational projection; authenticated SSE/HTTP API plus separate authenticated PTY channel; Cockpit health projection; semantic conversation UI; operator Workspace; Sentry diagnostics; operator docs; bounded just-bash skill execution. Convex is the target product data layer but its first projection is outside this proof. Marketing site, production push/merge/deploy, iOS shell, Linux desktop application launch, a live OpenCode/Kilo adapter, and unrestricted shell access are outside this proof.
+- `surface`: Flutter Web, Android and Windows active ShipGlows runtime; Node.js/TypeScript managed control plane; `AgentRuntime`/`ExecutionProvider`/`CapabilityBroker` contracts; generic ACP local-stdio adapter with pinned Codex ACP first agent; Firebase Auth identity adapter; GitHub App access layer; managed clone/worktree layer; SQLite operational projection; authenticated SSE/HTTP API plus separate authenticated PTY channel; Cockpit health projection; semantic conversation UI; operator Workspace; Sentry diagnostics; operator docs; bounded just-bash skill execution. Convex is the target product data layer but its first projection is outside this proof. Marketing site, production push/merge/deploy, iOS shell, Linux desktop application launch, additional live ACP agents, and unrestricted shell access are outside this proof.
 - `proof_profile`: high-risk authenticated runtime and agent-execution proof. Required evidence combines official-doc freshness, runner unit/contract/integration/security tests, Flutter unit/widget/platform tests, authenticated Web browser proof, Android and Windows build/session/adapter proof, local managed Git/Codex-first-adapter smoke plus fake second-adapter conformance proof, restart/reconnect/idempotency proof, tenant isolation, secret/redaction scans, Sentry and diagnostics redaction, metadata lint, design-system drift check, dependency audit, and diff hygiene.
 - `proof_order`:
   1. Freeze shared request/response/event/error schemas and threat boundaries.
@@ -715,6 +717,9 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-17 21:37:06 UTC | sg-development + sg-engineering | GPT-5 Codex | Unified ACP overflow and interrupt behind a bounded hard-stop, removed sessions before terminal acknowledgement, fenced late callbacks and second prompts, tolerated cancel transport rejection, bounded raw NDJSON framing and validated retained provider identifiers. Framing failure now closes the SDK connection and kills the producer idempotently. | focused ACP connection proof passes 16/16; full runner suite passes 354/355 with only the pre-existing Windows CRLF worktree fixture mismatch | Keep cold isolated resume denied until a separately specified durable workspace-descriptor migration exists |
+| 2026-08-17 21:12:00 UTC | sg-development + sg-engineering | GPT-5 Codex | Hardened the ACP slice after independent review: explicit runtime modes and trusted workspaces, durable approval lifecycle, active-run fencing, one-shot approval only, bounded sanitized updates, safe stop reasons, supervised process shutdown and no advertised ACP resume. | ACP/security/app integration gates pass; complete runner suite passes 345/346 with only the pre-existing Windows CRLF worktree fixture mismatch | Keep cold isolated resume denied until a separately specified durable workspace-descriptor migration exists |
+| 2026-08-17 20:31:58 UTC | sg-development + sg-engineering | GPT-5 Codex | Replaced the runner's active native-only selection with one generic ACP local-stdio runtime behind the unchanged `AgentRuntime` boundary; pinned ACP SDK and Codex ACP versions; normalized sessions, prompt lifecycle, cancellation, permissions and semantic updates without exposing raw provider data. | focused ACP tests, typecheck, lint, dependency audit and real create/prompt/stream smoke pass; the full suite has one unrelated Windows CRLF fixture failure | Resolve the independent workspace fixture normalization, then continue Task 5 process-restart/order hardening |
 | 2026-07-18 08:20:45 UTC | 000-shipglows | GPT-5 Codex | Routed the validated non-trivial product vision to the build lifecycle. | routed | 001-sg-build |
 | 2026-07-18 08:20:45 UTC | 001-sg-build | GPT-5 Codex | Classified the agent/server boundary as requiring a dedicated ready specification before implementation. | spec-required | 100-sg-spec |
 | 2026-07-18 08:20:45 UTC | 100-sg-spec | GPT-5 Codex | Converted operator decisions, current code evidence, preferred stacks, and fresh official integration docs into an executable high-risk MVP contract. | drafted | /101-sg-ready ShipGlows Managed Codex Cockpit MVP |
@@ -823,4 +828,4 @@ The portfolio architecture decision now supersedes this spec's original Supabase
 
 Historical Supabase task text and run-history evidence below remains a record of what was decided, implemented or deployed at that time; it is not current implementation guidance. The last managed-server proof still used the Supabase deployment and cannot be claimed as Firebase proof. Current completion requirements are owned by `firebase-auth-convex-alignment.md`: Linux REST/OIDC support, live Firebase authentication, deployment migration and a separately specified first Convex product projection remain open.
 
-`100-sg-spec` (amended; agentic-security, health evaluator, Firebase and single-runtime decisions) -> `101-sg-ready` (existing MVP contract ready) -> `001-sg-build` (Tasks 7 and 9 complete; Tasks 8, 10 and 12 locally partial) -> `103-sg-verify` (200 Flutter tests, analysis, Web release, goldens, browser, metadata and zero changed-file drift pass locally) -> `005-sg-ship` (Task 9 visual-proof commit created locally; push not authorized) -> `004-sg-deploy` (live Firebase, hosted runner, Sentry and public Workspace proofs remain partial or externally blocked)
+`100-sg-spec` (amended; agentic-security, health evaluator, Firebase, single-runtime and ACP-only adapter decisions) -> `101-sg-ready` (existing MVP contract ready) -> `001-sg-build` (generic ACP runner slice implemented locally; Tasks 7 and 9 complete; Tasks 5, 8, 10 and 12 locally partial) -> `103-sg-verify` (ACP-focused proof, typecheck, lint, audit and real create/prompt/stream smoke pass; no restart-resume claim, and one unrelated Windows CRLF suite failure remains) -> `005-sg-ship` (not authorized for this ACP slice) -> `004-sg-deploy` (live Firebase, hosted runner, Sentry and public Workspace proofs remain partial or externally blocked)

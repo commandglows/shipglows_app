@@ -1,4 +1,4 @@
-import type { AgentRuntime, OpaqueId } from "../contracts/index.js";
+import type { AgentRuntime, OpaqueId, RuntimeEvent } from "../contracts/index.js";
 import { RuntimeCapabilityError } from "../contracts/index.js";
 import type { OperationalStore, PersistedEvent } from "../db/index.js";
 import type { EventHub } from "../events/index.js";
@@ -40,7 +40,7 @@ type FixStore = Pick<
   OperationalStore,
   "createConversation" | "createRun" | "appendEvent" | "saveRuntimeSession" | "checkpointRun" |
   "getGitHubRepositoryBinding" | "scheduleWorkspaceCleanup"
->;
+> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
 
 interface FixLifecycle {
   readonly tenantId: string;
@@ -117,6 +117,7 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
   async #events(input: { readonly lifecycle: FixLifecycle }): Promise<void> {
     try {
       for await (const event of this.runtime.events({ runtimeSessionId: opaque(input.lifecycle.runtimeSessionId) })) {
+        this.#persistApproval(input.lifecycle, event);
         this.#appendEvent({ id: id("evt"), tenantId: input.lifecycle.tenantId, conversationId: input.lifecycle.conversationId, type: event.type, payload: event.payload });
         const terminal = event.type === "turn.completed" ? "completed" : event.type === "turn.failed" ? "failed" : event.type === "turn.interrupted" ? "interrupted" : undefined;
         if (terminal !== undefined) {
@@ -125,7 +126,26 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
         }
       }
     } catch {
+      try {
+        await this.runtime.interruptTurn({ runtimeSessionId: input.lifecycle.runtimeSessionId, runtimeTurnId: input.lifecycle.runtimeTurnId });
+      } catch {
+        // The durable failure below remains authoritative when provider cancellation also fails.
+      }
       this.#finalize(input.lifecycle, "failed", { phase: "event_stream_failed", code: "eventStreamUnavailable" }, { type: "run.failed", payload: { runId: input.lifecycle.runId, code: "eventStreamUnavailable" } });
+    }
+  }
+
+  #persistApproval(lifecycle: FixLifecycle, event: RuntimeEvent): void {
+    const approvalId = event.payload["approvalId"];
+    if (typeof approvalId !== "string") return;
+    if (this.store.createApproval === undefined || this.store.getApproval === undefined || this.store.resolveApproval === undefined) {
+      throw new Error("Durable approval storage is unavailable.");
+    }
+    if (event.type === "approval.requested") {
+      this.store.createApproval({ id: approvalId, tenantId: lifecycle.tenantId, runId: lifecycle.runId, requestedAt: event.occurredAt });
+    } else if (event.type === "approval.expired") {
+      const approval = this.store.getApproval({ tenantId: lifecycle.tenantId, approvalId });
+      if (approval?.state === "pending") this.store.resolveApproval({ tenantId: lifecycle.tenantId, approvalId, state: "expired", resolvedAt: event.occurredAt });
     }
   }
 
@@ -148,7 +168,11 @@ export class ManagedFixCommandExecutor implements FixCommandExecutor {
       await this.execution?.admit({ runId, tenantId: input.tenantId, projectId: input.projectId, conversationId, taskKind: "fix", runtimeId: this.runtime.id, providerId: "managed-disposable", requiredCapabilities: ["isolatedWorkspace"] });
       executionAdmitted = this.execution !== undefined;
       const workspace = await this.workspaces.createFixWorktree({ projectId: input.projectId, conversationId, binding, transport: this.transport });
-      const session = await this.runtime.createSession({ conversationId: opaque(conversationId), workspaceRoot: workspace.root });
+      const session = await this.runtime.createSession({
+        conversationId: opaque(conversationId),
+        accessMode: "workspaceWrite",
+        workspace: { root: workspace.root, kind: "isolated" },
+      });
       this.store.saveRuntimeSession({ id: id("ses"), tenantId: input.tenantId, conversationId, runtimeId: this.runtime.id, runtimeSessionId: String(session.runtimeSessionId), state: session.state });
       const turn = await this.runtime.startTurn({ runtimeSessionId: session.runtimeSessionId, message: `Apply the approved ShipGlows fix ${input.issueId} in the isolated workspace. Instruction: ${input.instruction}` });
       this.store.checkpointRun({ tenantId: input.tenantId, runId, state: "running", checkpoint: { phase: "turn_started", runtimeTurnId: String(turn.runtimeTurnId), workspaceKind: "fix" } });

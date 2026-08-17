@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { AgentRuntime, OpaqueId } from "../contracts/index.js";
+import type { AgentRuntime, OpaqueId, ProjectWorkspaceResolver, RuntimeEvent } from "../contracts/index.js";
 import type { OperationalStore } from "../db/index.js";
 import type { EventHub } from "../events/index.js";
 import { RunAdmission, RunLimitError } from "./limits.js";
@@ -9,7 +9,7 @@ import type { ExecutionAdmissionService } from "./execution.js";
 export type AuditCommandStore = Pick<
   OperationalStore,
   "createConversation" | "createRun" | "appendEvent" | "saveRuntimeSession" | "checkpointRun"
->;
+> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
 
 export interface AuditCommandResult {
   readonly conversationId: string;
@@ -48,6 +48,7 @@ export class AuditCommandService {
     },
     private readonly admission: RunAdmission = new RunAdmission(),
     private readonly execution?: ExecutionAdmissionService,
+    private readonly resolveWorkspace?: ProjectWorkspaceResolver,
   ) {}
 
   #appendEvent(input: Parameters<AuditCommandStore["appendEvent"]>[0]) {
@@ -100,6 +101,7 @@ export class AuditCommandService {
   async #persistRuntimeEvents(input: { readonly lifecycle: RunLifecycle }): Promise<void> {
     try {
       for await (const event of this.runtime.events({ runtimeSessionId: input.lifecycle.runtimeSessionId })) {
+        this.#persistApproval(input.lifecycle, event);
         this.#appendEvent({
           id: id("evt"),
           tenantId: input.lifecycle.tenantId,
@@ -120,10 +122,29 @@ export class AuditCommandService {
         }
       }
     } catch {
+      try {
+        await this.runtime.interruptTurn({ runtimeSessionId: input.lifecycle.runtimeSessionId, runtimeTurnId: input.lifecycle.runtimeTurnId });
+      } catch {
+        // The durable failure below remains authoritative when provider cancellation also fails.
+      }
       this.#finalize(input.lifecycle, "failed", { phase: "event_stream_failed", code: "eventStreamUnavailable" }, {
         type: "run.failed",
         payload: { runId: input.lifecycle.runId, code: "eventStreamUnavailable" },
       });
+    }
+  }
+
+  #persistApproval(lifecycle: RunLifecycle, event: RuntimeEvent): void {
+    const approvalId = event.payload["approvalId"];
+    if (typeof approvalId !== "string") return;
+    if (this.store.createApproval === undefined || this.store.getApproval === undefined || this.store.resolveApproval === undefined) {
+      throw new Error("Durable approval storage is unavailable.");
+    }
+    if (event.type === "approval.requested") {
+      this.store.createApproval({ id: approvalId, tenantId: lifecycle.tenantId, runId: lifecycle.runId, requestedAt: event.occurredAt });
+    } else if (event.type === "approval.expired") {
+      const approval = this.store.getApproval({ tenantId: lifecycle.tenantId, approvalId });
+      if (approval?.state === "pending") this.store.resolveApproval({ tenantId: lifecycle.tenantId, approvalId, state: "expired", resolvedAt: event.occurredAt });
     }
   }
 
@@ -134,6 +155,8 @@ export class AuditCommandService {
     readonly scope: string;
   }): Promise<AuditCommandResult> {
     if (!/^[\u0020-\u007E]{1,128}$/.test(input.scope)) throw new Error("Audit scope is invalid.");
+    const workspaceRoot = await this.resolveWorkspace?.(input) ?? null;
+    if (workspaceRoot === null) throw new Error("Trusted project workspace is unavailable.");
     if (!this.admission.acquire(input.tenantId, this.limits.maxConcurrentRunsPerTenant)) {
       throw new RunLimitError("runQuotaExceeded", "The tenant has reached its active run quota.");
     }
@@ -167,7 +190,11 @@ export class AuditCommandService {
     try {
       await this.execution?.admit({ runId, tenantId: input.tenantId, projectId: input.projectId, conversationId, taskKind: "audit", runtimeId: this.runtime.id, providerId: "managed-disposable", requiredCapabilities: ["readOnly"] });
       executionAdmitted = this.execution !== undefined;
-      const session = await this.runtime.createSession({ conversationId: opaque(conversationId) });
+      const session = await this.runtime.createSession({
+        conversationId: opaque(conversationId),
+        accessMode: "readOnly",
+        workspace: { root: workspaceRoot, kind: "project" },
+      });
       this.store.saveRuntimeSession({
         id: id("ses"),
         tenantId: input.tenantId,

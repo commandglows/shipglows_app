@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { AgentRuntime, OpaqueId } from "../contracts/index.js";
+import type { AgentRuntime, OpaqueId, ProjectWorkspaceResolver, RuntimeEvent } from "../contracts/index.js";
 import type { OperationalStore, PersistedRun } from "../db/index.js";
 import type { EventHub } from "../events/index.js";
 import { RunAdmission, RunLimitError } from "./limits.js";
@@ -10,7 +10,7 @@ export type ConversationCommandStore = Pick<
   OperationalStore,
   "createConversation" | "getConversation" | "createRun" | "getRun" | "getLatestRun" | "saveRuntimeSession" |
   "getRuntimeSession" | "checkpointRun" | "appendEvent"
->;
+> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
 
 export interface ConversationResult {
   readonly conversationId: string;
@@ -58,6 +58,7 @@ export class ConversationCommandService {
     },
     private readonly admission: RunAdmission = new RunAdmission(),
     private readonly execution?: ExecutionAdmissionService,
+    private readonly resolveWorkspace?: ProjectWorkspaceResolver,
   ) {}
 
   #appendEvent(input: Parameters<ConversationCommandStore["appendEvent"]>[0]): void {
@@ -66,10 +67,16 @@ export class ConversationCommandService {
   }
 
   async create(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string; readonly title: string }): Promise<ConversationResult> {
+    const workspaceRoot = await this.resolveWorkspace?.(input) ?? null;
+    if (workspaceRoot === null) throw new ConversationCommandError("runtimeUnavailable", "A trusted project workspace is unavailable.");
     const conversationId = id("cnv");
     this.store.createConversation({ id: conversationId, tenantId: input.tenantId, projectId: input.projectId, createdBy: input.userId, title: input.title });
     try {
-      const session = await this.runtime.createSession({ conversationId: opaque(conversationId) });
+      const session = await this.runtime.createSession({
+        conversationId: opaque(conversationId),
+        accessMode: "readOnly",
+        workspace: { root: workspaceRoot, kind: "project" },
+      });
       this.store.saveRuntimeSession({
         id: id("ses"),
         tenantId: input.tenantId,
@@ -149,6 +156,7 @@ export class ConversationCommandService {
       const persistEvents = async (): Promise<void> => {
         try {
           for await (const event of this.runtime.events({ runtimeSessionId: opaque(session.runtimeSessionId) })) {
+            this.#persistApproval({ tenantId: input.tenantId, runId }, event);
             this.#appendEvent({ id: id("evt"), tenantId: input.tenantId, conversationId: input.conversationId, type: event.type, payload: event.payload });
             const terminal = event.type === "turn.completed" ? "completed" : event.type === "turn.failed" ? "failed" : event.type === "turn.interrupted" ? "interrupted" : undefined;
             if (terminal !== undefined) {
@@ -157,6 +165,11 @@ export class ConversationCommandService {
             }
           }
         } catch {
+          try {
+            await this.runtime.interruptTurn({ runtimeSessionId: opaque(session.runtimeSessionId), runtimeTurnId: turn.runtimeTurnId });
+          } catch {
+            // The durable failure below remains authoritative when provider cancellation also fails.
+          }
           finalize("failed", "eventStreamUnavailable");
         }
       };
@@ -189,25 +202,42 @@ export class ConversationCommandService {
     } catch {
       throw new ConversationCommandError("runtimeUnavailable", "The runtime could not interrupt the turn.");
     }
-    this.store.checkpointRun({ tenantId: input.tenantId, runId: context.run.id, state: "interrupted", checkpoint: { phase: "interrupted", code: "operatorInterrupted" } });
-    this.execution?.finish({ tenantId: input.tenantId, runId: context.run.id, state: "interrupted" });
-    this.#appendEvent({ id: id("evt"), tenantId: input.tenantId, conversationId: input.conversationId, type: "turn.interrupted", payload: { runId: context.run.id, code: "operatorInterrupted" } });
     return { conversationId: input.conversationId, runId: context.run.id, state: "interrupted" };
   }
 
-  async resume(input: { readonly tenantId: string; readonly projectId: string; readonly conversationId: string }): Promise<ConversationResult> {
+  async resume(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string; readonly conversationId: string }): Promise<ConversationResult> {
     const conversation = this.store.getConversation({ tenantId: input.tenantId, conversationId: input.conversationId });
     if (conversation?.projectId !== input.projectId) throw new ConversationCommandError("conversationNotFound", "The conversation was not found.");
     const currentSession = this.store.getRuntimeSession({ tenantId: input.tenantId, conversationId: input.conversationId });
     if (currentSession === undefined) throw new ConversationCommandError("runtimeUnavailable", "The runtime session is unavailable.");
+    const workspaceRoot = await this.resolveWorkspace?.(input) ?? null;
+    if (workspaceRoot === null) throw new ConversationCommandError("runtimeUnavailable", "A trusted project workspace is unavailable.");
     try {
-      const session = await this.runtime.resumeSession({ runtimeSessionId: opaque(currentSession.runtimeSessionId) });
+      const session = await this.runtime.resumeSession({
+        runtimeSessionId: opaque(currentSession.runtimeSessionId),
+        accessMode: "readOnly",
+        workspace: { root: workspaceRoot, kind: "project" },
+      });
       this.store.saveRuntimeSession({ id: id("ses"), tenantId: input.tenantId, conversationId: input.conversationId, runtimeId: this.runtime.id, runtimeSessionId: String(session.runtimeSessionId), state: session.state });
     } catch {
       throw new ConversationCommandError("runtimeUnavailable", "The runtime could not resume the conversation.");
     }
     this.#appendEvent({ id: id("evt"), tenantId: input.tenantId, conversationId: input.conversationId, type: "conversation.stateChanged", payload: { state: "idle" } });
     return { conversationId: input.conversationId, state: "idle" };
+  }
+
+  #persistApproval(context: { readonly tenantId: string; readonly runId: string }, event: RuntimeEvent): void {
+    const approvalId = event.payload["approvalId"];
+    if (typeof approvalId !== "string") return;
+    if (this.store.createApproval === undefined || this.store.getApproval === undefined || this.store.resolveApproval === undefined) {
+      throw new Error("Durable approval storage is unavailable.");
+    }
+    if (event.type === "approval.requested") {
+      this.store.createApproval({ id: approvalId, tenantId: context.tenantId, runId: context.runId, requestedAt: event.occurredAt });
+    } else if (event.type === "approval.expired") {
+      const approval = this.store.getApproval({ tenantId: context.tenantId, approvalId });
+      if (approval?.state === "pending") this.store.resolveApproval({ tenantId: context.tenantId, approvalId, state: "expired", resolvedAt: event.occurredAt });
+    }
   }
 
   #context(input: { readonly tenantId: string; readonly projectId: string; readonly conversationId: string }): { readonly run: PersistedRun; readonly session: { readonly runtimeSessionId: string } } {

@@ -10,7 +10,7 @@ const projectId = "prj_agentic_policy";
 const conversationId = "cnv_agentic_policy";
 const approvalId = "apr_agentic_policy";
 
-function run(taskKind: PersistedRun["taskKind"]): PersistedRun {
+function run(taskKind: PersistedRun["taskKind"], state: PersistedRun["state"] = "running"): PersistedRun {
   return {
     id: "run_agentic_policy",
     tenantId,
@@ -19,17 +19,17 @@ function run(taskKind: PersistedRun["taskKind"]): PersistedRun {
     runtimeId: "codex",
     executionProviderId: "managed-disposable",
     taskKind,
-    state: "running",
+    state,
     checkpoint: {},
     createdAt: "2026-08-08T00:00:00.000Z",
     updatedAt: "2026-08-08T00:00:00.000Z",
   };
 }
 
-function harness(taskKind: PersistedRun["taskKind"]) {
+function harness(taskKind: PersistedRun["taskKind"], state: PersistedRun["state"] = "running") {
   let runtimeCalls = 0;
   let persistedResolutions = 0;
-  const persistedRun = run(taskKind);
+  const persistedRun = run(taskKind, state);
   const store: ApprovalCommandStore = {
     getApproval: () => ({ id: approvalId, tenantId, runId: persistedRun.id, state: "pending", requestedAt: "2026-08-08T00:00:00.000Z", resolvedAt: null }),
     getRun: () => persistedRun,
@@ -89,5 +89,14 @@ describe("agentic security adversarial policy", () => {
     const result = await service.resolve({ tenantId, projectId, approvalId, decision: "deny" });
     assert.deepEqual(result, { approvalId, state: "denied" });
     assert.deepEqual(counts(), { runtimeCalls: 1, persistedResolutions: 1 });
+  });
+
+  it("expires a stale approval without calling the runtime", async () => {
+    const { service, counts } = harness("fix", "completed");
+    await assert.rejects(
+      service.resolve({ tenantId, projectId, approvalId, decision: "approve" }),
+      (error: unknown) => error instanceof ApprovalCommandError && error.code === "approvalAlreadyResolved",
+    );
+    assert.deepEqual(counts(), { runtimeCalls: 0, persistedResolutions: 1 });
   });
 });

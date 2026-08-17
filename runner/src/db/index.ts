@@ -1049,6 +1049,13 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
       const checkpoint: SafePayload = { phase: "runner_restart", reason: "in_flight_run_recovered" };
       assertSecretSafe(checkpoint);
       db.prepare(
+        `UPDATE approvals SET state = 'expired', resolved_at = ?
+         WHERE state = 'pending' AND EXISTS(
+           SELECT 1 FROM runs WHERE runs.id = approvals.run_id AND runs.tenant_id = approvals.tenant_id
+             AND runs.state IN ('queued', 'running')
+         )`,
+      ).run(occurredAt);
+      db.prepare(
         `UPDATE executions SET state = 'interrupted', failure_code = 'runnerRestart'
          WHERE state = 'preflightPassed' AND EXISTS(
            SELECT 1 FROM runs WHERE runs.id = executions.run_id AND runs.tenant_id = executions.tenant_id

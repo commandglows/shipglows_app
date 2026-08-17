@@ -1,8 +1,9 @@
 import { dirname, resolve } from "node:path";
+import { createRequire } from "node:module";
 
 import { buildRunnerApp } from "./app.js";
 import { FirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
-import { CodexAppServerRuntime, StdioCodexConnection } from "./agent-runtime/codex/index.js";
+import { AcpRuntime, StdioAcpConnection } from "./agent-runtime/acp/index.js";
 import { loadConfig } from "./config.js";
 import { openOperationalStore } from "./db/index.js";
 import { EventHub } from "./events/index.js";
@@ -27,6 +28,8 @@ import { GitHubAppProjectSource, UnavailableGitHubProjectSource } from "./projec
 import { LocalProjectContextGenerator } from "./projectContextGenerator.js";
 
 const config = loadConfig();
+const require = createRequire(import.meta.url);
+const codexAcpEntrypoint = require.resolve("@agentclientprotocol/codex-acp");
 const studioCapability = config.studio.enabled ? createTrustedBaseStudioResolver({
   configuration: config.studio,
   repository: new GitStudioRepositoryAttestor(config.studio.repositoryRoot, config.studio.repositoryCleanScope),
@@ -36,6 +39,7 @@ const studioSessions = studioCapability === undefined ? undefined : new StudioSe
 
 const databasePath = process.env["RUNNER_DB_PATH"] ?? resolve(config.cwd, ".shipglows-runner.sqlite");
 const store = await openOperationalStore(databasePath);
+store.recoverInFlightRuns({ occurredAt: new Date().toISOString() });
 const localStudioActor = Object.freeze({ tenantId: "local_studio", userId: "local_operator", subject: "local_studio_operator" });
 const localStudioWorkspaceRoot = config.studio.enabled ? dirname(config.studio.repositoryRoot) : undefined;
 const localStudioProjects = config.localStudioAuthEnabled && config.studio.enabled && localStudioWorkspaceRoot !== undefined ? createLocalStudioProjectCatalog({
@@ -92,7 +96,16 @@ const authentication = config.integrations.firebase.enabled
     })()
   : undefined;
 const agentRuntime = config.runtimes.codex.enabled
-  ? new CodexAppServerRuntime((workspaceRoot) => new StdioCodexConnection({ cwd: workspaceRoot ?? config.cwd }))
+  ? new AcpRuntime({
+      id: "codex",
+      modeIds: { readOnly: "read-only", workspaceWrite: "agent" },
+      factory: ({ cwd, handlers }) => new StdioAcpConnection({
+        cwd,
+        command: process.execPath,
+        args: [codexAcpEntrypoint],
+        handlers,
+      }),
+    })
   : undefined;
 const fixRuntime = config.integrations.github.enabled && agentRuntime !== undefined
   ? (() => {
@@ -130,6 +143,7 @@ const dependencies = {
   ...(projectContextGenerator === undefined ? {} : { projectContextGenerator }),
   cockpitStore: localStudioProjects?.cockpitStore ?? store,
   ...(localStudioProjects === undefined ? {} : { localProjectManagement: localStudioProjects.management }),
+  ...(localStudioProjects === undefined ? {} : { projectWorkspaceResolver: (input: Parameters<typeof localStudioProjects.management.resolveLocalRepository>[0]) => localStudioProjects.management.resolveLocalRepository(input) }),
   ...(githubProjectSource === undefined ? {} : { githubProjectSource }),
   idempotencyStore: store,
   eventHub,
@@ -146,8 +160,10 @@ const dependencies = {
 };
 const app = buildRunnerApp({ config, dependencies });
 resolvedFixRuntime?.cleanupWorker.start();
-app.addHook("onClose", () => {
+app.addHook("onClose", async () => {
   resolvedFixRuntime?.cleanupWorker.stop();
+  await agentRuntime?.close();
+  store.recoverInFlightRuns({ occurredAt: new Date().toISOString() });
   store.close();
   operatorWorkspaceGateway.shutdown();
 });

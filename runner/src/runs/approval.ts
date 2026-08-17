@@ -64,6 +64,15 @@ export class ApprovalCommandService {
     if (approval.state !== "pending") {
       throw new ApprovalCommandError("approvalAlreadyResolved", "The approval has already been resolved.");
     }
+    if (run.state !== "running") {
+      this.store.resolveApproval({
+        tenantId: input.tenantId,
+        approvalId: input.approvalId,
+        state: "expired",
+        resolvedAt: new Date().toISOString(),
+      });
+      throw new ApprovalCommandError("approvalAlreadyResolved", "The approval no longer belongs to an active run.");
+    }
     // Until provider-neutral action metadata is available, only an isolated fix run may
     // approve a privileged runtime action. Audit and conversation runs fail closed; a
     // hostile repository or prompt cannot turn their human approval UI into a capability

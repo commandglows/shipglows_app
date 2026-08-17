@@ -155,8 +155,10 @@ describe("SQLite operational projection", () => {
     store.createExecution(envelope);
     store.markExecution({ tenantId: ids.tenantA, executionId: String(envelope.executionId), state: "preflightPassed" });
     store.checkpointRun({ tenantId: ids.tenantA, runId: ids.runA, state: "running", checkpoint: { phase: "turn_started" } });
+    store.createApproval({ id: ids.approvalA, tenantId: ids.tenantA, runId: ids.runA, requestedAt: "2026-08-06T23:59:00.000Z" });
     assert.equal(store.recoverInFlightRuns({ occurredAt: "2026-08-07T00:00:00.000Z" }), 1);
     assert.equal(store.getExecution({ tenantId: ids.tenantA, executionId: String(envelope.executionId) })?.state, "interrupted");
+    assert.equal(store.getApproval({ tenantId: ids.tenantA, approvalId: ids.approvalA })?.state, "expired");
     store.markExecutionForRun({ tenantId: ids.tenantA, runId: ids.runA, state: "completed" });
     assert.equal(store.getExecution({ tenantId: ids.tenantA, executionId: String(envelope.executionId) })?.state, "interrupted");
     store.close();

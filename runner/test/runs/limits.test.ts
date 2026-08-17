@@ -81,6 +81,8 @@ describe("managed run limits", () => {
       undefined,
       { maxConcurrentRunsPerTenant: 1, maxRunDurationMs: 10 },
       new RunAdmission(),
+      undefined,
+      () => "C:\\managed\\project",
     );
 
     const result = await service.start({ tenantId: "ten_1", userId: "usr_1", projectId: "prj_1", scope: "security" });
@@ -89,5 +91,49 @@ describe("managed run limits", () => {
     assert.equal(result.state, "running");
     assert.equal(interrupted, 1);
     assert.deepEqual(states, ["running", "interrupted"]);
+  });
+
+  it("interrupts and fails closed when durable approval persistence throws", async () => {
+    let cursor = 0;
+    let interrupted = 0;
+    const states: string[] = [];
+    const store: AuditCommandStore = {
+      createConversation: () => undefined,
+      createRun: () => ({
+        id: "run_approval", tenantId: "ten_1", projectId: "prj_1", conversationId: "cnv_1", runtimeId: "fake",
+        executionProviderId: "managed-disposable", taskKind: "audit", state: "queued", checkpoint: { phase: "queued" },
+        createdAt: "2026-08-02T00:00:00.000Z", updatedAt: "2026-08-02T00:00:00.000Z",
+      }),
+      appendEvent: (input) => ({ ...input, cursor: ++cursor, occurredAt: "2026-08-02T00:00:00.000Z" }),
+      saveRuntimeSession: () => undefined,
+      checkpointRun: (input) => {
+        states.push(input.state);
+        return {
+          id: "run_approval", tenantId: input.tenantId, projectId: "prj_1", conversationId: "cnv_1", runtimeId: "fake",
+          executionProviderId: "managed-disposable", taskKind: "audit", state: input.state, checkpoint: input.checkpoint,
+          createdAt: "2026-08-02T00:00:00.000Z", updatedAt: "2026-08-02T00:00:00.000Z",
+        };
+      },
+      createApproval: () => { throw new Error("storage unavailable"); },
+      getApproval: () => undefined,
+      resolveApproval: () => undefined,
+    };
+    const runtime: AgentRuntime = {
+      id: "fake",
+      capabilities: new Set(["sessions", "turns", "interrupt", "approvals", "semanticEvents"]),
+      createSession: async () => ({ runtimeSessionId: opaque("session_approval"), state: "idle" }),
+      resumeSession: async () => ({ runtimeSessionId: opaque("session_approval"), state: "idle" }),
+      startTurn: async () => ({ runtimeTurnId: opaque("turn_approval"), state: "queued" }),
+      interruptTurn: async () => { interrupted += 1; },
+      async *events() {
+        yield { type: "approval.requested", occurredAt: "2026-08-02T00:00:01.000Z", payload: { approvalId: "approval_1" } };
+      },
+    };
+    const service = new AuditCommandService(store, runtime, undefined, { maxConcurrentRunsPerTenant: 1, maxRunDurationMs: 1_000 }, new RunAdmission(), undefined, () => "C:\\managed\\project");
+    const result = await service.start({ tenantId: "ten_1", userId: "usr_1", projectId: "prj_1", scope: "security" });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(result.state, "running");
+    assert.equal(interrupted, 1);
+    assert.deepEqual(states, ["running", "failed"]);
   });
 });

@@ -350,6 +350,7 @@ describe("runner API foundation", () => {
       dependencies: {
         authentication,
         projectAccess,
+        projectWorkspaceResolver: () => "C:\\managed\\project",
         auditStore,
         agentRuntime: runtime,
         idempotencyStore: {
@@ -625,6 +626,7 @@ describe("runner API foundation", () => {
         authentication: { authenticate: async () => actor },
         projectAccess: { hasProjectAccess: () => true },
         conversationStore,
+        projectWorkspaceResolver: () => "C:\\managed\\project",
         agentRuntime: runtime,
         idempotencyStore,
       },
@@ -684,6 +686,7 @@ describe("runner API foundation", () => {
         authentication: { authenticate: async () => actor },
         projectAccess: { hasProjectAccess: () => true },
         conversationStore,
+        projectWorkspaceResolver: () => "C:\\managed\\project",
         agentRuntime: runtime,
         idempotencyStore: {
           executeIdempotentAsync: async (_input, callback) => ({ replayed: false, response: await callback() }),

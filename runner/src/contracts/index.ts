@@ -18,6 +18,16 @@ export type OpaqueId = string & { readonly __opaqueId: unique symbol };
 export type ConversationState = "idle" | "active" | "interrupted" | "completed" | "failed";
 export type ApprovalDecision = "approve" | "deny";
 export type SafePayload = Readonly<Record<string, unknown>>;
+export type RuntimeAccessMode = "readOnly" | "workspaceWrite";
+export interface RuntimeWorkspace {
+  readonly root: string;
+  readonly kind: "project" | "isolated";
+}
+export type ProjectWorkspaceResolver = (input: {
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly projectId: string;
+}) => Promise<string | null> | string | null;
 
 export interface RuntimeSession {
   readonly runtimeSessionId: OpaqueId;
@@ -38,8 +48,16 @@ export interface RuntimeEvent {
 export interface AgentRuntime {
   readonly id: string;
   readonly capabilities: ReadonlySet<RuntimeCapability>;
-  createSession(input: { readonly conversationId: OpaqueId; readonly workspaceRoot?: string }): Promise<RuntimeSession>;
-  resumeSession(input: { readonly runtimeSessionId: OpaqueId }): Promise<RuntimeSession>;
+  createSession(input: {
+    readonly conversationId: OpaqueId;
+    readonly accessMode: RuntimeAccessMode;
+    readonly workspace: RuntimeWorkspace;
+  }): Promise<RuntimeSession>;
+  resumeSession(input: {
+    readonly runtimeSessionId: OpaqueId;
+    readonly accessMode: RuntimeAccessMode;
+    readonly workspace: RuntimeWorkspace;
+  }): Promise<RuntimeSession>;
   startTurn(input: {
     readonly runtimeSessionId: OpaqueId;
     readonly message: string;

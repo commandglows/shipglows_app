@@ -13,6 +13,7 @@ import { installErrorHandler, CommandRequestSchemas, VersionResponseSchema } fro
 import type { CockpitProjectRecord, OperationalStore } from "./db/index.js";
 import type { PersistedEvent } from "./db/index.js";
 import type { AgentRuntime, SafePayload } from "./contracts/index.js";
+import type { ProjectWorkspaceResolver } from "./contracts/index.js";
 import type { EventHub } from "./events/index.js";
 import { AuditCommandService } from "./runs/audit.js";
 import { RunLimitError } from "./runs/limits.js";
@@ -97,12 +98,13 @@ const DiagnosticResponseSchema = Type.Object({
 export interface RunnerAppDependencies {
   readonly authentication?: AuthenticationAdapter;
   readonly projectAccess?: ProjectAccessRepository;
-  readonly auditStore?: Pick<OperationalStore, "createConversation" | "createRun" | "appendEvent" | "saveRuntimeSession" | "checkpointRun">;
+  readonly auditStore?: Pick<OperationalStore, "createConversation" | "createRun" | "appendEvent" | "saveRuntimeSession" | "checkpointRun"> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
   readonly eventStore?: Pick<OperationalStore, "getConversation" | "listEvents"> & Partial<Pick<OperationalStore, "listConversations" | "getApproval" | "getRun">>;
   readonly cockpitStore?: Pick<OperationalStore, "listCockpitProjects">;
   readonly projectContextStore?: Pick<OperationalStore, "getLatestProjectContextBundle">;
   readonly projectContextGenerator?: ProjectContextGenerator;
   readonly localProjectManagement?: LocalProjectManagement;
+  readonly projectWorkspaceResolver?: ProjectWorkspaceResolver;
   readonly githubProjectSource?: GitHubProjectSource;
   readonly operatorWorkspaceCapability?: (input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }) => Promise<{ readonly available: boolean; readonly reason: string }>;
   readonly operatorWorkspaceGateway?: OperatorWorkspaceGateway;
@@ -111,7 +113,7 @@ export interface RunnerAppDependencies {
   readonly fixExecutor?: FixCommandExecutor;
   readonly idempotencyStore?: Pick<OperationalStore, "executeIdempotentAsync">;
   readonly approvalStore?: Pick<OperationalStore, "getApproval" | "getRun" | "getRuntimeSession" | "resolveApproval" | "appendEvent">;
-  readonly conversationStore?: Pick<OperationalStore, "createConversation" | "getConversation" | "createRun" | "getRun" | "getLatestRun" | "saveRuntimeSession" | "getRuntimeSession" | "checkpointRun" | "appendEvent">;
+  readonly conversationStore?: Pick<OperationalStore, "createConversation" | "getConversation" | "createRun" | "getRun" | "getLatestRun" | "saveRuntimeSession" | "getRuntimeSession" | "checkpointRun" | "appendEvent"> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
   readonly agentRuntime?: AgentRuntime;
   readonly executionAdmission?: ExecutionAdmissionService;
   readonly diagnostics?: RunnerDiagnostics;
@@ -498,7 +500,7 @@ export function buildRunnerApp({
       try {
         const outcome = await idempotencyStore.executeIdempotentAsync({ tenantId: actor.tenantId, actorUserId: actor.userId, scope: `conversation:create:${request.params.projectId}`, key: request.headers["idempotency-key"] }, async () => ({
           statusCode: 201,
-          body: (await new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission).create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, title: request.body.title })) as unknown as SafePayload,
+          body: (await new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission, dependencies.projectWorkspaceResolver).create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, title: request.body.title })) as unknown as SafePayload,
         }));
         return await reply.status(outcome.response.statusCode).send(outcome.response.body);
       } catch (error: unknown) {
@@ -523,12 +525,12 @@ export function buildRunnerApp({
     if (idempotencyStore === undefined) return reply.status(503).send({ error: { code: "idempotencyUnavailable", message: "Durable command replay is unavailable." } });
     try {
       const outcome = await idempotencyStore.executeIdempotentAsync({ tenantId: actor.tenantId, actorUserId: actor.userId, scope: `conversation:${action}:${request.params.conversationId}`, key: request.headers["idempotency-key"] }, async () => {
-        const service = new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission);
+        const service = new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission, dependencies.projectWorkspaceResolver);
         const result = action === "message"
           ? await service.message({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, conversationId: request.params.conversationId, text: request.body.text ?? "" })
           : action === "interrupt"
             ? await service.interrupt({ tenantId: actor.tenantId, projectId: request.params.projectId, conversationId: request.params.conversationId })
-            : await service.resume({ tenantId: actor.tenantId, projectId: request.params.projectId, conversationId: request.params.conversationId });
+            : await service.resume({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, conversationId: request.params.conversationId });
         return { statusCode: action === "message" ? 202 : 200, body: result as unknown as SafePayload };
       });
       return await reply.status(outcome.response.statusCode).send(outcome.response.body);
@@ -628,6 +630,7 @@ export function buildRunnerApp({
             config.limits,
             dependencies.runAdmission,
             dependencies.executionAdmission,
+            dependencies.projectWorkspaceResolver,
           ).start({
             tenantId: actor.tenantId,
             userId: actor.userId,
