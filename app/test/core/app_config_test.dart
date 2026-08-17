@@ -2,6 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shipglows_app/core/app_config.dart';
 
 void main() {
+  test('personal cloud is opt-in for managed runner builds', () {
+    expect(AppConfig.personalCloudEnabled, isFalse);
+  });
+
   test('local Studio auth accepts only the exact loopback runner', () {
     expect(AppConfig.isLocalStudioRunner('http://127.0.0.1:3210'), isTrue);
     expect(AppConfig.isLocalStudioRunner('http://127.0.0.1:3210/'), isTrue);

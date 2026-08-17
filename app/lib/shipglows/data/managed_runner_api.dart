@@ -1822,12 +1822,13 @@ class ManagedRunnerApi
         options: Options(headers: await _headers()),
       );
       final data = response.data;
-      if (data is! Map || data['projects'] is! List)
+      if (data is! Map || data['projects'] is! List) {
         throw const ManagedRunnerException(
           code: 'invalidResponse',
           message:
               'The managed runner returned an invalid cloud project catalog.',
         );
+      }
       return (data['projects'] as List)
           .map((raw) {
             if (raw is! Map ||
@@ -1843,12 +1844,13 @@ class ManagedRunnerApi
             }
             final capabilities = raw['capabilities'] as Map;
             if (capabilities['preview'] is! bool ||
-                capabilities['workspace'] is! bool)
+                capabilities['workspace'] is! bool) {
               throw const ManagedRunnerException(
                 code: 'invalidResponse',
                 message:
                     'The managed runner returned invalid cloud capabilities.',
               );
+            }
             return PersonalCloudProject(
               id: raw['projectId'] as String,
               name: raw['displayName'] as String,

@@ -18,7 +18,7 @@ class ProjectsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (AppConfig.managedRunnerEnabled && !AppConfig.localStudioAuthEnabled) {
+    if (AppConfig.managedRunnerEnabled && AppConfig.personalCloudEnabled) {
       return const _PersonalCloudProjectsScreen();
     }
     final projects = ref.watch(managedProjectsProvider);

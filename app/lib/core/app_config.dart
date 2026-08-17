@@ -14,6 +14,11 @@ class AppConfig {
   static bool get managedRunnerEnabled =>
       managedRunnerBaseUrl.trim().isNotEmpty;
 
+  static const personalCloudEnabled = bool.fromEnvironment(
+    'PERSONAL_CLOUD_ENABLED',
+    defaultValue: false,
+  );
+
   static const _localStudioAuthOverride = bool.fromEnvironment(
     'LOCAL_STUDIO_AUTH_ENABLED',
     defaultValue: false,
