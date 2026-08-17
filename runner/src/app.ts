@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyReply, type preHandlerAsyncHookHandler } from "fastify";
 import websocket from "@fastify/websocket";
 import { Readable } from "node:stream";
 import { TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
@@ -9,7 +9,7 @@ import {
   type AuthenticationAdapter,
 } from "./auth/index.js";
 import type { RunnerConfig } from "./config.js";
-import { installErrorHandler, CommandRequestSchemas, VersionResponseSchema } from "./contracts/index.js";
+import { HttpError, installErrorHandler, CommandRequestSchemas, VersionResponseSchema } from "./contracts/index.js";
 import type { CockpitProjectRecord, OperationalStore } from "./db/index.js";
 import type { PersistedEvent } from "./db/index.js";
 import type { AgentRuntime, SafePayload } from "./contracts/index.js";
@@ -40,6 +40,8 @@ import { registerCompilationRoutingRoutes, type CompilationRoutingProjectionReso
 import { registerActivityReviewRoutes } from "./activityReviewRoutes.js";
 import { registerProjectContextRoutes } from "./projectContextRoutes.js";
 import type { ProjectContextGenerator } from "./projectContextRoutes.js";
+import { CloudProjectCatalogError, redactCloudProject, type CloudProjectCatalogReader } from "./cloud-projects/index.js";
+import { PreviewIngressError, type PreviewIngressService } from "./preview-ingress/index.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -120,6 +122,9 @@ export interface RunnerAppDependencies {
   readonly studioCapability?: StudioCapabilityResolver;
   readonly studioSessions?: StudioSessionService;
   readonly studioCompilationRouting?: CompilationRoutingProjectionResolver;
+  readonly cloudProjectCatalog?: CloudProjectCatalogReader;
+  readonly previewIngress?: PreviewIngressService;
+  readonly reconcileCloudProjects?: (actor: { readonly tenantId: string; readonly userId: string }) => Promise<void>;
 }
 
 function eventFrame(event: PersistedEvent): string {
@@ -148,6 +153,24 @@ function nextWithTimeout<T>(iterator: AsyncIterator<T>, timeoutMs: number): Prom
   });
 }
 
+function readCookie(header: string | undefined, name: string): string | undefined {
+  if (header === undefined) return undefined;
+  for (const part of header.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 1 || part.slice(0, separator).trim() !== name) continue;
+    const value = part.slice(separator + 1).trim();
+    return value.length > 0 ? value : undefined;
+  }
+  return undefined;
+}
+
+function previewError(reply: FastifyReply, error: unknown) {
+  if (error instanceof PreviewIngressError) {
+    return reply.status(error.statusCode).send({ error: { code: error.code, message: error.message } });
+  }
+  throw error;
+}
+
 export function buildRunnerApp({
   config,
   dependencies = {},
@@ -171,11 +194,80 @@ export function buildRunnerApp({
       .header("Access-Control-Allow-Origin", origin)
       .header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
       .header("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key, X-ShipGlows-Tenant")
+      .header("Access-Control-Allow-Credentials", "true")
       .header("Access-Control-Max-Age", "600");
     if (request.method === "OPTIONS") return reply.status(204).send();
   });
   const authentication = dependencies.authentication ?? new DisabledAuthenticationAdapter();
   const projectAccess = dependencies.projectAccess ?? noProjectAccess;
+  const cloudProjectCatalog = dependencies.cloudProjectCatalog;
+  const previewIngress = dependencies.previewIngress;
+  const reconcileCloudProjects = dependencies.reconcileCloudProjects;
+  const reconcileCloudProjectsGuard: preHandlerAsyncHookHandler = async (request) => {
+    const actor = request.shipglowsActor;
+    if (actor === undefined) throw new Error("Authenticated actor is missing.");
+    try {
+      await reconcileCloudProjects?.({ tenantId: actor.tenantId, userId: actor.userId });
+    } catch (error) {
+      if (error instanceof CloudProjectCatalogError) throw new HttpError(503, error.code, error.message);
+      throw error;
+    }
+  };
+  if (cloudProjectCatalog !== undefined) {
+    app.get("/v1/cloud-projects", { preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard] }, async (request) => {
+      const actor = request.shipglowsActor;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      const snapshot = await cloudProjectCatalog.read();
+      const projects = [];
+      for (const project of snapshot.entries) {
+        if (await projectAccess.hasProjectAccess({ tenantId: actor.tenantId, userId: actor.userId, projectId: project.projectId, capability: "read" })) projects.push(redactCloudProject(project));
+      }
+      return { generatedAt: snapshot.generatedAt, projects };
+    });
+  }
+  if (previewIngress !== undefined && cloudProjectCatalog !== undefined) {
+    app.post<{ Params: { projectId: string }; Body: Record<string, never> }>("/v1/projects/:projectId/preview-ticket", {
+      preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard, projectAuthorizationGuard(projectAccess, "read"), stateChangingOriginGuard(config.server.allowedOrigins)],
+      schema: { params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }), body: Type.Object({}) },
+    }, async (request, reply) => {
+      const actor = request.shipglowsActor;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      try {
+        const snapshot = await cloudProjectCatalog.read();
+        const project = snapshot.entries.find((entry) => entry.projectId === request.params.projectId);
+        if (project === undefined || !config.personalCloud.enabled) return await reply.status(503).send({ error: { code: "previewUnavailable", message: "Preview access is unavailable." } });
+        const host = `${project.previewSlug}.${config.personalCloud.previewDomain}`;
+        const ticket = await previewIngress.createTicket({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, host, origin: request.headers.origin ?? "" });
+        return await reply.status(201).send({ ...ticket, origin: `https://${host}` });
+      } catch (error) { return await previewError(reply, error); }
+    });
+    app.post<{ Body: { ticketId: string; secret: string } }>("/v1/preview/session", {
+      preHandler: [authenticationGuard(authentication), stateChangingOriginGuard(config.server.allowedOrigins)],
+      schema: { body: Type.Object({ ticketId: Type.String({ minLength: 8, maxLength: 128 }), secret: Type.String({ minLength: 32, maxLength: 128 }) }) },
+    }, async (request, reply) => {
+      const actor = request.shipglowsActor;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      try {
+        const cookie = await previewIngress.consumeTicket({ tenantId: actor.tenantId, userId: actor.userId, ticketId: request.body.ticketId, secret: request.body.secret, host: request.hostname, origin: request.headers.origin ?? "" });
+        return await reply.header("Set-Cookie", `${cookie.name}=${cookie.value}; ${cookie.attributes}; Max-Age=${cookie.maxAgeSeconds}`).header("Cache-Control", "no-store").send({ state: "ready" });
+      } catch (error) { return await previewError(reply, error); }
+    });
+    app.get("/v1/preview/authorize", async (request, reply) => {
+      try {
+        const cookie = readCookie(request.headers.cookie, "__Host-shipglows_preview");
+        const result = await previewIngress.authorize({ cookie, host: request.hostname, ...(request.headers.origin === undefined ? {} : { origin: request.headers.origin }), websocket: request.headers.upgrade?.toLowerCase() === "websocket" });
+        return await reply.header("X-ShipGlows-Project", result.projectId).send({ state: "authorized" });
+      } catch (error) { return await previewError(reply, error); }
+    });
+    app.get<{ Querystring: { domain?: string } }>("/v1/preview/tls-ask", async (request, reply) => {
+      const domain = request.query.domain ?? "";
+      try {
+        const snapshot = await cloudProjectCatalog.read();
+        const allowed = snapshot.entries.some((project) => project.capabilities.preview && `${project.previewSlug}.${config.personalCloud.enabled ? config.personalCloud.previewDomain : "invalid"}` === domain.toLowerCase());
+        return allowed ? await reply.send({ allowed: true }) : await reply.status(404).send({ allowed: false });
+      } catch { return await reply.status(503).send({ allowed: false }); }
+    });
+  }
   if (dependencies.localProjectManagement !== undefined) {
     registerLocalProjectRoutes(app, {
       authentication,
@@ -313,7 +405,7 @@ export function buildRunnerApp({
   app.get<{ Params: { projectId: string } }>(
     "/v1/projects/:projectId/operator-workspace",
     {
-      preHandler: [authenticationGuard(authentication), projectAuthorizationGuard(projectAccess, "read")],
+      preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard, projectAuthorizationGuard(projectAccess, "read")],
       schema: {
         params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
         response: {
@@ -335,7 +427,7 @@ export function buildRunnerApp({
   app.post<{ Params: { projectId: string }; Headers: { "idempotency-key": string } }>(
     "/v1/projects/:projectId/operator-sessions",
     {
-      preHandler: [authenticationGuard(authentication), projectAuthorizationGuard(projectAccess, "read"), stateChangingOriginGuard(config.server.allowedOrigins)],
+      preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard, projectAuthorizationGuard(projectAccess, "read"), stateChangingOriginGuard(config.server.allowedOrigins)],
       schema: {
         params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
         headers: Type.Object({ "idempotency-key": Type.String({ minLength: 8, maxLength: 128 }) }, { additionalProperties: true }),
@@ -385,7 +477,7 @@ export function buildRunnerApp({
       if (gateway === undefined) return socket.close(1011, "Workspace unavailable.");
       const protocol = request.headers["sec-websocket-protocol"];
       const token = typeof protocol === "string" && protocol.startsWith("shipglows.workspace.") ? protocol.slice("shipglows.workspace.".length) : "";
-      gateway.attach(request.params.sessionId, token, socket);
+      gateway.attach(request.params.sessionId, token, socket, request.headers.origin);
     },
   );
 

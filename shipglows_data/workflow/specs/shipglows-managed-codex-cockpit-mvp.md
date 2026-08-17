@@ -1,19 +1,19 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.30.0"
+artifact_version: "1.31.3"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
-updated: "2026-08-17"
-updated_at: "2026-08-17 21:37:06 UTC"
+updated: "2026-08-18"
+updated_at: "2026-08-17 22:45:49 UTC"
 status: ready
-source_skill: "100-sg-spec"
+source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
 scope: "managed-agent-cockpit-mvp"
 owner: "Diane"
 confidence: high
-user_story: "En tant qu'utilisatrice de ShipGlows, je veux voir la santé de tous mes projets, piloter l'agent de code adapté à chaque tâche et, lorsque je l'autorise explicitement, ouvrir un espace opérateur terminal dans la même application, afin de travailler depuis mon navigateur sans administrer l'infrastructure."
+user_story: "En tant qu'utilisatrice unique de ShipGlows, je veux retrouver mes projets, ouvrir leur preview persistante et reprendre le même tmux/Neovim depuis l'application, tandis que Conversations et Studio restent disponibles sans bloquer ce premier jalon Personal Cloud."
 risk_level: high
 security_impact: yes
 docs_impact: yes
@@ -36,6 +36,8 @@ linked_systems:
   - "ShipGlows Markdown artifacts"
   - "just-bash skill sandbox"
   - "authenticated PTY/tmux gateway"
+  - "ShipGlows CLI project catalog v1"
+  - "persistent preview ingress"
   - "ExecutionProvider contract"
   - "CapabilityBroker contract"
   - "Warp Oz orchestration patterns (inspiration only)"
@@ -56,10 +58,10 @@ depends_on:
     artifact_version: "1.0.0"
     required_status: "ready"
   - artifact: "shipglows_data/technical/design-system-authority.md"
-    artifact_version: "1.0.0"
-    required_status: "draft"
-  - artifact: "/home/claude/shipglowz/skills/references/preferred-stacks.md"
-    artifact_version: "1.1.0"
+    artifact_version: "1.3.1"
+    required_status: "active"
+  - artifact: "skills/references/preferred-stacks.md"
+    artifact_version: "1.4.0"
     required_status: "active"
   - artifact: "https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md"
     artifact_version: "checked-2026-08-01"
@@ -119,6 +121,7 @@ evidence:
   - "Warp oz-agent-worker review 2026-08-07: adopt only a ShipGlows-owned resolved execution envelope, provider preflight and explicit execution outcomes; distributed worker transport, Kubernetes, and durable reattach remain outside this MVP slice."
   - "Local integration proof 2026-08-17: the new Flutter runtime exposes one persistent global project selector and one visual Settings project panel backed by a closed, in-memory development catalog containing exactly `shipglows_app` and `gocharbon`; no database provisioning, GitHub access, or mutation capability is granted."
   - "Local project-management proof 2026-08-17: the loopback runner owns one persistent workspace-bounded registry and redacted management API; the Flutter runtime exposes one Projects page for connect, activate, default, rename, archive/restore, and disconnect. Repository paths remain private, generic project mutation remains denied, and disconnect never deletes or changes Git files."
+  - "Operator decision 2026-08-18: the current Personal Cloud milestone is Projects plus persistent Preview plus reconnectable Workspace; semantic Conversations and Studio remain available but are non-blocking for this milestone."
 next_step: "/102-sg-start ShipGlows Managed Agent Cockpit MVP"
 ---
 
@@ -132,6 +135,8 @@ ShipGlows Managed Agent Cockpit MVP
 
 # Status
 
+Personal Cloud amendment, 2026-08-18: the current milestone is deliberately narrower than the complete Cockpit vision. Its release path is Projects + persistent Preview + reconnectable Workspace. Semantic Conversations and Studio remain supported product surfaces, but neither is a blocking dependency for this milestone and Studio keeps its separate capability contract. The existing CLI/tmux/Neovim workflow remains authoritative; the application becomes its authenticated remote window rather than replacing it. Firebase Auth uses one provisioned single-tenant UID, SQLite remains an operational projection, and Convex and Docker are deferred. `/101-sg-ready` returned SAFE after the companion contracts, PC-A ownership, OWASP gate, dependency freshness and ACP runtime authority were corrected; this specification is ready for bounded implementation.
+
 Amended on 2026-08-17 after the local project-management integration and ACP runtime decision. The existing Flutter prototype is the implementation base. Its active runtime owns one persistent global project selector, one complete Projects page, and a Settings entry point. In the loopback-only development pilot, the runner owns a persistent workspace-bounded registry seeded with `shipglows_app` and `gocharbon`; it supports connect, active/default selection, rename, reversible archive, and registry-only disconnect through exact-origin authenticated routes. Local repository paths are never returned to Flutter, Git content is never changed by registry actions, built-ins cannot be disconnected, and generic project mutation remains denied. Studio availability is declared per project instead of inferred. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane and exposes only its normalized `AgentRuntime` contract to product code. The runner uses one generic local-stdio ACP adapter with pinned Codex ACP as its first configured agent; provider wire types remain private, unsupported capabilities fail closed, and the previous Codex app-server adapter stays frozen as a local rollback until ACP proof is complete. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Firebase Auth is the cross-platform identity baseline behind a portable provider boundary; Convex is the target product data layer, while Fastify/SQLite remains the documented execution-plane exception.
 
 # User Story
@@ -140,7 +145,7 @@ En tant qu'utilisatrice de ShipGlows, je veux voir la santé de tous mes projets
 
 # Minimal Behavior Contract
 
-After signing in, the user sees one Cockpit summarizing every authorized GitHub repository across tech, content, SEO, performance, and security. Opening a project reveals agent conversations as child tabs; semantic messages, tools, plans, approvals and results remain the default interaction. A separately protected Workspace tab may open a real server-side PTY attached only to an allowlisted tmux session, allowing terminal use and Neovim without exposing credentials, clone paths or raw control protocols. Audit and fix actions use the ShipGlows-managed control plane, which verifies access, selects an authorized runtime and execution environment, prepares isolated repository workspaces, runs ShipGlows skills and records durable evidence. A failed, interrupted, stale, unauthorized or disconnected action remains visible with a recoverable state. The primary edge case is a selected runtime that cannot satisfy the requested capabilities: ShipGlows must reject it before work begins, explain the missing capability, and never silently broaden permissions or fall back to another runtime.
+After signing in, the user sees the runner-owned project catalog, can open each project's stable preview, and can enter an explicitly protected Workspace attached to the same server-owned tmux session used by the existing CLI workflow. Each reconnect obtains a fresh short-lived capability; no capability is reused or placed in a URL. Semantic Conversations, health, audit/fix work and Studio remain available when configured, but they do not block this Personal Cloud milestone. A failed, interrupted, stale, unauthorized or disconnected action remains visible with a recoverable state. The primary Workspace edge case is a lost browser bridge while tmux continues: the UI must stop the stale socket, request a fresh capability, reattach to the same allowlisted tmux session, and never spawn a duplicate tmux session or silently broaden permissions.
 
 # Success Behavior
 
@@ -158,6 +163,10 @@ After signing in, the user sees one Cockpit summarizing every authorized GitHub 
 - Web, Android and Windows use the same Flutter domain, state, API and UI modules. Flutter Web is the first end-to-end deployment proof; Android and Windows receive platform, contract and Workspace rendering proof in the MVP.
 - Windows uses the same Flutter domain, state, API and Workspace contracts; the MVP proves the Windows shell and terminal rendering contract without requiring WSL on the user's machine.
 - The operator Workspace can reconnect to an existing tmux session, resize the PTY, display terminal output, and launch Neovim; it is never silently opened from a normal agent conversation.
+- Every Workspace reconnect uses a fresh project/actor capability and reattaches to the same server-owned tmux session after the previous socket lease has ended; terminal scrollback persistence remains owned by tmux, not Flutter or SQLite.
+- The runner accepts a Workspace WebSocket only when the authenticated request `Origin` exactly equals the configured ShipGlows application origin; prefix, suffix, wildcard, missing and `null` origins are rejected.
+- Client and runner exchange bounded heartbeat frames; a missed-heartbeat lease closes the WebSocket and releases the active attachment without killing tmux.
+- One actor/project/tmux tuple has at most one active WebSocket. A second attach returns `409 operatorSessionActive`; takeover is never implicit.
 
 # Error Behavior
 
@@ -175,6 +184,10 @@ After signing in, the user sees one Cockpit summarizing every authorized GitHub 
 - A projection refresh failure never erases the last known Cockpit evidence; affected dimensions become stale or unknown with a timestamp and source diagnostic.
 - Repository content that attempts prompt injection cannot expand server permissions, reveal secrets, alter tenant/project selection, or bypass approval and sandbox policies.
 - Operator terminal failure, tmux loss, PTY disconnect or unsupported resize leaves the semantic Cockpit usable and shows a recoverable Workspace state; it never falls back to unbounded shell execution.
+- A Workspace disconnect transitions the client to a retryable state, clears its stale channel, and requests a fresh capability before reconnecting to the same tmux session.
+- Missing, `null`, wildcard, prefix-matched, suffix-matched or otherwise non-exact Workspace `Origin` is rejected before PTY attachment.
+- A missed heartbeat closes only the abandoned WebSocket/PTY attachment. It does not kill tmux, create a second session or expose a takeover path.
+- A concurrent Workspace attach is rejected with `409 operatorSessionActive`; the UI explains that another attachment is active and offers retry only after that lease closes.
 
 # Problem
 
@@ -550,10 +563,10 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Implementation note (2026-08-11): the local semantic conversation surface is implemented with typed event mapping, coalesced deltas, ANSI/control sanitization, monotonic cursors, ID/cursor dedupe, bounded timeline/reconnect, atomic tab replacement, unread/pause behavior and conditional auto-scroll. Create/send/interrupt/resume/approve/deny plus audit and proposed-fix controls use the verified runner routes and stable idempotency keys. Local Flutter proof passes; live Firebase/runner and concurrent-device integration proof remain, so Task 10 stays partial.
 - [~] Task 11: Implement the separately authorized operator Workspace.
   - Files: `runner/src/operator-workspace/**`, `runner/src/pty/**`, `runner/test/operator-workspace/**`, `runner/test/pty/**`, `app/lib/shipglows/presentation/screens/operator_workspace_screen.dart`, `app/lib/shipglows/presentation/widgets/operator_workspace/**`, `app/lib/shipglows/providers/operator_workspace/**`, `app/test/shipglows/operator_workspace/**`, platform runner files for Web/Android/Windows.
-  - Action: Issue one project-scoped short-lived capability, attach only to an allowlisted tmux session, bridge PTY input/output and resize through the separate channel, render with the selected Flutter terminal package, reconnect safely, and launch Neovim without persisting scrollback or exposing host paths/credentials.
+  - Action: Issue one project-scoped short-lived capability per initial attach or reconnect, validate the WebSocket `Origin` by exact equality against the configured application origin, attach only to the existing allowlisted tmux session, bridge bounded PTY input/output/resize and heartbeat frames through the separate channel, and launch Neovim without persisting scrollback or exposing host paths/credentials. A disconnect releases only the browser attachment; tmux persists. One actor/project/tmux tuple has one active attachment, and a concurrent attach fails with `409 operatorSessionActive` rather than taking over silently.
   - User story link: Gives the operator the requested browser-accessible tmux/Neovim workspace without making terminal administration part of ordinary use.
   - Depends on: Tasks 2-4, 6, 8, and 9; the semantic agent surface must remain usable if Workspace is unavailable.
-  - Validate with: authorization/expiry tests, tmux allowlist tests, PTY resize/reconnect tests, Web/Android/Windows rendering proof, Neovim launch fixture, disconnect cleanup, no-host-path/secret assertions, and concurrent-session rejection.
+  - Validate with: authorization/expiry and capability-reuse rejection tests, exact-Origin negative matrix, tmux identity/allowlist tests, heartbeat expiry, PTY resize/fresh-capability reconnect tests, Web/Android/Windows rendering proof, Neovim launch fixture, disconnect cleanup, no-host-path/secret assertions, and deterministic concurrent-session rejection.
   - Implementation note (2026-08-03): the runner now issues one idempotent, short-lived project/actor capability, spawns only a server-allowlisted tmux session through a PTY, rejects invalid/expired/concurrent attachments, bounds input and resize frames, and closes by actor ownership. Flutter creates the capability, connects through the dedicated WebSocket channel, renders PTY output with `xterm`, forwards input/resize, and closes on disposal. Hosted reconnect, Neovim, and Web/Android/Windows rendering proof remain.
 - [~] Task 12: Add observability, operational controls, and secure runbook.
   - Files: `runner/src/observability/**`, `app/lib/shipglows/observability/**`, `shipglows_data/technical/operator-guides/managed-agent-runner.md`, related tests.
@@ -580,6 +593,14 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 
 The default execution order is sequential by batch. Parallel work is allowed only inside a batch when write sets are disjoint, contracts are frozen, and each worker has a dedicated validation command.
 
+Personal Cloud follow-up batches are non-overlapping and override broader batch ownership only for the companion-spec implementation:
+
+- Batch PC-A — single sequential CLI writer: after the foundation and preview contracts are frozen, one writer owns both catalog v1 export and exact-Host user-mode Caddy routing, including HMR/lifecycle behavior. Its complete write set is `cli/config.sh`, `cli/lib.sh`, `cli/install.sh`, and `tests/cli/**` in the ShipGlows CLI repository; no companion batch or parallel writer may edit any CLI file.
+- Batch PC-B — runner discovery and preview: owns only new `runner/src/cloud-projects/**`, `runner/src/preview/**`, `runner/test/cloud-projects/**`, and `runner/test/preview/**` files.
+- Batch PC-C — Workspace reconnect: owns only `runner/src/operator-workspace/**`, `runner/src/pty/**`, `runner/test/operator-workspace/**`, and `runner/test/pty/**`.
+- Batch PC-D — Flutter Personal Cloud surfaces: owns only new preview/workspace feature, provider, widget, screen and matching test files; it does not modify shared navigation or API clients.
+- Batch PC-I — sequential integration: runs after PC-A through PC-D and exclusively owns shared configuration, application bootstrap, `main`, database/migrations, common API client/types, router/navigation, and documentation files. No parallel writer may touch those shared files.
+
 # Acceptance Criteria
 
 - `AC-001`: A signed-in user sees only authorized projects in one Cockpit.
@@ -600,6 +621,10 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - `AC-014`: Completed run evidence can update the Cockpit and create a proposed tracker change while repository/Markdown remains canonical.
 - `AC-015`: A non-technical user can complete sign-in, select a project, launch an audit, inspect progress/result, and start a follow-up conversation without infrastructure instructions.
 - `AC-016`: An explicitly authorized operator can open one Workspace, attach to one allowlisted tmux session, resize/reconnect the PTY, launch Neovim, and close the session without exposing host paths, credentials, or arbitrary shell selection.
+- `AC-016a`: Every Workspace reconnect obtains a fresh one-time capability and reattaches to the same tmux session; neither Flutter nor SQLite persists terminal scrollback.
+- `AC-016b`: Workspace WebSocket admission requires exact configured `Origin`; missing, `null`, wildcard, prefix and suffix variants fail before PTY creation.
+- `AC-016c`: Bounded heartbeat expiry releases the abandoned browser attachment without killing tmux, and a concurrent attach deterministically returns `409 operatorSessionActive` with no implicit takeover.
+- `AC-016d`: Projects + persistent Preview + reconnectable Workspace is the current Personal Cloud completion gate; semantic Conversations and Studio remain usable when available but are not blocking dependencies for that gate.
 - `AC-017`: At least one proprietary ShipGlows skill can run through bounded `just-bash` against a controlled snapshot, produce versioned evidence, and update health without accessing secrets or unrestricted network/filesystem state.
 - `AC-018`: Copied diagnostics begin with commit/build identity and Paris/UTC build timestamps, remain redacted, and are useful without direct Sentry dashboard access.
 - `AC-019`: The Cockpit shows only caller-authorized redacted run-state supervision; every MVP run records `manual`, and schedule/webhook/system-recommendation triggers are rejected without starting work.
@@ -642,7 +667,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
   - `MCC-016`: completed evidence updates health projection and tracker proposal without making SQLite canonical.
   - `MCC-017`: design-system authority, keyboard/focus/semantics, responsive layout, and long-conversation behavior pass UI proof.
   - `MCC-018`: official OpenAI, OpenCode/Kilo/ACP, Firebase, Convex, and GitHub assumptions are rechecked immediately before dependency/runtime integration.
-  - `MCC-019`: operator Workspace capability is project-scoped, expires, attaches only to an allowlisted tmux session, reconnects safely, and cannot expose host paths or credentials.
+  - `MCC-019`: operator Workspace capability is project-scoped, one-time and fresh per reconnect; the socket requires exact configured `Origin`, heartbeat expiry releases only its attachment, reattachment targets the same allowlisted tmux session, concurrent attach returns `409 operatorSessionActive`, and no host path, credential or scrollback persistence escapes.
   - `MCC-020`: a just-bash skill run is bounded, produces versioned evidence, and cannot access secrets or unrestricted network/filesystem state.
   - `MCC-021`: diagnostics/log-copy exposes safe build identity and Paris/UTC timestamps without tokens, cookies, private text, terminal scrollback or raw payloads.
   - `MCC-022`: operations summaries remain tenant/project scoped and do not expose prompts, paths, secrets, raw logs or unauthorized run totals.
@@ -664,6 +689,7 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - Contract tests for operations-summary tenant isolation, manual-only run admission, immutable policy resolution, bounded context provenance and forbidden automatic triggers.
 - Contract and migration tests for immutable execution-envelope persistence, provider capability/preflight rejection, opaque cancellation, no-fallback behavior, v6-to-v7 compatibility, tenant isolation and restart interruption semantics.
 - PTY/tmux integration fixtures for capability expiry, allowlists, resize, reconnect, cleanup, Neovim launch, and concurrent-session rejection.
+- Workspace security/recovery fixtures for one-time capability reuse denial, exact-Origin positive and negative matrices, heartbeat expiry without tmux termination, fresh-capability reattachment to the same tmux session, stale Flutter channel disposal, and deterministic `409 operatorSessionActive` handling.
 - just-bash contract fixtures for virtual filesystem bounds, network allowlists, execution limits, cancellation, and evidence capture.
 - Flutter provider/widget tests for loading, empty, disconnected, stale, access-lost, project-busy, streaming, approval, error, long conversation, multi-device update, and retry states.
 - Responsive and accessibility tests for keyboard navigation, focus order, semantics, contrast, reduced motion, screen widths, and unread/streaming announcements.
@@ -691,12 +717,22 @@ The default execution order is sequential by batch. Parallel work is allowed onl
 - Medium sandbox risk: just-bash is beta and simulated; its use must remain bounded and must not be mistaken for proof that real server commands are safe.
 - Medium orchestration risk: copied trigger or memory patterns could create unbounded autonomous work or tenant-context leakage; manual-only admission, explicit policy/context provenance and a future-spec gate keep those patterns out of the MVP.
 
+# OWASP Security Gate
+
+- Top 10:2025 applicability: all categories apply to this internet-facing privileged control plane — `A01 Broken Access Control` covers actor/tenant/project/runtime/Workspace authorization; `A02 Security Misconfiguration` covers Firebase, CORS/Origin, cookies, Caddy, runner and diagnostics; `A03 Software Supply Chain Failures` covers pinned ACP/runtime packages, lockfiles and release provenance; `A04 Cryptographic Failures` covers TLS, token/capability secrecy and randomness; `A05 Injection` covers SQL, command, path, prompt, event, header and terminal input; `A06 Insecure Design` covers replay, concurrency, quotas, approvals, capability admission and abuse cases; `A07 Authentication Failures` covers Firebase token/session lifecycle and the fixed operator identity; `A08 Software or Data Integrity Failures` covers catalog/runtime events, SQLite transitions, idempotency and build artifacts; `A09 Security Logging and Alerting Failures` covers redacted denial, runtime, Workspace and provider evidence; `A10 Mishandling of Exceptional Conditions` covers timeout, interruption, crash, restart, partial failure, cleanup and fail-closed recovery.
+- Trust and data boundaries: untrusted Flutter/browser/native client -> Firebase-authenticated runner API; GitHub/provider tokens -> server-only adapters; repository content/prompts -> policy/runtime/sandbox; CLI catalog and PM2/tmux state -> runner redacted projection; runner -> SQLite operational projection; normalized SSE -> Flutter; one-time Workspace capability plus exact `Origin` -> WebSocket/PTy -> allowlisted tmux; future public Caddy/TLS and hosted providers remain external boundaries. No client-selected tenant, filesystem path, command, runtime policy, upstream port or raw provider protocol crosses these boundaries.
+- Selected exact ASVS v5.0.0 requirement identifiers: `v5.0.0-2.1.3` for documented resource limits; `v5.0.0-2.2.1` and `v5.0.0-2.2.2` for positive closed-schema validation; `v5.0.0-2.3.1` and `v5.0.0-2.3.4` for ordered state transitions and concurrency; `v5.0.0-3.3.1`, `v5.0.0-3.4.2` and `v5.0.0-3.4.3` for session, exact-origin and browser policy; `v5.0.0-5.3.2` for server-owned path containment; `v5.0.0-8.2.1`, `v5.0.0-8.2.2` and `v5.0.0-8.3.1` for function/object authorization; `v5.0.0-12.1.1` for hosted TLS; `v5.0.0-13.1.3`, `v5.0.0-13.2.4` and `v5.0.0-13.2.5` for service lifecycle, timeout/retry and outbound-resource policy; `v5.0.0-14.2.1`, `v5.0.0-14.2.4` and `v5.0.0-14.2.7` for sensitive-data classification, minimal retention and no URL secrets; `v5.0.0-15.2.5` for dangerous execution containment; `v5.0.0-16.3.3`, `v5.0.0-16.5.1` and `v5.0.0-16.5.3` for security logging, generic external errors and fail-closed exceptions. ASVS freshness recheck: `/101-sg-ready` must verify the identifiers, exact current wording and applicability against the official ASVS v5.0.0 source before accepting this gate.
+- Existing proof contract: `MCC-005`, `MCC-008`, `MCC-010` and `MCC-019` cover replay, authorization and Workspace admission; `MCC-006`, `MCC-007`, `MCC-011`, `MCC-020`, `MCC-024` and `MCC-025` cover repository/runtime containment, injection and policy admission; `MCC-012` and `MCC-026` cover exceptional recovery; `MCC-013`, `MCC-021` and `MCC-022` cover secret-safe storage, diagnostics and operations visibility; `MCC-018` owns dependency/provider freshness. Passing lint, audit or fake adapters alone is supporting evidence, not a hosted security claim.
+- Residual gaps and owners: the release/operations owner must prove public TLS/Caddy/firewall, exact production origins, Firebase provisioning, backups/reboot and browser denial under `shipglows-personal-cloud-rollout.md`; GitHub, Firebase, Sentry and ACP/provider owners must complete credentialed live proofs without exposing secrets; the product/security owner must separately approve any multi-user tenancy, automatic trigger, remote execution provider, Studio production bridge or broader terminal capability. Until those proofs pass, the runner and Workspace remain locally proven or deployment-blocked rather than production-secure.
+
 # Execution Notes
 
+- Personal Cloud implementation reads this spec with `shipglows-cloud-dev-gateway-foundation.md`, `shipglows-persistent-dev-preview-ingress.md`, and `shipglows-personal-cloud-rollout.md`. Companion-spec batches PC-A through PC-D may proceed only on their disjoint write sets; PC-I integrates shared config/app/main/database/API/router/docs sequentially after them.
+- The Personal Cloud milestone reuses the existing CLI/PM2/tmux/Neovim setup. It does not introduce Docker or Convex and does not make semantic Conversations or Studio a preview/Workspace dependency.
 - Read order: this spec; `AGENT.md`; `technical/runtime-boundary.md`; foundational architecture; GitHub managed clone spec; dashboard projection spec; design-system authority; `lib/shipglows/**`; source reader/project-health modules; runner foundation; and current Firebase/Auth provider notes. Dormant modules are inspected only for a concrete, reviewed integration need.
 - Start with Batch A. Do not wire UI action buttons to real execution until auth, tenant isolation, workspace containment, persistence, and idempotency tests pass.
 - Keep every runtime transport behind `AgentRuntime` and keep Flutter behind the normalized ShipGlows event contract. No Flutter model may import a runtime wire type.
-- Use supervised `codex app-server` stdio locally for the first MVP adapter. Do not let its transport, session identifiers or capabilities leak into routes, policy, health or Flutter; the fake second adapter is mandatory proof.
+- Use the allowlisted, version-pinned `@agentclientprotocol/codex-acp` subprocess over local stdio as the active Codex adapter behind ShipGlows `AgentRuntime`. ACP transport, wire types, session identifiers and capabilities remain private to the adapter and cannot leak into routes, policy, health or Flutter; the fake second adapter remains mandatory proof. Keep the previous Codex app-server adapter strictly intact and rollback-only: it is neither an active implementation target nor an independently evolving path.
 - Use authenticated fetch-style SSE from Flutter with `Authorization` and `Last-Event-ID` headers; do not use browser `EventSource` or base the public API on app-server's experimental WebSocket transport.
 - Keep SQLite access behind repositories and explicit migrations; do not embed SQL in route handlers.
 - Keep GitHub token generation inside a single server adapter with structured redaction and no persistence.
@@ -717,6 +753,11 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-17 22:45:49 UTC | 101-sg-ready | GPT-5 Codex | Rechecked the Personal Cloud priority, companion dependency versions, non-overlapping write ownership, Workspace reconnect policy, OWASP/ASVS gate and pinned ACP runtime authority after all P1 corrections. | SAFE; metadata, dependency, contradiction, canonical-structure and diff checks passed with no unresolved readiness blocker | /102-sg-start ShipGlows Managed Agent Cockpit MVP |
+| 2026-08-17 22:44:00 UTC | 101-sg-ready correction | GPT-5 Codex | Replaced the obsolete active app-server execution note with the pinned allowlisted Codex ACP local-stdio subprocess behind `AgentRuntime`; retained the previous app-server adapter unchanged and rollback-only with no wire-type leakage. | runtime-authority P1 corrected; targeted contradiction checks required | Rerun metadata, contradiction, structure and diff checks |
+| 2026-08-17 22:41:38 UTC | 101-sg-ready correction | GPT-5 Codex | Added the canonical OWASP Top 10:2025 and selected ASVS v5.0.0 security gate with trust boundaries, existing MCC evidence and hosted/provider residual owners. | security-gate P1 corrected; targeted checks required | Rerun metadata, structure and diff checks |
+| 2026-08-17 22:38:29 UTC | 101-sg-ready correction | GPT-5 Codex | Removed false parallel CLI ownership by making PC-A the single sequential writer for catalog export and exact-Host Caddy/HMR lifecycle work; corrected design-system and preferred-stack dependencies to canonical active metadata. | P1 ownership and dependency blockers corrected; targeted readiness checks required | Rerun targeted metadata, structure and diff checks |
+| 2026-08-17 22:23:23 UTC | 100-sg-spec | GPT-5 Codex | Amended the Cockpit around the Personal Cloud priority: Projects, persistent Preview and reconnectable Workspace; fixed fresh capability, exact-Origin, heartbeat and single-active contracts while keeping semantic Conversations and Studio available but non-blocking. | amended; companion specs drafted and readiness review required | Run `/101-sg-ready ShipGlows Managed Agent Cockpit MVP` with the three Personal Cloud companion specs |
 | 2026-08-17 21:37:06 UTC | sg-development + sg-engineering | GPT-5 Codex | Unified ACP overflow and interrupt behind a bounded hard-stop, removed sessions before terminal acknowledgement, fenced late callbacks and second prompts, tolerated cancel transport rejection, bounded raw NDJSON framing and validated retained provider identifiers. Framing failure now closes the SDK connection and kills the producer idempotently. | focused ACP connection proof passes 16/16; full runner suite passes 354/355 with only the pre-existing Windows CRLF worktree fixture mismatch | Keep cold isolated resume denied until a separately specified durable workspace-descriptor migration exists |
 | 2026-08-17 21:12:00 UTC | sg-development + sg-engineering | GPT-5 Codex | Hardened the ACP slice after independent review: explicit runtime modes and trusted workspaces, durable approval lifecycle, active-run fencing, one-shot approval only, bounded sanitized updates, safe stop reasons, supervised process shutdown and no advertised ACP resume. | ACP/security/app integration gates pass; complete runner suite passes 345/346 with only the pre-existing Windows CRLF worktree fixture mismatch | Keep cold isolated resume denied until a separately specified durable workspace-descriptor migration exists |
 | 2026-08-17 20:31:58 UTC | sg-development + sg-engineering | GPT-5 Codex | Replaced the runner's active native-only selection with one generic ACP local-stdio runtime behind the unchanged `AgentRuntime` boundary; pinned ACP SDK and Codex ACP versions; normalized sessions, prompt lifecycle, cancellation, permissions and semantic updates without exposing raw provider data. | focused ACP tests, typecheck, lint, dependency audit and real create/prompt/stream smoke pass; the full suite has one unrelated Windows CRLF fixture failure | Resolve the independent workspace fixture normalization, then continue Task 5 process-restart/order hardening |
@@ -821,6 +862,12 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-11 18:26:17 UTC | 300-sg-docs + 007-sg-content | GPT-5 Codex | Reconciled contributor guidance, public app README, technical context, runtime/code maps, the active MVP contract, and historical migration records with one ShipGlows runtime, Firebase Auth, Convex target data plane, and Fastify/SQLite execution-plane exception. Historical cleanup documents and their two originating specs are now explicitly superseded. | documentation is current for the implemented Cockpit baseline; live Firebase, hosted runner, Sentry and public Workspace proof remain open and are not claimed complete | Continue the hosted Firebase/Runner proof from the documented single-runtime baseline |
 
 # Current Chantier Flow
+
+## Personal Cloud amendment — 2026-08-18
+
+The active milestone is now `Projects -> persistent Preview -> reconnectable Workspace`. It preserves the existing CLI/PM2/tmux/Neovim workflow and adds an authenticated Flutter window onto it. Semantic Conversations and Studio remain valid independent surfaces, but neither blocks this milestone. The companion specs own the catalog/auth/SQLite foundation, preview ingress and later CAX11 rollout; no Docker or Convex dependency is introduced.
+
+`100-sg-spec` (Personal Cloud amendment reviewed) -> `101-sg-ready` (SAFE across this spec and all three companion specs; ready) -> `102-sg-start` (next: PC-A through PC-D on disjoint files, then PC-I sequential integration) -> `103-sg-verify` (exact-Origin, ticket/cookie, HTTP+WS preview, tmux reconnect/heartbeat/single-active, reboot/browser proof) -> `004-sg-deploy` (only after separate exact-target remote authority)
 
 ## Architecture amendment — 2026-08-11
 

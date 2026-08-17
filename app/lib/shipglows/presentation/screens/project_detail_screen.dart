@@ -109,6 +109,11 @@ class _ServerProjectDetailBody extends StatelessWidget {
       SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
       ManagedConversationPanel(projectId: runnerProjectId),
       const SizedBox(height: 12),
+      _PersonalCloudButton(
+        projectName: projectName,
+        projectId: runnerProjectId,
+      ),
+      SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
       _OperatorWorkspaceButton(
         projectName: projectName,
         projectId: runnerProjectId,
@@ -208,6 +213,11 @@ class _ProjectDetailBody extends StatelessWidget {
         if (runnerProjectId != null) ...[
           SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
           ProjectContextPanel(projectId: runnerProjectId!),
+          SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
+          _PersonalCloudButton(
+            projectName: project.project,
+            projectId: runnerProjectId!,
+          ),
           SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
           _OperatorWorkspaceButton(
             projectName: project.project,
@@ -317,6 +327,24 @@ class _ProjectDetailBody extends StatelessWidget {
       ],
     );
   }
+}
+
+class _PersonalCloudButton extends StatelessWidget {
+  const _PersonalCloudButton({
+    required this.projectName,
+    required this.projectId,
+  });
+  final String projectName;
+  final String projectId;
+
+  @override
+  Widget build(BuildContext context) => FilledButton.icon(
+    onPressed: () => context.go(
+      '/project/${Uri.encodeComponent(projectName)}/cloud?runnerProjectId=${Uri.encodeQueryComponent(projectId)}',
+    ),
+    icon: const Icon(Icons.cloud_outlined),
+    label: const Text('Ouvrir Preview + Terminal'),
+  );
 }
 
 class _OperatorWorkspaceButton extends StatelessWidget {

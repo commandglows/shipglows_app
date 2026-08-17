@@ -10,6 +10,7 @@ import 'activity_review_models.dart';
 import '../../domain/studio/studio_contracts.dart';
 import '../../domain/studio/studio_compilation_routing.dart';
 import '../../domain/studio/studio_session.dart';
+import '../personal_cloud/personal_cloud_models.dart';
 
 typedef ManagedRunnerAccessTokenProvider =
     Future<String?> Function({bool forceRefresh});
@@ -1813,6 +1814,104 @@ class ManagedRunnerApi
 
   final Dio _dio;
   final ManagedRunnerAccessTokenProvider? accessTokenProvider;
+
+  Future<List<PersonalCloudProject>> loadPersonalCloudProjects() async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/cloud-projects',
+        options: Options(headers: await _headers()),
+      );
+      final data = response.data;
+      if (data is! Map || data['projects'] is! List)
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message:
+              'The managed runner returned an invalid cloud project catalog.',
+        );
+      return (data['projects'] as List)
+          .map((raw) {
+            if (raw is! Map ||
+                raw['projectId'] is! String ||
+                raw['displayName'] is! String ||
+                raw['status'] is! String ||
+                raw['capabilities'] is! Map) {
+              throw const ManagedRunnerException(
+                code: 'invalidResponse',
+                message:
+                    'The managed runner returned an invalid cloud project.',
+              );
+            }
+            final capabilities = raw['capabilities'] as Map;
+            if (capabilities['preview'] is! bool ||
+                capabilities['workspace'] is! bool)
+              throw const ManagedRunnerException(
+                code: 'invalidResponse',
+                message:
+                    'The managed runner returned invalid cloud capabilities.',
+              );
+            return PersonalCloudProject(
+              id: raw['projectId'] as String,
+              name: raw['displayName'] as String,
+              status: raw['status'] as String,
+              preview: capabilities['preview'] as bool,
+              workspace: capabilities['workspace'] as bool,
+            );
+          })
+          .toList(growable: false);
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  Future<Uri> openPersonalCloudPreview({required String projectId}) async {
+    try {
+      final ticketResponse = await _dio.post<dynamic>(
+        '/v1/projects/${Uri.encodeComponent(projectId)}/preview-ticket',
+        data: const <String, Object?>{},
+        options: Options(headers: await _headers()),
+      );
+      final data = ticketResponse.data;
+      if (data is! Map ||
+          data['id'] is! String ||
+          data['secret'] is! String ||
+          data['origin'] is! String) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid preview ticket.',
+        );
+      }
+      final origin = Uri.tryParse(data['origin'] as String);
+      if (origin == null ||
+          origin.scheme != 'https' ||
+          origin.host.isEmpty ||
+          origin.path != '') {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid preview origin.',
+        );
+      }
+      final bootstrap = Dio(
+        BaseOptions(
+          baseUrl: origin.toString(),
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      await bootstrap.post<dynamic>(
+        '/v1/preview/session',
+        data: <String, Object?>{
+          'ticketId': data['id'],
+          'secret': data['secret'],
+        },
+        options: Options(
+          headers: await _headers(),
+          extra: const {'withCredentials': true},
+        ),
+      );
+      return origin;
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
 
   @override
   Future<StudioCompilationRoutingProjection> studioCompilationRouting({

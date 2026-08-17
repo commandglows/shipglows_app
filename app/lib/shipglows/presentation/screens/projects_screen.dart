@@ -4,10 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../presentation/theme/app_theme.dart';
+import '../../../core/app_config.dart';
 import '../../data/managed_runner_api.dart';
 import '../../providers/managed_github_projects_provider.dart';
 import '../../providers/managed_project_selection_provider.dart';
 import '../../providers/managed_projects_provider.dart';
+import '../../providers/personal_cloud/personal_cloud_projects_provider.dart';
+import '../../personal_cloud/personal_cloud_models.dart';
 import '../widgets/shipglows_scaffold.dart';
 
 class ProjectsScreen extends ConsumerWidget {
@@ -15,6 +18,9 @@ class ProjectsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (AppConfig.managedRunnerEnabled && !AppConfig.localStudioAuthEnabled) {
+      return const _PersonalCloudProjectsScreen();
+    }
     final projects = ref.watch(managedProjectsProvider);
     final selection = ref.watch(managedProjectSelectionProvider);
     final tokens = AppTheme.tokensOf(context);
@@ -155,6 +161,68 @@ class ProjectsScreen extends ConsumerWidget {
       }
     }
   }
+}
+
+class _PersonalCloudProjectsScreen extends ConsumerWidget {
+  const _PersonalCloudProjectsScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final projects = ref.watch(personalCloudProjectsProvider);
+    final tokens = AppTheme.tokensOf(context);
+    return ShipGlowsScaffold(
+      title: 'Projets cloud',
+      actions: [
+        IconButton(
+          tooltip: 'Actualiser les projets',
+          onPressed: () => ref.invalidate(personalCloudProjectsProvider),
+          icon: const Icon(Icons.refresh_rounded),
+        ),
+      ],
+      body: projects.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => _ErrorState(
+          message: _message(error),
+          onRetry: () => ref.invalidate(personalCloudProjectsProvider),
+        ),
+        data: (items) => items.isEmpty
+            ? const Center(child: Text('Aucun projet cloud disponible.'))
+            : ListView.separated(
+                itemCount: items.length,
+                separatorBuilder: (_, _) => SizedBox(height: tokens.spacing.sm),
+                itemBuilder: (context, index) =>
+                    _PersonalCloudProjectCard(project: items[index]),
+              ),
+      ),
+    );
+  }
+}
+
+class _PersonalCloudProjectCard extends StatelessWidget {
+  const _PersonalCloudProjectCard({required this.project});
+  final PersonalCloudProject project;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: ListTile(
+      leading: Icon(
+        project.status == 'online'
+            ? Icons.cloud_done_outlined
+            : Icons.cloud_off_outlined,
+      ),
+      title: Text(project.name),
+      subtitle: Text(
+        '${project.status} · Preview ${project.preview ? "disponible" : "indisponible"} · Terminal ${project.workspace ? "disponible" : "indisponible"}',
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded),
+      enabled: project.preview || project.workspace,
+      onTap: project.preview || project.workspace
+          ? () => context.go(
+              '/project/${Uri.encodeComponent(project.name)}/cloud?runnerProjectId=${Uri.encodeQueryComponent(project.id)}',
+            )
+          : null,
+    ),
+  );
 }
 
 class _ProjectSelectionModeCard extends ConsumerWidget {

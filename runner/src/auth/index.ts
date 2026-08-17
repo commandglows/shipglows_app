@@ -77,6 +77,25 @@ export class FirebaseAuthenticationAdapter implements AuthenticationAdapter {
   }
 }
 
+export class FixedSingleUserFirebaseAuthenticationAdapter implements AuthenticationAdapter {
+  constructor(
+    private readonly verifier: FirebaseIdTokenVerifier,
+    private readonly expectedSubject: string,
+    private readonly tenantId: string,
+    private readonly userId: string,
+  ) {}
+
+  async authenticate(request: Pick<FastifyRequest, "headers">): Promise<ActorContext | null> {
+    const token = bearerToken(request.headers);
+    if (token === undefined) return null;
+    try {
+      const { subject } = await this.verifier.verify(token);
+      if (subject !== this.expectedSubject) return null;
+      return { subject, tenantId: this.tenantId, userId: this.userId };
+    } catch { return null; }
+  }
+}
+
 function readSubject(payload: JWTPayload): string {
   if (typeof payload.sub !== "string" || payload.sub.length === 0) {
     throw new Error("Firebase ID token has no subject.");

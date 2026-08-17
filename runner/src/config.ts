@@ -19,9 +19,23 @@ export interface RunnerConfig {
   readonly integrations: RunnerIntegrationsConfig;
   readonly runtimes: RunnerRuntimesConfig;
   readonly operatorWorkspaces: Readonly<Record<string, OperatorWorkspaceConfig>>;
+  readonly personalCloud: RunnerPersonalCloudConfig;
   readonly studio: RunnerStudioConfig;
   readonly localStudioAuthEnabled: boolean;
 }
+
+export type RunnerPersonalCloudConfig =
+  | { readonly enabled: false }
+  | {
+      readonly enabled: true;
+      readonly catalogPath: string;
+      readonly allowedRoots: readonly string[];
+      readonly previewDomain: string;
+      readonly appOrigin: string;
+      readonly firebaseUid: string;
+      readonly tenantId: string;
+      readonly userId: string;
+    };
 
 export type RunnerStudioConfig =
   | { readonly enabled: false }
@@ -153,6 +167,14 @@ export function loadConfig(
   const studioEnabled = readBoolean(env["RUNNER_STUDIO_ENABLED"], "RUNNER_STUDIO_ENABLED", issues);
   const localStudioAuthEnabled = readBoolean(env["RUNNER_LOCAL_STUDIO_AUTH_ENABLED"], "RUNNER_LOCAL_STUDIO_AUTH_ENABLED", issues);
   const operatorWorkspaces = parseOperatorWorkspaces(env["RUNNER_OPERATOR_WORKSPACES"], issues);
+  const personalCloudEnabled = readBoolean(env["RUNNER_PERSONAL_CLOUD_ENABLED"], "RUNNER_PERSONAL_CLOUD_ENABLED", issues);
+  const personalCloudCatalogPath = env["RUNNER_CLOUD_PROJECT_CATALOG_PATH"] ?? "";
+  const personalCloudAllowedRoots = (env["RUNNER_CLOUD_ALLOWED_ROOTS"] ?? "").split(",").map((value) => value.trim()).filter(Boolean);
+  const personalCloudPreviewDomain = (env["RUNNER_PREVIEW_DOMAIN"] ?? "").trim().toLowerCase();
+  const personalCloudAppOrigin = (env["RUNNER_PERSONAL_CLOUD_APP_ORIGIN"] ?? "").trim();
+  const personalCloudFirebaseUid = (env["RUNNER_PERSONAL_CLOUD_FIREBASE_UID"] ?? "").trim();
+  const personalCloudTenantId = (env["RUNNER_PERSONAL_CLOUD_TENANT_ID"] ?? "").trim();
+  const personalCloudUserId = (env["RUNNER_PERSONAL_CLOUD_USER_ID"] ?? "").trim();
   const maxConcurrentRunsPerTenant = readBoundedInteger(
     env["RUNNER_MAX_CONCURRENT_RUNS_PER_TENANT"],
     2,
@@ -245,6 +267,20 @@ export function loadConfig(
   if (environment === "production" && allowedOrigins.length === 0) {
     issues.push("RUNNER_ALLOWED_ORIGINS is required in production");
   }
+  if (personalCloudEnabled) {
+    if (!isAbsolute(personalCloudCatalogPath)) issues.push("RUNNER_CLOUD_PROJECT_CATALOG_PATH must be absolute");
+    if (personalCloudAllowedRoots.length === 0 || personalCloudAllowedRoots.some((root) => !isAbsolute(root))) issues.push("RUNNER_CLOUD_ALLOWED_ROOTS must contain absolute paths");
+    if (!/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(personalCloudPreviewDomain)) issues.push("RUNNER_PREVIEW_DOMAIN must be a DNS name");
+    try {
+      const origin = new URL(personalCloudAppOrigin);
+      if (origin.origin !== personalCloudAppOrigin || (environment === "production" && origin.protocol !== "https:")) throw new Error();
+    } catch { issues.push("RUNNER_PERSONAL_CLOUD_APP_ORIGIN must be an exact origin"); }
+    if (!allowedOrigins.includes(personalCloudAppOrigin)) issues.push("RUNNER_PERSONAL_CLOUD_APP_ORIGIN must be allowlisted by RUNNER_ALLOWED_ORIGINS");
+    if (!/^[A-Za-z0-9:_-]{1,128}$/.test(personalCloudFirebaseUid)) issues.push("RUNNER_PERSONAL_CLOUD_FIREBASE_UID is required and must be opaque");
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(personalCloudTenantId)) issues.push("RUNNER_PERSONAL_CLOUD_TENANT_ID is required");
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(personalCloudUserId)) issues.push("RUNNER_PERSONAL_CLOUD_USER_ID is required");
+    if (!firebaseEnabled) issues.push("RUNNER_PERSONAL_CLOUD_ENABLED requires FIREBASE_AUTH_ENABLED=true");
+  }
   if (issues.length > 0) throw new ConfigError(issues);
 
   return {
@@ -275,6 +311,16 @@ export function loadConfig(
       eve: { enabled: eveEnabled },
     },
     operatorWorkspaces,
+    personalCloud: personalCloudEnabled ? {
+      enabled: true,
+      catalogPath: personalCloudCatalogPath,
+      allowedRoots: personalCloudAllowedRoots,
+      previewDomain: personalCloudPreviewDomain,
+      appOrigin: personalCloudAppOrigin,
+      firebaseUid: personalCloudFirebaseUid,
+      tenantId: personalCloudTenantId,
+      userId: personalCloudUserId,
+    } : { enabled: false },
     localStudioAuthEnabled,
     studio: studioEnabled && configuredStudioProfile !== null ? {
       enabled: true,
@@ -305,6 +351,7 @@ export function publicConfig(config: RunnerConfig) {
     codexEnabled: config.runtimes.codex.enabled,
     eveEnabled: config.runtimes.eve.enabled,
     operatorWorkspaceCount: Object.keys(config.operatorWorkspaces).length,
+    personalCloudEnabled: config.personalCloud.enabled,
     studioEnabled: config.studio.enabled,
     localStudioAuthEnabled: config.localStudioAuthEnabled,
   };

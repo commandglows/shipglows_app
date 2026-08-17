@@ -6,6 +6,7 @@ import 'presentation/screens/overview_screen.dart';
 import 'presentation/screens/project_detail_screen.dart';
 import 'presentation/screens/projects_screen.dart';
 import 'presentation/screens/operator_workspace_screen.dart';
+import 'presentation/screens/personal_cloud_project_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/studio_screen.dart';
 
@@ -29,6 +30,17 @@ GoRouter createShipGlowsRouter() {
             ),
           );
         },
+      ),
+      GoRoute(
+        path: '/project/:project/cloud',
+        pageBuilder: (context, state) => MaterialPage(
+          child: PersonalCloudProjectScreen(
+            projectName: Uri.decodeComponent(
+              state.pathParameters['project'] ?? '',
+            ),
+            projectId: state.uri.queryParameters['runnerProjectId'] ?? '',
+          ),
+        ),
       ),
       GoRoute(
         path: '/project/:project/workspace',

@@ -40,10 +40,10 @@ describe("OperatorWorkspaceGateway", () => {
 
   it("streams PTY output and accepts only bounded input and resize messages", () => {
     const pty = new FakePty();
-    const gateway = new OperatorWorkspaceGateway({ project: { cwd: "/srv/project", tmuxSession: "project" } }, () => pty, () => 1_000);
+    const gateway = new OperatorWorkspaceGateway({ project: { cwd: "/srv/project", tmuxSession: "project" } }, () => pty, () => 1_000, 60_000, "https://app.shipglows.com");
     const session = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", idempotencyKey: "request-123" });
     const socket = new FakeSocket();
-    gateway.attach(session.id, session.token, socket);
+    gateway.attach(session.id, session.token, socket, "https://app.shipglows.com");
     socket.message(JSON.stringify({ type: "input", data: "codex\r" }));
     socket.message(JSON.stringify({ type: "resize", columns: 140, rows: 40 }));
     socket.message(JSON.stringify({ type: "resize", columns: 9999, rows: 1 }));
@@ -55,20 +55,20 @@ describe("OperatorWorkspaceGateway", () => {
 
   it("rejects expired, invalid and second simultaneous attachments", () => {
     let now = 1_000;
-    const gateway = new OperatorWorkspaceGateway({ project: { cwd: "/srv/project", tmuxSession: "project" } }, () => new FakePty(), () => now, 100);
+    const gateway = new OperatorWorkspaceGateway({ project: { cwd: "/srv/project", tmuxSession: "project" } }, () => new FakePty(), () => now, 100, "https://app.shipglows.com");
     const session = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", idempotencyKey: "request-123" });
     const invalid = new FakeSocket();
-    gateway.attach(session.id, "wrong", invalid);
+    gateway.attach(session.id, "wrong", invalid, "https://app.shipglows.com");
     assert.equal(invalid.closed?.[0], 4403);
     const first = new FakeSocket();
-    gateway.attach(session.id, session.token, first);
+    gateway.attach(session.id, session.token, first, "https://app.shipglows.com");
     const second = new FakeSocket();
-    gateway.attach(session.id, session.token, second);
+    gateway.attach(session.id, session.token, second, "https://app.shipglows.com");
     assert.equal(second.closed?.[0], 4403);
     first.listeners.get("close")?.();
     now = 1_101;
     const expired = new FakeSocket();
-    gateway.attach(session.id, session.token, expired);
+    gateway.attach(session.id, session.token, expired, "https://app.shipglows.com");
     assert.equal(expired.closed?.[0], 4403);
   });
 
@@ -79,5 +79,58 @@ describe("OperatorWorkspaceGateway", () => {
     assert.equal(gateway.closeOwned({ sessionId: session.id, tenantId: "tenant", userId: "other" }), false);
     assert.equal(gateway.closeOwned({ sessionId: session.id, tenantId: "tenant", userId: "user" }), true);
     assert.equal(pty.killed, true);
+  });
+
+  it("requires exact Origin, consumes capabilities once and returns explicit 409 while attached", () => {
+    const gateway = new OperatorWorkspaceGateway({ project: { cwd: "/srv/project", tmuxSession: "same-tmux" } }, () => new FakePty(), () => 1_000, 60_000, "https://app.shipglows.com");
+    const session = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", idempotencyKey: "first" });
+    const hostile = new FakeSocket();
+    gateway.attach(session.id, session.token, hostile, "https://app.shipglows.com.evil");
+    assert.equal(hostile.closed?.[0], 4403);
+    const first = new FakeSocket();
+    gateway.attach(session.id, session.token, first, "https://app.shipglows.com");
+    assert.throws(() => gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", idempotencyKey: "second" }), (error) => error instanceof Error && "statusCode" in error && error.statusCode === 409);
+    first.listeners.get("close")?.();
+    const replay = new FakeSocket();
+    gateway.attach(session.id, session.token, replay, "https://app.shipglows.com");
+    assert.equal(replay.closed?.[0], 4403);
+    const reattach = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", idempotencyKey: "second" });
+    assert.notEqual(reattach.token, session.token);
+  });
+
+  it("releases only the browser attachment after heartbeat expiry", () => {
+    let now = 1_000;
+    let tick: () => void = () => undefined;
+    const pty = new FakePty();
+    const gateway = new OperatorWorkspaceGateway(
+      { project: { cwd: "/srv/project", tmuxSession: "same-tmux" } },
+      () => pty,
+      { now: () => now, heartbeatTimeoutMs: 100, schedule: (listener) => { tick = listener; return { dispose() { return undefined; } }; } },
+      60_000,
+      "https://app.shipglows.com",
+    );
+    const session = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", idempotencyKey: "first" });
+    const socket = new FakeSocket();
+    gateway.attach(session.id, session.token, socket, "https://app.shipglows.com");
+    socket.message(JSON.stringify({ type: "heartbeat" }));
+    now = 1_101;
+    tick();
+    assert.equal(socket.closed?.[0], 4408);
+    assert.equal(pty.killed, false);
+    const fresh = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", idempotencyKey: "fresh" });
+    assert.notEqual(fresh.token, session.token);
+  });
+
+  it("reconciles newly discovered workspace mappings without killing active tmux sessions", () => {
+    const firstPty = new FakePty();
+    const gateway = new OperatorWorkspaceGateway({}, () => firstPty, () => 1_000, 60_000, "https://app.shipglows.com");
+    assert.equal(gateway.capability("project").available, false);
+    gateway.reconcileWorkspaces({ project: { cwd: "/srv/project", tmuxSession: "same-tmux" } });
+    assert.equal(gateway.capability("project").available, true);
+    const session = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", idempotencyKey: "fresh" });
+    gateway.reconcileWorkspaces({});
+    assert.equal(firstPty.killed, false);
+    assert.equal(gateway.capability("project").available, false);
+    assert.equal(gateway.close(session.id), true);
   });
 });

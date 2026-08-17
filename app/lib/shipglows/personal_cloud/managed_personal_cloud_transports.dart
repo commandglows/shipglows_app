@@ -1,0 +1,102 @@
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+import '../data/managed_runner_api.dart';
+import 'personal_cloud_models.dart';
+import 'personal_cloud_transports.dart';
+
+class ManagedProjectPreviewTransport implements ProjectPreviewTransport {
+  const ManagedProjectPreviewTransport(this.api);
+  final ManagedRunnerApi api;
+
+  @override
+  Future<ProjectPreviewSnapshot> openPreview({
+    required String projectId,
+  }) async {
+    try {
+      final origin = await api.openPersonalCloudPreview(projectId: projectId);
+      return ProjectPreviewSnapshot(
+        state: ProjectPreviewState.ready,
+        message: 'Preview distante connectée.',
+        origin: origin,
+      );
+    } on ManagedRunnerException catch (error) {
+      throw _surfaceError(error);
+    }
+  }
+}
+
+class ManagedRemoteWorkspaceTransport implements RemoteWorkspaceTransport {
+  const ManagedRemoteWorkspaceTransport(this.api);
+  final ManagedRunnerApi api;
+
+  @override
+  Future<RemoteWorkspaceCapability> createCapability({
+    required String projectId,
+    required String idempotencyKey,
+  }) async {
+    try {
+      final session = await api.createOperatorSession(
+        projectId: projectId,
+        idempotencyKey: idempotencyKey,
+      );
+      return RemoteWorkspaceCapability(
+        sessionId: session.sessionId,
+        token: session.token,
+        expiresAt: session.expiresAt,
+      );
+    } on ManagedRunnerException catch (error) {
+      throw _surfaceError(error);
+    }
+  }
+
+  @override
+  RemoteWorkspaceSocket connect(RemoteWorkspaceCapability capability) {
+    final channel = api.connectOperatorSession(
+      ManagedOperatorSession(
+        sessionId: capability.sessionId,
+        token: capability.token,
+        expiresAt: capability.expiresAt,
+      ),
+    );
+    return _ManagedRemoteWorkspaceSocket(channel);
+  }
+
+  @override
+  Future<void> releaseCapability({required String sessionId}) =>
+      api.closeOperatorSession(sessionId: sessionId);
+}
+
+class _ManagedRemoteWorkspaceSocket implements RemoteWorkspaceSocket {
+  const _ManagedRemoteWorkspaceSocket(this.channel);
+  final WebSocketChannel channel;
+  @override
+  Future<void> get ready => channel.ready;
+  @override
+  Stream<Object?> get messages => channel.stream;
+  @override
+  void send(String data) => channel.sink.add(data);
+  @override
+  Future<void> close() async => channel.sink.close();
+}
+
+RemoteSurfaceException _surfaceError(ManagedRunnerException error) {
+  final failure = switch (error.code) {
+    'unauthorized' => RemoteSurfaceFailure.unauthorized,
+    'projectForbidden' ||
+    'previewDenied' ||
+    'previewOriginDenied' => RemoteSurfaceFailure.denied,
+    'previewExpired' => RemoteSurfaceFailure.expired,
+    'operatorSessionActive' => RemoteSurfaceFailure.activeElsewhere,
+    'operatorWorkspaceUnavailable' ||
+    'previewUnavailable' => RemoteSurfaceFailure.unavailable,
+    _ => RemoteSurfaceFailure.network,
+  };
+  return RemoteSurfaceException(
+    failure: failure,
+    message: error.message,
+    retryable:
+        failure == RemoteSurfaceFailure.network ||
+        failure == RemoteSurfaceFailure.unavailable ||
+        failure == RemoteSurfaceFailure.expired,
+  );
+}

@@ -2,7 +2,7 @@ import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 
 import { buildRunnerApp } from "./app.js";
-import { FirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
+import { FirebaseAuthenticationAdapter, FixedSingleUserFirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
 import { AcpRuntime, StdioAcpConnection } from "./agent-runtime/acp/index.js";
 import { loadConfig } from "./config.js";
 import { openOperationalStore } from "./db/index.js";
@@ -17,7 +17,7 @@ import { RunAdmission } from "./runs/limits.js";
 import { ManagedFixCommandExecutor } from "./runs/fix.js";
 import { GitHubAppGitTransport, LocalWorkspaceManager, ProcessGitCommand } from "./workspaces/index.js";
 import { WorkspaceCleanupWorker } from "./workspaces/cleanup.js";
-import { OperatorWorkspaceGateway } from "./operator-workspace/index.js";
+import { OperatorWorkspaceGateway, spawnTmuxPty } from "./operator-workspace/index.js";
 import { ExecutionAdmissionService, LocalManagedExecutionProvider } from "./runs/execution.js";
 import { ExecutionProviderRegistry } from "./contracts/index.js";
 import { createBuildIdentity, RunnerDiagnostics } from "./observability/index.js";
@@ -26,6 +26,8 @@ import { StudioSessionService } from "./studio/session.js";
 import { createLocalStudioProjectCatalog } from "./projects/localStudioProjectCatalog.js";
 import { GitHubAppProjectSource, UnavailableGitHubProjectSource } from "./projects/githubProjectSource.js";
 import { LocalProjectContextGenerator } from "./projectContextGenerator.js";
+import { FileCloudProjectCatalogReader, findCloudProjectByHost } from "./cloud-projects/index.js";
+import { PreviewIngressService } from "./preview-ingress/index.js";
 
 const config = loadConfig();
 const require = createRequire(import.meta.url);
@@ -84,15 +86,39 @@ const diagnostics = new RunnerDiagnostics({
 const eventHub = new EventHub();
 const runAdmission = new RunAdmission();
 const executionAdmission = new ExecutionAdmissionService(store, new ExecutionProviderRegistry([new LocalManagedExecutionProvider()]), config.limits);
-const operatorWorkspaceGateway = new OperatorWorkspaceGateway(config.operatorWorkspaces);
+const personalCloudConfig = config.personalCloud.enabled ? config.personalCloud : undefined;
+const cloudProjectCatalog = personalCloudConfig !== undefined
+  ? new FileCloudProjectCatalogReader(personalCloudConfig.catalogPath, personalCloudConfig.allowedRoots)
+  : undefined;
+const operatorWorkspaceGateway = new OperatorWorkspaceGateway(
+  config.operatorWorkspaces,
+  spawnTmuxPty,
+  {},
+  60_000,
+  personalCloudConfig?.appOrigin ?? config.server.allowedOrigins[0],
+);
+const reconcileCloudProjects = personalCloudConfig !== undefined && cloudProjectCatalog !== undefined
+  ? async (actor: { readonly tenantId: string; readonly userId: string }) => {
+      if (actor.tenantId !== personalCloudConfig.tenantId || actor.userId !== personalCloudConfig.userId) throw new Error("Personal Cloud actor mismatch.");
+      const snapshot = await cloudProjectCatalog.read();
+      const cloudWorkspaces: Record<string, { cwd: string; tmuxSession: string }> = {};
+      for (const project of snapshot.entries) {
+        store.ensureLocalProjectContextTarget({ tenantId: actor.tenantId, userId: actor.userId, projectId: project.projectId });
+        if (project.capabilities.workspace && project.privateRuntime.tmuxSession !== undefined) {
+          cloudWorkspaces[project.projectId] = { cwd: project.privateRuntime.cwd, tmuxSession: project.privateRuntime.tmuxSession };
+        }
+      }
+      operatorWorkspaceGateway.reconcileWorkspaces({ ...config.operatorWorkspaces, ...cloudWorkspaces });
+    }
+  : undefined;
 const authentication = config.integrations.firebase.enabled
   ? (() => {
       const projectId = config.integrations.firebase.projectId;
       if (projectId === undefined) throw new Error("Firebase project ID is required when authentication is enabled.");
-      return new FirebaseAuthenticationAdapter(
-        createFirebaseIdTokenVerifier({ projectId }),
-        { resolve: (input) => Promise.resolve(store.resolveActor(input) ?? null) },
-      );
+      const verifier = createFirebaseIdTokenVerifier({ projectId });
+      return config.personalCloud.enabled
+        ? new FixedSingleUserFirebaseAuthenticationAdapter(verifier, config.personalCloud.firebaseUid, config.personalCloud.tenantId, config.personalCloud.userId)
+        : new FirebaseAuthenticationAdapter(verifier, { resolve: (input) => Promise.resolve(store.resolveActor(input) ?? null) });
     })()
   : undefined;
 const agentRuntime = config.runtimes.codex.enabled
@@ -106,6 +132,17 @@ const agentRuntime = config.runtimes.codex.enabled
         handlers,
       }),
     })
+  : undefined;
+const previewIngress = personalCloudConfig !== undefined && cloudProjectCatalog !== undefined
+  ? new PreviewIngressService(
+      {
+        resolveByHost: async (host) => findCloudProjectByHost(await cloudProjectCatalog.read(), host, personalCloudConfig.previewDomain),
+      },
+      {
+        hasAccess: (input) => projectAccess.hasProjectAccess({ ...input, capability: "read" }),
+      },
+      personalCloudConfig.appOrigin,
+    )
   : undefined;
 const fixRuntime = config.integrations.github.enabled && agentRuntime !== undefined
   ? (() => {
@@ -152,6 +189,9 @@ const dependencies = {
   runAdmission,
   executionAdmission,
   diagnostics,
+  ...(cloudProjectCatalog === undefined ? {} : { cloudProjectCatalog }),
+  ...(previewIngress === undefined ? {} : { previewIngress }),
+  ...(reconcileCloudProjects === undefined ? {} : { reconcileCloudProjects }),
   ...(studioCapability === undefined ? {} : { studioCapability }),
   ...(studioSessions === undefined ? {} : { studioSessions }),
   ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime.executor }),

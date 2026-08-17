@@ -30,6 +30,7 @@ describe("runner configuration", () => {
       codexEnabled: false,
       eveEnabled: false,
       operatorWorkspaceCount: 0,
+      personalCloudEnabled: false,
       studioEnabled: false,
       localStudioAuthEnabled: false,
     });
@@ -78,6 +79,25 @@ describe("runner configuration", () => {
         error.issues.includes("FIREBASE_AUTH_ENABLED=true is required in production") &&
         error.issues.includes("RUNNER_ALLOWED_ORIGINS is required in production"),
     );
+  });
+
+  it("admits personal cloud only with fixed Firebase identity and private filesystem bounds", () => {
+    const env = {
+      RUNNER_PERSONAL_CLOUD_ENABLED: "true",
+      FIREBASE_AUTH_ENABLED: "true",
+      FIREBASE_PROJECT_ID: "shipglows-prod",
+      RUNNER_ALLOWED_ORIGINS: "https://app.shipglows.com",
+      RUNNER_CLOUD_PROJECT_CATALOG_PATH: "/srv/shipglows/state/cli-project-catalog.v1.json",
+      RUNNER_CLOUD_ALLOWED_ROOTS: "/srv/projects",
+      RUNNER_PREVIEW_DOMAIN: "preview.shipglows.com",
+      RUNNER_PERSONAL_CLOUD_APP_ORIGIN: "https://app.shipglows.com",
+      RUNNER_PERSONAL_CLOUD_FIREBASE_UID: "firebase-owner",
+      RUNNER_PERSONAL_CLOUD_TENANT_ID: "ten_personal",
+      RUNNER_PERSONAL_CLOUD_USER_ID: "usr_owner",
+    };
+    assert.equal(loadConfig(env).personalCloud.enabled, true);
+    assert.throws(() => loadConfig({ ...env, RUNNER_PERSONAL_CLOUD_FIREBASE_UID: "" }), /FIREBASE_UID/);
+    assert.throws(() => loadConfig({ ...env, FIREBASE_AUTH_ENABLED: "false" }), /requires FIREBASE_AUTH_ENABLED/);
   });
 
   it("keeps Studio disabled by default and rejects production or incomplete enablement", () => {

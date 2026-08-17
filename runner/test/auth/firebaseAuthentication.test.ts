@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   FirebaseAuthenticationAdapter,
+  FixedSingleUserFirebaseAuthenticationAdapter,
   type ActorResolver,
   type FirebaseIdTokenVerifier,
 } from "../../src/auth/index.js";
@@ -54,5 +55,22 @@ describe("Firebase authentication adapter", () => {
     ]) {
       assert.equal(await adapter.authenticate({ headers }), null);
     }
+  });
+
+  it("binds personal-cloud auth to one configured subject without a tenant header", async () => {
+    const adapter = new FixedSingleUserFirebaseAuthenticationAdapter(
+      verifier,
+      "auth-user-000000000001",
+      "ten_personal",
+      "usr_owner",
+    );
+    assert.deepEqual(await adapter.authenticate({ headers: { authorization: "Bearer valid.jwt.token" } }), {
+      tenantId: "ten_personal",
+      userId: "usr_owner",
+      subject: "auth-user-000000000001",
+    });
+    const otherVerifier: FirebaseIdTokenVerifier = { verify: async () => ({ subject: "other-user" }) };
+    const denied = new FixedSingleUserFirebaseAuthenticationAdapter(otherVerifier, "auth-user-000000000001", "ten_personal", "usr_owner");
+    assert.equal(await denied.authenticate({ headers: { authorization: "Bearer valid.jwt.token", "x-shipglows-tenant": "attacker" } }), null);
   });
 });
