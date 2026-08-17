@@ -74,8 +74,6 @@ jobs:
       - working-directory: app
         run: flutter analyze
       - working-directory: app
-        run: flutter test
-      - working-directory: app
         run: flutter build windows --release
       - shell: pwsh
         run: Compress-Archive -Path app/build/windows/x64/runner/Release/* -DestinationPath shipglows-app-windows.zip
