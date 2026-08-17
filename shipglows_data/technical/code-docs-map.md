@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.2.0"
+artifact_version: "1.6.0"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-08-11"
+updated: "2026-08-16"
 status: active
 source_skill: 300-sg-docs
 scope: "code-docs-map"
@@ -16,17 +16,33 @@ docs_impact: yes
 linked_systems:
   - "app/lib/"
   - "app/test/"
+  - "runner/src/studio/"
+  - "runner/test/studio/"
+  - "site/src/studio/"
+  - "site/tests/studio/"
   - "shipglows_data/technical/"
   - "shipglows_data/workflow/specs/"
 depends_on: []
 supersedes:
+  - "shipglows_data/technical/code-docs-map.md@1.5.2"
+  - "shipglows_data/technical/code-docs-map.md@1.5.1"
+  - "shipglows_data/technical/code-docs-map.md@1.5.0"
+  - "shipglows_data/technical/code-docs-map.md@1.4.0"
+  - "shipglows_data/technical/code-docs-map.md@1.3.0"
+  - "shipglows_data/technical/code-docs-map.md@1.2.0"
   - "shipglows_data/technical/code-docs-map.md@1.1.0"
 evidence:
   - "app/lib/main.dart has one product entrypoint: ShipGlowsApp."
   - "Task 9-10 Cockpit and semantic conversation surfaces are covered by Flutter tests."
   - "Task 9 visual proof adds deterministic goldens and release-build Chrome evidence."
-next_review: "2026-09-11"
-next_step: "/sg-docs technical audit"
+  - "The Studio trusted-base slice maps the Astro development adapter, authenticated capability projection, and Flutter read-only preview shell."
+  - "Earlier trusted-base Studio evidence on 2026-08-16: site 13/13 with check/build/exclusion, runner 35/35 with typecheck/lint, and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
+  - "The earlier five-defect pass closed exact handshake validation, loop/revision ordering, atomic idempotency, distinct 256 KiB bridge-message and 16 KiB command limits, and late provider cleanup; its OCI wording predates the managed-sandbox supersession."
+  - "Earlier managed-sandbox evidence and account-free Vercel adapter conformance passed independent verification on 2026-08-16: 48/48 focused tests, 73/73 then-current Studio tests, typecheck, lint, diff check, and zero high-severity offline audit findings."
+  - "No Vercel SDK/package, account, credential, real provider/network call, production wiring, execution, preview, persistence, export, or availability proof exists."
+  - "The five-target universal router, authenticated projection, canonical artifact evidence, strict Dart mirror, and independent verifier boundary passed local adversarial verification at P0/P1/P2=0; no execution provider or compiler is configured."
+next_review: "2026-09-13"
+next_step: "Refresh routing only after separately approved real Linux, Windows, or macOS worker proof; compilation and artifact delivery remain unavailable."
 ---
 
 # Code Docs Map
@@ -56,6 +72,10 @@ This map links current ShipGlows code areas to their primary technical documenta
 | `app/lib/shipglows/data/managed_runner_api.dart` + Cockpit/conversation/Workspace providers, screens, widgets, and matching tests | Typed server-first Cockpit, normalized semantic conversations with audit/fix controls, and a separate authorized operator Workspace; explicit local-only, empty, stale, access-lost, session-expired, reconnect, and error states | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md` | `cd app && flutter analyze && flutter test` | Any runner API path, Cockpit projection, conversation event/action, approval UX, auth-token attachment, SSE/WebSocket behavior, project identity mapping, or interactive terminal rendering change |
 | `app/lib/data/shipglows_sources/` | Active Markdown/source readers | `shipglows_data/technical/markdown-source-of-truth.md` | `flutter test app/test/data/shipglows_sources` | Any parser, allowlist, diagnostics, source file rule, or operational record grammar change |
 | `app/lib/domain/project_health/` | Active project health model | `shipglows_data/technical/markdown-source-of-truth.md` | `flutter test app/test/domain/project_health` | Any project posture, next-command, or health scoring change |
+| `app/lib/domain/studio/` + `app/lib/shipglows/**/studio*` + `app/test/domain/studio/` + `app/test/shipglows/studio/` | Target-neutral Studio state and Flutter Web shell for the real Astro iframe, semantic sessions/Laboratory, closed compile intents, and strict parsing/display of the separate five-target compilation-routing projection; project support and compiler availability remain distinct | `shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md`, `shipglows_data/workflow/specs/shipglows-universal-compilation-router.md`, and `shipglows_data/technical/design-system-authority.md` | `cd app && flutter analyze && flutter test test/domain/studio test/shipglows/studio` (32/32 Studio tests with clean analysis/format on 2026-08-16) | Any Studio state, route, capability, selection, command, Laboratory, compile DTO, compilation target/environment projection, artifact-evidence mirror, or client-domain contract change |
+| `runner/src/studio/` + `runner/test/studio/` + Studio route registration in `runner/src/app.ts` | Trusted-base Studio/session contracts, provider-neutral managed-sandbox admission, account-free Vercel facade, and the separate universal detector/router/projection for Astro Web plus Flutter Web/Android/Windows/iOS; resolver and evidence verifier are optional/unconfigured and every compile path remains fail-closed | `shipglows_data/technical/managed-runner-foundation.md`, `shipglows_data/technical/operator-guides/studio-oci-worker.md`, `shipglows_data/technical/platforms/vercel.md`, `shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md`, and `shipglows_data/workflow/specs/shipglows-universal-compilation-router.md` | `cd runner && npx tsx --test test/studio/*.test.ts && npm run typecheck && npm run lint && npm audit --audit-level=high --offline` (96 pass/1 Windows symlink skip, clean static/offline-audit gates, independent P0/P1/P2=0 on 2026-08-16) | Any Studio schema/session, project detection, artifact digest, target/execution-class/toolchain mapping, route projection, verifier correlation, provider admission, lifecycle, origin, isolation, credential, persistence, ingress, or cleanup rule change |
+| `site/src/studio/` + `site/src/integrations/studioPreview.ts` + Hero anchors | Development-only exact-origin bridge over eight reviewed Astro hero surfaces; it accepts only the closed selection/semantic-command protocol and production output excludes the bridge and markers | `shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md` | `cd site && pnpm exec vitest run tests/studio && pnpm check && pnpm build` plus production marker scan (13/13 focused tests and zero production markers on 2026-08-16) | Any semantic anchor, bridge message, command kind/parameters, parent origin, injected development script, Astro integration, or production exclusion change |
+| Studio/managed-sandbox operations | Enablement, repository/runtime attestation, session limits, fail-closed compile behavior, managed-provider proof checklist, Vercel account-free contract state, recovery, and incident boundaries; the guide's legacy filename is retained only for link compatibility | `shipglows_data/technical/operator-guides/studio-oci-worker.md` and `shipglows_data/technical/platforms/vercel.md` | Focused Astro/Flutter/runner gates plus separately approved independently observed provider and hosted browser proof before enablement | Any Studio configuration, repository digest, runtime origin, provider/adapter/image/policy/evidence, account/project scope, budget/cost, capacity, lease, cleanup, credential, network, persistence, private ingress, or public routing change |
 | `runner/src/` + `runner/test/` + `runner/scripts/` | Managed TypeScript control plane, including JWKS auth, project authorization, runtime/repository orchestration, versioned skill/context provenance, durable projections, the authoritative five-dimensional health evaluator, closed liveness/authenticated diagnostics, online SQLite backup, semantic HTTP/SSE, and the separate short-lived operator gateway with fixed allowlisted tmux PTY, bounded WebSocket frames, owner-only closure and real Codex smoke | `shipglows_data/technical/managed-runner-foundation.md` and `shipglows_data/technical/operator-guides/managed-agent-runner.md` | `cd runner && npm test && npm run typecheck && npm run lint && npm run audit && npm run smoke:operator-workspace` | Any runtime adapter, API/event schema, diagnostic/build identity, backup/recovery procedure, skill/context contract, health evidence/projection rule, identity-directory binding, auth/access rule, GitHub App policy, PTY/operator-session capability, persistence, secret/redaction, or execution-provider change |
 | Operator Workspace deployment and recovery | Server-only allowlist, loopback deployment, HTTPS/WebSocket publication, actor/project provisioning, smoke proof, reconnect and recovery | `shipglows_data/technical/operator-guides/operator-workspace.md` | `cd runner && npm run smoke:operator-workspace` plus hosted authenticated browser proof | Any Workspace environment variable, reverse-proxy route, capability lifetime, identity provisioning, reconnect, Neovim, platform proof, or incident procedure change |
 | `/home/claude/shipglowz/tui` | ShipGlows-owned terminal dashboard (Bun/OpenTUI), read-only V1 | `/home/claude/shipglowz/shipglows_data/technical/terminal-tui.md` | `cd /home/claude/shipglowz/tui && bun run typecheck && bun test` | Any source policy, reader/parser, operational record grammar, view-model, OpenTUI lifecycle, or keyboard navigation change |

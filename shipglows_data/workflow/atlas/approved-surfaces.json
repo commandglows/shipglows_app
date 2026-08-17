@@ -1,0 +1,112 @@
+{
+  "format_version": "2.0",
+  "project": "shipglows_app",
+  "updated_at": "2026-08-16T09:15:00+02:00",
+  "source_of_truth": "atlas",
+  "surfaces": [
+    {
+      "surface_id": "project.studio",
+      "target_id": "project.studio.primary",
+      "label": "Studio visuel du projet",
+      "route_patterns": ["/projects/:projectId/studio"],
+      "selectors": {"stable": "[data-sg-target=\"project.studio.primary\"]"},
+      "assessments": {
+        "copy": {"quality": "unknown", "focus": false, "approval": null},
+        "design": {"quality": "unknown", "focus": false, "approval": null}
+      },
+      "function_ids": [
+        "studio.open",
+        "studio.select-surface",
+        "studio.preview-command",
+        "studio.manage-variant",
+        "studio.compile-variant",
+        "studio.verify-compile"
+      ],
+      "upstream_ids": [],
+      "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"],
+      "impact_categories": ["copy", "design", "structure", "behavior"],
+      "impact_paths": [
+        {"path": "app/lib/domain/studio", "dimensions": ["function"]},
+        {"path": "app/test/domain/studio", "dimensions": ["function"]},
+        {"path": "app/lib/shipglows/data/managed_runner_api.dart", "dimensions": ["function"]},
+        {"path": "app/lib/shipglows/providers/studio_provider.dart", "dimensions": ["function"]},
+        {"path": "app/lib/shipglows/router.dart", "dimensions": ["function"]},
+        {"path": "app/lib/shipglows/presentation/screens/project_detail_screen.dart", "dimensions": ["design", "function"]},
+        {"path": "app/test/shipglows/studio", "dimensions": ["design", "function"]},
+        {"path": "runner/src/studio", "dimensions": ["function"]},
+        {"path": "runner/test/studio", "dimensions": ["function"]}
+      ],
+      "status": "planned",
+      "aliases": []
+    },
+    {
+      "surface_id": "project.studio.preview",
+      "target_id": "project.studio.preview.primary",
+      "label": "Aperçu du runtime réel",
+      "route_patterns": ["/projects/:projectId/studio"],
+      "selectors": {"stable": "[data-sg-target=\"project.studio.preview.primary\"]"},
+      "assessments": {
+        "copy": {"quality": "unknown", "focus": false, "approval": null},
+        "design": {"quality": "unknown", "focus": false, "approval": null}
+      },
+      "function_ids": ["studio.preview-command"],
+      "upstream_ids": [],
+      "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"],
+      "impact_categories": ["design", "behavior"],
+      "impact_paths": [
+        {"path": "site/src/components/Hero.astro", "dimensions": ["design", "function"]},
+        {"path": "site/src/studio", "dimensions": ["function"]},
+        {"path": "site/src/integrations/studioPreview.ts", "dimensions": ["function"]},
+        {"path": "site/astro.config.mjs", "dimensions": ["function"]},
+        {"path": "site/tests/studio", "dimensions": ["function"]},
+        {"path": "app/lib/shipglows/presentation/screens/studio_screen.dart", "dimensions": ["design", "function"]},
+        {"path": "app/lib/shipglows/presentation/widgets/studio", "dimensions": ["design", "function"]}
+      ],
+      "status": "planned",
+      "aliases": []
+    },
+    {
+      "surface_id": "project.studio.inspector",
+      "target_id": "project.studio.inspector.primary",
+      "label": "Inspecteur sémantique",
+      "route_patterns": ["/projects/:projectId/studio"],
+      "selectors": {"stable": "[data-sg-target=\"project.studio.inspector.primary\"]"},
+      "assessments": {
+        "copy": {"quality": "unknown", "focus": false, "approval": null},
+        "design": {"quality": "unknown", "focus": false, "approval": null}
+      },
+      "function_ids": ["studio.select-surface", "studio.preview-command"],
+      "upstream_ids": [],
+      "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"],
+      "impact_categories": ["copy", "design", "behavior"],
+      "status": "planned",
+      "aliases": []
+    },
+    {
+      "surface_id": "project.studio.laboratory",
+      "target_id": "project.studio.laboratory.primary",
+      "label": "Laboratoire de variantes",
+      "route_patterns": ["/projects/:projectId/studio"],
+      "selectors": {"stable": "[data-sg-target=\"project.studio.laboratory.primary\"]"},
+      "assessments": {
+        "copy": {"quality": "unknown", "focus": false, "approval": null},
+        "design": {"quality": "unknown", "focus": false, "approval": null}
+      },
+      "function_ids": ["studio.manage-variant", "studio.compile-variant", "studio.verify-compile"],
+      "upstream_ids": [],
+      "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"],
+      "impact_categories": ["copy", "design", "structure", "behavior"],
+      "status": "planned",
+      "aliases": []
+    }
+  ],
+  "functions": [
+    {"function_id": "studio.open", "kind": "capability", "label": "Ouvrir le Studio", "operator_observable": true, "surface_ids": ["project.studio"], "upstream_ids": [], "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"], "dependencies": {"frontend": ["app/lib/domain/studio", "app/lib/shipglows/presentation/screens/studio_screen.dart", "app/lib/shipglows/router.dart", "app/lib/shipglows/presentation/screens/project_detail_screen.dart"], "backend": ["runner/src/studio", "runner/src/app.ts"]}, "assessment": {"quality": "unknown", "focus": false, "approval": null}, "aliases": []},
+    {"function_id": "studio.select-surface", "kind": "capability", "label": "Sélectionner une surface", "operator_observable": true, "surface_ids": ["project.studio", "project.studio.inspector"], "upstream_ids": [], "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"], "dependencies": {"frontend": ["app/lib/domain/studio", "app/lib/shipglows/presentation/widgets/studio", "site/src/components/Hero.astro", "site/src/studio"], "backend": ["runner/src/studio"]}, "assessment": {"quality": "unknown", "focus": false, "approval": null}, "aliases": []},
+    {"function_id": "studio.preview-command", "kind": "capability", "label": "Prévisualiser une commande", "operator_observable": true, "surface_ids": ["project.studio", "project.studio.preview", "project.studio.inspector"], "upstream_ids": [], "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"], "dependencies": {"frontend": ["app/lib/domain/studio"], "backend": ["runner/src/studio"]}, "assessment": {"quality": "unknown", "focus": false, "approval": null}, "aliases": []},
+    {"function_id": "studio.manage-variant", "kind": "capability", "label": "Gérer les variantes", "operator_observable": true, "surface_ids": ["project.studio", "project.studio.laboratory"], "upstream_ids": [], "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"], "dependencies": {"frontend": ["app/lib/domain/studio"], "backend": ["runner/src/studio"]}, "assessment": {"quality": "unknown", "focus": false, "approval": null}, "aliases": []},
+    {"function_id": "studio.compile-variant", "kind": "capability", "label": "Compiler une variante", "operator_observable": true, "surface_ids": ["project.studio", "project.studio.laboratory"], "upstream_ids": [], "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"], "dependencies": {"frontend": ["app/lib/domain/studio"], "backend": ["runner/src/studio"]}, "assessment": {"quality": "unknown", "focus": false, "approval": null}, "aliases": []},
+    {"function_id": "studio.verify-compile", "kind": "capability", "label": "Vérifier la compilation", "operator_observable": true, "surface_ids": ["project.studio", "project.studio.laboratory"], "upstream_ids": [], "spec_ids": ["spec.shipglows-visual-studio-and-laboratory-mvp"], "dependencies": {"frontend": ["app/lib/domain/studio"], "backend": ["runner/src/studio"]}, "assessment": {"quality": "unknown", "focus": false, "approval": null}, "aliases": []}
+  ],
+  "import_history": []
+}

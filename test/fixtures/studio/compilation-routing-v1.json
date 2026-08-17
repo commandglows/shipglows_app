@@ -1,0 +1,83 @@
+{
+  "contractVersion": "shipglows.compilation-routing.v1",
+  "projectId": "shipglows_app",
+  "projectKind": "flutter",
+  "sourceRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "repositoryDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "projectEvidenceDigest": "ce45a5c53ed7537f75947db56a0091284c8ab22f647ee4edbc709e941bea56a6",
+  "artifactDigests": [
+    {
+      "path": "app/android/settings.gradle",
+      "digest": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "path": "app/ios/Runner.xcodeproj/project.pbxproj",
+      "digest": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    {
+      "path": "app/pubspec.lock",
+      "digest": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    {
+      "path": "app/pubspec.yaml",
+      "digest": "4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    {
+      "path": "app/web/index.html",
+      "digest": "5555555555555555555555555555555555555555555555555555555555555555"
+    },
+    {
+      "path": "app/windows/CMakeLists.txt",
+      "digest": "6666666666666666666666666666666666666666666666666666666666666666"
+    }
+  ],
+  "observedAt": "2026-08-16T13:00:00.000Z",
+  "expiresAt": "2026-08-16T13:15:00.000Z",
+  "routes": [
+    {
+      "target": "astroWeb",
+      "projectSupported": false,
+      "compilerAvailability": "unavailable",
+      "environment": "linuxNode",
+      "executionClass": "linuxSandbox",
+      "toolchain": "astroNodePnpm",
+      "reason": "targetNotDeclared"
+    },
+    {
+      "target": "flutterWeb",
+      "projectSupported": true,
+      "compilerAvailability": "unavailable",
+      "environment": "linuxFlutter",
+      "executionClass": "linuxSandbox",
+      "toolchain": "flutterWeb",
+      "reason": "workerUnconfigured"
+    },
+    {
+      "target": "flutterAndroid",
+      "projectSupported": true,
+      "compilerAvailability": "unavailable",
+      "environment": "linuxAndroid",
+      "executionClass": "linuxSandbox",
+      "toolchain": "flutterAndroidGradle",
+      "reason": "workerUnconfigured"
+    },
+    {
+      "target": "flutterWindows",
+      "projectSupported": true,
+      "compilerAvailability": "unavailable",
+      "environment": "windowsFlutter",
+      "executionClass": "windowsVm",
+      "toolchain": "flutterWindowsMsvc",
+      "reason": "workerUnconfigured"
+    },
+    {
+      "target": "flutterIos",
+      "projectSupported": true,
+      "compilerAvailability": "unavailable",
+      "environment": "macosFlutter",
+      "executionClass": "macosXcode",
+      "toolchain": "flutterIosXcode",
+      "reason": "workerUnconfigured"
+    }
+  ]
+}

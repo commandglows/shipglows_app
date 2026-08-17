@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.8.0"
+artifact_version: "3.3.0"
 project: "shipglows_app"
 created: "2026-08-01"
-updated: "2026-08-11"
+updated: "2026-08-16"
 status: draft
 source_skill: "102-sg-start"
 scope: "managed-runner-foundation"
@@ -44,6 +44,21 @@ linked_systems:
   - "runner/src/github/index.ts"
   - "runner/src/workspaces/index.ts"
   - "runner/src/operator-workspace/index.ts"
+  - "runner/src/studio/contracts.ts"
+  - "runner/src/studio/capability.ts"
+  - "runner/src/studio/previewRuntimeProvider.ts"
+  - "runner/src/studio/routes.ts"
+  - "runner/src/studio/session.ts"
+  - "runner/src/studio/workerProvider.ts"
+  - "runner/src/studio/providers/managedSandbox.ts"
+  - "runner/src/studio/providers/attestation.ts"
+  - "runner/src/studio/providers/evidenceVerifier.ts"
+  - "runner/src/studio/providers/vercelSandboxProvider.ts"
+  - "runner/src/studio/projectTargetDetector.ts"
+  - "runner/src/studio/compilationRouter.ts"
+  - "runner/src/studio/compilationRoutingRoutes.ts"
+  - "runner/test/studio/compilationRoutingRoute.test.ts"
+  - "app/lib/domain/studio/studio_compilation_routing.dart"
   - "runner/scripts/operator-workspace-smoke.ts"
   - "app/lib/shipglows/presentation/screens/operator_workspace_screen.dart"
   - "app/lib/shipglows/providers/managed_workspace_provider.dart"
@@ -51,11 +66,17 @@ linked_systems:
   - "Flutter Web"
   - "OpenAI Codex app-server"
   - "eve"
+  - "shipglows_data/technical/platforms/vercel.md"
 depends_on:
   - artifact: "shipglows_data/workflow/specs/shipglows-managed-codex-cockpit-mvp.md"
     artifact_version: "1.21.0"
     required_status: "ready"
 supersedes:
+  - "shipglows_data/technical/managed-runner-foundation.md@3.2.0"
+  - "shipglows_data/technical/managed-runner-foundation.md@3.1.1"
+  - "shipglows_data/technical/managed-runner-foundation.md@3.1.0"
+  - "shipglows_data/technical/managed-runner-foundation.md@3.0.0"
+  - "shipglows_data/technical/managed-runner-foundation.md@2.8.0"
   - "shipglows_data/technical/managed-runner-foundation.md@2.7.0"
 evidence:
   - "Managed Agent Cockpit MVP Tasks 1-3 foundation implementation"
@@ -65,8 +86,14 @@ evidence:
   - "eve Apache-2.0 beta repository review on 2026-08-01"
   - "GitHub App and Git worktree official documentation check on 2026-08-02"
   - "Flutter Task 9-10 local proof on 2026-08-11: 194 tests, clean analysis, and release Web build."
-next_review: "2026-08-16"
-next_step: "Complete public Caddy/TLS routing and actor/project provisioning, then prove the Workspace from Flutter Web."
+  - "Final runner Studio proof on 2026-08-16: 35/35 focused tests, TypeScript typecheck, and full lint pass; no OCI worker was provisioned or invoked."
+  - "Earlier trusted-base cross-surface proof on 2026-08-16: site 13/13 with check/build/exclusion and Flutter 24 Studio plus five theme tests (29/29 combined) with clean analysis/format."
+  - "Five focused defects are closed: exact handshake validation, loop/revision ordering, atomic idempotency, distinct 256 KiB total-message and 16 KiB command limits, and late provider cleanup after timeout."
+  - "Earlier provider-neutral managed-sandbox admission and account-free injected Vercel adapter conformance passed independent verification on 2026-08-16: 48/48 focused tests, 73/73 then-current Studio tests, typecheck, lint, diff check, and zero high-severity findings in the offline dependency audit."
+  - "No Vercel SDK/package, account, credential, provider/network call, production wiring, generated execution, preview, persistence, artifact export, or availability proof exists."
+  - "Universal routing local proof on 2026-08-16: five closed targets, authenticated revision/digest-bound projection, canonical artifact evidence, independent worker-evidence verification, Runner 96 pass/1 Windows symlink skip, Flutter Studio 32/32, clean static/offline-audit gates, and independent P0/P1/P2=0."
+next_review: "2026-09-13"
+next_step: "Keep all compilation unavailable until separately authorized real Linux, Windows, and macOS execution-class proofs exist."
 ---
 
 # Managed Runner Foundation
@@ -94,14 +121,41 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - `runner/src/github/**`
 - `runner/src/workspaces/**`
 - `runner/src/operator-workspace/**`
+- `runner/src/studio/**`
 - `runner/scripts/operator-workspace-smoke.ts`
 - `runner/scripts/backup-operational-store.ts`
 - `runner/test/**`
+
+## Studio Contract Foundation
+
+The runner owns the versioned Studio contract, repository/runtime identity, session journal, Laboratory policy, and compile-admission boundary. Target negotiation admits only `shipglows.astro.hero.v1`, the exact configured clean Git HEAD/tree digest, an HTTP loopback origin, bridge v1, all eight reviewed anchors, and the read-only `inspect` capability. Exact handshake validation and loop/revision ordering are covered by the final focused pass. Repository dirtiness, revision/digest drift, runtime health failure, origin credentials, bridge/profile/anchor mismatch, timeout, or resolver exception returns unavailable without fallback.
+
+`GET /v1/projects/:projectId/studio/capability` is the authenticated discovery boundary for the inspect-only Astro pilot. It requires project read authorization and returns only the exact contract/profile/bridge versions, runner-attested source revision and repository digest, loopback preview origin, `inspect`, and eight semantic surface summaries. The site is not trusted to declare repository identity and provides no revision/digest header.
+
+Authenticated project-mutation routes now create actor/tenant/project-scoped ephemeral sessions, apply closed semantic `VisualCommand` schemas, compact compatible commands, preserve ordered undo/redo, expose bounded events, enforce 30-minute idle and four-hour absolute expiry, manage up to eight variants, and activate Laboratory from hard/soft policy triggers. Commands, events, and projections contain no host path, raw project content, prompt, credential, provider event, or executable text.
+
+Session creation idempotency is serialized and replayed atomically under concurrency. Studio enforces separate bounds of 16 KiB per semantic command and 256 KiB for the complete bridge message. Preview-start and worker-preflight timeouts attach late cleanup/release handlers so a provider that resolves after the timeout does not leak an admitted resource.
+
+The compile route freezes one accepted variant into an immutable `CompileIntent`, reattests the base identity, and permits only one idempotent attempt. `StudioCompileAdmissionService` now validates a provider-neutral managed-sandbox envelope against immutable policy, image, phase, expiry, resource/cost budgets, and independently verified capability evidence. Provider self-attestation is insufficient: evidence must bind the provider, adapter, account/project/configuration digests, exact scenario, resource identity, budget, observation and expiry before admission. This is an admission implementation only. `main.ts` injects no managed provider, so compile returns bounded `studioCompileUnavailable`/`503`, creates no worktree, invokes no agent, executes no generated code on the host, produces no patch, and reloads no runtime.
+
+The first adapter, `VercelSandboxProvider`, uses an injected narrow client facade and deterministic local fakes. It adds no Vercel SDK/package or import. The adapter starts each allocation non-persistent with zero ports and deny-all networking; generation can move only to one exact HTTPS root broker policy, while verification stays deny-all without a model capability. It enforces complete immutable budgets, atomic lifecycle-call reservations, shared active/pending/quarantine capacity, provider-wide sliding API limits, same-key preflight coalescing, exact evidence/lease correlation, idempotent release, orphan reconciliation, and quarantine on cleanup uncertainty. No command, source transfer, snapshot, provider preview, persistence, or artifact export method is implemented.
+
+Studio is disabled by default. Configuration rejects partial enablement and refuses Studio enablement in production. No customer-controlled preview, hosted end-to-end proof, or public availability claim exists.
+
+### Universal routing projection
+
+`projectTargetDetector.ts` parses repository evidence as bounded data without executing manifests or project commands. Its capability digest covers the exact source revision, repository digest, declared targets, and sorted artifact digests. Astro requires `site/package.json` plus `site/pnpm-lock.yaml`. Flutter requires `app/pubspec.yaml`, `app/pubspec.lock`, and exactly the platform markers corresponding to advertised Web, Android, Windows, and iOS targets; Android accepts exactly one server-detected Gradle settings form.
+
+`compilationRouter.ts` owns the exhaustive target-to-execution-class/toolchain table. `compilationRoutingRoutes.ts` exposes the separate authenticated read-only `GET /v1/projects/:projectId/studio/compilation-routing` projection with `private, no-store`. Its optional resolver must provide an independent `CompilationWorkerEvidenceVerifier`; absence, exception, stale evidence, cross-tenant/project/target replay, artifact drift, ambiguity, or mismatch produces unavailable and never falls back to the runner host. The Dart parser applies the same closed five-route and artifact-evidence invariants before the Flutter provider displays them.
+
+The endpoint is not registered with a resolver in `main.ts`. Its local fake-verifier success proves contract correlation only, not a real worker or compiler. The existing Astro capability route and compile-intent body remain unchanged, and compilation still accepts no client-selected artifact target.
 
 ## Entrypoints
 
 - `npm start` starts the runner on loopback by default.
 - `GET /v1/version` returns no filesystem paths, credentials or provider configuration. `GET /v1/projects/:projectId/authorization` is a read-only protected-route probe: it proves authentication plus tenant-scoped project membership and returns only the opaque project id and granted read capability.
+- `GET /v1/projects/:projectId/studio/capability` is a read-only authenticated projection. It returns `503 studioUnavailable` unless a server-owned resolver admits the exact trusted Astro base revision and loopback origin.
+- `POST /v1/projects/:projectId/studio-sessions` and its command, undo/redo, variant, event, interrupt, close, and compile-intent routes require authenticated project scope; mutations also require the trusted-Origin policy and bounded idempotency.
 - `loadConfig` refuses flags that would expose a public app-server, accept client-selected paths, or enable an unsafe shell.
 - `RUNNER_OPERATOR_WORKSPACES` accepts only a server-owned JSON map from bounded project ids to absolute working directories and bounded tmux names. Neither value is returned to Flutter.
 - `npm run smoke:operator-workspace` creates an isolated real PTY/tmux session, proves resize and input/output with the installed Codex executable, scans the bounded transcript for obvious secret markers, and cleans the temporary tmux session.
@@ -140,6 +194,7 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - Semantic conversations map normalized runner events into typed message, tool, plan, approval, progress and result items; assistant deltas coalesce, ANSI/control bytes are removed, cursors remain monotonic, duplicate events are suppressed and retained timelines are bounded. Tabs expose unread state, pause inactive streams, and replace the final closed tab atomically.
 - Conversation controls cover create, message, interrupt, resume, approve, deny, audit and proposed fix. Audit/fix routes use the verified runner payloads and stable idempotency keys. Runtime identity and capability limits appear only when represented by safe typed values; the semantic surface never renders PTY or terminal output.
 - Flutter now exposes a dedicated operator Workspace route from a server-backed project detail. It creates the short-lived session over authenticated HTTP, connects through `web_socket_channel`, renders output and captures keyboard input with `xterm`, forwards bounded resize frames, and closes the session on screen disposal. Unavailable and interrupted states remain explicit; no SSH credential, server path, PTY handle or tmux identifier is presented. Cockpit and semantic Codex conversations remain the normal user surface.
+- Flutter now exposes a capability-gated Studio route for the trusted Astro base. It parses the exact inspect-only projection, embeds the admitted origin in a sandboxed Web iframe, accepts only exact-origin/source/channel bridge messages and server-projected surfaces, and synchronizes semantic commands, ephemeral session state, undo/redo, Laboratory reasons, and variants with the runner. Compile submission now sends only `{variantId}` with a stable `Idempotency-Key` and parses the runner's closed immutable `CompileIntent`; worker admission still fails closed because no real provider is injected.
 - The composition root now opens the server-owned SQLite projection, optionally enables Firebase ID-token authentication and Codex stdio, and closes the store with the app lifecycle. The protected event route emits a bounded, tenant-scoped SSE replay with cursor resume and heartbeat; `live=true` adds tenant/conversation-scoped in-process fan-out, a 30-second idle bound, and disconnect cleanup.
 - All persisted event, run checkpoint, and idempotency payloads are checked for credentials, cookies, authorization material, clone paths and recognizable token values.
 - Firebase Auth is the identity adapter. The runner verifies an access token with the project's JWKS, accepts only RS256 ID tokens with its expected issuer and audience, then resolves the JWT subject through a tenant membership lookup.
@@ -170,6 +225,8 @@ The managed runner is ShipGlows's private control-plane service. It gives the Fl
 - Active runs are admitted through a shared per-tenant limit and released on terminal event, timeout, or startup failure. The configured maximum duration interrupts the selected runtime; a failed interrupt is projected as a bounded failure code.
 - Every admitted execution is manual-only and immutable after persistence. Provider capability or preflight rejection occurs before side effects and cannot silently fall back to another provider or runtime.
 - The optional operator Workspace is a separate capability from semantic Codex conversations. It remains server-owned, tenant/project-scoped, allowlisted, short-lived, and unavailable by default for projects without an explicit server mapping.
+- Studio never starts generated code on the runner host. Missing or incomplete independently verified managed-sandbox evidence keeps compile unavailable; a provider name, marketing claim, SDK response, local fake, or self-reported attestation cannot satisfy admission.
+- Studio repository/runtime identity is server-owned. The target site may prove only its public profile, bridge version, and anchors; it cannot choose or attest the Git revision/digest, path, runtime, provider, image, policy, command, prompt, or proof bypass.
 
 ## Validation
 
@@ -178,6 +235,7 @@ cd runner
 npm test
 npm run typecheck
 npm run lint
+npx tsx --test test/studio/*.test.ts
 npm run audit
 rg -n "@clerk/fastify|RUNNER_UNSAFE_SHELL|RUNNER_PUBLIC_APP_SERVER|RUNNER_ALLOW_CLIENT_PATHS|GITHUB_TOKEN" src test package.json
 cd ../app && flutter analyze && flutter test test/shipglows/auth/auth_provider_test.dart
@@ -192,7 +250,11 @@ cd ../app && flutter analyze && flutter test test/shipglows/auth/auth_provider_t
 - Does a new execution provider remain disposable or explicitly operator-persistent?
 - Does the public route schema omit host paths, raw credentials and terminal output?
 - Does the operator Workspace remain fail-closed for missing authorization, allowlist, capability, TLS, or identity provisioning?
+- Does Studio remain disabled in production and unavailable for a dirty repository, identity/runtime mismatch, unsupported capability, expired session, or missing independently verified managed provider?
+- Does a compile-related change preserve the no-host-execution invariant, exact evidence binding, complete budget/cost admission, phase separation, and cleanup reservation before allocation?
 
 ## Maintenance Rule
 
-Update this document whenever the runner gains an adapter, route family, auth provider, persistence schema, execution provider, capability rule or public diagnostic surface. Distinguish contract proof, isolated real-server smoke, loopback deployment, and public authenticated proof. The operator PTY has isolated real-server proof and the runner is supervised on loopback; GitHub App/provider execution and the browser-to-runner Workspace journey remain unproven.
+Update this document whenever the runner gains an adapter, route family, auth provider, persistence schema, execution provider, capability rule or public diagnostic surface. Distinguish contract proof, account-free adapter conformance, independently observed real-provider proof, isolated execution proof, hosted authenticated proof, and public availability. Studio currently has provider-neutral contract and local fake-adapter proof only; its Vercel account/configuration, managed-microVM containment, private ingress, effective network/credential policy, quotas/cost, provider cleanup, generated compile, patch/reload evidence, browser visual proof, and hosted journey remain unproven.
+
+The universal routing contract must be updated whenever project evidence, target names, execution classes, toolchains, route schemas, verifier correlation, or Flutter parsing changes. Platform prerequisites are sourced from official [Flutter deployment documentation](https://docs.flutter.dev/deployment) and [Astro build documentation](https://docs.astro.build/en/guides/deploy/); those references never substitute for ShipGlows runtime evidence.

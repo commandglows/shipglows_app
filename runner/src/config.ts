@@ -15,7 +15,20 @@ export interface RunnerConfig {
   readonly integrations: RunnerIntegrationsConfig;
   readonly runtimes: RunnerRuntimesConfig;
   readonly operatorWorkspaces: Readonly<Record<string, OperatorWorkspaceConfig>>;
+  readonly studio: RunnerStudioConfig;
 }
+
+export type RunnerStudioConfig =
+  | { readonly enabled: false }
+  | {
+      readonly enabled: true;
+      readonly projectId: "shipglows_app";
+      readonly previewOrigin: "http://127.0.0.1:3003";
+      readonly expectedSourceRevision: string;
+      readonly expectedRepositoryDigest: string;
+      readonly adapterVersion: string;
+      readonly capabilityVersion: string;
+    };
 
 export interface OperatorWorkspaceConfig {
   readonly cwd: string;
@@ -128,6 +141,7 @@ export function loadConfig(
   const githubEnabled = readBoolean(env["GITHUB_ENABLED"], "GITHUB_ENABLED", issues);
   const codexEnabled = readBoolean(env["CODEX_ENABLED"], "CODEX_ENABLED", issues);
   const eveEnabled = readBoolean(env["EVE_ENABLED"], "EVE_ENABLED", issues);
+  const studioEnabled = readBoolean(env["RUNNER_STUDIO_ENABLED"], "RUNNER_STUDIO_ENABLED", issues);
   const operatorWorkspaces = parseOperatorWorkspaces(env["RUNNER_OPERATOR_WORKSPACES"], issues);
   const maxConcurrentRunsPerTenant = readBoundedInteger(
     env["RUNNER_MAX_CONCURRENT_RUNS_PER_TENANT"],
@@ -185,6 +199,13 @@ export function loadConfig(
 
   const allowedOrigins = parseAllowedOrigins(env["RUNNER_ALLOWED_ORIGINS"], issues);
   const environment = env["RUNNER_ENV"] ?? "test";
+  if (studioEnabled && environment === "production") issues.push("RUNNER_STUDIO_ENABLED is forbidden in production");
+  if (studioEnabled && env["RUNNER_STUDIO_PROJECT_ID"] !== "shipglows_app") issues.push("RUNNER_STUDIO_PROJECT_ID must be shipglows_app");
+  if (studioEnabled && env["RUNNER_STUDIO_ORIGIN"] !== "http://127.0.0.1:3003") issues.push("RUNNER_STUDIO_ORIGIN must be http://127.0.0.1:3003");
+  if (studioEnabled && !/^[a-f0-9]{7,64}$/i.test(env["RUNNER_STUDIO_SOURCE_REVISION"] ?? "")) issues.push("RUNNER_STUDIO_SOURCE_REVISION must be an exact Git revision");
+  if (studioEnabled && !/^[a-f0-9]{64}$/i.test(env["RUNNER_STUDIO_REPOSITORY_DIGEST"] ?? "")) issues.push("RUNNER_STUDIO_REPOSITORY_DIGEST must be a SHA-256 digest");
+  if (studioEnabled && !/^[A-Za-z0-9._-]{1,64}$/.test(env["RUNNER_STUDIO_ADAPTER_VERSION"] ?? "")) issues.push("RUNNER_STUDIO_ADAPTER_VERSION is required");
+  if (studioEnabled && !/^[A-Za-z0-9._-]{1,64}$/.test(env["RUNNER_STUDIO_CAPABILITY_VERSION"] ?? "")) issues.push("RUNNER_STUDIO_CAPABILITY_VERSION is required");
   if (environment === "production" && !firebaseEnabled) {
     issues.push("FIREBASE_AUTH_ENABLED=true is required in production");
   }
@@ -217,6 +238,15 @@ export function loadConfig(
       eve: { enabled: eveEnabled },
     },
     operatorWorkspaces,
+    studio: studioEnabled ? {
+      enabled: true,
+      projectId: "shipglows_app",
+      previewOrigin: "http://127.0.0.1:3003",
+      expectedSourceRevision: env["RUNNER_STUDIO_SOURCE_REVISION"] ?? "",
+      expectedRepositoryDigest: env["RUNNER_STUDIO_REPOSITORY_DIGEST"] ?? "",
+      adapterVersion: env["RUNNER_STUDIO_ADAPTER_VERSION"] ?? "",
+      capabilityVersion: env["RUNNER_STUDIO_CAPABILITY_VERSION"] ?? "",
+    } : { enabled: false },
   };
 }
 
@@ -233,5 +263,6 @@ export function publicConfig(config: RunnerConfig) {
     codexEnabled: config.runtimes.codex.enabled,
     eveEnabled: config.runtimes.eve.enabled,
     operatorWorkspaceCount: Object.keys(config.operatorWorkspaces).length,
+    studioEnabled: config.studio.enabled,
   };
 }

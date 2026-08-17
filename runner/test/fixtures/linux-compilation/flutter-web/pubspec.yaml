@@ -1,0 +1,14 @@
+name: shipglows_flutter_web_compilation_fixture
+description: Minimal repository-owned Flutter Web compilation fixture.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.11.5 <3.12.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  uses-material-design: false

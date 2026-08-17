@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "shipglows-toolchain-image-plan-v1",
+  "target": "astro_web",
+  "status": "blocked_missing_immutable_inputs",
+  "routable": false,
+  "visibility": "private",
+  "platform": "linux/amd64",
+  "baseImage": {
+    "family": "debian-bookworm-slim",
+    "reference": null,
+    "digest": null
+  },
+  "finalImage": {
+    "repository": null,
+    "digest": null,
+    "maximumBytes": 16106127360
+  },
+  "toolchain": {
+    "nodeVersion": "24.19.0",
+    "nodeLinuxX64Archive": "https://nodejs.org/download/release/v24.19.0/node-v24.19.0-linux-x64.tar.xz",
+    "nodeLinuxX64Sha256": "14b342e71204f811bde6153be8e04b62aef63c236fef92b55f9c83154b409647",
+    "pnpmVersion": "11.15.0",
+    "pnpmArtifactSha256": null,
+    "astroVersion": "6.4.8",
+    "astroCheckVersion": "0.9.10",
+    "typescriptVersion": "6.0.3",
+    "toolchainDigest": null
+  },
+  "offlineCache": {
+    "fixtureLockPath": "runner/test/fixtures/linux-compilation/astro-web/pnpm-lock.yaml",
+    "fixtureLockSha256": "c0c903df0e56b43623872733e03cc173359813e70a412915a9bfc0e4a1885135",
+    "contentDigest": null,
+    "networkAtRuntime": "deny_all",
+    "cacheMissBehavior": "fail_closed"
+  },
+  "execution": {
+    "workingDirectory": "/workspace",
+    "user": "65532:65532",
+    "environment": {
+      "CI": "1",
+      "HOME": "/tmp/shipglows-home",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "PNPM_HOME": "/opt/shipglows/pnpm",
+      "PNPM_STORE_DIR": "/opt/shipglows/pnpm-store",
+      "TZ": "UTC"
+    },
+    "commands": [
+      ["pnpm", "install", "--offline", "--frozen-lockfile", "--ignore-scripts"],
+      ["pnpm", "exec", "astro", "check"],
+      ["pnpm", "exec", "astro", "build"]
+    ],
+    "outputRoot": "dist",
+    "timeoutMs": 600000,
+    "persistent": false,
+    "ports": 0,
+    "runtimeNetwork": "deny_all",
+    "guestCredentials": false
+  },
+  "attestation": {
+    "sbomDigest": null,
+    "provenanceDigest": null,
+    "vulnerabilityResultDigest": null,
+    "createdAt": null,
+    "retireAt": null
+  },
+  "blockers": [
+    "immutable_base_digest_unresolved",
+    "private_final_repository_unresolved",
+    "final_image_digest_unresolved",
+    "pnpm_artifact_digest_unresolved",
+    "offline_store_unmaterialized",
+    "sbom_unavailable",
+    "provenance_unavailable",
+    "vulnerability_result_unavailable"
+  ]
+}

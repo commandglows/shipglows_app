@@ -12,7 +12,7 @@
     "start": "astro dev",
     "check": "astro check",
     "test": "vitest run",
-    "build": "astro build",
+    "build": "astro build && node ./tests/studio/assertProductionExclusion.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },

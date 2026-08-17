@@ -1,5 +1,6 @@
 ---
 import { homeCopy, pathFor, type Locale } from "../i18n/ui";
+import { studioAnchorAttributes } from "../studio/heroContract";
 
 interface Props {
   locale?: Locale;
@@ -10,15 +11,15 @@ const copy = homeCopy[locale].hero;
 const [primaryAction, ...secondaryActions] = copy.actions;
 ---
 
-<section class="hero">
-  <div class="hero-copy">
-    <p class="eyebrow">{copy.eyebrow}</p>
-    <h1>{copy.title}</h1>
-    <p class="hero-text">{copy.body}</p>
-    <ul class="hero-points">
+<section class="hero" {...studioAnchorAttributes("hero.root")}>
+  <div class="hero-copy" {...studioAnchorAttributes("hero.copy")}>
+    <p class="eyebrow" {...studioAnchorAttributes("hero.eyebrow")}>{copy.eyebrow}</p>
+    <h1 {...studioAnchorAttributes("hero.title")}>{copy.title}</h1>
+    <p class="hero-text" {...studioAnchorAttributes("hero.body")}>{copy.body}</p>
+    <ul class="hero-points" {...studioAnchorAttributes("hero.points")}>
       {copy.points.map((point) => <li>{point}</li>)}
     </ul>
-    <div class="hero-actions">
+    <div class="hero-actions" {...studioAnchorAttributes("hero.actions")}>
       <a class={`${primaryAction[2]} hero-action-primary`} href={pathFor(primaryAction[1], locale)}>
         {primaryAction[0]}
       </a>
@@ -28,7 +29,7 @@ const [primaryAction, ...secondaryActions] = copy.actions;
     </div>
   </div>
 
-  <div class="hero-panel">
+  <div class="hero-panel" {...studioAnchorAttributes("hero.panel")}>
     <div class="hero-map">
       {copy.blocks.map(([label, body]) => (
         <div class="hero-map-block">

@@ -1,10 +1,10 @@
 ---
 artifact: technical_architecture
 metadata_schema_version: "1.0"
-artifact_version: "2.1.0"
+artifact_version: "2.5.0"
 project: "shipglows_app"
 created: "2026-04-26"
-updated: "2026-08-03"
+updated: "2026-08-16"
 status: reviewed
 source_skill: 300-sg-docs
 scope: architecture
@@ -15,8 +15,17 @@ security_impact: yes
 docs_impact: yes
 linked_systems:
   - "app/lib/shipglows/"
+  - "app/lib/domain/studio/"
   - "runner/src/"
+  - "runner/src/studio/"
+  - "runner/src/studio/providers/vercelSandboxProvider.ts"
+  - "runner/src/studio/projectTargetDetector.ts"
+  - "runner/src/studio/compilationRouter.ts"
+  - "runner/src/studio/compilationRoutingRoutes.ts"
+  - "site/src/studio/"
+  - "site/src/integrations/studioPreview.ts"
   - "shipglows_data/technical/managed-runner-foundation.md"
+  - "shipglows_data/technical/platforms/vercel.md"
 depends_on:
   - artifact: "shipglows_data/technical/context.md"
     artifact_version: "2.1.0"
@@ -25,11 +34,19 @@ depends_on:
     artifact_version: "1.4.0"
     required_status: ready
 supersedes:
+  - "shipglows_data/technical/architecture.md@2.4.0"
+  - "shipglows_data/technical/architecture.md@2.3.0"
+  - "shipglows_data/technical/architecture.md@2.2.0"
+  - "shipglows_data/technical/architecture.md@2.1.0"
   - "shipglows_data/workflow/archives/contentflow-governance/architecture.md"
 evidence:
   - "Implemented runner contracts, Flutter managed surfaces, and current ready specification."
-next_review: "2026-09-03"
-next_step: "Publish the existing OperatorSession gateway through authenticated HTTPS and prove browser reconnect."
+  - "The trusted Astro hero now exposes eight development-only semantic anchors through an exact-origin bridge; the production build contains no Studio marker."
+  - "Flutter has an authenticated runner-gated, read-only Studio route and inspector; local browser proof remains fail-closed until a capability resolver is deployed."
+  - "Provider-neutral managed-sandbox admission plus an account-free injected Vercel facade passed independent local verification on 2026-08-16; no SDK, provider call, production wiring, execution, preview, persistence, export, or availability proof exists."
+  - "The provider-neutral universal compilation router and authenticated Flutter projection passed independent local verification at P0/P1/P2=0 for Astro Web and Flutter Web, Android, Windows, and iOS; no real execution environment is configured."
+next_review: "2026-09-13"
+next_step: "Select and separately authorize real execution providers and spend boundaries before proving any compiler or artifact path."
 ---
 
 # Architecture
@@ -74,10 +91,35 @@ The runner is the authority for:
 - redacted event persistence and health projections;
 - project/actor-scoped operator capability issuance and owner-only session closure;
 - allowlisted tmux PTY creation, bounded input/resize frames, reconnect, and cleanup.
+- managed-sandbox capability admission, independent evidence validation, resource/cost budgets, lifecycle reservations, release, and reconciliation.
 
 ## Runtime Neutrality
 
 `AgentRuntime` owns sessions, turns, interruption, approvals, normalized events, and capabilities. Codex app-server is an adapter, not the public API. Unsupported capabilities fail explicitly and do not silently select another runtime.
+
+Studio follows the same separation. Flutter and the runner share a versioned semantic vocabulary, while the runner owns exact target-profile admission, the preview-runtime provider port, and the provider-neutral managed-sandbox boundary. The first trusted-base slice exposes an authenticated read-only capability route, a Flutter Web preview/inspector shell, and eight development-only semantic anchors over the real Astro hero. The client cannot choose selectors, paths, commands, revisions, providers, images, budgets, credentials, or broader capabilities; a missing or mismatched resolver keeps Studio unavailable. Generated and customer-controlled work remain unavailable until a managed provider is independently proved.
+
+## Universal Compilation Routing
+
+The local `shipglows.compilation-routing.v1` contract separates project support from compiler availability. The runner reads bounded, stable, server-owned manifest evidence and exposes five closed artifact targets: `astroWeb`, `flutterWeb`, `flutterAndroid`, `flutterWindows`, and `flutterIos`. Each maps to one requirement only: Linux/Node, Linux/Flutter Web, Linux/Android, Windows/Flutter with MSVC/CMake, or macOS/Flutter with Xcode. Flutter displays this authenticated projection and requires explicit operator selection when several project targets exist; it cannot select a provider, worker, image, command, toolchain version, or signing authority.
+
+Project evidence binds the tenant-authorized project, source revision, repository digest, declared targets, and the exact sorted manifest/lock/platform-marker digest set. Worker evidence is accepted only through an injected independent verifier and must correlate to the authenticated tenant, project, revision, target, route-requirement digest, execution class, toolchain, resource, policy, observation, and expiry. Unknown, ambiguous, stale, inconsistent, unverified, or replayed evidence fails closed. The new route is separate from Astro Studio v1 and does not add an artifact target to the existing compile-intent POST.
+
+This is routing truth, not execution truth. The composition root configures no universal router resolver, Linux/Windows/macOS worker, compiler, signing service, or provider. No project build, command, signature, artifact, deployment, or availability proof exists.
+
+## Managed-Sandbox Boundary
+
+The Studio domain admits capability outcomes, not Vercel wire types or a specific hypervisor/container-runtime brand. Admission requires an immutable phase envelope, complete resource and USD spend reservation, exact policy/image identity, expiring lease, and independently verified evidence bound to the provider, adapter, account/project/configuration scope, scenario, resource, budget, observation, and expiry. Provider self-attestation, product documentation, or a successful fake cannot satisfy real admission.
+
+`VercelSandboxProvider` is the first adapter, implemented against an injected narrow facade without a Vercel SDK/package. Account-free conformance proves fail-closed orchestration only: non-persistent zero-port creation, initial deny-all networking, a single exact generation broker rule, verification deny-all, atomic complete lifecycle-call reservations, shared capacity, idempotent release, reconciliation, and quarantine. The composition root does not inject it, and no execution, source transfer, snapshot, preview, persistence, export, provider/network call, credential, or billable action exists.
+
+The former self-hosted containerd/gVisor worker direction was superseded before provisioning. It remains architecture history for future adapter comparison and is not an operative deployment instruction.
+
+## Studio Trusted-base Preview
+
+The Astro adapter exists only during `astro dev`. It injects a fixed bridge for the exact Flutter parent origin and emits semantic selection messages from reviewed anchors; Astro production output is scanned to ensure the bridge and anchor markers are absent. Flutter embeds the admitted loopback origin with `HtmlElementView`, a sandboxed iframe, no referrer, exact source/origin/channel checks, and a server-projected anchor allowlist. This slice is inspect-only: it performs no preview mutation, source write, worktree creation, generation, commit, push, merge, or deployment.
+
+The capability route still requires ordinary runner authentication and project-read authorization. Its resolver must bind the exact first-party project, source revision, repository digest, origin, and `inspect` capability. The local browser currently proves the Flutter product remains healthy and fail-closed without that deployment configuration; authenticated embedded-preview proof remains a separate gate.
 
 ## Repository Safety
 
@@ -103,4 +145,6 @@ cd ../app && flutter analyze && flutter test
 
 ## Maintenance Rule
 
-Update this document when trust boundaries, runtime contracts, data authority, repository mutation policy, supported platforms, or operator-session architecture changes.
+Update this document when trust boundaries, runtime contracts, managed-provider admission/evidence, resource/cost policy, data authority, repository mutation policy, supported platforms, or operator-session architecture changes. Do not represent local fake-provider conformance as account, containment, availability, or execution proof.
+
+Official platform references: [Flutter Web deployment](https://docs.flutter.dev/deployment/web), [Flutter Android deployment](https://docs.flutter.dev/deployment/android), [Flutter Windows deployment](https://docs.flutter.dev/platform-integration/windows/building), [Flutter iOS deployment](https://docs.flutter.dev/deployment/ios), and [Astro build configuration](https://docs.astro.build/en/reference/configuration-reference/#build-options). These sources define platform prerequisites; they do not prove ShipGlows worker availability.

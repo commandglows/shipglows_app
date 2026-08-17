@@ -1,10 +1,10 @@
 ---
 artifact: product_context
 metadata_schema_version: "1.0"
-artifact_version: "2.1.0"
+artifact_version: "2.2.0"
 project: "shipglows_app"
 created: "2026-04-26"
-updated: "2026-08-03"
+updated: "2026-08-15"
 status: reviewed
 source_skill: 300-sg-docs
 scope: product
@@ -13,15 +13,20 @@ confidence: high
 risk_level: high
 security_impact: yes
 docs_impact: yes
-target_user: "repository owners and technical operators"
-user_problem: "They lack one safe visual place to understand repository health and direct managed coding agents."
+target_user: "developers, founders, agencies, repository owners, and technical operators"
+user_problem: "They lack one safe visual place to understand repository health, direct managed coding agents, and iterate on the real product before generating code."
 desired_outcomes:
   - "Understand all repository health dimensions from one Cockpit."
   - "Run and resume project-scoped agent conversations without using SSH or a terminal."
   - "Review audits, fixes, approvals, and evidence through explicit controls."
+  - "Experiment visually on the real product without changing source files."
+  - "Compile only an accepted visual variant into one isolated reviewable patch."
 non_goals:
   - "Unsupervised repository mutation, push, merge, or deployment."
   - "General server administration for ordinary users."
+  - "A separate autonomous design-file authority or a generic vector editor."
+linked_systems:
+  - "shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md"
 depends_on:
   - artifact: "shipglows_data/business/business.md"
     artifact_version: "2.0.0"
@@ -34,8 +39,9 @@ supersedes:
 evidence:
   - "Current Flutter ShipGlows runtime and managed runner implementation."
   - "Operator decisions captured in the Managed Agent Cockpit MVP specification."
+  - "Operator decision 2026-08-15: add a planned code-first Visual Studio and deferred-generation Laboratory as the second ShipGlows product promise."
 next_review: "2026-09-03"
-next_step: "Complete public TLS and authenticated project provisioning, then prove the Workspace from Flutter Web."
+next_step: "Run readiness for the Visual Studio and Laboratory MVP while preserving the existing hosted Cockpit proof gap."
 ---
 
 # Product Context
@@ -43,6 +49,15 @@ next_step: "Complete public TLS and authenticated project provisioning, then pro
 ## Current Product
 
 ShipGlows is a Flutter application backed by a managed control plane. It organizes work by project, shows a visual health Cockpit, and exposes one tab per managed agent conversation.
+
+## Planned Product Direction
+
+ShipGlows has two complementary promises:
+
+1. safely understand projects and direct managed agents through explicit controls, worktrees, approvals, and evidence;
+2. visually create and edit the real running product, experiment without source generation, and compile only an accepted variant into production-oriented Astro or Flutter code.
+
+The second promise is planned, not implemented or publicly available. Its governing draft is `shipglows_data/workflow/specs/shipglows-visual-studio-and-laboratory-mvp.md`. It defines a real-runtime Studio, an automatically triggered Laboratory for complex work, and an explicit compile boundary. It does not make a separate design document authoritative and does not weaken the current mutation, authorization, worktree, review, or remote-action boundaries.
 
 ## Primary Surfaces
 

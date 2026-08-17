@@ -26,6 +26,14 @@ void main() {
         expect(tokens.cockpit.cardMinWidth, greaterThan(0));
         expect(tokens.conversation.panelMinHeight, greaterThan(0));
         expect(tokens.motion.standard, greaterThan(Duration.zero));
+        expect(
+          tokens.studio.inspectorWidth,
+          greaterThan(tokens.studio.surfaceRailWidth),
+        );
+        expect(
+          tokens.studio.previewMinHeight,
+          greaterThan(tokens.minimumTarget),
+        );
       }
     });
 
@@ -61,6 +69,11 @@ void main() {
             tokens.execution.running,
             palette.mutedSurface,
             'running on status panel',
+          ),
+          (
+            tokens.studio.active,
+            palette.mutedSurface,
+            'Laboratory active on status panel',
           ),
           (
             tokens.access.granted,
