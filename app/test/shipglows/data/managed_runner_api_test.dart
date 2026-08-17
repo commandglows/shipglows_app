@@ -50,6 +50,75 @@ void main() {
     expect(result.projectId, 'runner_proj_1');
   });
 
+  test('loads a bounded read-only activity and review projection', () async {
+    final adapter = _RecordingAdapter(
+      (request, attempt) => _jsonResponse(200, {
+        'projectId': 'project-1',
+        'status': 'degraded',
+        'reasons': ['studioReviewUnavailable'],
+        'activity': [
+          {
+            'id': 'event-1',
+            'conversationId': 'conversation-1',
+            'conversationTitle': 'Release check',
+            'kind': 'run',
+            'label': 'Run completed',
+            'occurredAt': '2026-08-17T11:00:00.000Z',
+            'destination': 'conversations',
+          },
+        ],
+        'review': const [],
+      }),
+    );
+    final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+      ..httpClientAdapter = adapter;
+    final api = ManagedRunnerApi(baseUrl: 'https://runner.example', dio: dio);
+
+    final projection = await api.loadActivityReview(projectId: 'project-1');
+
+    expect(projection.projectId, 'project-1');
+    expect(projection.activity.single.label, 'Run completed');
+    expect(
+      adapter.requests.single.path,
+      '/v1/projects/project-1/activity-review',
+    );
+    expect(adapter.requests.single.method, 'GET');
+  });
+
+  test('refreshes project context with a stable idempotency key', () async {
+    final adapter = _RecordingAdapter(
+      (request, attempt) => _jsonResponse(200, {
+        'projectId': 'project-1',
+        'status': 'ready',
+        'observedAt': '2026-08-17T10:00:00.000Z',
+        'sourceCommit': 'abc123',
+        'repositorySnapshotCount': 2,
+        'shipglowsArtifactCount': 3,
+        'redactionCount': 0,
+      }),
+    );
+    final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+      ..httpClientAdapter = adapter;
+    final api = ManagedRunnerApi(baseUrl: 'https://runner.example', dio: dio);
+
+    final projection = await api.refreshProjectContext(
+      projectId: 'project-1',
+      idempotencyKey: 'context-refresh-1',
+    );
+
+    expect(projection.status, ManagedProjectContextStatus.ready);
+    expect(
+      adapter.requests.single.path,
+      '/v1/projects/project-1/context/refresh',
+    );
+    expect(adapter.requests.single.method, 'POST');
+    expect(adapter.requests.single.data, <String, Object?>{});
+    expect(
+      adapter.requests.single.headers['Idempotency-Key'],
+      'context-refresh-1',
+    );
+  });
+
   test('rejects malformed runner events', () {
     expect(
       () => ManagedConversationEvent.fromJson({'cursor': 1}),

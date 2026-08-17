@@ -86,7 +86,7 @@ class CockpitDtoMapper {
     return ProjectHealthDimension(
       dimension: dimension,
       status: _healthStatus(_requiredString(json, 'status')),
-      summary: _requiredString(json, 'summary'),
+      summary: _summaryString(json['summary']),
       producer: _requiredString(json, 'producer'),
       evidenceCount: _requiredNonNegativeInt(json, 'evidenceCount'),
       score: score,

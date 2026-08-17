@@ -6,6 +6,9 @@ import 'auth_provider.dart';
 
 final managedRunnerApiProvider = Provider<ManagedRunnerClient?>((ref) {
   if (!AppConfig.managedRunnerEnabled) return null;
+  if (AppConfig.localStudioAuthEnabled) {
+    return ManagedRunnerApi(baseUrl: AppConfig.managedRunnerBaseUrl);
+  }
   final auth = ref.watch(shipGlowsAuthProvider);
   return ManagedRunnerApi(
     baseUrl: AppConfig.managedRunnerBaseUrl,

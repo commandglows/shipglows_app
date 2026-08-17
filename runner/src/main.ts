@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 
 import { buildRunnerApp } from "./app.js";
 import { FirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
@@ -22,17 +22,57 @@ import { ExecutionProviderRegistry } from "./contracts/index.js";
 import { createBuildIdentity, RunnerDiagnostics } from "./observability/index.js";
 import { GitStudioRepositoryAttestor, HttpStudioRuntimeAttestor, createTrustedBaseStudioResolver } from "./studio/capability.js";
 import { StudioSessionService } from "./studio/session.js";
+import { createLocalStudioProjectCatalog } from "./projects/localStudioProjectCatalog.js";
+import { GitHubAppProjectSource, UnavailableGitHubProjectSource } from "./projects/githubProjectSource.js";
+import { LocalProjectContextGenerator } from "./projectContextGenerator.js";
 
 const config = loadConfig();
 const studioCapability = config.studio.enabled ? createTrustedBaseStudioResolver({
   configuration: config.studio,
-  repository: new GitStudioRepositoryAttestor(config.cwd),
+  repository: new GitStudioRepositoryAttestor(config.studio.repositoryRoot, config.studio.repositoryCleanScope),
   runtime: new HttpStudioRuntimeAttestor(),
 }) : undefined;
 const studioSessions = studioCapability === undefined ? undefined : new StudioSessionService(studioCapability);
 
 const databasePath = process.env["RUNNER_DB_PATH"] ?? resolve(config.cwd, ".shipglows-runner.sqlite");
 const store = await openOperationalStore(databasePath);
+const localStudioActor = Object.freeze({ tenantId: "local_studio", userId: "local_operator", subject: "local_studio_operator" });
+const localStudioWorkspaceRoot = config.studio.enabled ? dirname(config.studio.repositoryRoot) : undefined;
+const localStudioProjects = config.localStudioAuthEnabled && config.studio.enabled && localStudioWorkspaceRoot !== undefined ? createLocalStudioProjectCatalog({
+  storagePath: resolve(process.env["LOCALAPPDATA"] ?? config.cwd, "ShipGlows", "Runner", "local-projects.json"),
+  allowedRoot: localStudioWorkspaceRoot,
+  studioProjectId: config.studio.projectId,
+  builtinProjects: [
+    { id: "shipglows_app", name: "ShipGlows", repositoryFullName: "shipglows/shipglows_app", repositoryPath: resolve(localStudioWorkspaceRoot, "shipglows_app") },
+    { id: "gocharbon", name: "GoCharbon", repositoryFullName: "shipglows/gocharbon", repositoryPath: resolve(localStudioWorkspaceRoot, "gocharbon") },
+  ],
+}) : undefined;
+const localStudioAuthentication = config.localStudioAuthEnabled
+  ? { authenticate: () => Promise.resolve(localStudioActor) }
+  : undefined;
+const githubProjectSource = localStudioProjects === undefined
+  ? undefined
+  : config.integrations.github.enabled
+    ? (() => {
+        const github = config.integrations.github;
+        if (github.appId === undefined || github.appSlug === undefined || github.privateKey === undefined || github.setupUrl === undefined) {
+          throw new Error("GitHub App project-source configuration is incomplete.");
+        }
+        return new GitHubAppProjectSource({
+          appId: github.appId,
+          appSlug: github.appSlug,
+          privateKey: github.privateKey,
+          setupUrl: github.setupUrl,
+          storagePath: resolve(process.env["LOCALAPPDATA"] ?? config.cwd, "ShipGlows", "Runner", "github-project-source.json"),
+          onConnectionState: (input) => localStudioProjects.management.updateGitHubReadiness(input),
+          ...(github.apiBaseUrl === undefined ? {} : { apiBaseUrl: github.apiBaseUrl }),
+        });
+      })()
+    : new UnavailableGitHubProjectSource(false);
+const projectAccess = localStudioProjects?.projectAccess ?? store;
+const projectContextGenerator = localStudioProjects === undefined
+  ? undefined
+  : new LocalProjectContextGenerator(localStudioProjects.management, store);
 const diagnostics = new RunnerDiagnostics({
   build: createBuildIdentity(process.env),
   probes: [{ name: "database", check: () => { store.schemaVersion(); } }],
@@ -81,12 +121,16 @@ const fixRuntime = config.integrations.github.enabled && agentRuntime !== undefi
   : undefined;
 const resolvedFixRuntime = await fixRuntime;
 const dependencies = {
-  projectAccess: store,
+  projectAccess,
   auditStore: store,
   approvalStore: store,
   conversationStore: store,
   eventStore: store,
-  cockpitStore: store,
+  projectContextStore: store,
+  ...(projectContextGenerator === undefined ? {} : { projectContextGenerator }),
+  cockpitStore: localStudioProjects?.cockpitStore ?? store,
+  ...(localStudioProjects === undefined ? {} : { localProjectManagement: localStudioProjects.management }),
+  ...(githubProjectSource === undefined ? {} : { githubProjectSource }),
   idempotencyStore: store,
   eventHub,
   operatorWorkspaceGateway,
@@ -97,7 +141,7 @@ const dependencies = {
   ...(studioCapability === undefined ? {} : { studioCapability }),
   ...(studioSessions === undefined ? {} : { studioSessions }),
   ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime.executor }),
-  ...(authentication === undefined ? {} : { authentication }),
+  ...(localStudioAuthentication !== undefined ? { authentication: localStudioAuthentication } : authentication === undefined ? {} : { authentication }),
   ...(agentRuntime === undefined ? {} : { agentRuntime }),
 };
 const app = buildRunnerApp({ config, dependencies });

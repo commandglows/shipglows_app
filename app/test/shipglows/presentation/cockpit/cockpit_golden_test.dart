@@ -4,8 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shipglows_app/domain/project_health/project_health_models.dart';
 import 'package:shipglows_app/presentation/theme/app_theme.dart';
 import 'package:shipglows_app/shipglows/data/cockpit/cockpit_models.dart';
+import 'package:shipglows_app/shipglows/data/managed_runner_api.dart';
 import 'package:shipglows_app/shipglows/providers/dashboard_provider.dart';
 import 'package:shipglows_app/shipglows/providers/managed_cockpit_provider.dart';
+import 'package:shipglows_app/shipglows/providers/managed_project_selection_provider.dart';
+import 'package:shipglows_app/shipglows/providers/managed_projects_provider.dart';
 import 'package:shipglows_app/shipglows/router.dart';
 
 const _goldenSurfaceKey = Key('cockpit-golden-surface');
@@ -81,6 +84,20 @@ Future<void> _pumpGolden(
       overrides: [
         dashboardProvider.overrideWith(() => _DashboardFixture(dashboard)),
         managedCockpitSnapshotProvider.overrideWith((ref) async => managed),
+        managedProjectsProvider.overrideWith(
+          () => _ManagedProjectsFixture(
+            managed.status == ManagedCockpitStatus.active
+                ? const [_managedProject]
+                : const [],
+          ),
+        ),
+        managedProjectSelectionProvider.overrideWith(
+          () => _ManagedSelectionFixture(
+            managed.status == ManagedCockpitStatus.active
+                ? _managedProject.id
+                : null,
+          ),
+        ),
       ],
       child: RepaintBoundary(
         key: _goldenSurfaceKey,
@@ -110,6 +127,37 @@ class _DashboardFixture extends DashboardNotifier {
   @override
   Future<DashboardModel> build() async => value;
 }
+
+class _ManagedProjectsFixture extends ManagedProjectsController {
+  _ManagedProjectsFixture(this.projects);
+
+  final List<ManagedProjectRecord> projects;
+
+  @override
+  Future<List<ManagedProjectRecord>> build() async => projects;
+}
+
+class _ManagedSelectionFixture extends ManagedProjectSelectionController {
+  _ManagedSelectionFixture(this.projectId);
+
+  final String? projectId;
+
+  @override
+  ManagedProjectSelection build() => projectId == null
+      ? const ManagedProjectSelection.automatic()
+      : ManagedProjectSelection.selected(projectId!);
+}
+
+const _managedProject = ManagedProjectRecord(
+  id: 'project-demo',
+  name: 'Demo server project',
+  repositoryFullName: 'shipglows/demo',
+  isDefault: true,
+  isArchived: false,
+  builtin: false,
+  studioAvailable: false,
+  sourceKinds: ['github'],
+);
 
 DashboardModel _dashboard({ProjectHealth? localProject}) => DashboardModel(
   generatedAt: DateTime.utc(2026, 8, 11),

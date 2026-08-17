@@ -11,7 +11,25 @@ class AppConfig {
     defaultValue: '',
   );
 
-  static bool get managedRunnerEnabled => managedRunnerBaseUrl.trim().isNotEmpty;
+  static bool get managedRunnerEnabled =>
+      managedRunnerBaseUrl.trim().isNotEmpty;
+
+  static const _localStudioAuthOverride = bool.fromEnvironment(
+    'LOCAL_STUDIO_AUTH_ENABLED',
+    defaultValue: false,
+  );
+
+  static bool isLocalStudioRunner(String value) {
+    final uri = Uri.tryParse(value.trim());
+    return uri != null &&
+        uri.scheme == 'http' &&
+        uri.host == '127.0.0.1' &&
+        uri.port == 3210 &&
+        (uri.path.isEmpty || uri.path == '/');
+  }
+
+  static bool get localStudioAuthEnabled =>
+      _localStudioAuthOverride && isLocalStudioRunner(managedRunnerBaseUrl);
 
   static const clerkPublishableKey = String.fromEnvironment(
     'CLERK_PUBLISHABLE_KEY',

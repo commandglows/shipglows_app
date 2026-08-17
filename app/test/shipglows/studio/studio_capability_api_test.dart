@@ -70,6 +70,57 @@ void main() {
   });
 
   test(
+    'parses the exact GoCharbon Hero profile received from the runner',
+    () async {
+      final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+        ..httpClientAdapter = _JsonAdapter(_gocharbonCapability());
+      final capability = await ManagedRunnerApi(
+        baseUrl: 'https://runner.example',
+        dio: dio,
+      ).studioCapability(projectId: 'gocharbon');
+
+      expect(capability.profileId, 'gocharbon.astro.hero.v1');
+      expect(capability.previewOrigin.origin, 'http://127.0.0.1:3002');
+      expect(capability.expectedPaths, ['site/src/pages/index.astro']);
+      expect(capability.surfaces.map((surface) => surface.id), [
+        'hero.root',
+        'hero.copy',
+        'hero.eyebrow',
+        'hero.title',
+        'hero.intro',
+        'hero.actions',
+        'hero.miner',
+        'hero.depth',
+      ]);
+    },
+  );
+
+  test('rejects a supported profile on the wrong project or origin', () async {
+    final wrongProject = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+      ..httpClientAdapter = _JsonAdapter(_gocharbonCapability());
+    await expectLater(
+      ManagedRunnerApi(
+        baseUrl: 'https://runner.example',
+        dio: wrongProject,
+      ).studioCapability(projectId: 'shipglows_app'),
+      throwsA(isA<ManagedRunnerException>()),
+    );
+    final body = {
+      ..._gocharbonCapability(),
+      'previewOrigin': 'http://127.0.0.1:3003',
+    };
+    final wrongOrigin = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+      ..httpClientAdapter = _JsonAdapter(body);
+    await expectLater(
+      ManagedRunnerApi(
+        baseUrl: 'https://runner.example',
+        dio: wrongOrigin,
+      ).studioCapability(projectId: 'gocharbon'),
+      throwsA(isA<ManagedRunnerException>()),
+    );
+  });
+
+  test(
     'executes capability session journal variant and fail-closed compile routes',
     () async {
       final adapter = _StudioSequenceAdapter();
@@ -243,6 +294,49 @@ Map<String, Object?> _capability() => {
       ..._leafCapabilities,
     ]),
     _surface('hero.panel', 'Product panel', 'Hero.panel', [
+      'token.set',
+      'spacing.set',
+      'radius.set',
+      ..._leafCapabilities,
+    ]),
+  ],
+};
+
+Map<String, Object?> _gocharbonCapability() => {
+  ..._capability(),
+  'profileId': 'gocharbon.astro.hero.v1',
+  'previewOrigin': 'http://127.0.0.1:3002',
+  'expectedPaths': ['site/src/pages/index.astro'],
+  'surfaces': [
+    _surface('hero.root', 'Hero', 'GoCharbonHero', [
+      'token.set',
+      'spacing.set',
+      'radius.set',
+    ]),
+    _surface('hero.copy', 'Hero copy', 'GoCharbonHero.copy', [
+      'spacing.set',
+      'radius.set',
+      ..._leafCapabilities,
+    ]),
+    _surface(
+      'hero.eyebrow',
+      'Eyebrow',
+      'GoCharbonHero.eyebrow',
+      _leafCapabilities,
+    ),
+    _surface('hero.title', 'Title', 'GoCharbonHero.title', _leafCapabilities),
+    _surface('hero.intro', 'Intro', 'GoCharbonHero.intro', _leafCapabilities),
+    _surface('hero.actions', 'Actions', 'GoCharbonHero.actions', [
+      'spacing.set',
+      ..._leafCapabilities,
+    ]),
+    _surface(
+      'hero.miner',
+      'Miner image',
+      'GoCharbonHero.miner',
+      _leafCapabilities,
+    ),
+    _surface('hero.depth', 'Depth panel', 'GoCharbonHero.depthPanel', [
       'token.set',
       'spacing.set',
       'radius.set',

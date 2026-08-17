@@ -1,5 +1,6 @@
 import { isStudioDigest, isStudioRevision } from "./contracts.js";
-import { STUDIO_PROFILE_ID, isExactStudioOrigin } from "./capability.js";
+import { isExactStudioOrigin } from "./capability.js";
+import { studioProfileForId } from "./profiles.js";
 
 export interface PreviewRuntimeRequest {
   readonly profileId: string;
@@ -58,7 +59,8 @@ export class PreviewRuntimeController {
 
   async start(request: PreviewRuntimeRequest): Promise<{ readonly runtimeId: string; readonly origin: string; readonly sourceRevision: string; readonly repositoryDigest: string }> {
     if (this.#runtimeId !== undefined) throw new PreviewRuntimeAdmissionError("alreadyStarted", "Preview runtime is already started.");
-    if (request.profileId !== STUDIO_PROFILE_ID || !isStudioRevision(request.sourceRevision) || !isStudioDigest(request.repositoryDigest)) throw new PreviewRuntimeAdmissionError("invalidRequest", "Preview runtime request is invalid.");
+    const profile = studioProfileForId(request.profileId);
+    if (profile === null || !isStudioRevision(request.sourceRevision) || !isStudioDigest(request.repositoryDigest)) throw new PreviewRuntimeAdmissionError("invalidRequest", "Preview runtime request is invalid.");
     if (!this.#provider.capabilities.networkDenied || !this.#provider.capabilities.hostExecutionDenied) throw new PreviewRuntimeAdmissionError("providerUnavailable", "Preview provider isolation is unavailable.");
     if (request.generated && !this.#provider.capabilities.generatedPreview) throw new PreviewRuntimeAdmissionError("providerUnavailable", "Generated preview isolation is unavailable.");
     if (!request.generated && !this.#provider.capabilities.basePreview) throw new PreviewRuntimeAdmissionError("providerUnavailable", "Base preview is unavailable.");
@@ -73,7 +75,7 @@ export class PreviewRuntimeController {
       void startOperation.then((lateRuntime) => this.safeCleanup(lateRuntime.runtimeId)).catch(() => undefined);
       throw error instanceof PreviewRuntimeAdmissionError ? error : new PreviewRuntimeAdmissionError("providerUnavailable", "Preview runtime failed to start.");
     }
-    if (!isExactStudioOrigin(runtime.origin) || runtime.sourceRevision !== request.sourceRevision || runtime.repositoryDigest !== request.repositoryDigest) {
+    if (!isExactStudioOrigin(runtime.origin) || runtime.origin !== profile.previewOrigin || runtime.sourceRevision !== request.sourceRevision || runtime.repositoryDigest !== request.repositoryDigest) {
       await this.safeCleanup(runtime.runtimeId);
       throw new PreviewRuntimeAdmissionError("runtimeMismatch", "Preview runtime attestation does not match the admitted profile.");
     }

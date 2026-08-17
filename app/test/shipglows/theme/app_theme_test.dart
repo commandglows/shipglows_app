@@ -133,7 +133,7 @@ void main() {
 
     expect(source, contains('AppTheme.lightTheme'));
     expect(source, contains('AppTheme.darkTheme'));
-    expect(source, contains('ThemeMode.system'));
+    expect(source, contains('shipGlowsThemePreferenceProvider'));
     expect(source, isNot(contains('ThemeData(')));
     expect(source, isNot(contains('_buildTheme')));
     expect(carrier, contains('GoogleFonts.interTextTheme'));

@@ -1,10 +1,10 @@
 ---
 artifact: content_map
 metadata_schema_version: "1.0"
-artifact_version: "0.4.0"
+artifact_version: "0.4.1"
 project: "shipglows_app"
 created: "2026-04-26"
-updated: "2026-08-14"
+updated: "2026-08-17"
 status: "draft"
 source_skill: sf-docs
 scope: content_map
@@ -41,6 +41,8 @@ next_step: "Validate product-led adoption without introducing service CTAs or pr
 ---
 
 # Content Map - shipglows_app
+
+The active product now communicates three recovered behaviors: multi-page repository discovery remains explicit, theme choices persist locally, and Cockpit activity/review guidance is read-only and project-scoped. Error copy remains controlled and diagnostic exports are allowlisted rather than exposing raw runtime failures.
 
 ## Purpose Of This Map
 
@@ -91,15 +93,16 @@ next_step: "Validate product-led adoption without introducing service CTAs or pr
 - `shipglows_data/workflow/specs/shipglows-github-managed-clone-indexer.md`: runner/indexer spec for GitHub access, managed clone materialization, Markdown indexing, and Firestore projection.
 - `shipglows_data/workflow/specs/shipglows-firestore-data-model.md`: foundational Firestore schema chantier spec that owns model decisions and implementation tasks.
 - `shipglows_data/workflow/specs/shipglows-auth-github-access.md`: foundational auth/access spec separating Firebase Auth identity from GitHub App repository authorization.
-- `shipglows_data/workflow/specs/shipglows-project-onboarding-flow.md`: foundational user flow for Firebase sign-in, GitHub App connection, repository selection, project create-or-join, and indexing progress.
+- `shipglows_data/workflow/specs/shipglows-project-onboarding-flow.md`: active Smart Project Hub contract for local/GitHub App setup and discovery, explicit repository selection, reconciliation, capability guidance, and the still-deferred hosted Firebase/indexing continuation.
+- `shipglows_data/technical/project-onboarding-flow.md`: implemented Hub state machine, security/redaction boundary, source reconciliation, failure behavior, capability truth, and portfolio-evolution boundary.
 - `shipglows_data/workflow/specs/shipglows-markdown-artifact-governance.md`: foundational corpus spec for `shipglows_data/`, artifact families, tracker parsing, frontmatter extraction, and safe Markdown indexing.
 - `shipglows_data/workflow/specs/shipglows-dashboard-readonly-projection.md`: foundational dashboard read model for consuming Firestore project refs, artifact projection, freshness, access warnings, diagnostics, and index status without making Firestore canonical.
 
 ## Legacy And Reference Surfaces
 
-These surfaces are not active ShipGlows product contracts. They are retained for review and possible reuse.
+These surfaces are not active ShipGlows product contracts. Dormant modules are retained for review and possible reuse unless a removal is recorded explicitly.
 
-- `lib/router.dart`: legacy ContentFlow route graph, only selected by `APP_TARGET=legacy` or `APP_TARGET=contentflow`.
+- The former `lib/router.dart` ContentFlow route graph was removed on 2026-08-17 after import-boundary proof; no alternate `APP_TARGET` runtime exists.
 - `lib/providers/providers.dart`: legacy provider graph.
 - `lib/presentation/**`: legacy ContentFlow UI plus some reusable primitives.
 - `lib/data/services/**`: legacy service layer including API, auth, feedback, offline/cache, notifications.

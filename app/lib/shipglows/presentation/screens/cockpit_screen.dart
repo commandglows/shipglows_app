@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../domain/project_health/project_health_models.dart';
 import '../../../presentation/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import '../../providers/dashboard_provider.dart';
 import '../../providers/managed_cockpit_provider.dart';
 import '../widgets/cockpit/cockpit_project_card.dart';
 import '../widgets/cockpit/cockpit_status_panel.dart';
+import '../widgets/cockpit/activity_review_panel.dart';
 import '../widgets/cockpit/project_workspace_tabs.dart';
 import '../widgets/shipglows_scaffold.dart';
 
@@ -85,7 +87,33 @@ class _ServerCockpit extends StatelessWidget {
       tabs: ProjectWorkspaceTabs(projects: snapshot.projects),
       cards: [
         for (final project in snapshot.projects)
-          CockpitProjectCard.server(project: project),
+          _ServerProjectSection(project: project),
+      ],
+    );
+  }
+}
+
+class _ServerProjectSection extends StatelessWidget {
+  const _ServerProjectSection({required this.project});
+
+  final CockpitProject project;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppTheme.tokensOf(context);
+    final location =
+        '/project/${Uri.encodeComponent(project.name)}'
+        '?runnerProjectId=${Uri.encodeComponent(project.id)}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CockpitProjectCard.server(project: project),
+        SizedBox(height: tokens.spacing.sm),
+        ActivityReviewPanel(
+          projectId: project.id,
+          accessState: project.accessState,
+          onOpenConversations: () => context.go(location),
+        ),
       ],
     );
   }

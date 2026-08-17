@@ -191,7 +191,7 @@ Penpot contributes architectural lessons only: stable identities, typed reversib
 ## MVP platform
 
 - Control surface: Flutter Web inside the existing `shipglows_app` product.
-- Target runtime: the existing ShipGlows Astro site under `site/`, initially bounded to `site/src/components/Hero.astro` and its canonical tokens/styles, served from an isolated runner-managed worktree.
+- Target runtime: the existing ShipGlows Astro site under `site/`, initially bounded to `site/src/components/Hero.astro`, plus the separately allowlisted GoCharbon Astro homepage Hero portability pilot under `site/src/pages/index.astro`; each profile retains its own exact origin, repository root, revision/digest, surfaces, and source path.
 - Full precision editing: expanded desktop viewport first.
 - Compact Flutter viewport: session status, variant comparison, approval, failure, and proof review; no precision canvas promise in MVP.
 - Windows, Android, iPhone/iPad, and Flutter-target preview adapters remain compatible future consumers of the same domain contracts, not MVP delivery claims.
@@ -345,7 +345,7 @@ Raw screenshots and customer content remain ephemeral in MVP. Persisted evidence
 
 ## `StudioTargetProfile`
 
-The runner owns a versioned `StudioTargetProfile`; the client receives only its safe capability projection. The MVP profile ID is `shipglows.astro.hero.v1` and binds:
+The runner owns a versioned `StudioTargetProfile`; the client receives only its safe capability projection. The supported pilot profile IDs are `shipglows.astro.hero.v1` and `gocharbon.astro.hero.v1`, selected by a closed server-side project allowlist, and each binds:
 
 - the authorized project and exact source revision;
 - the project-relative target root `site/`, pilot route/fixture IDs, adapter version, and six-to-ten semantic surfaces;
@@ -361,7 +361,7 @@ Capability discovery fails closed when the profile, revision, dependency lock, a
 
 Long-lived target preview is governed by a dedicated server-side port with `preflight`, `start`, `health`, `interrupt`, `stop`, and `cleanup` lifecycle operations. It is distinct from the current execution-admission `ExecutionProvider`, which does not launch or sandbox a runtime and therefore cannot by itself satisfy this contract.
 
-The MVP may use a local development provider only to render the pinned, reviewed base revision of the first-party `shipglows_app/site` pilot after verifying its lockfile and approved profile. That provider runs without runner/provider credentials, exposes only a loopback port to the reverse proxy, receives a minimal environment allowlist, accesses only the approved base worktree and temporary session directory, denies outbound network throughout the live session, and enforces process-count, memory, CPU, duration, output, cancellation, and cleanup limits.
+The MVP may use a local development provider only to render the pinned, reviewed base revision of the first-party `shipglows_app/site` or `gocharbon/site` pilot after verifying the selected closed profile and its separately configured repository identity. That provider runs without runner/provider credentials, exposes only the profile's exact loopback port to the reverse proxy, receives a minimal environment allowlist, accesses only the approved base worktree and temporary session directory, denies outbound network throughout the live session, and enforces process-count, memory, CPU, duration, output, cancellation, and cleanup limits.
 
 Arbitrary/customer-controlled repositories and every agent-generated worktree remain non-executable until a managed provider proves OS-level filesystem, process, secret, ingress, egress, cross-job, and lifecycle isolation. Generated code is untrusted even when its base repository is first-party. A missing, degraded, unproved, over-quota, or cost-blocked capability blocks compilation/post-compile rendering and returns an explicit unavailable state; it never falls back to launching generated or customer code on the runner host.
 
@@ -404,7 +404,7 @@ No Vercel credential is used and no real or cost-bearing sandbox is created by t
 
 ## Enablement
 
-The existing first-party `site/` Astro project is the only MVP pilot and is explicitly enabled once through an approved project change. The first bounded target is `site/src/components/Hero.astro`, its copy source, and its canonical `site/src/styles/global.css` tokens/styles. Enablement provides stable semantic surface anchors and a development-only ShipGlows integration. Starting or editing a Studio session does not modify that integration or any other source file. No capability response may generalize this approval to a different repository, project, route, component, or revision.
+Two explicit first-party Astro pilots are allowlisted: ShipGlows `site/src/components/Hero.astro` and GoCharbon's homepage Hero in `site/src/pages/index.astro`. Each exposes exactly eight stable semantic surfaces through a development-only bridge; GoCharbon's second pilot exists only to validate portability and does not expand the supported profile set. Starting or editing a Studio session does not modify either integration or any source file. No capability response may generalize either approval to a different repository, project, route, component, origin, or revision.
 
 The adapter must:
 
@@ -515,7 +515,7 @@ If the required implementation scope materially exceeds the frozen intent, the r
 - Project/runtime content is untrusted and cannot become an instruction, path, selector authority, prompt policy, or executable command.
 - The Flutter app consumes bounded typed data and never executes customer project code in its own isolate.
 - All preview and mutation execution remains runner-owned, tenant/project scoped, isolated, resource bounded, and secret safe.
-- The trusted local preview exception is limited to the pinned first-party `shipglows_app/site` profile; it is not a customer-preview architecture or production isolation claim.
+- The trusted local preview exception is limited to the two pinned first-party `shipglows_app/site` and `gocharbon/site` profiles; it is not a customer-preview architecture or production isolation claim.
 - The trusted local exception ends at the reviewed base revision; agent-generated worktrees are always untrusted executable input.
 - The managed provider remains a separate failure and administrative domain; co-locating generated execution with the primary runner does not satisfy the MVP contract.
 - Generation and verification never share a sandbox, credential, mutable volume, process namespace, or reusable attachment capability.
@@ -537,7 +537,7 @@ If the required implementation scope materially exceeds the frozen intent, the r
 - A separately approved Vercel account/project credential and spend ceiling before the first real provider proof; fake adapter and contract work require neither.
 - An internal model gateway able to issue and revoke one-job, cost-bounded capabilities without placing raw provider credentials in a sandbox.
 - Current Flutter `GoRouter`, Riverpod composition, project detail, theme/tokens, authenticated runner client, and responsive shell.
-- The repository's `site/` Astro project, explicitly instrumented around `site/src/components/Hero.astro` with stable semantic anchors and deterministic content fixtures.
+- The ShipGlows and GoCharbon Astro projects, each explicitly instrumented around its allowlisted Hero source path with eight stable semantic anchors and a production-excluded bridge.
 - Surface Protection/Atlas contracts from ShipGlows Core, adopted project-locally before protected production use.
 - Current official Flutter and Astro embedding/runtime behavior documented in the linked Penpot architecture study.
 - Current OWASP web, LLM, and agentic risk guidance for the privileged compile boundary.
@@ -863,7 +863,7 @@ Additional cases:
 # Acceptance Criteria
 
 - [ ] An authorized operator opens Studio from a project whose runner capability is supported.
-- [x] The MVP capability is offered only for the pinned first-party `shipglows_app/site` profile; another repository fails closed until a sandboxed provider is independently proved.
+- [x] The MVP capability is offered only for the two pinned first-party `shipglows_app/site` and `gocharbon/site` profiles; every other project/profile/origin fails closed until independently approved and proved.
 - [x] The local trusted provider can render only the reviewed base revision; agent-generated worktrees require a proved sandbox and never execute through a host-process fallback.
 - [ ] The center surface is the real instrumented Astro runtime.
 - [ ] Meaningful surfaces can be selected with visible source confidence and supported property groups.
@@ -941,7 +941,7 @@ Additional cases:
 | Vercel sandbox port is treated as private by obscurity | Customer preview or project content becomes public | Never expose provider domains; require authenticated runner mediation or provider-native private ingress plus unauthenticated-denial proof |
 | Patch export crosses the trust boundary unsafely | Arbitrary file write or corrupted worktree | Canonical bounded manifest, path/type/size/digest verification, symlink/device rejection, applicability check, and mutation only after complete retrieval |
 
-Residual risk: a single instrumented Astro pilot and one managed provider cannot prove zero-configuration compatibility with arbitrary repositories, universal isolation/reliability across provider changes, production deployment isolation, Flutter-target editing, or macOS/iOS delivery. Those claims remain explicitly unavailable.
+Residual risk: two instrumented Astro Hero pilots and one managed provider validate bounded portability only; they do not prove zero-configuration compatibility with arbitrary repositories, universal isolation/reliability across provider changes, production deployment isolation, Flutter-target editing, or macOS/iOS delivery. Those claims remain explicitly unavailable.
 
 # Execution Notes
 
@@ -994,6 +994,9 @@ The browser embedding path, trusted base-preview boundary, generation/verificati
 | 2026-08-16 10:03:28 | sg-docs | GPT-5 Codex | Refreshed the mapped evidence after the final Studio defect-fix pass and live local route checks. | Site 13/13, runner 35/35, and Flutter 24 Studio plus five theme tests (29/29 combined) pass; five audit defects are closed, the live profile/eight anchors and Flutter bundle/no-console-warning route are confirmed, while screenshot/semantics and all generated-worker proof remain pending. | Provision the dedicated Linux worker, then produce generated compile/reload and visual/semantics proof. |
 | 2026-08-16 11:20:45 | 100-sg-spec | gpt-5.6-sol (high) | Replaced the active implementation direction with the confirmed provider-neutral managed-sandbox contract, managed microVM primary class, and Vercel first adapter while preserving the self-hosted OCI decision as superseded evidence. | User story, behavior, security, persistence/snapshots, private previews, network/credential policy, quotas/cost, cleanup, patch export, documentation consequences, and non-overlapping future batches are autonomous; no provider call or availability claim occurred. | Run adversarial readiness against the revised contract. |
 | 2026-08-16 11:20:45 | 101-sg-ready | gpt-5.6-sol (high) | Re-ran scenario-first readiness for provider outage, public ingress, persistence leakage, credential exposure, quota/cost exhaustion, artifact tampering, cleanup uncertainty, and host fallback. | Ready: admission/probe/release can start account-free; real provider proof and later compile/export remain explicit approval/evidence gates and cannot be represented as available. | Start Batch A, then Batch B; stop before any real Vercel call. |
+| 2026-08-17 04:00 | sg-development | GPT-5 Codex | Added an explicit local Studio authentication mode for manual pilot testing. | The mode is development-only, loopback-only, restricted to the single server-configured allowlisted Studio project and `127.0.0.1:3005` app origin, mutually exclusive with Firebase authentication, and disabled by default. | Prove the authenticated capability and live preview in the local Studio route. |
+| 2026-08-17 10:58 | sg-development | GPT-5 Codex | Added the second bounded GoCharbon Astro homepage Hero portability pilot without enabling compile or persistence. | Eight development-only surfaces, the `gocharbon.astro.hero.v1` closed runner profile, exact `127.0.0.1:3002` origin/repository configuration, and profile-aware Flutter parsing are locally verified; production output excludes the bridge. | Run the separately owned live runner/app/browser proof against the GoCharbon route. |
+| 2026-08-17 11:55 | sg-development | GPT-5 Codex | Repaired GoCharbon's development-only anchor emission and added a profile-specific bounded document allowance, then completed the live runner/app/browser proof. | The runner attests revision `51a0169f15e9256342579f3c9bf89fcb2c79532b` and eight surfaces; Studio shows `Aperçu connecté`, renders the real GoCharbon Hero, selects `Title` with its semantic overlay, and reports no browser console errors. Compile remains disabled and fail-closed. | Let the operator explore the live pilot; keep generation, persistence, patch export, push, and deployment outside this slice. |
 | 2026-08-16 13:26:33 | sg-docs | gpt-5.6-sol (high) | Reconciled the provider-neutral managed-sandbox and account-free Vercel adapter implementation with canonical architecture, runner, operator, platform, and routing documentation after independent verification. | Batches A-B are documented as implemented and locally verified at 48/48 focused and 73/73 full Studio tests with clean static/audit gates; Batches C-D-E remain pending and no external/provider or availability claim was added. | Obtain a new credential/cost approval for bounded real-provider Batch C proof. |
 
 # Current Chantier Flow
@@ -1003,8 +1006,8 @@ The browser embedding path, trusted base-preview boundary, generation/verificati
 | Specification | completed | Durable implementation contract with confirmed product decision, superseded self-hosted history, provider-neutral managed-sandbox capabilities, managed microVM primary class, and Vercel first adapter |
 | Readiness | ready | A fresh agent can implement account-free admission/probe/release and knows the exact authority/proof gates for real provider use and deferred compile/export without conversation history |
 | Implementation | in_progress | Tasks 1, 3, 4, and the local session/journal/Laboratory portion of Tasks 2 and 5 are implemented; managed-provider Batches A-B are complete account-free, while Batches C-D-E remain pending, Task 6 remains at immutable compile admission, and Task 7 has not started |
-| Verification | in_progress | Site 13/13, Flutter 29/29 combined, managed-sandbox focused 48/48, and full runner Studio 73/73 pass with their recorded static gates; local adapter evidence is independently verified, while screenshot/semantics, real-provider account/isolation/private-ingress, generated compile, patch export, reload, and evidence-matrix proof remain pending |
+| Verification | in_progress | The trusted ShipGlows and GoCharbon Astro pilots both have live visual/semantic proof; GoCharbon additionally passes 4/4 contract tests, a 23-page production build with zero Studio markers, runner Studio 42/42 plus typecheck/lint, and Flutter 12/12 plus focused analyze. Managed-sandbox local evidence is independently verified, while real-provider account/isolation/private-ingress, generated compile, patch export, reload, and the full evidence matrix remain pending. |
 | Closure | pending | Requires implementation and independent proof |
 | Shipping | pending | No public delivery or capability claim authorized |
 
-Current next action: obtain a new full approval naming the Vercel account/project credential boundary and spend ceiling, then execute inert bounded Batch C admission/probe/release proof only. Stop before project/generated execution, model calls, provider preview, persistence, patch export/import, production wiring, or availability language. The current local Studio can attest and display the trusted Astro base, exchange semantic selection/command messages, synchronize ephemeral sessions, undo/redo, Laboratory reasons and variants, and submit `{variantId}` with `Idempotency-Key` to parse the runner's closed immutable `CompileIntent`. The managed-sandbox admission contract and injected Vercel facade are locally verified but not wired. Compile remains disabled by default and fail-closed; it performs no generated execution, worktree mutation, patch, compiled reload, commit, push, merge, deploy, hosted delivery, or public availability claim.
+Current next action: let the operator explore the live GoCharbon pilot. Any move beyond this bounded preview slice still requires a new full approval naming the Vercel account/project credential boundary and spend ceiling before inert Batch C admission/probe/release proof. Stop before project/generated execution, model calls, provider preview, persistence, patch export/import, production wiring, or availability language. The current local Studio can attest and display both trusted Astro bases and exchange semantic selection messages. The managed-sandbox admission contract and injected Vercel facade are locally verified but not wired. Compile remains disabled by default and fail-closed; it performs no generated execution, worktree mutation, patch, compiled reload, push, merge, deploy, hosted delivery, or public availability claim.

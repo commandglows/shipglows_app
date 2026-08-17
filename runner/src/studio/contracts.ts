@@ -116,7 +116,7 @@ export interface RenderEvidence {
 
 export interface StudioTargetProfile {
   readonly schemaVersion: typeof STUDIO_CONTRACT_VERSION;
-  readonly profileId: "shipglows.astro.hero.v1";
+  readonly profileId: "shipglows.astro.hero.v1" | "gocharbon.astro.hero.v1";
   readonly projectId: string;
   readonly sourceRevision: string;
   readonly repositoryDigest: string;
@@ -282,7 +282,8 @@ export type TargetProfileNegotiation = { readonly supported: true; readonly capa
 
 export function negotiateTargetProfile(profile: StudioTargetProfile, request: TargetProfileRequest): TargetProfileNegotiation {
   const exact = request.trustedFirstPartyBase &&
-    runtimeTextEquals(profile.schemaVersion, STUDIO_CONTRACT_VERSION) && runtimeTextEquals(profile.profileId, "shipglows.astro.hero.v1") &&
+    runtimeTextEquals(profile.schemaVersion, STUDIO_CONTRACT_VERSION) &&
+    (runtimeTextEquals(profile.profileId, "shipglows.astro.hero.v1") || runtimeTextEquals(profile.profileId, "gocharbon.astro.hero.v1")) &&
     runtimeBooleanEquals(profile.productionExcluded, true) && runtimeTextEquals(profile.isolation, "trustedFirstPartyBaseOnly") && runtimeTextEquals(profile.target, request.target) && runtimeTextEquals(profile.targetRoot, "site/") &&
     revisionPattern.test(profile.sourceRevision) && digestPattern.test(profile.repositoryDigest) &&
     profile.projectId === request.projectId && profile.sourceRevision === request.sourceRevision && profile.repositoryDigest === request.repositoryDigest &&

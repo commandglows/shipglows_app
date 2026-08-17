@@ -411,6 +411,27 @@ describe("runner API foundation", () => {
     assert.equal(response.json().error.code, "runtimeUnavailable");
   });
 
+  it("answers CORS preflight only for an explicitly allowed browser origin", async () => {
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test", RUNNER_ALLOWED_ORIGINS: "http://127.0.0.1:3005" }),
+    });
+    const allowed = await app.inject({
+      method: "OPTIONS",
+      url: "/v1/projects/shipglows_app/studio-sessions",
+      headers: { origin: "http://127.0.0.1:3005", "access-control-request-method": "POST" },
+    });
+    const denied = await app.inject({
+      method: "OPTIONS",
+      url: "/v1/projects/shipglows_app/studio-sessions",
+      headers: { origin: "https://hostile.example", "access-control-request-method": "POST" },
+    });
+    await app.close();
+    assert.equal(allowed.statusCode, 204);
+    assert.equal(allowed.headers["access-control-allow-origin"], "http://127.0.0.1:3005");
+    assert.equal(denied.statusCode, 403);
+    assert.equal(denied.headers["access-control-allow-origin"], undefined);
+  });
+
   it("fails closed until the isolated fix executor is wired", async () => {
     const app = buildRunnerApp({
       config: loadConfig({ RUNNER_ALLOWED_ORIGINS: "https://cockpit.example.com" }),

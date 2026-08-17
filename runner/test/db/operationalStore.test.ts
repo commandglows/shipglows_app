@@ -691,6 +691,20 @@ describe("SQLite operational projection", () => {
       envelope.context,
     );
     assert.deepEqual(
+      store.getLatestProjectContextBundle({
+        tenantId: ids.tenantA,
+        projectId: ids.projectA,
+      }),
+      envelope.context,
+    );
+    assert.equal(
+      store.getLatestProjectContextBundle({
+        tenantId: ids.tenantB,
+        projectId: ids.projectA,
+      }),
+      undefined,
+    );
+    assert.deepEqual(
       store.getSkillRun({ tenantId: ids.tenantA, skillRunId: ids.skillRunA }),
       envelope.run,
     );

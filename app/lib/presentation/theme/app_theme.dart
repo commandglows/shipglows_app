@@ -462,6 +462,23 @@ class AppNavigationTokens {
   final double mobileBarHeight = 64;
   final double railWidth = 72;
   final double expandedRailWidth = 256;
+  final double compactLabeledDestinationMinWidth = 72;
+
+  NavigationDestinationLabelBehavior compactLabelBehaviorFor({
+    required double availableWidth,
+    required double textScaleFactor,
+    required int destinationCount,
+  }) {
+    if (destinationCount < 1) {
+      return NavigationDestinationLabelBehavior.alwaysHide;
+    }
+    final widthPerDestination = availableWidth / destinationCount;
+    final requiredWidth =
+        compactLabeledDestinationMinWidth * textScaleFactor;
+    return widthPerDestination >= requiredWidth
+        ? NavigationDestinationLabelBehavior.alwaysShow
+        : NavigationDestinationLabelBehavior.alwaysHide;
+  }
 }
 
 class AppCockpitTokens {

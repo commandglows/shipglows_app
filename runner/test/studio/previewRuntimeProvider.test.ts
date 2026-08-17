@@ -54,6 +54,15 @@ describe("PreviewRuntimeProvider lifecycle", () => {
     assert.equal(cleaned, true);
   });
 
+  it("binds each supported profile to its exact allowlisted runtime origin", async () => {
+    const gocharbon = { ...request, profileId: "gocharbon.astro.hero.v1" };
+    const matching = provider({
+      start: async (input) => ({ runtimeId: "run_gocharbon", origin: "http://127.0.0.1:3002", sourceRevision: input.sourceRevision, repositoryDigest: input.repositoryDigest }),
+    });
+    assert.equal((await new PreviewRuntimeController(matching).start(gocharbon)).origin, "http://127.0.0.1:3002");
+    await assert.rejects(new PreviewRuntimeController(provider()).start(gocharbon), (error: unknown) => error instanceof PreviewRuntimeAdmissionError && error.code === "runtimeMismatch");
+  });
+
   it("times out without allowing a later start or host fallback", async () => {
     let started = false;
     const controller = new PreviewRuntimeController(provider({

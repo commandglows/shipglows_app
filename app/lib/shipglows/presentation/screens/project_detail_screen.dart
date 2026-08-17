@@ -10,6 +10,8 @@ import '../../providers/managed_project_identity_provider.dart';
 import '../../providers/studio_provider.dart';
 import '../widgets/dependency_posture_chip.dart';
 import '../widgets/managed_conversation_panel.dart';
+import '../widgets/project_context_panel.dart';
+import '../widgets/safe_error_view.dart';
 import '../widgets/shipglows_scaffold.dart';
 
 class ProjectDetailScreen extends ConsumerWidget {
@@ -32,7 +34,12 @@ class ProjectDetailScreen extends ConsumerWidget {
       title: projectName,
       body: dashboard.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Failed to load: $error')),
+        error: (_, _) => SafeErrorView(
+          code: 'dashboard.load_failed',
+          scope: 'project.detail',
+          message: 'The project dashboard is temporarily unavailable.',
+          onRetry: () => ref.invalidate(dashboardProvider),
+        ),
         data: (data) {
           ProjectHealth? project;
           for (final item in data.projects) {
@@ -97,7 +104,9 @@ class _ServerProjectDetailBody extends StatelessWidget {
           ),
         ),
       ),
-      const SizedBox(height: 12),
+      SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
+      ProjectContextPanel(projectId: runnerProjectId),
+      SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
       ManagedConversationPanel(projectId: runnerProjectId),
       const SizedBox(height: 12),
       _OperatorWorkspaceButton(
@@ -197,7 +206,9 @@ class _ProjectDetailBody extends StatelessWidget {
         const SizedBox(height: 12),
         ManagedConversationPanel(projectId: runnerProjectId),
         if (runnerProjectId != null) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
+          ProjectContextPanel(projectId: runnerProjectId!),
+          SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
           _OperatorWorkspaceButton(
             projectName: project.project,
             projectId: runnerProjectId!,

@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "2.0.0"
+artifact_version: "2.0.1"
 project: "shipglows_app"
 created: "2026-04-27"
-updated: "2026-08-03"
+updated: "2026-08-17"
 status: reviewed
 source_skill: 300-sg-docs
 scope: "context-function-tree"
@@ -93,7 +93,7 @@ shipglows_data/
 
 ## Legacy Boundary
 
-The older ContentFlow runtime remains under legacy Flutter modules such as `app/lib/router.dart`, `app/lib/presentation/`, and `app/lib/data/services/`. Consult the legacy inventory before adapting or removing it; do not use those modules as current ShipGlows entrypoints.
+The former ContentFlow route graph has been removed. Dormant Flutter modules remain under areas such as `app/lib/presentation/` and `app/lib/data/services/`; consult the legacy inventory before adapting or removing them, and never treat them as ShipGlows entrypoints.
 
 ## Validation
 

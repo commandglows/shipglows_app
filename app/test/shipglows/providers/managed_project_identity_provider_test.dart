@@ -1,14 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shipglows_app/data/models/project.dart';
+import 'package:shipglows_app/shipglows/data/managed_runner_api.dart';
 import 'package:shipglows_app/shipglows/providers/managed_project_identity_provider.dart';
 
 void main() {
-  final projects = <Project>[
-    Project(
+  final projects = <ManagedProjectRecord>[
+    const ManagedProjectRecord(
       id: 'proj_opaque_1',
       name: 'ShipGlows App',
-      url: 'https://github.com/shipglows/app',
-      createdAt: DateTime.utc(2026, 1, 1),
+      repositoryFullName: 'shipglows/app',
+      isDefault: true,
+      isArchived: false,
+      builtin: false,
+      studioAvailable: true,
     ),
   ];
 
@@ -22,11 +25,14 @@ void main() {
   test('fails closed when the dashboard name is ambiguous', () {
     final ambiguous = [
       ...projects,
-      Project(
+      const ManagedProjectRecord(
         id: 'proj_opaque_2',
         name: 'ShipGlows App',
-        url: 'https://github.com/other/app',
-        createdAt: DateTime.utc(2026, 1, 2),
+        repositoryFullName: 'other/app',
+        isDefault: false,
+        isArchived: false,
+        builtin: false,
+        studioAvailable: false,
       ),
     ];
     expect(resolveManagedRunnerProjectId('ShipGlows App', ambiguous), isNull);

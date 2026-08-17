@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.2.0"
+artifact_version: "1.3.0"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-08-11"
+updated: "2026-08-17"
 status: active
 source_skill: 300-sg-docs
 scope: "runtime-boundary"
@@ -29,6 +29,7 @@ evidence:
   - "Managed Cockpit auth bootstrap is disabled without all required public Firebase build values."
   - "The Flutter product consumes only normalized ShipGlows runner contracts."
   - "Release-build Chrome proof loads no Clerk runtime and reports zero console errors."
+  - "The former app/lib/router.dart alternate route graph was removed after import-boundary proof on 2026-08-17."
 next_review: "2026-09-11"
 next_step: "/sg-docs technical audit"
 ---
@@ -56,6 +57,7 @@ ShipGlows App has one product runtime. This document defines its executable boun
 ## Invariants
 
 - `app/lib/main.dart` always launches `ShipGlowsApp`.
+- The root `app/lib/router.dart` alternate route graph does not exist; active routes are owned exclusively by `app/lib/shipglows/router.dart`.
 - New product work belongs under `app/lib/shipglows/` or an explicitly shared, documented module.
 - Dormant files elsewhere under `app/lib/` are not a product surface, compatibility target, or architecture constraint. They may be reused only after a narrow review and direct integration into ShipGlows.
 - Auth, feedback, BYOK, pipeline, terminal, and agent-runner features cannot be activated by naming or compile-time target aliases.
@@ -69,6 +71,7 @@ ShipGlows App has one product runtime. This document defines its executable boun
 ```bash
 ! rg -n "APP_TARGET|LegacyShipGlowsApp" app/lib app/test
 ! rg -n "package:shipglows_app/(providers/providers\\.dart|data/services/|router\\.dart)" app/lib/shipglows
+test ! -e app/lib/router.dart
 ! rg -n "clerk-runtime|contentflow:" app/web/index.html
 cd app && flutter test test/widget_test.dart && flutter analyze
 ```

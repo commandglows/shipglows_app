@@ -23,6 +23,14 @@ void main() {
       expect(find.text('Demo server project'), findsWidgets);
       expect(find.text('Managed Cockpit active'), findsOneWidget);
       expect(find.byType(NavigationBar), findsOneWidget);
+      final navigation = tester.widget<NavigationBar>(
+        find.byType(NavigationBar),
+      );
+      expect(
+        navigation.labelBehavior,
+        NavigationDestinationLabelBehavior.alwaysShow,
+      );
+      expect(find.text('Projets'), findsOneWidget);
     });
 
     testWidgets('keeps an empty server response authoritative', (tester) async {
@@ -151,6 +159,21 @@ void main() {
       );
 
       expect(find.byType(NavigationBar), findsOneWidget);
+      final navigation = tester.widget<NavigationBar>(
+        find.byType(NavigationBar),
+      );
+      expect(
+        navigation.labelBehavior,
+        NavigationDestinationLabelBehavior.alwaysHide,
+      );
+      expect(find.bySemanticsLabel(RegExp('Projets')), findsOneWidget);
+      final firstDestination = find.byType(NavigationDestination).first;
+      final minimumTarget = AppTheme.tokensOf(
+        tester.element(firstDestination),
+      ).minimumTarget;
+      final destinationSize = tester.getSize(firstDestination);
+      expect(destinationSize.width, greaterThanOrEqualTo(minimumTarget));
+      expect(destinationSize.height, greaterThanOrEqualTo(minimumTarget));
       expect(tester.takeException(), isNull);
 
       await tester.dragUntilVisible(

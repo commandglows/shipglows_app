@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.0.1"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-08-11"
+updated: "2026-08-17"
 status: superseded
 source_skill: 300-sg-docs
 scope: "legacy-contentflow-inventory"
@@ -57,7 +57,7 @@ This inventory remains the classification source. The migration tracker is the o
 
 - `lib/presentation/**`
 - `lib/providers/providers.dart`
-- `lib/router.dart`
+- former `lib/router.dart` deletion record
 - `lib/data/services/**`
 - `lib/data/models/**`
 - `lib/core/**`
@@ -69,7 +69,7 @@ This inventory remains the classification source. The migration tracker is the o
 ## Entrypoints
 
 - `lib/main.dart` always starts `ShipGlowsApp`.
-- `lib/router.dart` and `lib/providers/providers.dart` are dormant modules outside the product entrypoint.
+- `lib/providers/providers.dart` remains dormant outside the product entrypoint. The former `lib/router.dart` route graph was removed on 2026-08-17 after import proof.
 
 ## Inventory
 
@@ -98,7 +98,7 @@ This inventory remains the classification source. The migration tracker is the o
 | `lib/data/services/offline_storage_service.dart` | Legacy offline/cache | adapt-candidate | medium | Review if projection/sync needs local cache |
 | `lib/data/services/notification_service.dart` | Legacy notification scaffold | park | medium | Keep parked until notification need exists |
 | `lib/providers/providers.dart` | Legacy provider graph | park | high | Split only when specific reused module is selected |
-| `lib/router.dart` | Dormant route graph | archive-later | high | Do not expose it as a product route |
+| `lib/router.dart` | Removed route graph | deleted | low | Import-boundary test prevents restoration as an alternate runtime |
 | `lib/presentation/screens/auth/` | Legacy auth UI | reference-only | high | Do not choose Clerk by default |
 | `lib/presentation/screens/feedback/` | Legacy feedback UI | keep-concept | medium | Future text feedback spec decides reuse |
 | `lib/presentation/screens/settings/` | Legacy settings/integrations | adapt-candidate | medium | Review for BYOK/source settings later |

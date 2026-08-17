@@ -85,7 +85,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('Seuil cible'), findsNothing);
-    await tester.tap(find.text('Studio'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Studio'));
     await tester.pumpAndSettle();
     expect(find.text('Laboratoire actif'), findsOneWidget);
     expect(find.bySemanticsLabel('Laboratoire actif'), findsWidgets);

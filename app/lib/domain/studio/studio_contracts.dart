@@ -1,6 +1,13 @@
 import 'dart:convert';
 
 const studioContractVersion = 'shipglows.studio.v1';
+const supportedStudioProfiles = <String, String>{
+  'shipglows_app': 'shipglows.astro.hero.v1',
+  'gocharbon': 'gocharbon.astro.hero.v1',
+};
+
+bool isSupportedStudioProfile(String projectId, String profileId) =>
+    supportedStudioProfiles[projectId] == profileId;
 
 abstract final class StudioLimits {
   static const maxNodes = 256;
@@ -206,7 +213,7 @@ StudioTargetNegotiation negotiateStudioTarget(
   StudioTargetRequest request,
 ) {
   final exactProfile =
-      profile.profileId == 'shipglows.astro.hero.v1' &&
+      isSupportedStudioProfile(profile.projectId, profile.profileId) &&
       profile.projectId == request.projectId &&
       profile.sourceRevision == request.sourceRevision &&
       profile.repositoryDigest == request.repositoryDigest &&

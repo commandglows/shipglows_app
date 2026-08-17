@@ -1,19 +1,19 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.2.0"
 project: "shipglows_app"
 created: "2026-05-10"
 created_at: "2026-05-10 09:13:19 UTC"
-updated: "2026-05-30"
-updated_at: "2026-05-30 16:55:06 UTC"
-status: ready
+updated: "2026-08-17"
+updated_at: "2026-08-17 14:57:13 UTC"
+status: active
 source_skill: sf-spec
 source_model: "GPT-5 Codex"
 scope: "project-onboarding-flow"
 owner: "Diane"
 confidence: medium
-user_story: "En tant qu'utilisatrice ShipGlows, je veux connecter GitHub, choisir un repository et voir son statut d'indexation, afin de transformer un repo GitHub en projet ShipGlows lisible sans comprendre l'infrastructure interne."
+user_story: "En tant qu'utilisatrice ShipGlows, je veux relier un dépôt local ou choisir explicitement un repository autorisé par la GitHub App, puis voir ce que ShipGlows peut réellement faire avec ce projet, sans comprendre l'infrastructure interne."
 risk_level: "high"
 security_impact: "yes"
 docs_impact: "yes"
@@ -25,6 +25,8 @@ linked_systems:
   - "managed clone runner"
   - "ShipGlows dashboard"
   - "ShipGlows Markdown artifacts"
+  - "ShipGlows Smart Project Hub"
+  - "local project registry"
 depends_on:
   - artifact: "shipglows_data/technical/shipglows-foundational-architecture.md"
     artifact_version: "0.1.0"
@@ -59,7 +61,10 @@ evidence:
   - "User decision 2026-05-10: GitHub App installation can cover all repos or selected repos, but ShipGlows project creation requires explicit repo selection in the app."
   - "User decision 2026-05-10: GitHub wins for repository access."
   - "User decision 2026-05-10: stale projection remains visible/searchable with warning after GitHub access is lost."
-next_step: "/sf-ready ShipGlows Markdown Artifact Governance"
+  - "User decision 2026-08-17: implement the Smart Project Hub now and defer autonomous portfolio management to a later chantier."
+  - "User decision 2026-08-17: one project aggregate can start local or GitHub and reconciles matching sources instead of creating duplicates."
+  - "Implementation 2026-08-17: the local runner now owns secure GitHub App install state, installation verification, repository listing, explicit selection revalidation, and access-loss projection without external test calls."
+next_step: "Configure real GitHub App credentials for separately authorized browser proof, then continue hosted Firebase identity and indexing without changing the active Hub contract."
 ---
 # Spec: ShipGlows Project Onboarding Flow
 🟢 [shipglows_app] spec: ShipGlows Project Onboarding Flow | status: ready | path: shipglows_data/workflow/specs/shipglows-project-onboarding-flow.md | next: /sf-ready ShipGlows Markdown Artifact Governance
@@ -70,11 +75,22 @@ ShipGlows Project Onboarding Flow
 
 # Status
 
-Ready after `/sf-ready`. This spec defines the user-visible onboarding flow that binds Firebase Auth, GitHub App access, shared Firestore projects, managed clone indexing, and read-only dashboard projection. Fresh official docs, ready auth/access, Firestore model, managed clone/indexer dependencies, and the Test Contract below are in place.
+Active. The local Smart Project Hub slice is implemented in the single ShipGlows runtime: local repositories and explicitly selected GitHub candidates converge into one project aggregate with honest readiness and capabilities. The local runner now includes the real GitHub App installation/list/select adapter, proven only with mocked HTTP. Hosted Firebase identity, clone/indexing, Firestore resume, real credentials, and authenticated browser proof remain deferred and must not be inferred from the local implementation.
 
 # User Story
 
-En tant qu'utilisatrice ShipGlows, je veux connecter GitHub, choisir un repository et voir son statut d'indexation, afin de transformer un repo GitHub en projet ShipGlows lisible sans comprendre l'infrastructure interne.
+En tant qu'utilisatrice ShipGlows, je veux relier un dépôt local ou choisir explicitement un repository autorisé par la GitHub App, puis voir ce que ShipGlows peut réellement faire avec ce projet, sans comprendre l'infrastructure interne.
+
+# Smart Hub Amendment — 2026-08-17
+
+The onboarding owner now has two explicit delivery strata:
+
+1. **Active local Smart Hub**: connect a bounded local Git repository or consume a server-returned GitHub candidate, reconcile matching GitHub origins, persist one redacted project aggregate, synchronize project selection, and expose honest Cockpit/Studio/Conversations/Workspace capability guidance.
+2. **Deferred hosted continuation**: Firebase identity, shared remote project membership, managed clone/index, Firestore projection/resume, real-credential installation/browser proof, and authenticated hosted proof.
+
+The active local runner exposes a real GitHub App source adapter: one-time actor-bound setup state, App-JWT installation verification, server-only short-lived installation tokens, official repository pagination, opaque candidates/cursors, immutable selection revalidation, and access-loss projection. Disabled configuration remains no-network, and all automated proof uses mocked GitHub HTTP without real credentials or external calls.
+
+Future portfolio automation may reuse cursor-based repository discovery, but import-all, continuous monitoring, webhooks, schedules, notifications, autonomous actions, clones, and Git mutations are not part of this chantier.
 
 # Minimal Behavior Contract
 
@@ -136,7 +152,7 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
 # Scope Out
 
 - Implementing Firebase Auth provider screens.
-- Implementing GitHub App installation callback code.
+- Deploying or proving the GitHub App setup flow with real credentials or external GitHub calls.
 - Implementing repo search pagination details.
 - Implementing Cloud Functions.
 - Implementing Firestore rules.
@@ -147,7 +163,7 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
 
 # Constraints
 
-- Project equals one GitHub repository, represented by an opaque `projectId` plus GitHub repository metadata.
+- A project is one repository aggregate represented by an opaque `projectId`; it may have a local source, a GitHub source, or both after identity reconciliation.
 - User must explicitly select a repository before ShipGlows creates/joins a project.
 - GitHub App installation is necessary but not sufficient to create projects.
 - V1 requires only read permission.
@@ -155,7 +171,7 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
 - Clone paths are never shown or requested.
 - Tokens and installation internals are never shown.
 - The UI can show non-sensitive GitHub account/org labels when useful.
-- Firestore projection is the UI read source after indexing, but GitHub remains canonical.
+- For the deferred hosted flow, Firestore projection is the UI read source after indexing, while GitHub remains canonical.
 - Long-running indexing must be resumable from Firestore status.
 
 # Dependencies
@@ -212,13 +228,13 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
 
 # Implementation Tasks
 
-- [ ] Task 1: Create the onboarding technical flow document.
+- [x] Task 1: Create the onboarding technical flow document.
   - File: `shipglows_data/technical/project-onboarding-flow.md`
   - Action: Define state machine, transitions, blocked states, retry behavior, resume behavior, and copy constraints.
   - User story link: Makes the user path implementable without exposing clone/backend internals.
   - Depends on: this spec passing `/sf-ready`.
   - Validate with: `rg -n "signed_out|needs_github_connection|select_repository|indexing_project|ready|blocked" shipglows_data/technical/project-onboarding-flow.md`.
-- [ ] Task 2: Define onboarding state DTOs and pure contracts.
+- [x] Task 2: Define onboarding state DTOs and pure contracts.
   - File: `lib/shipglows/` or nearest existing app-layer ShipGlows data directory chosen during implementation.
   - Action: Add onboarding state enum, repository option DTO, setup status DTO, and failure/retry mapping without wiring Firebase SDKs yet.
   - User story link: Gives Flutter a stable user-facing flow state independent of backend implementation details.
@@ -230,13 +246,15 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
   - User story link: Proves onboarding can create/join/read setup status without real GitHub/Firebase calls.
   - Depends on: Tasks 1-2.
   - Validate with: `flutter test test/shipglows`.
+  - 2026-08-17 status: local source status/list/select/reconcile/redaction fakes are implemented and proven; Firebase membership, clone/index, Firestore resume, hidden project, and archived-orphan scenarios remain deferred with the hosted continuation.
 - [ ] Task 4: Implement user-visible onboarding screens or panels.
   - File: `lib/shipglows/presentation/**` or the existing ShipGlows route/presentation layer.
   - Action: Add signed-out, connect GitHub, select repo, setup progress, ready, and blocked state UI with no clone paths, token fields, or backend jargon.
   - User story link: Delivers the first-run path from repo selection to readable project.
   - Depends on: Tasks 1-3.
   - Validate with: widget tests for each state and accessibility labels for progress/errors.
-- [ ] Task 5: Update docs maps and changelog after implementation.
+  - 2026-08-17 status: active Hub now covers local connection, authenticated GitHub App install/return, honest connection states, visual repository search/selection, readiness, capability guidance, Settings/global selection, source-specific disconnect actions, lifecycle actions, and recoverable errors; hosted sign-in, real-credential browser proof, indexing progress, and Firestore resume remain deferred.
+- [x] Task 5: Update docs maps and changelog after implementation.
   - File: `shipglows_data/technical/code-docs-map.md`
   - File: `shipglows_data/editorial/content-map.md`
   - File: `CHANGELOG.md`
@@ -246,6 +264,20 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
   - Validate with: `rg -n "project-onboarding-flow|GitHub App|select_repository|indexing_project" shipglows_data/technical shipglows_data/editorial CHANGELOG.md`.
 
 # Acceptance Criteria
+
+## Active Smart Hub Slice
+
+- A local repository and its matching GitHub `owner/repository` identity resolve to one project.
+- GitHub project creation requires one explicit opaque candidate selection.
+- GitHub setup state, cursors, and candidates are actor-bound, expiring, replay-safe, and revalidated before project connection.
+- Local paths, installation IDs, numeric repository IDs, tokens, and private keys never enter public project DTOs.
+- GitHub source status is one of `disabled`, `disconnected`, `verifying`, `ready`, `degraded`, or `accessLost`.
+- Project readiness and Cockpit/Studio/Conversations/Workspace capabilities remain factual and fail closed.
+- Missing health evidence remains unknown rather than healthy.
+- Settings, the global selector, Cockpit, Studio, and the Hub share one active project selection.
+- Local connection and project management never mutate Git repositories.
+
+## Deferred Hosted Continuation
 
 - The flow starts from Firebase Auth identity and does not require GitHub login.
 - The flow uses GitHub App repo authorization.
@@ -260,7 +292,7 @@ The UI remains product-oriented: connect GitHub, choose repo, watch setup status
 
 # Test Contract
 
-- `surface`: onboarding technical contract, pure state DTOs, fake backend/repository contracts, onboarding UI states, docs maps, and future backend request assumptions for GitHub App installation and project indexing. Real Firebase Auth providers, GitHub App callbacks, Cloud Functions, Firestore Security Rules, and production repository access are out of scope unless a later spec expands the implementation surface.
+- `surface`: active local/GitHub Smart Hub contracts, secure local-runner GitHub App setup/list/select adapter, pure source/readiness/capability DTOs, mocked GitHub HTTP, visual repository picker, reconciliation, redaction, docs maps, and future backend request assumptions for project indexing. Real Firebase Auth providers, Cloud Functions, Firestore Security Rules, real credentials, and production repository access remain outside the implemented slice.
 - `proof_profile`: high-risk user-flow contract proof before hosted auth/GitHub integration. Required evidence is fresh official GitHub/Firebase docs, state-machine tests, fake backend tests, widget tests, forbidden-field rendering checks, docs coherence, metadata lint, and diff hygiene.
 - `proof_order`:
   1. Write `project-onboarding-flow.md` before app code.
@@ -319,6 +351,9 @@ None. Remaining choices are implementation details unless they change visible on
 | 2026-05-10 09:13:19 UTC | sf-spec | GPT-5 Codex | Created foundational project onboarding flow spec. | Draft spec created. | /sf-ready ShipGlows Project Onboarding Flow after foundational coherence pass |
 | 2026-05-30 16:54:01 UTC | sf-spec | GPT-5 Codex | Repaired readiness gaps: dependency versions, fresh official docs, structured tasks, Test Contract, proof order, scenarios, and exception policy. | reviewed | /sf-ready ShipGlows Project Onboarding Flow |
 | 2026-05-30 16:55:06 UTC | sf-ready | GPT-5 Codex | Readiness review passed: explicit repo selection, create-or-join, resume behavior, failure states, security constraints, fresh-docs gate, and Test Contract are actionable. | ready | /sf-ready ShipGlows Markdown Artifact Governance |
+| 2026-08-17 13:57:42 UTC | 001-sg-build | GPT-5 Codex | Expanded and implemented the active Smart Project Hub: unified local/GitHub aggregate, confirmed-origin reconciliation, redacted source bridge, honest readiness/capabilities, visual repository picker, shared active selection, and aligned technical docs. | local Smart Hub verified: active Flutter suite 102/102, full analysis, runner project suite 8/8, typecheck, lint, metadata, diff hygiene, and zero design drift; real GitHub App/Firebase/indexing/browser proof remains deferred | Configure and prove the hosted flow in a separately authorized environment |
+| 2026-08-17 14:36:00 UTC | 001-sg-build | GPT-5 Codex | Replaced the local GitHub placeholder with the secure App install/list/select adapter, authenticated Flutter return flow, source-specific disconnect actions, and aggregate access-loss propagation. | mocked App-JWT/token/repository tests, runner checks, and focused Flutter checks pass; no real credential, network, or server action performed | Run final integration and separately authorize real browser proof when credentials are configured |
+| 2026-08-17 14:57:13 UTC | 001-sg-build | GPT-5 Codex | Completed integration verification, installation-scoped access isolation, and compact-shell accessibility repair for the Smart Project Hub. | locally verified: active Flutter suite 105/105, clean analysis, runner typecheck/lint and focused config/project tests 27/27, metadata 4/4, zero design drift, and clean diff check; the full runner suite is 322/323 with only the pre-existing Windows CRLF fixture assertion | Keep hosted real-credential GitHub/Firebase/indexing/browser proof pending until separately authorized |
 
 # Current Chantier Flow
 
@@ -326,7 +361,7 @@ None. Remaining choices are implementation details unless they change visible on
 |------|--------|-------|
 | sf-spec | done | Onboarding flow spec created from foundational auth, Firestore, and runner shipglows_data/workflow/specs. |
 | sf-ready | ready | Passed after fresh-docs and Test Contract repair. |
-| sf-start | pending | No implementation before foundational coherence review. |
-| sf-verify | pending | Verify after future implementation only. |
+| sf-start | active | Local Smart Hub and mocked GitHub App adapter implementation are complete; hosted Firebase/indexing and real-credential browser proof remain deferred. |
+| sf-verify | locally_verified | Active Flutter suite 105/105 and analysis pass; runner typecheck/lint and focused config/project tests 27/27 pass, including installation-scoped isolation and immediate list/select failure propagation; metadata 4/4, zero design drift, and diff hygiene pass. Full runner suite is 322/323 with only the pre-existing Windows CRLF fixture assertion. Hosted auth/browser/Firebase/indexing proof is not claimed. |
 | sf-end | pending | Close after implementation and verification. |
 | sf-ship | pending | Commit/push only after explicit ship flow. |

@@ -25,6 +25,10 @@ import {
   projectAuthorizationGuard,
   type ProjectAccessRepository,
 } from "./projects/projectAccess.js";
+import type { LocalProjectManagement } from "./projects/localStudioProjectCatalog.js";
+import { registerLocalProjectRoutes } from "./projects/localProjectRoutes.js";
+import type { GitHubProjectSource } from "./projects/githubProjectSource.js";
+import { registerGitHubProjectRoutes } from "./projects/githubProjectRoutes.js";
 import { stateChangingOriginGuard } from "./security/requestPolicy.js";
 import { OperatorWorkspaceError, type OperatorWorkspaceGateway } from "./operator-workspace/index.js";
 import type { RunnerDiagnostics } from "./observability/index.js";
@@ -32,6 +36,9 @@ import type { StudioCapabilityResolver } from "./studio/capability.js";
 import type { StudioSessionService } from "./studio/session.js";
 import { registerStudioRoutes } from "./studio/routes.js";
 import { registerCompilationRoutingRoutes, type CompilationRoutingProjectionResolver } from "./studio/compilationRoutingRoutes.js";
+import { registerActivityReviewRoutes } from "./activityReviewRoutes.js";
+import { registerProjectContextRoutes } from "./projectContextRoutes.js";
+import type { ProjectContextGenerator } from "./projectContextRoutes.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -91,8 +98,12 @@ export interface RunnerAppDependencies {
   readonly authentication?: AuthenticationAdapter;
   readonly projectAccess?: ProjectAccessRepository;
   readonly auditStore?: Pick<OperationalStore, "createConversation" | "createRun" | "appendEvent" | "saveRuntimeSession" | "checkpointRun">;
-  readonly eventStore?: Pick<OperationalStore, "getConversation" | "listEvents"> & Partial<Pick<OperationalStore, "listConversations">>;
+  readonly eventStore?: Pick<OperationalStore, "getConversation" | "listEvents"> & Partial<Pick<OperationalStore, "listConversations" | "getApproval" | "getRun">>;
   readonly cockpitStore?: Pick<OperationalStore, "listCockpitProjects">;
+  readonly projectContextStore?: Pick<OperationalStore, "getLatestProjectContextBundle">;
+  readonly projectContextGenerator?: ProjectContextGenerator;
+  readonly localProjectManagement?: LocalProjectManagement;
+  readonly githubProjectSource?: GitHubProjectSource;
   readonly operatorWorkspaceCapability?: (input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }) => Promise<{ readonly available: boolean; readonly reason: string }>;
   readonly operatorWorkspaceGateway?: OperatorWorkspaceGateway;
   readonly eventHub?: EventHub;
@@ -146,8 +157,38 @@ export function buildRunnerApp({
   void app.register(websocket, { options: { maxPayload: 20 * 1024 } });
   app.setValidatorCompiler(TypeBoxValidatorCompiler);
   installErrorHandler(app);
+  app.addHook("onRequest", async (request, reply) => {
+    const origin = request.headers.origin;
+    if (typeof origin !== "string") return;
+    const allowed = config.server.allowedOrigins.includes(origin);
+    if (!allowed) {
+      if (request.method === "OPTIONS") return reply.status(403).send();
+      return;
+    }
+    reply
+      .header("Access-Control-Allow-Origin", origin)
+      .header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
+      .header("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key, X-ShipGlows-Tenant")
+      .header("Access-Control-Max-Age", "600");
+    if (request.method === "OPTIONS") return reply.status(204).send();
+  });
   const authentication = dependencies.authentication ?? new DisabledAuthenticationAdapter();
   const projectAccess = dependencies.projectAccess ?? noProjectAccess;
+  if (dependencies.localProjectManagement !== undefined) {
+    registerLocalProjectRoutes(app, {
+      authentication,
+      management: dependencies.localProjectManagement,
+      allowedOrigins: config.server.allowedOrigins,
+    });
+    if (dependencies.githubProjectSource !== undefined) {
+      registerGitHubProjectRoutes(app, {
+        authentication,
+        source: dependencies.githubProjectSource,
+        management: dependencies.localProjectManagement,
+        allowedOrigins: config.server.allowedOrigins,
+      });
+    }
+  }
 
   app.get(
     "/health/live",
@@ -166,6 +207,33 @@ export function buildRunnerApp({
     authentication,
     projectAccess,
     ...(dependencies.studioCompilationRouting === undefined ? {} : { resolver: dependencies.studioCompilationRouting }),
+  });
+  registerActivityReviewRoutes(app, {
+    authentication,
+    projectAccess,
+    ...(dependencies.eventStore?.listConversations === undefined
+      ? {}
+      : {
+          store: dependencies.eventStore as Pick<
+            OperationalStore,
+            "listConversations" | "listEvents"
+          > &
+            Partial<Pick<OperationalStore, "getApproval" | "getRun">>,
+        }),
+  });
+  registerProjectContextRoutes(app, {
+    authentication,
+    projectAccess,
+    allowedOrigins: config.server.allowedOrigins,
+    ...(dependencies.projectContextStore === undefined
+      ? {}
+      : { store: dependencies.projectContextStore }),
+    ...(dependencies.projectContextGenerator === undefined
+      ? {}
+      : { generator: dependencies.projectContextGenerator }),
+    ...(dependencies.idempotencyStore === undefined
+      ? {}
+      : { idempotencyStore: dependencies.idempotencyStore }),
   });
 
   app.get(

@@ -57,6 +57,33 @@ describe("Studio capability route", () => {
     assert.doesNotMatch(response.body, /credential|javascript|selector|shell/i);
   });
 
+  it("projects the separately allowlisted GoCharbon Hero profile", async () => {
+    const digest = "b".repeat(64);
+    const capability = createTrustedBaseStudioCapability({
+      projectId: "gocharbon",
+      previewOrigin: "http://127.0.0.1:3002",
+      sourceRevision: "bcdef12",
+      expectedSourceRevision: "bcdef12",
+      repositoryDigest: digest,
+      expectedRepositoryDigest: digest,
+      requestedCapabilities: STUDIO_PREVIEW_CAPABILITIES,
+    });
+    assert.ok(capability);
+    assert.equal(capability.profileId, "gocharbon.astro.hero.v1");
+    assert.equal(capability.previewOrigin, "http://127.0.0.1:3002");
+    assert.deepEqual(capability.expectedPaths, ["site/src/pages/index.astro"]);
+    assert.deepEqual(capability.surfaces.map((surface) => surface.id), ["hero.root", "hero.copy", "hero.eyebrow", "hero.title", "hero.intro", "hero.actions", "hero.miner", "hero.depth"]);
+    assert.equal(createTrustedBaseStudioCapability({
+      projectId: "gocharbon",
+      previewOrigin: "http://127.0.0.1:3003",
+      sourceRevision: "bcdef12",
+      expectedSourceRevision: "bcdef12",
+      repositoryDigest: digest,
+      expectedRepositoryDigest: digest,
+      requestedCapabilities: STUDIO_PREVIEW_CAPABILITIES,
+    }), null);
+  });
+
   it("fails closed without a configured resolver or project access", async () => {
     const unavailable = app();
     const response = await unavailable.inject({ method: "GET", url: "/v1/projects/shipglows_app/studio/capability" });

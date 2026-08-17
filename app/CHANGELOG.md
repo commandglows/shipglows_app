@@ -7,6 +7,12 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Added explicit local project-context refresh with a bounded, server-owned repository and `shipglows_data` scan, Git-derived provenance, idempotent concurrency control, and no public source paths, content, or hashes.
+- Added a read-only project-context provenance card with verified, stale, missing, access-lost, and unavailable states backed by a tenant/project-scoped runner projection.
+- Added persistent tri-state project selection (`automatic`, explicit project, or `none`) across the global selector, Projects Hub, and Settings without silently reactivating a default project.
+- Recovered three bounded legacy product values in the active ShipGlows runtime: complete paginated GitHub repository discovery, persistent system/light/dark preferences with safe diagnostics, and project-scoped read-only activity/review guidance.
+- Added the active Smart Project Hub: visual local/GitHub source choices, explicit redacted repository selection, one reconciled project aggregate, detected platforms, honest readiness, and per-project Cockpit/Studio/Conversations/Workspace capability guidance.
+- Added the local-runner GitHub App setup bridge with authenticated one-time return state, server-side installation verification, official installation repository pagination, and reconnect handling in the Flutter Hub.
 - Added the separately authorized operator Workspace: short-lived project/actor capabilities, server-owned allowlisted tmux PTY, dedicated WebSocket streaming, Flutter `xterm` rendering, bounded input/resize, owner-only closure, and a real isolated PTY/tmux/Codex smoke harness.
 - Added pure Dart GitHub managed clone/indexer contracts, local fake runner, allowlisted ShipGlows Markdown artifact indexing policy, repository interface, documentation, and tests.
 - Added the traffic-first operational record web-reader contract and shared parser fixture for future Markdown-backed web projections.
@@ -14,6 +20,8 @@ The format is based on Keep a Changelog.
 - Added the local-contract-first ShipGlows product entitlement gate with bootstrap snapshot parsing, access-state stages, route/entry states, support docs, verification checklist, and tests.
 
 ### Changed
+- Unified project selection across the Hub, Settings, global selector, Cockpit and Studio while keeping the dormant Clerk/API project graph outside the active runtime.
+- Split local-folder and GitHub-source disconnect actions so GitHub-only and reconciled projects preserve the correct remaining aggregate.
 - Activated one server-owned ShipGlows Workspace allowlist on the supervised loopback runner while preserving Supabase authentication; public browser delivery still awaits the root-managed HTTPS route and actor/project provisioning.
 - Moved the project governance corpus to the monorepo root, replaced legacy ContentFlow owner documents with current ShipGlows contracts, and archived ten historical ContentFlow specs outside the active chantier registry.
 - Updated task tracking to reflect the active Firebase/GitHub/Firestore projection foundation instead of the retired Supabase migration path.
@@ -21,6 +29,8 @@ The format is based on Keep a Changelog.
 - Readied the foundational auth/GitHub access, project onboarding, Markdown artifact governance, and dashboard read-only projection specs for the next implementation slice.
 
 ### Security
+- Kept GitHub installation IDs, repository numeric IDs, installation tokens and local repository paths server-side; project creation still requires an explicit repository candidate selected through an exact-origin-protected route.
+- Bound GitHub setup state, pagination cursors, and repository candidates to one authenticated actor with short expiries; replay, cross-actor use, malformed upstream metadata, and access loss now fail closed while stale projects remain visible.
 - Added a server-enforced approval policy that refuses privileged actions from audit and ordinary conversation runs, while preserving explicit denial and allowing approval only for isolated fix runs; added adversarial regressions for repository prompt injection, secret access, exfiltration wording, and cross-project approval references.
 - Kept Workspace capabilities out of WebSocket URLs and kept host paths, tmux identifiers, SSH credentials, PTY handles, and terminal transcripts outside Flutter persistence and routine diagnostics.
 - Separated product entitlement from identity, GitHub access, open access, and cached bootstrap state so protected workspace data fails closed without a trusted `shipglows_app` entitlement snapshot.

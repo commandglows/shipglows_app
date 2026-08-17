@@ -2,61 +2,30 @@ import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-import { STUDIO_CONTRACT_VERSION, isStudioDigest, isStudioRevision, type StudioCapability, type StudioDimension } from "./contracts.js";
+import { STUDIO_CONTRACT_VERSION, isStudioDigest, isStudioRevision, type StudioCapability } from "./contracts.js";
+import {
+  SHIPGLOWS_STUDIO_SURFACES,
+  STUDIO_BRIDGE_VERSION,
+  STUDIO_PREVIEW_CAPABILITIES,
+  studioProfileForId,
+  studioProfileForProject,
+  type StudioProfileId,
+  type StudioProjectId,
+  type StudioSurfaceDefinition,
+} from "./profiles.js";
 
-export const STUDIO_BRIDGE_VERSION = "shipglows.studio.bridge.v1" as const;
+// Compatibility exports for the original ShipGlows pilot.
+export { STUDIO_BRIDGE_VERSION, STUDIO_PREVIEW_CAPABILITIES } from "./profiles.js";
 export const STUDIO_PROFILE_ID = "shipglows.astro.hero.v1" as const;
 export const STUDIO_PROJECT_ID = "shipglows_app" as const;
-
-export const STUDIO_PREVIEW_CAPABILITIES = Object.freeze([
-  "token.set",
-  "spacing.set",
-  "radius.set",
-  "opacity.set",
-  "transform.set",
-  "visibility.set",
-  "motion.duration",
-  "motion.easing",
-] as const satisfies readonly StudioCapability[]);
-
-const protectedDimensions = Object.freeze([
-  "copy",
-  "structure",
-  "accessibility",
-  "performance",
-] as const satisfies readonly StudioDimension[]);
-
-const surface = (
-  id: string,
-  label: string,
-  sourceSymbol: string,
-  capabilities: readonly StudioCapability[],
-) => Object.freeze({
-  id,
-  label,
-  sourceConfidence: "exact" as const,
-  sourceSymbol,
-  capabilities: Object.freeze([...capabilities]),
-  protectedDimensions,
-});
-
-export const STUDIO_SURFACES = Object.freeze([
-  surface("hero.root", "Hero", "Hero", ["token.set", "spacing.set", "radius.set"]),
-  surface("hero.copy", "Hero copy", "Hero.copy", ["spacing.set", "radius.set", "opacity.set", "transform.set", "visibility.set", "motion.duration", "motion.easing"]),
-  surface("hero.eyebrow", "Eyebrow", "Hero.eyebrow", ["opacity.set", "transform.set", "visibility.set", "motion.duration", "motion.easing"]),
-  surface("hero.title", "Title", "Hero.title", ["opacity.set", "transform.set", "visibility.set", "motion.duration", "motion.easing"]),
-  surface("hero.body", "Body", "Hero.body", ["opacity.set", "transform.set", "visibility.set", "motion.duration", "motion.easing"]),
-  surface("hero.points", "Proof points", "Hero.points", ["spacing.set", "opacity.set", "transform.set", "visibility.set", "motion.duration", "motion.easing"]),
-  surface("hero.actions", "Actions", "Hero.actions", ["spacing.set", "opacity.set", "transform.set", "visibility.set", "motion.duration", "motion.easing"]),
-  surface("hero.panel", "Product panel", "Hero.panel", ["token.set", "spacing.set", "radius.set", "opacity.set", "transform.set", "visibility.set", "motion.duration", "motion.easing"]),
-]);
+export const STUDIO_SURFACES = SHIPGLOWS_STUDIO_SURFACES;
 
 export interface StudioCapabilityProjection {
   readonly supported: true;
   readonly reason: "trustedFirstPartyBase";
   readonly contractVersion: typeof STUDIO_CONTRACT_VERSION;
   readonly bridgeVersion: typeof STUDIO_BRIDGE_VERSION;
-  readonly profileId: typeof STUDIO_PROFILE_ID;
+  readonly profileId: StudioProfileId;
   readonly sourceRevision: string;
   readonly repositoryDigest: string;
   readonly previewOrigin: string;
@@ -68,8 +37,8 @@ export interface StudioCapabilityProjection {
     readonly reason: "workerIsolationUnavailable";
     readonly message: string;
   };
-  readonly expectedPaths: readonly ["site/src/components/Hero.astro"];
-  readonly surfaces: typeof STUDIO_SURFACES;
+  readonly expectedPaths: readonly string[];
+  readonly surfaces: readonly StudioSurfaceDefinition[];
 }
 
 export interface StudioCapabilityAdmission {
@@ -96,11 +65,18 @@ export interface StudioRepositoryAttestor {
 }
 
 export interface StudioRuntimeAttestor {
-  attest(input: { readonly previewOrigin: string; readonly sourceRevision: string; readonly repositoryDigest: string }): Promise<{ readonly healthy: boolean; readonly profileId: string; readonly bridgeVersion: string } | null>;
+  attest(input: {
+    readonly previewOrigin: string;
+    readonly sourceRevision: string;
+    readonly repositoryDigest: string;
+    readonly profileId: StudioProfileId;
+    readonly surfaces: readonly StudioSurfaceDefinition[];
+    readonly documentLimitBytes: number;
+  }): Promise<{ readonly healthy: boolean; readonly profileId: string; readonly bridgeVersion: string } | null>;
 }
 
 export interface TrustedBaseStudioConfiguration {
-  readonly projectId: typeof STUDIO_PROJECT_ID;
+  readonly projectId: StudioProjectId;
   readonly previewOrigin: string;
   readonly expectedSourceRevision: string;
   readonly expectedRepositoryDigest: string;
@@ -111,14 +87,17 @@ export interface TrustedBaseStudioConfiguration {
 const execFileAsync = promisify(execFile);
 
 export class GitStudioRepositoryAttestor implements StudioRepositoryAttestor {
-  constructor(private readonly projectRoot: string) {}
+  constructor(private readonly projectRoot: string, private readonly cleanScope?: string) {}
 
   async attest(input: { readonly expectedSourceRevision: string; readonly expectedRepositoryDigest: string }): Promise<{ readonly sourceRevision: string; readonly repositoryDigest: string } | null> {
     if (!isStudioRevision(input.expectedSourceRevision) || !isStudioDigest(input.expectedRepositoryDigest)) return null;
     try {
       const sourceRevision = (await this.git(["rev-parse", "--verify", "HEAD"])).trim();
       if (sourceRevision !== input.expectedSourceRevision) return null;
-      const dirty = (await this.git(["status", "--porcelain=v1", "--untracked-files=normal"])).trim();
+      const dirty = (await this.git([
+        "status", "--porcelain=v1", "--untracked-files=normal",
+        ...(this.cleanScope === undefined ? [] : ["--", this.cleanScope]),
+      ])).trim();
       if (dirty !== "") return null;
       const treeObject = (await this.git(["rev-parse", "--verify", "HEAD^{tree}"])).trim();
       if (!/^[a-f0-9]{40,64}$/i.test(treeObject)) return null;
@@ -144,8 +123,9 @@ export class GitStudioRepositoryAttestor implements StudioRepositoryAttestor {
 export class HttpStudioRuntimeAttestor implements StudioRuntimeAttestor {
   constructor(private readonly timeoutMs = 2_000) {}
 
-  async attest(input: { readonly previewOrigin: string; readonly sourceRevision: string; readonly repositoryDigest: string }): Promise<{ readonly healthy: true; readonly profileId: typeof STUDIO_PROFILE_ID; readonly bridgeVersion: typeof STUDIO_BRIDGE_VERSION } | null> {
-    if (!isExactStudioOrigin(input.previewOrigin)) return null;
+  async attest(input: { readonly previewOrigin: string; readonly sourceRevision: string; readonly repositoryDigest: string; readonly profileId: StudioProfileId; readonly surfaces: readonly StudioSurfaceDefinition[]; readonly documentLimitBytes: number }): Promise<{ readonly healthy: true; readonly profileId: StudioProfileId; readonly bridgeVersion: typeof STUDIO_BRIDGE_VERSION } | null> {
+    const profile = studioProfileForId(input.profileId);
+    if (input.previewOrigin !== profile?.previewOrigin || input.surfaces !== profile.surfaces || input.documentLimitBytes !== profile.documentLimitBytes || !isExactStudioOrigin(input.previewOrigin)) return null;
     try {
       const response = await fetch(input.previewOrigin, {
         method: "GET",
@@ -154,14 +134,14 @@ export class HttpStudioRuntimeAttestor implements StudioRuntimeAttestor {
         headers: { accept: "text/html" },
       });
       if (!response.ok || new URL(response.url).origin !== input.previewOrigin) return null;
-      const document = await readBoundedBody(response, 256 * 1024);
-      if (!document.includes(`data-sg-studio-profile=\"${STUDIO_PROFILE_ID}\"`) || STUDIO_SURFACES.some((surface) => !document.includes(`data-sg-studio-anchor=\"${surface.id}\"`))) return null;
+      const document = await readBoundedBody(response, input.documentLimitBytes);
+      if (!document.includes(`data-sg-studio-profile=\"${input.profileId}\"`) || input.surfaces.some((surface) => !document.includes(`data-sg-studio-anchor=\"${surface.id}\"`))) return null;
       const bridgeUrl = new URL("/src/studio/heroContract.ts", input.previewOrigin);
       const bridgeResponse = await fetch(bridgeUrl, { method: "GET", redirect: "error", signal: AbortSignal.timeout(this.timeoutMs), headers: { accept: "text/javascript" } });
       if (!bridgeResponse.ok || new URL(bridgeResponse.url).origin !== input.previewOrigin) return null;
       const bridge = await readBoundedBody(bridgeResponse, 64 * 1024);
-      if (!bridge.includes(STUDIO_PROFILE_ID) || !bridge.includes(STUDIO_BRIDGE_VERSION) || STUDIO_SURFACES.some((surface) => !bridge.includes(`\"${surface.id}\"`))) return null;
-      return { healthy: true, profileId: STUDIO_PROFILE_ID, bridgeVersion: STUDIO_BRIDGE_VERSION };
+      if (!bridge.includes(input.profileId) || !bridge.includes(STUDIO_BRIDGE_VERSION) || input.surfaces.some((surface) => !bridge.includes(`\"${surface.id}\"`))) return null;
+      return { healthy: true, profileId: input.profileId, bridgeVersion: STUDIO_BRIDGE_VERSION };
     } catch {
       return null;
     }
@@ -211,7 +191,8 @@ export function createTrustedBaseStudioResolver(input: {
 }): StudioCapabilityResolver {
   const admit = async (actor: StudioActorProject): Promise<StudioCapabilityAdmission | null> => {
     const configuration = input.configuration;
-    if (actor.projectId !== STUDIO_PROJECT_ID) return null;
+    const profile = studioProfileForProject(configuration.projectId);
+    if (actor.projectId !== profile?.projectId || configuration.previewOrigin !== profile.previewOrigin) return null;
     const repository = await input.repository.attest({
       expectedSourceRevision: configuration.expectedSourceRevision,
       expectedRepositoryDigest: configuration.expectedRepositoryDigest,
@@ -221,8 +202,11 @@ export function createTrustedBaseStudioResolver(input: {
       previewOrigin: configuration.previewOrigin,
       sourceRevision: repository.sourceRevision,
       repositoryDigest: repository.repositoryDigest,
+      profileId: profile.profileId,
+      surfaces: profile.surfaces,
+      documentLimitBytes: profile.documentLimitBytes,
     });
-    if (runtime?.healthy !== true || runtime.profileId !== STUDIO_PROFILE_ID || runtime.bridgeVersion !== STUDIO_BRIDGE_VERSION) return null;
+    if (runtime?.healthy !== true || runtime.profileId !== profile.profileId || runtime.bridgeVersion !== STUDIO_BRIDGE_VERSION) return null;
     const projection = createTrustedBaseStudioCapability({
       projectId: actor.projectId,
       previewOrigin: configuration.previewOrigin,
@@ -239,7 +223,7 @@ export function createTrustedBaseStudioResolver(input: {
       projection,
       adapterVersion: configuration.adapterVersion,
       capabilityVersion: configuration.capabilityVersion,
-      allowedImpactPaths: ["site/src/components/Hero.astro"],
+      allowedImpactPaths: [...profile.expectedPaths],
       requiredEvidence: ["astro.check", "astro.test", "astro.build", "render.desktop", "render.intermediate", "render.mobile", "accessibility", "console", "performance"],
     };
   };
@@ -257,8 +241,9 @@ export function createTrustedBaseStudioCapability(input: {
   readonly adapterVersion?: string;
   readonly capabilityVersion?: string;
 }): StudioCapabilityProjection | null {
-  if (!isExactStudioOrigin(input.previewOrigin)) return null;
-  const exactProfile = input.projectId === STUDIO_PROJECT_ID &&
+  const profile = studioProfileForProject(input.projectId);
+  if (input.previewOrigin !== profile?.previewOrigin || !isExactStudioOrigin(input.previewOrigin)) return null;
+  const exactProfile =
     input.sourceRevision === input.expectedSourceRevision &&
     input.repositoryDigest === input.expectedRepositoryDigest &&
     isStudioRevision(input.sourceRevision) && isStudioDigest(input.repositoryDigest);
@@ -273,7 +258,7 @@ export function createTrustedBaseStudioCapability(input: {
     reason: "trustedFirstPartyBase",
     contractVersion: STUDIO_CONTRACT_VERSION,
     bridgeVersion: STUDIO_BRIDGE_VERSION,
-    profileId: STUDIO_PROFILE_ID,
+    profileId: profile.profileId,
     sourceRevision: input.sourceRevision,
     repositoryDigest: input.repositoryDigest,
     previewOrigin: new URL(input.previewOrigin).origin,
@@ -285,16 +270,17 @@ export function createTrustedBaseStudioCapability(input: {
       reason: "workerIsolationUnavailable",
       message: "Compilation indisponible : le runner n’a pas admis de worker OCI isolé.",
     },
-    expectedPaths: ["site/src/components/Hero.astro"],
-    surfaces: STUDIO_SURFACES,
+    expectedPaths: profile.expectedPaths,
+    surfaces: profile.surfaces,
   };
 }
 
 export function isExactStudioOrigin(value: string): boolean {
   try {
     const origin = new URL(value);
-    return origin.protocol === "http:" && origin.hostname === "127.0.0.1" && origin.port === "3003" &&
+    const exactOrigin = origin.protocol === "http:" && origin.hostname === "127.0.0.1" &&
       origin.username === "" && origin.password === "" && origin.pathname === "/" && origin.search === "" && origin.hash === "";
+    return exactOrigin && (origin.port === "3002" || origin.port === "3003");
   } catch {
     return false;
   }

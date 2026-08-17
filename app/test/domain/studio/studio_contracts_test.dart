@@ -50,6 +50,33 @@ void main() {
             .reason,
         'profileMismatch',
       );
+
+      final gocharbon = StudioTargetProfile(
+        profileId: 'gocharbon.astro.hero.v1',
+        projectId: 'gocharbon',
+        sourceRevision: 'abc123',
+        repositoryDigest: 'digest',
+        adapterVersion: '1.0.0',
+        capabilityVersion: '1.0.0',
+        capabilities: const {StudioCapability.tokenSet},
+        trustedFirstPartyBaseOnly: true,
+        productionExcluded: true,
+      );
+      expect(
+        negotiateStudioTarget(
+          gocharbon,
+          StudioTargetRequest(
+            projectId: 'gocharbon',
+            sourceRevision: 'abc123',
+            repositoryDigest: 'digest',
+            adapterVersion: '1.0.0',
+            capabilityVersion: '1.0.0',
+            capabilities: const {StudioCapability.tokenSet},
+            trustedFirstPartyBase: true,
+          ),
+        ),
+        isA<StudioTargetSupported>(),
+      );
     });
 
     test('rejects raw source-like parameters and oversized node sets', () {

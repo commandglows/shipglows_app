@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'presentation/screens/diagnostics_screen.dart';
 import 'presentation/screens/overview_screen.dart';
 import 'presentation/screens/project_detail_screen.dart';
+import 'presentation/screens/projects_screen.dart';
 import 'presentation/screens/operator_workspace_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/studio_screen.dart';
@@ -48,6 +49,22 @@ GoRouter createShipGlowsRouter() {
               state.pathParameters['project'] ?? '',
             ),
             projectId: state.uri.queryParameters['runnerProjectId'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/projects',
+        pageBuilder: (context, state) =>
+            const MaterialPage(child: ProjectsScreen()),
+      ),
+      GoRoute(
+        path: '/projects/github/setup',
+        pageBuilder: (context, state) => MaterialPage(
+          child: GitHubSetupReturnScreen(
+            installationId: int.tryParse(
+              state.uri.queryParameters['installation_id'] ?? '',
+            ),
+            state: state.uri.queryParameters['state'],
           ),
         ),
       ),

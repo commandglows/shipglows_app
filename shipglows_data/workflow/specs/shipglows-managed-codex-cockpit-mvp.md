@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.25.0"
+artifact_version: "1.27.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
-updated: "2026-08-11"
-updated_at: "2026-08-11 18:26:17 UTC"
+updated: "2026-08-17"
+updated_at: "2026-08-17 10:43:10 UTC"
 status: ready
 source_skill: "100-sg-spec"
 source_model: "GPT-5 Codex"
@@ -116,6 +116,8 @@ evidence:
   - "CTO architecture reframe 2026-08-01: ShipGlows owns the multi-agent control plane; Codex app-server is the first runtime adapter, while OpenCode, Kilo and ACP must remain possible behind the same normalized contract."
   - "Warp Oz review 2026-08-03: cloud-agent orchestration, run observability, controlled triggers and team-scoped memory are useful patterns; ShipGlows retains the product control plane and does not adopt Oz as an MVP dependency."
   - "Warp oz-agent-worker review 2026-08-07: adopt only a ShipGlows-owned resolved execution envelope, provider preflight and explicit execution outcomes; distributed worker transport, Kubernetes, and durable reattach remain outside this MVP slice."
+  - "Local integration proof 2026-08-17: the new Flutter runtime exposes one persistent global project selector and one visual Settings project panel backed by a closed, in-memory development catalog containing exactly `shipglows_app` and `gocharbon`; no database provisioning, GitHub access, or mutation capability is granted."
+  - "Local project-management proof 2026-08-17: the loopback runner owns one persistent workspace-bounded registry and redacted management API; the Flutter runtime exposes one Projects page for connect, activate, default, rename, archive/restore, and disconnect. Repository paths remain private, generic project mutation remains denied, and disconnect never deletes or changes Git files."
 next_step: "/102-sg-start ShipGlows Managed Agent Cockpit MVP"
 ---
 
@@ -129,7 +131,7 @@ ShipGlows Managed Agent Cockpit MVP
 
 # Status
 
-Amended on 2026-08-11 after the portfolio architecture decision. The existing Flutter prototype is the implementation base. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Firebase Auth is the cross-platform identity baseline behind a portable provider boundary; Convex is the target product data layer, while Fastify/SQLite remains the documented execution-plane exception. The next runner slice turns `ExecutionProvider` into a server-owned admission and execution boundary with an immutable resolved envelope; it does not add Oz, a remote worker protocol, Kubernetes, or restart reattachment.
+Amended on 2026-08-17 after the local project-management integration. The existing Flutter prototype is the implementation base. Its active runtime owns one persistent global project selector, one complete Projects page, and a Settings entry point. In the loopback-only development pilot, the runner owns a persistent workspace-bounded registry seeded with `shipglows_app` and `gocharbon`; it supports connect, active/default selection, rename, reversible archive, and registry-only disconnect through exact-origin authenticated routes. Local repository paths are never returned to Flutter, Git content is never changed by registry actions, built-ins cannot be disconnected, and generic project mutation remains denied. Studio availability is declared per project instead of inferred. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane: Codex app-server is the first complete adapter, while OpenCode, Kilo and ACP remain possible through the same `AgentRuntime` contract. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Firebase Auth is the cross-platform identity baseline behind a portable provider boundary; Convex is the target product data layer, while Fastify/SQLite remains the documented execution-plane exception.
 
 # User Story
 

@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.0.1"
 project: "shipglows_app"
 created: "2026-05-10"
-updated: "2026-08-11"
+updated: "2026-08-17"
 status: superseded
 source_skill: 300-sg-docs
 scope: "legacy-file-migration-tracker"
@@ -118,7 +118,7 @@ Each row must answer:
 | `lib/data/services/offline_storage_service.dart` | Legacy offline/cache | adapt candidate | `adapt-candidate` | future projection/cache path by owner spec | `legacy-contentflow-inventory.md` | medium | `rg -n "OfflineStorage|offline_storage" lib test` | Review after projection/sync spec |
 | `lib/data/services/notification_service.dart` | Legacy notification scaffold | park | `park` | `stay-current`; future `legacy/contentflow/data/services/notification_service.dart` if cleanup spec approves | `legacy-contentflow-inventory.md` | medium | `rg -n "NotificationService|notification_service" lib test` | Keep parked until notification need exists |
 | `lib/providers/providers.dart` | Dormant provider graph | park | `blocked-needs-spec` | `stay-current`; future archive path only after a cleanup spec | `legacy-contentflow-inventory.md`; `runtime-boundary.md` | high | `rg -n "providers.dart|ProviderScope" lib test` | Split only when a current spec selects a module |
-| `lib/router.dart` | Dormant route graph | archive later | `archive-later` | `stay-current`; future archive path after cleanup proof | `runtime-boundary.md` | high | `rg -n "GoRoute" lib/router.dart` | Remove/archive only after import proof |
+| `lib/router.dart` | Former dormant route graph | delete | `deleted-2026-08-17` | removed | Explicit operator approval after import proof; `runtime-boundary.md` | low | `Test-Path app/lib/router.dart` returns `False`; `flutter test test/shipglows/architecture/runtime_boundary_test.dart` | Complete; the last active project-identity bridge was moved to the managed registry before deletion |
 | `lib/presentation/screens/auth/` | Legacy auth UI | reference only | `blocked-needs-spec` | `stay-current`; future `legacy/contentflow/presentation/screens/auth/` after auth decision | `legacy-contentflow-inventory.md`; `shipglows_legacy-reuse-roadmap.md` | high | `rg -n "Auth|Clerk|auth" lib/presentation/screens/auth lib test` | Do not choose Clerk by default |
 | `lib/presentation/screens/projects/` | Legacy project UI | adapt candidate | `adapt-candidate` | future ShipGlows project UI by owner spec | `legacy-contentflow-inventory.md`; project onboarding specs | medium | `rg -n "ProjectsScreen|projects_screen|project" lib/presentation/screens/projects lib test` | Compare with GitHub project onboarding |
 | `lib/presentation/screens/onboarding/` | Legacy onboarding | adapt candidate | `adapt-candidate` | future ShipGlows onboarding path by owner spec | `legacy-contentflow-inventory.md`; project onboarding specs | medium | `rg -n "onboarding" lib/presentation/screens/onboarding lib test` | Reuse only after onboarding spec |

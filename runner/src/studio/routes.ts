@@ -16,6 +16,7 @@ const SemanticCapability = Type.Union([
   Type.Literal("transform.set"), Type.Literal("visibility.set"), Type.Literal("motion.duration"), Type.Literal("motion.easing"),
 ]);
 const ProtectedDimension = Type.Union([Type.Literal("copy"), Type.Literal("structure"), Type.Literal("accessibility"), Type.Literal("performance")]);
+const StudioProfileId = Type.Union([Type.Literal("shipglows.astro.hero.v1"), Type.Literal("gocharbon.astro.hero.v1")]);
 const Surface = Type.Object({
   id: Type.String({ minLength: 1, maxLength: 128 }), label: Type.String({ minLength: 1, maxLength: 128 }), sourceConfidence: Type.Literal("exact"),
   sourceSymbol: Type.String({ minLength: 1, maxLength: 128 }), capabilities: Type.Array(SemanticCapability, { minItems: 3, maxItems: 8, uniqueItems: true }),
@@ -28,7 +29,7 @@ const CompileIntentResponse = Type.Object({
   actorId: Type.String(), idempotencyKey: Type.String(), createdAt: Type.String(), status: Type.Union([Type.Literal("preflight"), Type.Literal("accepted"), Type.Literal("running"), Type.Literal("verified"), Type.Literal("failed"), Type.Literal("conflict")]),
 }, { additionalProperties: false });
 const SessionResponse = Type.Object({
-  contractVersion: Type.Literal("shipglows.studio.v1"), sessionId: Type.String(), projectId: Type.String(), profileId: Type.Literal("shipglows.astro.hero.v1"),
+  contractVersion: Type.Literal("shipglows.studio.v1"), sessionId: Type.String(), projectId: Type.String(), profileId: StudioProfileId,
   sourceRevision: Type.String(), repositoryDigest: Type.String(), state: Type.String(), revision: Type.Integer({ minimum: 0 }), commandCount: Type.Integer({ minimum: 0 }), undoCursor: Type.Integer({ minimum: 0 }), canUndo: Type.Boolean(), canRedo: Type.Boolean(),
   variants: Type.Array(Type.Object({ variantId: Type.String(), name: Type.String(), commandCount: Type.Integer({ minimum: 0 }), commandRevision: Type.Integer({ minimum: 0 }) }, { additionalProperties: false })),
   activeVariantId: Type.Union([Type.String(), Type.Null()]), laboratory: Type.Object({ mode: Type.Union([Type.Literal("studio"), Type.Literal("recommended"), Type.Literal("active")]), reasons: Type.Array(Type.String()) }, { additionalProperties: false }),
@@ -48,12 +49,12 @@ export function registerStudioRoutes(app: FastifyInstance, input: {
       preHandler: [authenticationGuard(input.authentication), projectAuthorizationGuard(input.projectAccess, "read")],
       schema: { params: ProjectParams, response: {
         200: Type.Object({
-          supported: Type.Literal(true), reason: Type.Literal("trustedFirstPartyBase"), contractVersion: Type.Literal("shipglows.studio.v1"), bridgeVersion: Type.Literal("shipglows.studio.bridge.v1"), profileId: Type.Literal("shipglows.astro.hero.v1"),
+          supported: Type.Literal(true), reason: Type.Literal("trustedFirstPartyBase"), contractVersion: Type.Literal("shipglows.studio.v1"), bridgeVersion: Type.Literal("shipglows.studio.bridge.v1"), profileId: StudioProfileId,
           sourceRevision: Type.String({ pattern: "^[a-fA-F0-9]{7,64}$" }), repositoryDigest: Type.String({ pattern: "^[a-fA-F0-9]{64}$" }), previewOrigin: Type.String({ format: "uri" }),
           adapterVersion: Type.String({ minLength: 1, maxLength: 64 }), capabilityVersion: Type.String({ minLength: 1, maxLength: 64 }),
           capabilities: Type.Tuple([Type.Literal("token.set"), Type.Literal("spacing.set"), Type.Literal("radius.set"), Type.Literal("opacity.set"), Type.Literal("transform.set"), Type.Literal("visibility.set"), Type.Literal("motion.duration"), Type.Literal("motion.easing")]),
           compileAdmission: Type.Object({ available: Type.Literal(false), reason: Type.Literal("workerIsolationUnavailable"), message: Type.String({ minLength: 1, maxLength: 256 }) }, { additionalProperties: false }),
-          expectedPaths: Type.Tuple([Type.Literal("site/src/components/Hero.astro")]), surfaces: Type.Array(Surface, { minItems: 8, maxItems: 8 }),
+          expectedPaths: Type.Array(Type.String({ minLength: 1, maxLength: 256 }), { minItems: 1, maxItems: 1, uniqueItems: true }), surfaces: Type.Array(Surface, { minItems: 8, maxItems: 8 }),
         }, { $id: "shipglows.studio.v1.capability.response", additionalProperties: false }),
         503: ErrorResponse,
       } },

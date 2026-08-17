@@ -6,6 +6,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'cockpit/cockpit_dto_mapper.dart';
 import 'cockpit/cockpit_models.dart';
+import 'activity_review_models.dart';
 import '../../domain/studio/studio_contracts.dart';
 import '../../domain/studio/studio_compilation_routing.dart';
 import '../../domain/studio/studio_session.dart';
@@ -286,6 +287,105 @@ const _studioSurfaceContracts =
       'hero.panel': (
         label: 'Product panel',
         symbol: 'Hero.panel',
+        capabilities: {
+          StudioCapability.tokenSet,
+          StudioCapability.spacingSet,
+          StudioCapability.radiusSet,
+          StudioCapability.opacitySet,
+          StudioCapability.transformSet,
+          StudioCapability.visibilitySet,
+          StudioCapability.motionDuration,
+          StudioCapability.motionEasing,
+        },
+      ),
+    };
+
+const _gocharbonStudioSurfaceContracts =
+    <
+      String,
+      ({String label, String symbol, Set<StudioCapability> capabilities})
+    >{
+      'hero.root': (
+        label: 'Hero',
+        symbol: 'GoCharbonHero',
+        capabilities: {
+          StudioCapability.tokenSet,
+          StudioCapability.spacingSet,
+          StudioCapability.radiusSet,
+        },
+      ),
+      'hero.copy': (
+        label: 'Hero copy',
+        symbol: 'GoCharbonHero.copy',
+        capabilities: {
+          StudioCapability.spacingSet,
+          StudioCapability.radiusSet,
+          StudioCapability.opacitySet,
+          StudioCapability.transformSet,
+          StudioCapability.visibilitySet,
+          StudioCapability.motionDuration,
+          StudioCapability.motionEasing,
+        },
+      ),
+      'hero.eyebrow': (
+        label: 'Eyebrow',
+        symbol: 'GoCharbonHero.eyebrow',
+        capabilities: {
+          StudioCapability.opacitySet,
+          StudioCapability.transformSet,
+          StudioCapability.visibilitySet,
+          StudioCapability.motionDuration,
+          StudioCapability.motionEasing,
+        },
+      ),
+      'hero.title': (
+        label: 'Title',
+        symbol: 'GoCharbonHero.title',
+        capabilities: {
+          StudioCapability.opacitySet,
+          StudioCapability.transformSet,
+          StudioCapability.visibilitySet,
+          StudioCapability.motionDuration,
+          StudioCapability.motionEasing,
+        },
+      ),
+      'hero.intro': (
+        label: 'Intro',
+        symbol: 'GoCharbonHero.intro',
+        capabilities: {
+          StudioCapability.opacitySet,
+          StudioCapability.transformSet,
+          StudioCapability.visibilitySet,
+          StudioCapability.motionDuration,
+          StudioCapability.motionEasing,
+        },
+      ),
+      'hero.actions': (
+        label: 'Actions',
+        symbol: 'GoCharbonHero.actions',
+        capabilities: {
+          StudioCapability.spacingSet,
+          StudioCapability.opacitySet,
+          StudioCapability.transformSet,
+          StudioCapability.visibilitySet,
+          StudioCapability.motionDuration,
+          StudioCapability.motionEasing,
+        },
+      ),
+      'hero.miner': (
+        label: 'Miner image',
+        symbol: 'GoCharbonHero.miner',
+        capabilities: {
+          StudioCapability.opacitySet,
+          StudioCapability.transformSet,
+          StudioCapability.visibilitySet,
+          StudioCapability.motionDuration,
+          StudioCapability.motionEasing,
+        },
+      ),
+      'hero.depth': (
+        label: 'Depth panel',
+        symbol: 'GoCharbonHero.depthPanel',
         capabilities: {
           StudioCapability.tokenSet,
           StudioCapability.spacingSet,
@@ -1284,6 +1384,390 @@ abstract interface class ManagedRunnerClient {
   });
 }
 
+enum ManagedProjectReadiness { ready, degraded, accessLost }
+
+enum ManagedGitHubConnectionState {
+  disabled,
+  disconnected,
+  verifying,
+  ready,
+  degraded,
+  accessLost,
+}
+
+class ManagedProjectCapabilities {
+  const ManagedProjectCapabilities({
+    required this.cockpit,
+    required this.studio,
+    required this.conversations,
+    required this.workspace,
+  });
+
+  final bool cockpit;
+  final bool studio;
+  final bool conversations;
+  final bool workspace;
+
+  factory ManagedProjectCapabilities.fromJson(Map<String, dynamic> json) {
+    if (json case {
+      'cockpit': final bool cockpit,
+      'studio': final bool studio,
+      'conversations': final bool conversations,
+      'workspace': final bool workspace,
+    }) {
+      return ManagedProjectCapabilities(
+        cockpit: cockpit,
+        studio: studio,
+        conversations: conversations,
+        workspace: workspace,
+      );
+    }
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message: 'The managed runner returned invalid project capabilities.',
+    );
+  }
+}
+
+class ManagedGitHubSourceStatus {
+  const ManagedGitHubSourceStatus({
+    required this.state,
+    required this.message,
+    this.accountLabel,
+    this.actionUrl,
+  });
+
+  final ManagedGitHubConnectionState state;
+  final String message;
+  final String? accountLabel;
+  final Uri? actionUrl;
+
+  factory ManagedGitHubSourceStatus.fromJson(Map<String, dynamic> json) {
+    final state = _githubConnectionState(json['state']);
+    final message = json['message'];
+    final accountLabel = json['accountLabel'];
+    final actionUrl = json['actionUrl'];
+    if (state == null ||
+        message is! String ||
+        (accountLabel != null && accountLabel is! String) ||
+        (actionUrl != null && actionUrl is! String)) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'The managed runner returned an invalid GitHub status.',
+      );
+    }
+    return ManagedGitHubSourceStatus(
+      state: state,
+      message: message,
+      accountLabel: accountLabel as String?,
+      actionUrl: actionUrl is String ? Uri.tryParse(actionUrl) : null,
+    );
+  }
+}
+
+abstract interface class ManagedActivityReviewClient {
+  Future<ManagedActivityReviewProjection> loadActivityReview({
+    required String projectId,
+  });
+}
+
+enum ManagedProjectContextStatus { ready, stale, missing }
+
+class ManagedProjectContextProjection {
+  const ManagedProjectContextProjection({
+    required this.projectId,
+    required this.status,
+    required this.observedAt,
+    required this.sourceCommit,
+    required this.repositorySnapshotCount,
+    required this.shipglowsArtifactCount,
+    required this.redactionCount,
+  });
+
+  final String projectId;
+  final ManagedProjectContextStatus status;
+  final DateTime? observedAt;
+  final String? sourceCommit;
+  final int repositorySnapshotCount;
+  final int shipglowsArtifactCount;
+  final int redactionCount;
+
+  factory ManagedProjectContextProjection.fromJson(Map<String, dynamic> json) {
+    if (json.keys.toSet().difference(const {
+      'projectId',
+      'status',
+      'observedAt',
+      'sourceCommit',
+      'repositorySnapshotCount',
+      'shipglowsArtifactCount',
+      'redactionCount',
+    }).isNotEmpty) {
+      throw const FormatException('Unexpected project context property.');
+    }
+    final projectId = json['projectId'];
+    final status = switch (json['status']) {
+      'ready' => ManagedProjectContextStatus.ready,
+      'stale' => ManagedProjectContextStatus.stale,
+      'missing' => ManagedProjectContextStatus.missing,
+      _ => null,
+    };
+    final observedRaw = json['observedAt'];
+    final observedAt = observedRaw == null
+        ? null
+        : DateTime.tryParse(observedRaw is String ? observedRaw : '');
+    final sourceCommit = json['sourceCommit'];
+    final repositoryCount = json['repositorySnapshotCount'];
+    final artifactCount = json['shipglowsArtifactCount'];
+    final redactionCount = json['redactionCount'];
+    final commitSafe =
+        sourceCommit == null ||
+        (sourceCommit is String &&
+            RegExp(r'^[A-Za-z0-9._/-]{1,200}$').hasMatch(sourceCommit));
+    if (projectId is! String ||
+        projectId.isEmpty ||
+        projectId.length > 128 ||
+        status == null ||
+        (observedRaw != null && observedAt == null) ||
+        !commitSafe ||
+        repositoryCount is! int ||
+        repositoryCount < 0 ||
+        repositoryCount > 128 ||
+        artifactCount is! int ||
+        artifactCount < 0 ||
+        artifactCount > 128 ||
+        redactionCount is! int ||
+        redactionCount < 0 ||
+        (status == ManagedProjectContextStatus.missing &&
+            (observedAt != null || sourceCommit != null))) {
+      throw const FormatException('Invalid project context projection.');
+    }
+    return ManagedProjectContextProjection(
+      projectId: projectId,
+      status: status,
+      observedAt: observedAt,
+      sourceCommit: sourceCommit as String?,
+      repositorySnapshotCount: repositoryCount,
+      shipglowsArtifactCount: artifactCount,
+      redactionCount: redactionCount,
+    );
+  }
+}
+
+abstract interface class ManagedProjectContextClient {
+  Future<ManagedProjectContextProjection> loadProjectContext({
+    required String projectId,
+  });
+
+  Future<ManagedProjectContextProjection> refreshProjectContext({
+    required String projectId,
+    required String idempotencyKey,
+  });
+}
+
+class ManagedGitHubSetup {
+  const ManagedGitHubSetup({
+    required this.actionUrl,
+    required this.setupUrl,
+    required this.expiresAt,
+  });
+
+  final Uri actionUrl;
+  final Uri setupUrl;
+  final DateTime expiresAt;
+
+  factory ManagedGitHubSetup.fromJson(Map<String, dynamic> json) {
+    final actionUrl = Uri.tryParse(json['actionUrl'] as String? ?? '');
+    final setupUrl = Uri.tryParse(json['setupUrl'] as String? ?? '');
+    final expiresAt = DateTime.tryParse(json['expiresAt'] as String? ?? '');
+    if (actionUrl == null ||
+        actionUrl.scheme != 'https' ||
+        actionUrl.host != 'github.com' ||
+        setupUrl == null ||
+        !setupUrl.hasScheme ||
+        expiresAt == null) {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'The managed runner returned an invalid GitHub setup.',
+      );
+    }
+    return ManagedGitHubSetup(
+      actionUrl: actionUrl,
+      setupUrl: setupUrl,
+      expiresAt: expiresAt,
+    );
+  }
+}
+
+class ManagedGitHubRepositoryCandidate {
+  const ManagedGitHubRepositoryCandidate({
+    required this.candidateId,
+    required this.fullName,
+    required this.defaultBranch,
+    required this.isPrivate,
+    required this.archived,
+  });
+
+  final String candidateId;
+  final String fullName;
+  final String defaultBranch;
+  final bool isPrivate;
+  final bool archived;
+
+  factory ManagedGitHubRepositoryCandidate.fromJson(Map<String, dynamic> json) {
+    if (json case {
+      'candidateId': final String candidateId,
+      'fullName': final String fullName,
+      'defaultBranch': final String defaultBranch,
+      'visibility': final String visibility,
+      'archived': final bool archived,
+    } when visibility == 'private' || visibility == 'public') {
+      return ManagedGitHubRepositoryCandidate(
+        candidateId: candidateId,
+        fullName: fullName,
+        defaultBranch: defaultBranch,
+        isPrivate: visibility == 'private',
+        archived: archived,
+      );
+    }
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message: 'The managed runner returned an invalid GitHub repository.',
+    );
+  }
+}
+
+class ManagedGitHubRepositoryPage {
+  const ManagedGitHubRepositoryPage({
+    required this.repositories,
+    required this.nextCursor,
+  });
+  final List<ManagedGitHubRepositoryCandidate> repositories;
+  final String? nextCursor;
+}
+
+class ManagedProjectRecord {
+  const ManagedProjectRecord({
+    required this.id,
+    required this.name,
+    required this.repositoryFullName,
+    required this.isDefault,
+    required this.isArchived,
+    required this.builtin,
+    required this.studioAvailable,
+    this.sourceKinds = const ['local'],
+    this.readiness = ManagedProjectReadiness.ready,
+    this.detectedPlatforms = const [],
+    this.capabilities = const ManagedProjectCapabilities(
+      cockpit: true,
+      studio: false,
+      conversations: true,
+      workspace: false,
+    ),
+  });
+
+  final String id;
+  final String name;
+  final String repositoryFullName;
+  final bool isDefault;
+  final bool isArchived;
+  final bool builtin;
+  final bool studioAvailable;
+  final List<String> sourceKinds;
+  final ManagedProjectReadiness readiness;
+  final List<String> detectedPlatforms;
+  final ManagedProjectCapabilities capabilities;
+
+  factory ManagedProjectRecord.fromJson(Map<String, dynamic> json) {
+    if (json case {
+      'id': final String id,
+      'name': final String name,
+      'repositoryFullName': final String repository,
+      'isDefault': final bool isDefault,
+      'isArchived': final bool isArchived,
+      'builtin': final bool builtin,
+      'studioAvailable': final bool studioAvailable,
+      'sourceKinds': final List<dynamic> sourceKinds,
+      'readiness': final String readiness,
+      'detectedPlatforms': final List<dynamic> detectedPlatforms,
+      'capabilities': final Map<dynamic, dynamic> capabilities,
+    }) {
+      final parsedReadiness = switch (readiness) {
+        'ready' => ManagedProjectReadiness.ready,
+        'degraded' => ManagedProjectReadiness.degraded,
+        'accessLost' => ManagedProjectReadiness.accessLost,
+        _ => null,
+      };
+      if (parsedReadiness == null ||
+          sourceKinds.any((item) => item != 'local' && item != 'github') ||
+          detectedPlatforms.any((item) => item is! String)) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid project.',
+        );
+      }
+      return ManagedProjectRecord(
+        id: id,
+        name: name,
+        repositoryFullName: repository,
+        isDefault: isDefault,
+        isArchived: isArchived,
+        builtin: builtin,
+        studioAvailable: studioAvailable,
+        sourceKinds: sourceKinds.cast<String>(),
+        readiness: parsedReadiness,
+        detectedPlatforms: detectedPlatforms.cast<String>(),
+        capabilities: ManagedProjectCapabilities.fromJson(
+          Map<String, dynamic>.from(capabilities),
+        ),
+      );
+    }
+    throw const ManagedRunnerException(
+      code: 'invalidResponse',
+      message: 'The managed runner returned an invalid project.',
+    );
+  }
+}
+
+abstract interface class ManagedProjectRegistryClient {
+  Future<List<ManagedProjectRecord>> listManagedProjects();
+  Future<ManagedProjectRecord> connectManagedProject({
+    required String repositoryPath,
+    String? name,
+  });
+  Future<ManagedProjectRecord> updateManagedProject({
+    required String projectId,
+    String? name,
+    bool? isDefault,
+    bool? isArchived,
+  });
+  Future<void> disconnectManagedProject({required String projectId});
+  Future<ManagedGitHubSourceStatus> getGitHubProjectSourceStatus();
+  Future<ManagedGitHubSetup> beginGitHubSetup();
+  Future<ManagedGitHubSourceStatus> completeGitHubSetup({
+    required int installationId,
+    required String state,
+  });
+  Future<void> disconnectGitHubSource();
+  Future<ManagedGitHubRepositoryPage> listGitHubRepositories({String? cursor});
+  Future<ManagedProjectRecord> connectGitHubProject({
+    required String candidateId,
+  });
+  Future<ManagedProjectRecord?> disconnectGitHubProject({
+    required String projectId,
+  });
+}
+
+ManagedGitHubConnectionState? _githubConnectionState(Object? value) =>
+    switch (value) {
+      'disabled' => ManagedGitHubConnectionState.disabled,
+      'disconnected' => ManagedGitHubConnectionState.disconnected,
+      'verifying' => ManagedGitHubConnectionState.verifying,
+      'ready' => ManagedGitHubConnectionState.ready,
+      'degraded' => ManagedGitHubConnectionState.degraded,
+      'accessLost' => ManagedGitHubConnectionState.accessLost,
+      _ => null,
+    };
+
 abstract interface class ManagedRunnerTaskClient {
   Future<ManagedConversationResult> runAudit({
     required String projectId,
@@ -1302,7 +1786,10 @@ abstract interface class ManagedRunnerTaskClient {
 class ManagedRunnerApi
     implements
         ManagedRunnerClient,
+        ManagedActivityReviewClient,
+        ManagedProjectContextClient,
         ManagedRunnerTaskClient,
+        ManagedProjectRegistryClient,
         ManagedWorkspaceTransport,
         ManagedStudioTransport,
         ManagedCompilationRoutingTransport {
@@ -1393,6 +1880,25 @@ class ManagedRunnerApi
       final origin = Uri.tryParse(json['previewOrigin']?.toString() ?? '');
       final rawSurfaces = json['surfaces'];
       final rawCapabilities = json['capabilities'];
+      final profileId = json['profileId'];
+      final surfaceContracts = switch ((projectId, profileId)) {
+        ('shipglows_app', 'shipglows.astro.hero.v1') => _studioSurfaceContracts,
+        ('gocharbon', 'gocharbon.astro.hero.v1') =>
+          _gocharbonStudioSurfaceContracts,
+        _ => null,
+      };
+      final expectedOriginPort = switch ((projectId, profileId)) {
+        ('shipglows_app', 'shipglows.astro.hero.v1') => 3003,
+        ('gocharbon', 'gocharbon.astro.hero.v1') => 3002,
+        _ => null,
+      };
+      if (surfaceContracts == null || expectedOriginPort == null) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message:
+              'The managed runner returned an unsupported Studio capability.',
+        );
+      }
       const expectedCapabilityNames = [
         'token.set',
         'spacing.set',
@@ -1432,7 +1938,6 @@ class ManagedRunnerApi
           json['supported'] == true &&
           json['reason'] == 'trustedFirstPartyBase' &&
           json['contractVersion'] == studioContractVersion &&
-          json['profileId'] == 'shipglows.astro.hero.v1' &&
           json['bridgeVersion'] == 'shipglows.studio.bridge.v1' &&
           exactCapabilities &&
           json['sourceRevision'] is String &&
@@ -1449,14 +1954,14 @@ class ManagedRunnerApi
           origin != null &&
           origin.scheme == 'http' &&
           origin.host == '127.0.0.1' &&
-          origin.port == 3003 &&
+          origin.port == expectedOriginPort &&
           origin.path.isEmpty &&
           !origin.hasQuery &&
           !origin.hasFragment;
       if (!exactProfile ||
           !exactOrigin ||
           rawSurfaces is! List ||
-          rawSurfaces.length != _studioSurfaceContracts.length) {
+          rawSurfaces.length != surfaceContracts.length) {
         throw const ManagedRunnerException(
           code: 'invalidResponse',
           message:
@@ -1521,8 +2026,7 @@ class ManagedRunnerApi
             final protectedDimensions = _parseStudioDimensions(
               surface['protectedDimensions'],
             );
-            final surfaceContract =
-                _studioSurfaceContracts[surface['id'] as String];
+            final surfaceContract = surfaceContracts[surface['id'] as String];
             if (surfaceContract == null ||
                 surface['label'] != surfaceContract.label ||
                 sourceSymbol != surfaceContract.symbol ||
@@ -1548,12 +2052,21 @@ class ManagedRunnerApi
           !List.generate(
             surfaces.length,
             (index) =>
-                surfaces[index].id ==
-                _studioSurfaceContracts.keys.elementAt(index),
+                surfaces[index].id == surfaceContracts.keys.elementAt(index),
           ).every((matches) => matches)) {
         throw const ManagedRunnerException(
           code: 'invalidResponse',
           message: 'The Studio surface projection contains duplicate ids.',
+        );
+      }
+      final expectedPaths = _parseExpectedPaths(json['expectedPaths']);
+      final expectedPath = projectId == 'gocharbon'
+          ? 'site/src/pages/index.astro'
+          : 'site/src/components/Hero.astro';
+      if (expectedPaths.length != 1 || expectedPaths.single != expectedPath) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The Studio source path projection is inconsistent.',
         );
       }
       return StudioPreviewCapability(
@@ -1579,7 +2092,7 @@ class ManagedRunnerApi
         ),
         capabilities: Set.unmodifiable(semanticCapabilities),
         compileAdmission: _parseCompileAdmission(json['compileAdmission']),
-        expectedPaths: _parseExpectedPaths(json['expectedPaths']),
+        expectedPaths: expectedPaths,
       );
     } on DioException catch (error) {
       throw _mapError(error);
@@ -1820,6 +2333,101 @@ class ManagedRunnerApi
   }
 
   @override
+  Future<ManagedActivityReviewProjection> loadActivityReview({
+    required String projectId,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/projects/${Uri.encodeComponent(projectId)}/activity-review',
+        options: Options(headers: await _headers()),
+      );
+      final data = response.data;
+      if (data is! Map) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid activity summary.',
+        );
+      }
+      try {
+        return ManagedActivityReviewProjection.fromJson(
+          Map<String, dynamic>.from(data),
+        );
+      } on FormatException {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid activity summary.',
+        );
+      }
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedProjectContextProjection> loadProjectContext({
+    required String projectId,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/projects/${Uri.encodeComponent(projectId)}/context',
+        options: Options(headers: await _headers()),
+      );
+      final data = response.data;
+      if (data is! Map) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid project context.',
+        );
+      }
+      try {
+        return ManagedProjectContextProjection.fromJson(
+          Map<String, dynamic>.from(data),
+        );
+      } on FormatException {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid project context.',
+        );
+      }
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedProjectContextProjection> refreshProjectContext({
+    required String projectId,
+    required String idempotencyKey,
+  }) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        '/v1/projects/${Uri.encodeComponent(projectId)}/context/refresh',
+        data: const <String, Object?>{},
+        options: Options(
+          headers: {...await _headers(), 'Idempotency-Key': idempotencyKey},
+        ),
+      );
+      final data = response.data;
+      if (data is! Map) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid project context.',
+        );
+      }
+      return ManagedProjectContextProjection.fromJson(
+        Map<String, dynamic>.from(data),
+      );
+    } on FormatException {
+      throw const ManagedRunnerException(
+        code: 'invalidResponse',
+        message: 'The managed runner returned an invalid project context.',
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
   Future<ManagedWorkspaceCapability> workspaceCapability({
     required String projectId,
   }) async {
@@ -1859,6 +2467,222 @@ class ManagedRunnerApi
       return const CockpitDtoMapper().snapshotFromJson(
         // The mapper validates every project and aggregate before exposure.
         response.data as Map<String, Object?>,
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<List<ManagedProjectRecord>> listManagedProjects() async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/local-projects',
+        options: Options(headers: await _headers()),
+      );
+      final data = response.data;
+      if (data is! Map || data['projects'] is! List) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid project list.',
+        );
+      }
+      return (data['projects'] as List)
+          .map(
+            (item) => ManagedProjectRecord.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(growable: false);
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedProjectRecord> connectManagedProject({
+    required String repositoryPath,
+    String? name,
+  }) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        '/v1/local-projects',
+        data: {
+          'repositoryPath': repositoryPath,
+          if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+        },
+        options: Options(headers: await _headers()),
+      );
+      return ManagedProjectRecord.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedProjectRecord> updateManagedProject({
+    required String projectId,
+    String? name,
+    bool? isDefault,
+    bool? isArchived,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (name != null) data['name'] = name;
+      if (isDefault != null) data['isDefault'] = isDefault;
+      if (isArchived != null) data['isArchived'] = isArchived;
+      final response = await _dio.patch<dynamic>(
+        '/v1/local-projects/${Uri.encodeComponent(projectId)}',
+        data: data,
+        options: Options(headers: await _headers()),
+      );
+      return ManagedProjectRecord.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<void> disconnectManagedProject({required String projectId}) async {
+    try {
+      await _dio.delete<dynamic>(
+        '/v1/local-projects/${Uri.encodeComponent(projectId)}',
+        options: Options(headers: await _headers()),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedGitHubSourceStatus> getGitHubProjectSourceStatus() async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/project-sources/github',
+        options: Options(headers: await _headers()),
+      );
+      return ManagedGitHubSourceStatus.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedGitHubSetup> beginGitHubSetup() async {
+    try {
+      final response = await _dio.post<dynamic>(
+        '/v1/project-sources/github/setup',
+        options: Options(headers: await _headers()),
+      );
+      return ManagedGitHubSetup.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedGitHubSourceStatus> completeGitHubSetup({
+    required int installationId,
+    required String state,
+  }) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        '/v1/project-sources/github/setup/complete',
+        data: {'installationId': installationId, 'state': state},
+        options: Options(headers: await _headers()),
+      );
+      return ManagedGitHubSourceStatus.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<void> disconnectGitHubSource() async {
+    try {
+      await _dio.delete<dynamic>(
+        '/v1/project-sources/github',
+        options: Options(headers: await _headers()),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedGitHubRepositoryPage> listGitHubRepositories({
+    String? cursor,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/v1/project-sources/github/repositories',
+        queryParameters: {'cursor': ?cursor},
+        options: Options(headers: await _headers()),
+      );
+      final data = response.data;
+      if (data is! Map ||
+          data['repositories'] is! List ||
+          (data['nextCursor'] != null && data['nextCursor'] is! String)) {
+        throw const ManagedRunnerException(
+          code: 'invalidResponse',
+          message: 'The managed runner returned an invalid repository list.',
+        );
+      }
+      return ManagedGitHubRepositoryPage(
+        repositories: (data['repositories'] as List)
+            .map(
+              (item) => ManagedGitHubRepositoryCandidate.fromJson(
+                Map<String, dynamic>.from(item as Map),
+              ),
+            )
+            .toList(growable: false),
+        nextCursor: data['nextCursor'] as String?,
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedProjectRecord> connectGitHubProject({
+    required String candidateId,
+  }) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        '/v1/project-sources/github/projects',
+        data: {'candidateId': candidateId},
+        options: Options(headers: await _headers()),
+      );
+      return ManagedProjectRecord.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
+  Future<ManagedProjectRecord?> disconnectGitHubProject({
+    required String projectId,
+  }) async {
+    try {
+      final response = await _dio.delete<dynamic>(
+        '/v1/projects/${Uri.encodeComponent(projectId)}/sources/github',
+        options: Options(headers: await _headers()),
+      );
+      if (response.statusCode == 204 || response.data == null) return null;
+      return ManagedProjectRecord.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
       );
     } on DioException catch (error) {
       throw _mapError(error);

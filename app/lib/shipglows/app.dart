@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../presentation/theme/app_theme.dart';
+import 'providers/app_preferences_provider.dart';
 import 'router.dart';
 
-class ShipGlowsApp extends StatelessWidget {
+class ShipGlowsApp extends ConsumerStatefulWidget {
   const ShipGlowsApp({super.key});
 
   @override
+  ConsumerState<ShipGlowsApp> createState() => _ShipGlowsAppState();
+}
+
+class _ShipGlowsAppState extends ConsumerState<ShipGlowsApp> {
+  late final _router = createShipGlowsRouter();
+
+  @override
   Widget build(BuildContext context) {
-    final router = createShipGlowsRouter();
+    final themePreference = ref.watch(shipGlowsThemePreferenceProvider);
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'ShipGlows Operations Dashboard',
-      routerConfig: router,
+      routerConfig: _router,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themePreference.themeMode,
     );
   }
 }

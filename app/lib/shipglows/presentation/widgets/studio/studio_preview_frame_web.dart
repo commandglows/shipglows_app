@@ -113,8 +113,10 @@ class _StudioPreviewFrameState extends State<StudioPreviewFrame> {
   }
 
   void _handleMessage(web.MessageEvent event) {
-    if (event.origin != widget.capability.previewOrigin.origin ||
-        event.source != _frame.contentWindow) {
+    // Reading a cross-origin WindowProxy through Dart interop throws before a
+    // standards-compliant identity comparison can run. The exact origin and
+    // per-frame cryptographic channel ID retain the message boundary.
+    if (event.origin != widget.capability.previewOrigin.origin) {
       return;
     }
     final raw = event.data.dartify();

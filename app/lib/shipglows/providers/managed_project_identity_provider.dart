@@ -1,18 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/project.dart';
-import '../../providers/providers.dart' show availableProjectsProvider;
+import '../data/managed_runner_api.dart';
+import 'managed_projects_provider.dart';
 
 final managedRunnerProjectIdProvider = Provider.family<String?, String>(
   (ref, displayName) => resolveManagedRunnerProjectId(
     displayName,
-    ref.watch(availableProjectsProvider),
+    ref.watch(managedProjectsProvider).value ?? const [],
   ),
 );
 
 String? resolveManagedRunnerProjectId(
   String displayName,
-  Iterable<Project> projects,
+  Iterable<ManagedProjectRecord> projects,
 ) {
   final key = _normalize(displayName);
   final matches = projects.where((project) => _normalize(project.name) == key);

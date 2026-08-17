@@ -246,9 +246,14 @@ export interface OperationalStore {
   }): void;
   appendHealthEvidence(input: PersistedHealthEvidence): void;
   persistSkillEvidenceEnvelope(input: SkillEvidenceEnvelope): void;
+  ensureLocalProjectContextTarget(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }): void;
   getProjectContextBundle(input: {
     readonly tenantId: string;
     readonly bundleId: string;
+  }): ProjectContextBundle | undefined;
+  getLatestProjectContextBundle(input: {
+    readonly tenantId: string;
+    readonly projectId: string;
   }): ProjectContextBundle | undefined;
   getSkillRun(input: {
     readonly tenantId: string;
@@ -1357,6 +1362,50 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         sourceCommit: readString(row, "sourceCommit"),
         createdAt: readString(row, "createdAt"),
         sources,
+        redactionCount: readNumber(row, "redactionCount"),
+      };
+    },
+    ensureLocalProjectContextTarget: ({ tenantId, userId, projectId }) => {
+      validateOpaqueValue(tenantId, "Tenant identifier");
+      validateOpaqueValue(userId, "User identifier");
+      validateOpaqueValue(projectId, "Project identifier");
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        run(db, "INSERT OR IGNORE INTO tenants VALUES(?, ?)", tenantId, `local:${tenantId}`);
+        run(db, "INSERT OR IGNORE INTO users VALUES(?, ?)", userId, `local:${userId}`);
+        run(db, "INSERT OR IGNORE INTO tenant_users VALUES(?, ?, ?)", tenantId, userId, "owner");
+        run(db, "INSERT OR IGNORE INTO projects VALUES(?, ?, NULL)", projectId, tenantId);
+        run(db, "INSERT OR IGNORE INTO memberships VALUES(?, ?, ?, ?)", tenantId, projectId, userId, "read");
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    },
+    getLatestProjectContextBundle: ({ tenantId, projectId }) => {
+      const row = oneRow(
+        db,
+        `SELECT id, schema_version AS schemaVersion, tenant_id AS tenantId, project_id AS projectId,
+                source_commit AS sourceCommit, created_at AS createdAt, sources, redaction_count AS redactionCount
+         FROM project_context_bundles
+         WHERE tenant_id = ? AND project_id = ?
+         ORDER BY created_at DESC, id DESC LIMIT 1`,
+        tenantId,
+        projectId,
+      );
+      if (row === undefined) return undefined;
+      const schemaVersion = readString(row, "schemaVersion");
+      if (schemaVersion !== PROJECT_CONTEXT_SCHEMA_VERSION) {
+        throw new RunStateError("Project context schema version is invalid.");
+      }
+      return {
+        schemaVersion,
+        bundleId: readString(row, "id"),
+        tenantId: readString(row, "tenantId"),
+        projectId: readString(row, "projectId"),
+        sourceCommit: readString(row, "sourceCommit"),
+        createdAt: readString(row, "createdAt"),
+        sources: JSON.parse(readString(row, "sources")) as ProjectContextBundle["sources"],
         redactionCount: readNumber(row, "redactionCount"),
       };
     },

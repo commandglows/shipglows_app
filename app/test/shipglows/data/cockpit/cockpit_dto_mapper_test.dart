@@ -22,7 +22,7 @@ void main() {
                   <String, Object?>{
                     'dimension': 'tech',
                     'status': 'healthy',
-                    'summary': 'Checks pass',
+                    'summary': <String, Object?>{'text': 'Checks pass'},
                     'producer': 'ci',
                     'evidenceCount': 2,
                     'checkedAt': '2026-07-18T07:00:00Z',
@@ -52,6 +52,10 @@ void main() {
       );
       expect(project.accessState, ProjectAccessState.available);
       expect(project.conversationCount, 3);
+      expect(
+        project.health.dimension(HealthDimension.tech).summary,
+        'Checks pass',
+      );
     });
 
     test('rejects a server aggregate that fabricates healthy state', () {
