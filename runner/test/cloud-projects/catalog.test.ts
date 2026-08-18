@@ -84,4 +84,17 @@ describe("CLI cloud project catalog", () => {
     const oversized = new FileCloudProjectCatalogReader("/srv/catalog.json", ["/srv"], Date.now, 60_000, 8, async () => validCatalog);
     await assert.rejects(oversized.read(), (error) => error instanceof CloudProjectCatalogError && error.code === "catalogInvalid");
   });
+
+  it("allows the private catalog file outside project roots but rejects relative paths", async () => {
+    const reader = new FileCloudProjectCatalogReader(
+      "/var/lib/shipglows/cli-project-catalog.v1.json",
+      ["/srv/projects"],
+      () => Date.parse("2026-08-18T10:00:30Z"),
+      60_000,
+      1_000_000,
+      async () => validCatalog.replaceAll("/srv/shipglows/alpha", "/srv/projects/alpha"),
+    );
+    assert.equal((await reader.read()).entries.length, 1);
+    assert.throws(() => new FileCloudProjectCatalogReader("catalog.json", ["/srv/projects"]), CloudProjectCatalogError);
+  });
 });

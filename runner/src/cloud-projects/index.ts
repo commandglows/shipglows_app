@@ -60,7 +60,10 @@ export class FileCloudProjectCatalogReader implements CloudProjectCatalogReader 
     private readonly maxBytes = DEFAULT_MAX_BYTES,
     private readonly load: (path: string) => Promise<string> = async (path) => readFile(path, "utf8"),
   ) {
-    if (!isAbsolute(catalogPath) || !isContained(catalogPath, allowedRoots)) {
+    // The catalog is server-configured state and intentionally lives outside
+    // project roots. Project cwd values remain constrained by allowedRoots
+    // when the snapshot is parsed.
+    if (!isAbsolute(catalogPath)) {
       throw new CloudProjectCatalogError("catalogInvalid");
     }
   }
