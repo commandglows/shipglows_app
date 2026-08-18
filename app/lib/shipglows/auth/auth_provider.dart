@@ -2,6 +2,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 enum ShipGlowsAuthStatus { signedOut, signedIn }
 
+enum ShipGlowsAuthFailure {
+  cancelled,
+  popupBlocked,
+  network,
+  unsupported,
+  unknown,
+}
+
+class ShipGlowsAuthException implements Exception {
+  const ShipGlowsAuthException({required this.failure, required this.message});
+
+  final ShipGlowsAuthFailure failure;
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class ShipGlowsSession {
   const ShipGlowsSession({
     required this.userId,
@@ -28,13 +46,22 @@ class ShipGlowsAuthState {
 }
 
 abstract interface class ShipGlowsAuthProvider {
+  bool get requiresAuthentication;
+
   Future<ShipGlowsSession?> currentSession({bool forceRefresh = false});
 
   Stream<ShipGlowsAuthState> get authStateChanges;
+
+  Future<void> signInWithGoogle();
+
+  Future<void> signOut();
 }
 
 class DisabledShipGlowsAuthProvider implements ShipGlowsAuthProvider {
   const DisabledShipGlowsAuthProvider();
+
+  @override
+  bool get requiresAuthentication => false;
 
   @override
   Stream<ShipGlowsAuthState> get authStateChanges =>
@@ -43,6 +70,12 @@ class DisabledShipGlowsAuthProvider implements ShipGlowsAuthProvider {
   @override
   Future<ShipGlowsSession?> currentSession({bool forceRefresh = false}) async =>
       null;
+
+  @override
+  Future<void> signInWithGoogle() async {}
+
+  @override
+  Future<void> signOut() async {}
 }
 
 class FirebaseSessionSnapshot {
@@ -103,14 +136,69 @@ class FirebaseFlutterSessionSource implements FirebaseSessionSource {
 }
 
 class FirebaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
-  FirebaseShipGlowsAuthProvider(this._source, {DateTime Function()? clock})
-    : _clock = clock ?? DateTime.now;
+  FirebaseShipGlowsAuthProvider(
+    this._source, {
+    DateTime Function()? clock,
+    Future<void> Function()? googleSignIn,
+    Future<void> Function()? signOut,
+  }) : _clock = clock ?? DateTime.now,
+       _googleSignIn = googleSignIn,
+       _signOut = signOut;
 
   final FirebaseSessionSource _source;
   final DateTime Function() _clock;
+  final Future<void> Function()? _googleSignIn;
+  final Future<void> Function()? _signOut;
   Future<FirebaseSessionSnapshot?>? _refreshInFlight;
 
   static const _refreshSkew = Duration(minutes: 1);
+
+  @override
+  bool get requiresAuthentication => true;
+
+  @override
+  Future<void> signInWithGoogle() async {
+    final signIn = _googleSignIn;
+    if (signIn == null) {
+      throw const ShipGlowsAuthException(
+        failure: ShipGlowsAuthFailure.unsupported,
+        message: 'La connexion Google est disponible dans l’application Web.',
+      );
+    }
+    try {
+      await signIn();
+    } on FirebaseAuthException catch (error) {
+      throw _mapFirebaseAuthError(error);
+    }
+  }
+
+  @override
+  Future<void> signOut() async => _signOut?.call();
+
+  ShipGlowsAuthException _mapFirebaseAuthError(FirebaseAuthException error) {
+    return switch (error.code) {
+      'popup-closed-by-user' ||
+      'cancelled-popup-request' => const ShipGlowsAuthException(
+        failure: ShipGlowsAuthFailure.cancelled,
+        message: 'La connexion Google a été annulée.',
+      ),
+      'popup-blocked' => const ShipGlowsAuthException(
+        failure: ShipGlowsAuthFailure.popupBlocked,
+        message:
+            'Le navigateur a bloqué la fenêtre Google. Autorisez les pop-ups puis réessayez.',
+      ),
+      'network-request-failed' => const ShipGlowsAuthException(
+        failure: ShipGlowsAuthFailure.network,
+        message:
+            'La connexion réseau a échoué. Vérifiez votre accès puis réessayez.',
+      ),
+      _ => const ShipGlowsAuthException(
+        failure: ShipGlowsAuthFailure.unknown,
+        message:
+            'La connexion Google a échoué. Réessayez sans partager de jeton.',
+      ),
+    };
+  }
 
   @override
   Stream<ShipGlowsAuthState> get authStateChanges =>

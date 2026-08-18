@@ -1,0 +1,21 @@
+[Unit]
+Description=Refresh ShipGlows Personal Cloud catalog and user Caddy routes
+After=default.target
+
+[Service]
+Type=oneshot
+Environment=SHIPGLOWS_REFRESH_ENV_FILE=%h/.config/shipglows/personal-cloud-refresh.env
+ExecStart=%h/.local/libexec/shipglows/refresh-personal-cloud.sh
+TimeoutStartSec=45s
+KillMode=process
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=default.target

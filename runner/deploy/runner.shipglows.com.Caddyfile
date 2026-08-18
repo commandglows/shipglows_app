@@ -1,14 +1,4 @@
-# Install as a dedicated Caddy site after runner.shipglows.com resolves to the
-# Hetzner host. The runner itself stays loopback-only on port 3210.
-runner.shipglows.com {
-	encode zstd gzip
-
-	header {
-		-Server
-		X-Content-Type-Options "nosniff"
-		Referrer-Policy "strict-origin-when-cross-origin"
-		X-Frame-Options "DENY"
-	}
-
-	reverse_proxy 127.0.0.1:3210
-}
+# Local validation bundle. Production installs the two imported snippets through
+# apply-caddy-snippets.sh so unrelated Caddy sites remain untouched.
+import caddy/00-shipglows-global.Caddyfile
+import caddy/shipglows-personal-cloud.Caddyfile

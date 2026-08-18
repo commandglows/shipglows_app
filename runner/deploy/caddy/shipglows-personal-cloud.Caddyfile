@@ -1,0 +1,101 @@
+(shipglows_runner_headers) {
+	header {
+		-Server
+		>Strict-Transport-Security "max-age=31536000"
+		>X-Content-Type-Options "nosniff"
+		>Referrer-Policy "no-referrer"
+		>Cache-Control "no-store"
+		>X-Frame-Options "DENY"
+		>Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+		>Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+	}
+}
+
+(shipglows_preview_headers) {
+	header {
+		-Server
+		>Strict-Transport-Security "max-age=31536000"
+		>X-Content-Type-Options "nosniff"
+		>Referrer-Policy "no-referrer"
+		>Content-Security-Policy "frame-ancestors https://app.shipglows.com"
+		>Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+	}
+}
+
+runner.shipglows.com {
+	encode zstd gzip
+	import shipglows_runner_headers
+
+	# These machine-to-machine preview endpoints remain loopback-only. The
+	# bootstrap session is reachable solely on the selected preview host.
+	@private_preview_api path /v1/preview/authorize /v1/preview/tls-ask /v1/preview/session
+	respond @private_preview_api 404
+
+	reverse_proxy 127.0.0.1:3210 {
+		transport http {
+			dial_timeout 3s
+			response_header_timeout 30s
+			keepalive 30s
+		}
+	}
+}
+
+# A catch-all HTTPS automation policy is required for per-project certificates.
+# The loopback ask endpoint authorizes only current catalog hosts before Caddy
+# obtains a certificate; the HTTP router still applies an exact wildcard host
+# matcher and runner authorization on every HTTP request and WebSocket upgrade.
+https:// {
+	tls {
+		on_demand
+	}
+
+	@preview_host host *.preview.shipglows.com
+	handle @preview_host {
+		route {
+			import shipglows_preview_headers
+
+			@bootstrap {
+				method POST OPTIONS
+				path /v1/preview/session
+			}
+			reverse_proxy @bootstrap 127.0.0.1:3210 {
+				header_up Host {host}
+				transport http {
+					dial_timeout 3s
+					response_header_timeout 15s
+				}
+			}
+
+			# Do not expose runner-only preview endpoints through another method.
+			@reserved_preview_api path /v1/preview/session /v1/preview/authorize /v1/preview/tls-ask
+			respond @reserved_preview_api 404
+
+			forward_auth 127.0.0.1:3210 {
+				uri /v1/preview/authorize
+				header_up Host {host}
+				header_up Origin {header.Origin}
+				header_up Cookie {header.Cookie}
+				header_up Upgrade {header.Upgrade}
+				header_up Connection {header.Connection}
+				copy_headers X-ShipGlows-Project
+			}
+
+			# The authorization cookie and bearer material are ingress credentials;
+			# the project devserver never receives them.
+			request_header -Authorization
+			request_header -Cookie
+			request_header -X-ShipGlows-*
+
+			reverse_proxy 127.0.0.1:8080 {
+				header_up Host {host}
+				transport http {
+					dial_timeout 3s
+					response_header_timeout 30s
+					keepalive 30s
+				}
+			}
+		}
+	}
+
+	respond 404
+}

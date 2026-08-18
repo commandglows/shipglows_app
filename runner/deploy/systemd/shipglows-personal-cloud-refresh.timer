@@ -1,0 +1,12 @@
+[Unit]
+Description=Keep ShipGlows Personal Cloud catalog inside its 120-second reader TTL
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=60s
+AccuracySec=5s
+Persistent=true
+Unit=shipglows-personal-cloud-refresh.service
+
+[Install]
+WantedBy=timers.target

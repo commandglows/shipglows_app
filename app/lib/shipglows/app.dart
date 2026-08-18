@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../presentation/theme/app_theme.dart';
+import 'auth/shipglows_auth_gate.dart';
 import 'providers/app_preferences_provider.dart';
 import 'router.dart';
 
@@ -26,6 +27,7 @@ class _ShipGlowsAppState extends ConsumerState<ShipGlowsApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themePreference.themeMode,
+      builder: (context, child) => ShipGlowsAuthGate(child: child!),
     );
   }
 }

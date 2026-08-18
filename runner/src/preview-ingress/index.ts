@@ -130,10 +130,12 @@ export class PreviewIngressService {
     const host = normalizeHost(input.host);
     const token = input.cookie;
     if (token === undefined || token.length < 32 || token.length > 128) denied();
-    if (input.websocket && input.origin !== this.allowedAppOrigin) throw new PreviewIngressError("previewOriginDenied", 403);
     const session = this.sessions.get(sessionKey(token));
     if (session === undefined) throw new PreviewIngressError("previewExpired", 403);
     if (session.host !== host || session.expiresAt <= this.now() || !safeDigest(session.tokenHash, token)) throw new PreviewIngressError("previewExpired", 403);
+    if (input.websocket && input.origin !== this.allowedAppOrigin && input.origin !== `https://${session.host}`) {
+      throw new PreviewIngressError("previewOriginDenied", 403);
+    }
     const project = await this.eligibleProject(host, session.projectId);
     if (!(await this.access.hasAccess({ tenantId: session.tenantId, userId: session.userId, projectId: session.projectId }))) denied();
     return { projectId: project.projectId, upstreamPort: project.privateRuntime.port };

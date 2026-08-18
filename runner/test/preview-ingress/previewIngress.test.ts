@@ -45,6 +45,16 @@ describe("PreviewIngressService", () => {
     await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "beta.preview.shipglows.com", websocket: false }), PreviewIngressError);
     await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", websocket: true }), (error) => error instanceof PreviewIngressError && error.code === "previewOriginDenied");
     assert.deepEqual(await ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com", websocket: true }), { projectId: "prj_alpha", upstreamPort: 4173 });
+    assert.deepEqual(await ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", origin: "https://alpha.preview.shipglows.com", websocket: true }), { projectId: "prj_alpha", upstreamPort: 4173 });
+    for (const origin of [
+      "https://alpha.preview.shipglows.com.evil",
+      "https://evil-alpha.preview.shipglows.com",
+      "https://beta.preview.shipglows.com",
+      "http://alpha.preview.shipglows.com",
+      "https://alpha.preview.shipglows.com:443",
+    ]) {
+      await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", origin, websocket: true }), (error) => error instanceof PreviewIngressError && error.code === "previewOriginDenied");
+    }
   });
 
   it("fails closed when the catalog is stale/stopped or membership is lost", async () => {

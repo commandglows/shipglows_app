@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'auth_provider.dart';
+import 'google_popup_sign_in.dart';
 
 /// Public Firebase client configuration supplied at compile time.
 ///
@@ -17,11 +18,13 @@ class FirebaseBootstrapConfiguration {
   });
 
   const FirebaseBootstrapConfiguration.fromEnvironment()
-      : apiKey = const String.fromEnvironment('FIREBASE_API_KEY'),
-        appId = const String.fromEnvironment('FIREBASE_APP_ID'),
-        messagingSenderId = const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
-        projectId = const String.fromEnvironment('FIREBASE_PROJECT_ID'),
-        authDomain = const String.fromEnvironment('FIREBASE_AUTH_DOMAIN');
+    : apiKey = const String.fromEnvironment('FIREBASE_API_KEY'),
+      appId = const String.fromEnvironment('FIREBASE_APP_ID'),
+      messagingSenderId = const String.fromEnvironment(
+        'FIREBASE_MESSAGING_SENDER_ID',
+      ),
+      projectId = const String.fromEnvironment('FIREBASE_PROJECT_ID'),
+      authDomain = const String.fromEnvironment('FIREBASE_AUTH_DOMAIN');
 
   final String apiKey;
   final String appId;
@@ -36,12 +39,12 @@ class FirebaseBootstrapConfiguration {
       projectId.trim().isNotEmpty;
 
   FirebaseOptions get options => FirebaseOptions(
-        apiKey: apiKey.trim(),
-        appId: appId.trim(),
-        messagingSenderId: messagingSenderId.trim(),
-        projectId: projectId.trim(),
-        authDomain: authDomain?.trim().isEmpty ?? true ? null : authDomain!.trim(),
-      );
+    apiKey: apiKey.trim(),
+    appId: appId.trim(),
+    messagingSenderId: messagingSenderId.trim(),
+    projectId: projectId.trim(),
+    authDomain: authDomain?.trim().isEmpty ?? true ? null : authDomain!.trim(),
+  );
 }
 
 Future<ShipGlowsAuthProvider> bootstrapShipGlowsAuth(
@@ -52,7 +55,12 @@ Future<ShipGlowsAuthProvider> bootstrapShipGlowsAuth(
   final app = Firebase.apps.isEmpty
       ? await Firebase.initializeApp(options: configuration.options)
       : Firebase.app();
+  final auth = FirebaseAuth.instanceFor(app: app);
   return FirebaseShipGlowsAuthProvider(
-    FirebaseFlutterSessionSource(FirebaseAuth.instanceFor(app: app)),
+    FirebaseFlutterSessionSource(auth),
+    googleSignIn: googlePopupSignInSupported
+        ? () => signInWithGooglePopup(auth)
+        : null,
+    signOut: auth.signOut,
   );
 }
