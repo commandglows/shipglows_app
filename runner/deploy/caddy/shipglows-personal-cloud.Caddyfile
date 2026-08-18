@@ -22,7 +22,9 @@
 	}
 }
 
-runner.shipglows.com {
+# Keep the legacy runner hostname during the Cloudflare cutover. The app moves
+# to api.shipglows.com only after the tunnel and browser/WebSocket proofs pass.
+runner.shipglows.com, api.shipglows.com {
 	encode zstd gzip
 	import shipglows_runner_headers
 
@@ -49,7 +51,10 @@ https:// {
 		on_demand
 	}
 
-	@preview_host host *.preview.shipglows.com
+	# Preview slugs stay at the first subdomain level so Cloudflare Universal
+	# SSL covers them without a paid multi-level wildcard certificate. Explicit
+	# system hosts above this catch-all always win.
+	@preview_host host *.shipglows.com
 	handle @preview_host {
 		route {
 			import shipglows_preview_headers

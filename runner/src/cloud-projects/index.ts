@@ -7,6 +7,7 @@ const DEFAULT_MAX_BYTES = 1_048_576;
 const DEFAULT_MAX_ENTRIES = 256;
 const ID_PATTERN = /^prj_[a-f0-9]{32}$/;
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const RESERVED_PREVIEW_SLUGS = new Set(["app", "api", "runner", "www"]);
 const TMUX_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
 export type CloudProjectRuntimeStatus = "online" | "launching" | "stopped" | "unavailable";
@@ -147,7 +148,7 @@ function parseEntry(value: unknown, allowedRoots: readonly string[]): CloudProje
   const tmuxSession = value["tmuxSession"];
   if (typeof projectId !== "string" || !ID_PATTERN.test(projectId)) invalid();
   if (!isCliText(displayName, 255)) invalid();
-  if (typeof previewSlug !== "string" || !SLUG_PATTERN.test(previewSlug)) invalid();
+  if (typeof previewSlug !== "string" || !SLUG_PATTERN.test(previewSlug) || RESERVED_PREVIEW_SLUGS.has(previewSlug)) invalid();
   if (!isCliRuntimeStatus(rawStatus) || !isCliSource(source)) invalid();
   if (!isCliText(cwd, 4_096) || !isAbsolute(cwd) || !isContained(cwd, allowedRoots)) invalid();
   if (port !== null && (!Number.isInteger(port) || (port as number) < 1 || (port as number) > 65_535)) invalid();

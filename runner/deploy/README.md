@@ -1,11 +1,11 @@
 # ShipGlows Personal Cloud — CAX11 deployment artifacts
 
-These files prepare the ready Personal Cloud architecture without granting or performing a deployment. They keep the runner on `127.0.0.1:3210`, the CLI-managed user Caddy on `127.0.0.1:8080`, and only system Caddy on public `80/443`.
+These files prepare the Personal Cloud architecture behind Cloudflare Tunnel. They keep the runner on `127.0.0.1:3210`, the CLI-managed user Caddy on `127.0.0.1:8080`, and system Caddy as the authenticated loopback origin. After tunnel proof, public firewall access to Caddy can be removed while SSH remains separately controlled.
 
 ## Fixed topology
 
-- `https://runner.shipglows.com` -> system Caddy -> runner `127.0.0.1:3210`, including the operator Workspace WebSocket.
-- `https://<slug>.preview.shipglows.com` -> on-demand TLS ask -> preview session bootstrap or runner `forward_auth` -> user Caddy `127.0.0.1:8080` -> catalog-owned loopback devserver.
+- `https://runner.shipglows.com` and `https://api.shipglows.com` -> Cloudflare Tunnel -> system Caddy -> runner `127.0.0.1:3210`, including the operator Workspace WebSocket.
+- `https://<slug>.shipglows.com` -> Cloudflare Universal SSL -> preview session bootstrap or runner `forward_auth` -> user Caddy `127.0.0.1:8080` -> catalog-owned loopback devserver. The first-level hostname is intentional: free Universal SSL does not cover `*.preview.shipglows.com` on a full DNS zone.
 - `/v1/preview/session` is the only preview-host route sent directly to the runner. `/v1/preview/authorize` and `/v1/preview/tls-ask` are never publicly routed.
 - The authorization cookie and bearer header are removed before the request reaches a devserver. Caddy preserves the original Host and supports HTTP and WebSocket/HMR proxying.
 - Studio remains separate and disabled in production.
@@ -14,7 +14,7 @@ These files prepare the ready Personal Cloud architecture without granting or pe
 
 - Node `>=22.16.0 <25`, npm, PM2, Caddy 2 with standard `forward_auth`, systemd user services, `flock`, `curl`, `ss`, tmux and the existing ShipGlows Linux CLI.
 - A dedicated non-login `shipglows-workspace` Unix account owns tmux/Neovim execution. The runner account may invoke only `/usr/bin/tmux` as that account through passwordless sudo; the workspace account must not read the runner env, Firebase configuration, SQLite database, Caddy credentials, or unrelated repositories.
-- Public firewall: only the separately approved administration port plus TCP `80/443`. Never expose `3210`, `8080`, or project devserver ports.
+- During migration, the public firewall may retain TCP `80/443` as rollback. After browser, WebSocket and reboot proofs, remove public `80/443`; never expose `3210`, `8080`, or project devserver ports.
 - Catalog refresh starts 30 seconds after the user manager settles and then runs 60 seconds after each completion. The service timeout is 45 seconds, below the runner reader TTL of 120 seconds; overlapping refreshes exit successfully under `flock`. User Caddy is regenerated/restarted only when the exact route set or its running state changes, so an unchanged timer tick does not churn active HMR sockets.
 - Runner: one forked PM2 instance, 512 MiB restart ceiling, ten rapid restart attempts, ten-second kill timeout, two concurrent runs and a 15-minute run limit by default.
 - On-demand TLS has a mandatory loopback `ask` endpoint. Caddy's deprecated `burst`/`interval` issuance limiter is intentionally not used; unknown hosts receive a non-2xx ask response and cannot obtain a certificate.
@@ -45,6 +45,8 @@ sudo setfacl -R -d -m u:shipglows-workspace:rwX /home/REPLACE_OPERATOR/projects/
 ```
 
 Create one explicit ACL pair per allowlisted repository; never grant the account access to the operator home or the runner state/config directories. The runner launches `/usr/bin/sudo -n -H -u shipglows-workspace -- /usr/bin/tmux …` with a fixed `PATH`, locale and terminal variables only. Validate the sudoers file before restarting the runner, and remove it plus the repository ACLs to roll this isolation layer back.
+
+Install `cloudflared` from Cloudflare's official package, authorize the zone through `cloudflared tunnel login`, and create one named tunnel. Keep the generated tunnel credential root-owned at mode `0600`; the origin certificate is an administrative credential and is not required by the running service. Copy `deploy/cloudflared/config.yml.example` to `/etc/cloudflared/config.yml`, replace only `REPLACE_TUNNEL_ID`, validate with `cloudflared --config /etc/cloudflared/config.yml tunnel ingress validate`, then install the system service. DNS must retain explicit records for `app`, `runner`, `api` and `www`; only the remaining `*.shipglows.com` wildcard points to the tunnel. This ordering keeps the Vercel-hosted app outside the preview catch-all.
 
 Install the refresh wrapper and user units without starting them:
 

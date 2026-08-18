@@ -40,7 +40,7 @@ source "$SHIPGLOWS_ROOT/cli/lib.sh"
 set -u
 
 if [[ "${SHIPGLOWS_CLOUD_MODE:-}" != "true" \
-  || "${SHIPGLOWS_PREVIEW_DOMAIN:-}" != "preview.shipglows.com" \
+  || "${SHIPGLOWS_PREVIEW_DOMAIN:-}" != "shipglows.com" \
   || "${SHIPGLOWS_USER_CADDY_BIND:-}" != "127.0.0.1" \
   || "${SHIPGLOWS_USER_CADDY_PORT:-}" != "8080" ]]; then
   echo "personal-cloud refresh boundary mismatch" >&2

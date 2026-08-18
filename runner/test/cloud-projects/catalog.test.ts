@@ -40,7 +40,7 @@ describe("CLI cloud project catalog", () => {
     assert.equal(JSON.stringify(redacted).includes("/srv/"), false);
     assert.equal(JSON.stringify(redacted).includes("4173"), false);
     assert.equal(JSON.stringify(redacted).includes("tmux"), false);
-    assert.equal(findCloudProjectByHost(snapshot, "alpha.preview.shipglows.com", "preview.shipglows.com")?.projectId, "prj_0123456789abcdef0123456789abcdef");
+    assert.equal(findCloudProjectByHost(snapshot, "alpha.shipglows.com", "shipglows.com")?.projectId, "prj_0123456789abcdef0123456789abcdef");
   });
 
   it("mirrors the exact CLI fixture and derives capabilities instead of trusting them", () => {
@@ -63,7 +63,7 @@ describe("CLI cloud project catalog", () => {
     ]);
   });
 
-  it("rejects duplicate slugs, unknown fields and boundary-escaping paths", () => {
+  it("rejects duplicate or reserved slugs, unknown fields and boundary-escaping paths", () => {
     const parsed = JSON.parse(validCatalog) as { projects: Record<string, unknown>[] };
     parsed.projects.push({ ...parsed.projects[0], id: "prj_abcdefabcdefabcdefabcdefabcdefab" });
     assert.throws(() => parseCloudProjectCatalog(JSON.stringify(parsed), ["/srv/shipglows"]), (error) => error instanceof CloudProjectCatalogError && error.code === "catalogInvalid");
@@ -72,6 +72,8 @@ describe("CLI cloud project catalog", () => {
     assert.throws(() => parseCloudProjectCatalog(JSON.stringify(unknown), ["/srv/shipglows"]), CloudProjectCatalogError);
     const escape = validCatalog.replace("/srv/shipglows/alpha", "/srv/private/alpha");
     assert.throws(() => parseCloudProjectCatalog(escape, ["/srv/shipglows"]), CloudProjectCatalogError);
+    const reserved = validCatalog.replace('"previewSlug":"alpha"', '"previewSlug":"app"');
+    assert.throws(() => parseCloudProjectCatalog(reserved, ["/srv/shipglows"]), CloudProjectCatalogError);
   });
 
   it("fails closed for unavailable, stale, future and oversized snapshots", async () => {

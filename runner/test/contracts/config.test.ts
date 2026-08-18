@@ -89,7 +89,7 @@ describe("runner configuration", () => {
       RUNNER_ALLOWED_ORIGINS: "https://app.shipglows.com",
       RUNNER_CLOUD_PROJECT_CATALOG_PATH: "/srv/shipglows/state/cli-project-catalog.v1.json",
       RUNNER_CLOUD_ALLOWED_ROOTS: "/srv/projects",
-      RUNNER_PREVIEW_DOMAIN: "preview.shipglows.com",
+      RUNNER_PREVIEW_DOMAIN: "shipglows.com",
       RUNNER_PERSONAL_CLOUD_APP_ORIGIN: "https://app.shipglows.com",
       RUNNER_PERSONAL_CLOUD_FIREBASE_UID: "firebase-owner",
       RUNNER_PERSONAL_CLOUD_TENANT_ID: "ten_personal",

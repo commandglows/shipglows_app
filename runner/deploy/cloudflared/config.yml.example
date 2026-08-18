@@ -1,0 +1,21 @@
+tunnel: REPLACE_TUNNEL_ID
+credentials-file: /etc/cloudflared/REPLACE_TUNNEL_ID.json
+no-autoupdate: true
+
+ingress:
+  - hostname: runner.shipglows.com
+    service: https://127.0.0.1:443
+    originRequest:
+      originServerName: runner.shipglows.com
+      noTLSVerify: true
+  - hostname: api.shipglows.com
+    service: https://127.0.0.1:443
+    originRequest:
+      originServerName: runner.shipglows.com
+      noTLSVerify: true
+  - hostname: "*.shipglows.com"
+    service: https://127.0.0.1:443
+    originRequest:
+      originServerName: runner.shipglows.com
+      noTLSVerify: true
+  - service: http_status:404

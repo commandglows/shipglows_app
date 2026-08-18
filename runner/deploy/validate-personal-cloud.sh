@@ -41,7 +41,7 @@ set +a
 [[ "${RUNNER_ALLOWED_ORIGINS:-}" == "https://app.shipglows.com" ]] || fail "runner Origin allowlist mismatch"
 [[ "${RUNNER_PERSONAL_CLOUD_ENABLED:-}" == "true" ]] || fail "Personal Cloud must be enabled"
 [[ "${RUNNER_PERSONAL_CLOUD_APP_ORIGIN:-}" == "https://app.shipglows.com" ]] || fail "Personal Cloud app Origin mismatch"
-[[ "${RUNNER_PREVIEW_DOMAIN:-}" == "preview.shipglows.com" ]] || fail "preview domain mismatch"
+[[ "${RUNNER_PREVIEW_DOMAIN:-}" == "shipglows.com" ]] || fail "preview domain mismatch"
 [[ "${SHIPGLOWS_CLOUD_MODE:-}" == "true" ]] || fail "CLI cloud mode must be enabled"
 [[ "${SHIPGLOWS_USER_CADDY_BIND:-}" == "127.0.0.1" && "${SHIPGLOWS_USER_CADDY_PORT:-}" == "8080" ]] || fail "user Caddy must bind 127.0.0.1:8080"
 [[ "${RUNNER_CLOUD_PROJECT_CATALOG_PATH:-}" == "${SHIPGLOWS_CLI_PROJECT_CATALOG_FILE:-}" ]] || fail "runner and CLI catalog paths must match"

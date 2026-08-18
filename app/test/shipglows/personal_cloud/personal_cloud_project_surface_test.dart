@@ -248,7 +248,7 @@ void main() {
 
     await tester.tap(find.text('Ouvrir dans un nouvel onglet'));
     await tester.pump();
-    expect(openedOrigin, Uri.parse('https://project.preview.shipglows.com'));
+    expect(openedOrigin, Uri.parse('https://project.shipglows.com'));
 
     await tester.tap(find.text('J’ai autorisé, réessayer'));
     await _pumpAsync(tester);
@@ -478,7 +478,7 @@ Future<void> _pumpAsync(WidgetTester tester, {int frames = 4}) async {
 ProjectPreviewSnapshot _readyPreview() => ProjectPreviewSnapshot(
   state: ProjectPreviewState.ready,
   message: 'Preview prête.',
-  origin: Uri.parse('https://project.preview.shipglows.com'),
+  origin: Uri.parse('https://project.shipglows.com'),
 );
 
 Widget _previewFrame(

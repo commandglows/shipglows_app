@@ -15,7 +15,7 @@ const project: CloudProjectCatalogEntry = {
 
 function service(now: () => number = () => 1_000) {
   return new PreviewIngressService(
-    { resolveByHost: (host) => host === "alpha.preview.shipglows.com" ? project : null },
+    { resolveByHost: (host) => host === "alpha.shipglows.com" ? project : null },
     { hasAccess: ({ tenantId, userId, projectId }) => tenantId === "tenant" && userId === "user" && projectId === "prj_alpha" },
     "https://app.shipglows.com",
     now,
@@ -27,33 +27,33 @@ function service(now: () => number = () => 1_000) {
 describe("PreviewIngressService", () => {
   it("exchanges a one-time actor/project/host ticket for a host-only secure cookie", async () => {
     const ingress = service();
-    const ticket = await ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" });
-    const cookie = await ingress.consumeTicket({ tenantId: "tenant", userId: "user", ticketId: ticket.id, secret: ticket.secret, host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" });
+    const ticket = await ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.shipglows.com", origin: "https://app.shipglows.com" });
+    const cookie = await ingress.consumeTicket({ tenantId: "tenant", userId: "user", ticketId: ticket.id, secret: ticket.secret, host: "alpha.shipglows.com", origin: "https://app.shipglows.com" });
     assert.equal(cookie.name, "__Host-shipglows_preview");
     assert.equal(cookie.attributes, "Path=/; HttpOnly; Secure; SameSite=Strict");
-    await assert.rejects(ingress.consumeTicket({ tenantId: "tenant", userId: "user", ticketId: ticket.id, secret: ticket.secret, host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" }), PreviewIngressError);
-    assert.deepEqual(await ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", websocket: false }), { projectId: "prj_alpha", upstreamPort: 4173 });
+    await assert.rejects(ingress.consumeTicket({ tenantId: "tenant", userId: "user", ticketId: ticket.id, secret: ticket.secret, host: "alpha.shipglows.com", origin: "https://app.shipglows.com" }), PreviewIngressError);
+    assert.deepEqual(await ingress.authorize({ cookie: cookie.value, host: "alpha.shipglows.com", websocket: false }), { projectId: "prj_alpha", upstreamPort: 4173 });
   });
 
   it("denies hostile origins, host swaps, actor swaps and websocket upgrades without exact Origin", async () => {
     const ingress = service();
-    await assert.rejects(ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com.evil" }), (error) => error instanceof PreviewIngressError && error.code === "previewOriginDenied");
-    const ticket = await ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" });
-    await assert.rejects(ingress.consumeTicket({ tenantId: "tenant", userId: "other", ticketId: ticket.id, secret: ticket.secret, host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" }), PreviewIngressError);
-    const fresh = await ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" });
-    const cookie = await ingress.consumeTicket({ tenantId: "tenant", userId: "user", ticketId: fresh.id, secret: fresh.secret, host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" });
-    await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "beta.preview.shipglows.com", websocket: false }), PreviewIngressError);
-    await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", websocket: true }), (error) => error instanceof PreviewIngressError && error.code === "previewOriginDenied");
-    assert.deepEqual(await ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com", websocket: true }), { projectId: "prj_alpha", upstreamPort: 4173 });
-    assert.deepEqual(await ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", origin: "https://alpha.preview.shipglows.com", websocket: true }), { projectId: "prj_alpha", upstreamPort: 4173 });
+    await assert.rejects(ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.shipglows.com", origin: "https://app.shipglows.com.evil" }), (error) => error instanceof PreviewIngressError && error.code === "previewOriginDenied");
+    const ticket = await ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.shipglows.com", origin: "https://app.shipglows.com" });
+    await assert.rejects(ingress.consumeTicket({ tenantId: "tenant", userId: "other", ticketId: ticket.id, secret: ticket.secret, host: "alpha.shipglows.com", origin: "https://app.shipglows.com" }), PreviewIngressError);
+    const fresh = await ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.shipglows.com", origin: "https://app.shipglows.com" });
+    const cookie = await ingress.consumeTicket({ tenantId: "tenant", userId: "user", ticketId: fresh.id, secret: fresh.secret, host: "alpha.shipglows.com", origin: "https://app.shipglows.com" });
+    await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "beta.shipglows.com", websocket: false }), PreviewIngressError);
+    await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.shipglows.com", websocket: true }), (error) => error instanceof PreviewIngressError && error.code === "previewOriginDenied");
+    assert.deepEqual(await ingress.authorize({ cookie: cookie.value, host: "alpha.shipglows.com", origin: "https://app.shipglows.com", websocket: true }), { projectId: "prj_alpha", upstreamPort: 4173 });
+    assert.deepEqual(await ingress.authorize({ cookie: cookie.value, host: "alpha.shipglows.com", origin: "https://alpha.shipglows.com", websocket: true }), { projectId: "prj_alpha", upstreamPort: 4173 });
     for (const origin of [
-      "https://alpha.preview.shipglows.com.evil",
-      "https://evil-alpha.preview.shipglows.com",
-      "https://beta.preview.shipglows.com",
-      "http://alpha.preview.shipglows.com",
-      "https://alpha.preview.shipglows.com:443",
+      "https://alpha.shipglows.com.evil",
+      "https://evil-alpha.shipglows.com",
+      "https://beta.shipglows.com",
+      "http://alpha.shipglows.com",
+      "https://alpha.shipglows.com:443",
     ]) {
-      await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", origin, websocket: true }), (error) => error instanceof PreviewIngressError && error.code === "previewOriginDenied");
+      await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.shipglows.com", origin, websocket: true }), (error) => error instanceof PreviewIngressError && error.code === "previewOriginDenied");
     }
   });
 
@@ -66,12 +66,12 @@ describe("PreviewIngressService", () => {
       "https://app.shipglows.com",
       () => 1_000,
     );
-    const ticket = await ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" });
-    const cookie = await ingress.consumeTicket({ tenantId: "tenant", userId: "user", ticketId: ticket.id, secret: ticket.secret, host: "alpha.preview.shipglows.com", origin: "https://app.shipglows.com" });
+    const ticket = await ingress.createTicket({ tenantId: "tenant", userId: "user", projectId: "prj_alpha", host: "alpha.shipglows.com", origin: "https://app.shipglows.com" });
+    const cookie = await ingress.consumeTicket({ tenantId: "tenant", userId: "user", ticketId: ticket.id, secret: ticket.secret, host: "alpha.shipglows.com", origin: "https://app.shipglows.com" });
     allowed = false;
-    await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", websocket: false }), (error) => error instanceof PreviewIngressError && error.code === "previewDenied");
+    await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.shipglows.com", websocket: false }), (error) => error instanceof PreviewIngressError && error.code === "previewDenied");
     allowed = true;
     Object.assign(mutableProject, { status: "stopped" });
-    await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.preview.shipglows.com", websocket: false }), (error) => error instanceof PreviewIngressError && error.code === "previewUnavailable");
+    await assert.rejects(ingress.authorize({ cookie: cookie.value, host: "alpha.shipglows.com", websocket: false }), (error) => error instanceof PreviewIngressError && error.code === "previewUnavailable");
   });
 });

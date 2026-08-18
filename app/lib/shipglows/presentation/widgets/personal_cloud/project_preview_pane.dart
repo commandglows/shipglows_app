@@ -425,7 +425,7 @@ class _PreviewBrowserHelp extends StatelessWidget {
             ),
             SizedBox(height: tokens.spacing.sm),
             const Text(
-              'Autorisez les cookies, les pop-ups et le contenu intégré pour app.shipglows.com et *.preview.shipglows.com. Sur Vivaldi, cliquez sur le bouclier près de la barre d’adresse et autorisez ce site.',
+              'Autorisez les cookies, les pop-ups et le contenu intégré pour app.shipglows.com et les previews *.shipglows.com. Sur Vivaldi, cliquez sur le bouclier près de la barre d’adresse et autorisez ce site.',
               textAlign: TextAlign.center,
             ),
             SizedBox(height: tokens.spacing.md),
