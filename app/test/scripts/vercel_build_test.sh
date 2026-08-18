@@ -11,7 +11,7 @@ cp "$SOURCE_ROOT/scripts/vercel-build.sh" "$FIXTURE_ROOT/scripts/vercel-build.sh
 
 cat >"$FIXTURE_ROOT/flutter/bin/flutter" <<'EOF'
 #!/bin/bash
-printf '%s\n' "$*" >>"$BUILD_TRACE"
+printf '<%s>\n' "$@" >>"$BUILD_TRACE"
 EOF
 chmod +x "$FIXTURE_ROOT/flutter/bin/flutter"
 
@@ -51,6 +51,7 @@ grep -q -- '--dart-define=OPEN_ACCESS=false' "$personal_trace"
 ! grep -q -- '--dart-define=API_BASE_URL=' "$personal_trace"
 ! grep -q -- '--dart-define=CLERK_PUBLISHABLE_KEY=' "$personal_trace"
 ! grep -q -- 'install-web-auth' "$personal_trace"
+grep -Fxq -- '<--dart-define=BUILD_AT_PARIS=2026-08-18 02:00 Europe/Paris>' "$personal_trace"
 
 legacy_trace="$FIXTURE_ROOT/legacy.trace"
 run_build "$legacy_trace" \
