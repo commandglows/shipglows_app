@@ -1,8 +1,9 @@
 import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
+import { createHash } from "node:crypto";
 
 import { buildRunnerApp } from "./app.js";
-import { FirebaseAuthenticationAdapter, FixedSingleUserFirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
+import { FirebaseAuthenticationAdapter, PersonalCloudFirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
 import { AcpRuntime, StdioAcpConnection } from "./agent-runtime/acp/index.js";
 import { loadConfig } from "./config.js";
 import { openOperationalStore } from "./db/index.js";
@@ -103,7 +104,7 @@ const operatorWorkspaceGateway = new OperatorWorkspaceGateway(
 );
 const reconcileCloudProjects = personalCloudConfig !== undefined && cloudProjectCatalog !== undefined
   ? async (actor: { readonly tenantId: string; readonly userId: string }) => {
-      if (actor.tenantId !== personalCloudConfig.tenantId || actor.userId !== personalCloudConfig.userId) throw new Error("Personal Cloud actor mismatch.");
+      if (actor.tenantId !== personalCloudConfig.tenantId || actor.userId !== personalCloudConfig.userId) return;
       const snapshot = await cloudProjectCatalog.read();
       const cloudWorkspaces: Record<string, { cwd: string; tmuxSession: string }> = {};
       for (const project of snapshot.entries) {
@@ -120,8 +121,22 @@ const authentication = config.integrations.firebase.enabled
       const projectId = config.integrations.firebase.projectId;
       if (projectId === undefined) throw new Error("Firebase project ID is required when authentication is enabled.");
       const verifier = createFirebaseIdTokenVerifier({ projectId });
-      return config.personalCloud.enabled
-        ? new FixedSingleUserFirebaseAuthenticationAdapter(verifier, config.personalCloud.firebaseUid, config.personalCloud.tenantId, config.personalCloud.userId)
+      return personalCloudConfig !== undefined
+        ? new PersonalCloudFirebaseAuthenticationAdapter(
+            verifier,
+            {
+              resolveOrProvision: ({ subject }) => {
+                const owner = subject === personalCloudConfig.firebaseUid;
+                const digest = createHash("sha256").update(subject).digest("hex").slice(0, 24);
+                return Promise.resolve(store.ensurePersonalActor({
+                  subject,
+                  tenantId: owner ? personalCloudConfig.tenantId : `ten_personal_${digest}`,
+                  userId: owner ? personalCloudConfig.userId : `usr_firebase_${digest}`,
+                }));
+              },
+            },
+            (reason) => console.warn(JSON.stringify({ event: "auth.denied", reason })),
+          )
         : new FirebaseAuthenticationAdapter(verifier, { resolve: (input) => Promise.resolve(store.resolveActor(input) ?? null) });
     })()
   : undefined;

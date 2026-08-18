@@ -76,10 +76,22 @@ void main() {
 
     expect(find.text('Contenu protégé'), findsNothing);
     expect(
-      find.text('Ce compte n’a pas accès à ce Personal Cloud.'),
+      find.text('Votre session Firebase a été refusée. Reconnectez-vous.'),
       findsOneWidget,
     );
-    expect(find.text('Changer de compte'), findsOneWidget);
+    expect(find.text('Se connecter avec Google'), findsOneWidget);
+    expect(find.textContaining('Diagnostic : auth_'), findsOneWidget);
+  });
+
+  testWidgets('shows a signed-in user with an empty project catalog', (
+    tester,
+  ) async {
+    final auth = _FakeAuthProvider(session: _session());
+    await tester.pumpWidget(_app(auth, authorizeSession: (_) async {}));
+    await _pumpAsync(tester);
+
+    expect(find.text('Contenu protégé'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }
 

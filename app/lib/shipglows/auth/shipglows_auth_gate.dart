@@ -35,7 +35,9 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
   StreamSubscription<ShipGlowsAuthState>? _subscription;
   ShipGlowsAuthGateStatus _status = ShipGlowsAuthGateStatus.loading;
   String? _message;
+  String? _diagnosticId;
   int _authGeneration = 0;
+  bool _interactiveSignIn = false;
 
   ShipGlowsAuthProvider get _auth => ref.read(shipGlowsAuthProvider);
 
@@ -48,7 +50,9 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
       return;
     }
     _subscription = auth.authStateChanges.listen(
-      (state) => unawaited(_applyAuthState(state)),
+      (state) {
+        if (!_interactiveSignIn) unawaited(_applyAuthState(state));
+      },
       onError: (Object _) =>
           _showError('La session n’a pas pu être vérifiée. Réessayez.'),
     );
@@ -73,53 +77,77 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     if (!mounted) return;
     final generation = ++_authGeneration;
     final session = state.session;
-    _invalidatePersonalCloudState();
     if (state.status == ShipGlowsAuthStatus.signedOut || session == null) {
       setState(() {
         _status = ShipGlowsAuthGateStatus.signedOut;
         _message = null;
+        _diagnosticId = null;
       });
       return;
     }
     setState(() {
       _status = ShipGlowsAuthGateStatus.loading;
       _message = null;
+      _diagnosticId = null;
     });
     try {
       await (widget.authorizeSession?.call(session) ??
               _authorizeWithRunner(session))
           .timeout(const Duration(seconds: 15));
       if (!mounted || generation != _authGeneration) return;
-      setState(() => _status = ShipGlowsAuthGateStatus.signedIn);
+      _invalidatePersonalCloudState();
+      setState(() {
+        _status = ShipGlowsAuthGateStatus.signedIn;
+        _diagnosticId = null;
+      });
     } on ManagedRunnerException catch (error) {
       if (!mounted || generation != _authGeneration) return;
-      final denied = error.statusCode == 401 || error.statusCode == 403;
+      final denied = error.statusCode == 403;
+      final diagnosticId = _recordDiagnostic(
+        stage: 'runner',
+        code: error.statusCode == 401 ? 'firebase_token_rejected' : error.code,
+      );
       setState(() {
         _status = denied
             ? ShipGlowsAuthGateStatus.denied
             : ShipGlowsAuthGateStatus.error;
         _message = denied
-            ? 'Ce compte n’a pas accès à ce Personal Cloud.'
+            ? 'Ce compte est connecté, mais il n’a pas accès à cette ressource.'
+            : error.statusCode == 401
+            ? 'Votre session Firebase a été refusée. Reconnectez-vous.'
             : 'Le Personal Cloud ne répond pas. Réessayez.';
+        _diagnosticId = diagnosticId;
       });
     } on TimeoutException {
       if (!mounted || generation != _authGeneration) return;
-      _showError('La vérification d’accès a expiré. Réessayez.');
-    } catch (_) {
+      _showError(
+        'La vérification d’accès a expiré. Réessayez.',
+        stage: 'runner',
+        code: 'access_timeout',
+      );
+    } catch (error) {
       if (!mounted || generation != _authGeneration) return;
-      _showError('L’accès au Personal Cloud n’a pas pu être vérifié.');
+      _showError(
+        'L’accès au Personal Cloud n’a pas pu être vérifié.',
+        stage: 'runner',
+        code: 'access_unexpected_${error.runtimeType}',
+      );
     }
   }
 
-  Future<void> _authorizeWithRunner(ShipGlowsSession _) async {
+  Future<void> _authorizeWithRunner(ShipGlowsSession session) async {
     if (!AppConfig.personalCloudEnabled) return;
-    final client = ref.read(managedRunnerApiProvider);
-    if (client is! ManagedRunnerApi) {
+    if (!AppConfig.managedRunnerEnabled) {
       throw const ManagedRunnerException(
         code: 'runnerUnavailable',
         message: 'The managed runner is unavailable.',
       );
     }
+    final client = ManagedRunnerApi(
+      baseUrl: AppConfig.managedRunnerBaseUrl,
+      accessTokenProvider: ({forceRefresh = false}) async =>
+          session.accessToken,
+    );
     await client.loadPersonalCloudProjects();
   }
 
@@ -130,11 +158,23 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     ref.invalidate(remoteWorkspaceTransportProvider);
   }
 
-  void _showError(String message) {
+  String _recordDiagnostic({required String stage, required String code}) {
+    final id =
+        'auth_${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}';
+    debugPrint('ShipGlows auth diagnostic=$id stage=$stage code=$code');
+    return id;
+  }
+
+  void _showError(
+    String message, {
+    String stage = 'session',
+    String code = 'unknown',
+  }) {
     if (!mounted) return;
     setState(() {
       _status = ShipGlowsAuthGateStatus.error;
       _message = message;
+      _diagnosticId = _recordDiagnostic(stage: stage, code: code);
     });
   }
 
@@ -144,8 +184,9 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
       _message = null;
     });
     try {
+      _interactiveSignIn = true;
       await _auth.signInWithGoogle();
-      final session = await _auth.currentSession(forceRefresh: true);
+      final session = await _auth.currentSession();
       if (!mounted) return;
       await _applyAuthState(
         session == null
@@ -153,9 +194,19 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
             : ShipGlowsAuthState.signedIn(session),
       );
     } on ShipGlowsAuthException catch (error) {
-      _showError(error.message);
-    } catch (_) {
-      _showError('La connexion Google a échoué. Réessayez.');
+      _showError(
+        error.message,
+        stage: 'firebase_popup',
+        code: error.failure.name,
+      );
+    } catch (error) {
+      _showError(
+        'La connexion Google a échoué. Réessayez.',
+        stage: 'firebase_popup',
+        code: 'unexpected_${error.runtimeType}',
+      );
+    } finally {
+      _interactiveSignIn = false;
     }
   }
 
@@ -186,6 +237,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     return _AuthenticationSurface(
       status: _status,
       message: _message,
+      diagnosticId: _diagnosticId,
       onSignIn: _signIn,
       onRetry: _restoreSession,
       onSignOut: _signOut,
@@ -197,6 +249,7 @@ class _AuthenticationSurface extends StatelessWidget {
   const _AuthenticationSurface({
     required this.status,
     required this.message,
+    required this.diagnosticId,
     required this.onSignIn,
     required this.onRetry,
     required this.onSignOut,
@@ -204,6 +257,7 @@ class _AuthenticationSurface extends StatelessWidget {
 
   final ShipGlowsAuthGateStatus status;
   final String? message;
+  final String? diagnosticId;
   final Future<void> Function() onSignIn;
   final Future<void> Function() onRetry;
   final Future<void> Function() onSignOut;
@@ -254,6 +308,14 @@ class _AuthenticationSurface extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                       ),
+                      if (diagnosticId != null) ...[
+                        SizedBox(height: tokens.spacing.sm),
+                        SelectableText(
+                          'Diagnostic : $diagnosticId',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                       SizedBox(height: tokens.spacing.lg),
                       if (isLoading)
                         const CircularProgressIndicator()

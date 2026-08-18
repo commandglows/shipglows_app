@@ -217,6 +217,16 @@ class FirebaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
         message:
             'La connexion réseau a échoué. Vérifiez votre accès puis réessayez.',
       ),
+      'unauthorized-domain' => const ShipGlowsAuthException(
+        failure: ShipGlowsAuthFailure.unsupported,
+        message:
+            'Ce domaine n’est pas autorisé par Firebase. Contactez l’administrateur.',
+      ),
+      'web-storage-unsupported' => const ShipGlowsAuthException(
+        failure: ShipGlowsAuthFailure.unsupported,
+        message:
+            'Le stockage nécessaire à la connexion est bloqué par le navigateur.',
+      ),
       _ => const ShipGlowsAuthException(
         failure: ShipGlowsAuthFailure.unknown,
         message:

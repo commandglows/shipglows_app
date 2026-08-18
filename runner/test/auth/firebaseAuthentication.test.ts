@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   FirebaseAuthenticationAdapter,
   FixedSingleUserFirebaseAuthenticationAdapter,
+  PersonalCloudFirebaseAuthenticationAdapter,
   type ActorResolver,
   type FirebaseIdTokenVerifier,
 } from "../../src/auth/index.js";
@@ -72,5 +73,47 @@ describe("Firebase authentication adapter", () => {
     const otherVerifier: FirebaseIdTokenVerifier = { verify: async () => ({ subject: "other-user" }) };
     const denied = new FixedSingleUserFirebaseAuthenticationAdapter(otherVerifier, "auth-user-000000000001", "ten_personal", "usr_owner");
     assert.equal(await denied.authenticate({ headers: { authorization: "Bearer valid.jwt.token", "x-shipglows-tenant": "attacker" } }), null);
+  });
+
+  it("provisions every valid Firebase subject without trusting a tenant header", async () => {
+    const failures: string[] = [];
+    const adapter = new PersonalCloudFirebaseAuthenticationAdapter(
+      verifier,
+      {
+        resolveOrProvision: async ({ subject }) => ({
+          subject,
+          tenantId: "ten_personal_subject",
+          userId: "usr_personal_subject",
+        }),
+      },
+      (reason) => failures.push(reason),
+    );
+    assert.deepEqual(
+      await adapter.authenticate({
+        headers: {
+          authorization: "Bearer valid.jwt.token",
+          "x-shipglows-tenant": "attacker",
+        },
+      }),
+      {
+        subject: "auth-user-000000000001",
+        tenantId: "ten_personal_subject",
+        userId: "usr_personal_subject",
+      },
+    );
+    assert.deepEqual(failures, []);
+  });
+
+  it("reports redacted authentication failure categories", async () => {
+    const failures: string[] = [];
+    const adapter = new PersonalCloudFirebaseAuthenticationAdapter(
+      verifier,
+      { resolveOrProvision: async () => { throw new Error("database unavailable"); } },
+      (reason) => failures.push(reason),
+    );
+    assert.equal(await adapter.authenticate({ headers: {} }), null);
+    assert.equal(await adapter.authenticate({ headers: { authorization: "Bearer invalid.jwt.token" } }), null);
+    assert.equal(await adapter.authenticate({ headers: { authorization: "Bearer valid.jwt.token" } }), null);
+    assert.deepEqual(failures, ["missingBearer", "invalidToken", "provisioningFailed"]);
   });
 });

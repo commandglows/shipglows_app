@@ -77,6 +77,12 @@ export class FirebaseAuthenticationAdapter implements AuthenticationAdapter {
   }
 }
 
+export interface PersonalActorProvisioner {
+  resolveOrProvision(input: { readonly subject: string }): Promise<ActorContext>;
+}
+
+export type AuthenticationFailureReason = "missingBearer" | "invalidToken" | "provisioningFailed";
+
 export class FixedSingleUserFirebaseAuthenticationAdapter implements AuthenticationAdapter {
   constructor(
     private readonly verifier: FirebaseIdTokenVerifier,
@@ -93,6 +99,35 @@ export class FixedSingleUserFirebaseAuthenticationAdapter implements Authenticat
       if (subject !== this.expectedSubject) return null;
       return { subject, tenantId: this.tenantId, userId: this.userId };
     } catch { return null; }
+  }
+}
+
+export class PersonalCloudFirebaseAuthenticationAdapter implements AuthenticationAdapter {
+  constructor(
+    private readonly verifier: FirebaseIdTokenVerifier,
+    private readonly actors: PersonalActorProvisioner,
+    private readonly onFailure: (reason: AuthenticationFailureReason) => void = () => undefined,
+  ) {}
+
+  async authenticate(request: Pick<FastifyRequest, "headers">): Promise<ActorContext | null> {
+    const token = bearerToken(request.headers);
+    if (token === undefined) {
+      this.onFailure("missingBearer");
+      return null;
+    }
+    let subject: string;
+    try {
+      ({ subject } = await this.verifier.verify(token));
+    } catch {
+      this.onFailure("invalidToken");
+      return null;
+    }
+    try {
+      return await this.actors.resolveOrProvision({ subject });
+    } catch {
+      this.onFailure("provisioningFailed");
+      return null;
+    }
   }
 }
 

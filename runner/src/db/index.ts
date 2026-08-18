@@ -154,6 +154,11 @@ export interface OperationalStore {
   createTenant(input: { readonly id: string; readonly identityRef: string }): void;
   createUser(input: { readonly id: string; readonly authSubject: string }): void;
   addTenantUser(input: { readonly tenantId: string; readonly userId: string; readonly role: string }): void;
+  ensurePersonalActor(input: {
+    readonly subject: string;
+    readonly tenantId: string;
+    readonly userId: string;
+  }): { readonly tenantId: string; readonly userId: string; readonly subject: string };
   createProject(input: {
     readonly id: string;
     readonly tenantId: string;
@@ -844,6 +849,51 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
     createUser: ({ id, authSubject }) => run(db, "INSERT INTO users VALUES(?, ?)", id, authSubject),
     addTenantUser: ({ tenantId, userId, role }) =>
       run(db, "INSERT INTO tenant_users VALUES(?, ?, ?)", tenantId, userId, role),
+    ensurePersonalActor: ({ subject, tenantId, userId }) => {
+      validateOpaqueValue(subject, "Authentication subject");
+      validateOpaqueValue(tenantId, "Tenant identifier");
+      validateOpaqueValue(userId, "User identifier");
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        const existing = oneRow(
+          db,
+          `SELECT users.id AS userId, tenant_users.tenant_id AS tenantId
+           FROM users JOIN tenant_users ON tenant_users.user_id = users.id
+           WHERE users.auth_subject = ?
+           ORDER BY tenant_users.tenant_id LIMIT 1`,
+          subject,
+        );
+        if (existing !== undefined) {
+          db.exec("COMMIT");
+          return { subject, tenantId: readString(existing, "tenantId"), userId: readString(existing, "userId") };
+        }
+
+        run(db, "INSERT OR IGNORE INTO tenants VALUES(?, ?)", tenantId, `firebase:${tenantId}`);
+        run(db, "INSERT OR IGNORE INTO users VALUES(?, ?)", userId, subject);
+        run(db, "UPDATE users SET auth_subject = ? WHERE id = ? AND auth_subject LIKE 'local:%'", subject, userId);
+        const user = oneRow(db, "SELECT auth_subject AS subject FROM users WHERE id = ?", userId);
+        if (user === undefined || readString(user, "subject") !== subject) {
+          throw new Error("Personal actor identity collision.");
+        }
+        run(
+          db,
+          `INSERT INTO tenant_users(tenant_id, user_id, role)
+           SELECT ?, ?, 'owner'
+           WHERE NOT EXISTS(
+             SELECT 1 FROM tenant_users WHERE tenant_id = ? AND user_id = ?
+           )`,
+          tenantId,
+          userId,
+          tenantId,
+          userId,
+        );
+        db.exec("COMMIT");
+        return { subject, tenantId, userId };
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    },
     createProject: ({ id, tenantId, githubRepositoryId, sourceSystem, sourceProjectId }) => {
       if (sourceSystem !== undefined || sourceProjectId !== undefined) {
         if (sourceSystem === undefined || sourceProjectId === undefined) {

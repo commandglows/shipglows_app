@@ -204,6 +204,35 @@ describe("SQLite operational projection", () => {
     store.close();
   });
 
+  it("provisions personal actors idempotently without granting project membership", async () => {
+    const store = await openOperationalStore(await databasePath("personal-actors"));
+    const actor = store.ensurePersonalActor({
+      subject: "firebase-new-user",
+      tenantId: "ten_personal_new",
+      userId: "usr_personal_new",
+    });
+    assert.deepEqual(actor, {
+      subject: "firebase-new-user",
+      tenantId: "ten_personal_new",
+      userId: "usr_personal_new",
+    });
+    assert.deepEqual(
+      store.ensurePersonalActor({
+        subject: "firebase-new-user",
+        tenantId: "ten_ignored",
+        userId: "usr_ignored",
+      }),
+      actor,
+    );
+    assert.equal(store.hasProjectAccess({
+      tenantId: actor.tenantId,
+      userId: actor.userId,
+      projectId: ids.projectA,
+      capability: "read",
+    }), false);
+    store.close();
+  });
+
   it("resolves cross-namespace project identities only for an authorized tenant member", async () => {
     const store = await openOperationalStore(await databasePath("project-identities"));
     seed(store);
