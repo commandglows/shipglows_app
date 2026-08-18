@@ -60,5 +60,11 @@ if user_caddy_is_running; then caddy_running=true; fi
 if [[ "$previous_routes" != "$current_routes" \
   || ( -n "$current_routes" && "$caddy_running" != "true" ) \
   || ( -z "$current_routes" && "$caddy_running" == "true" ) ]]; then
-  refresh_user_caddy_from_pm2
+  # The CLI may start user Caddy as a long-lived background process. Close the
+  # refresh lock descriptor in the subshell so Caddy cannot inherit it and
+  # make every later timer tick look like a successful overlapping refresh.
+  (
+    exec 9>&-
+    refresh_user_caddy_from_pm2
+  )
 fi

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { buildRunnerApp, type RunnerAppDependencies } from "../../src/app.js";
 import type { ActorContext, AuthenticationAdapter } from "../../src/auth/index.js";
+import { CloudProjectCatalogError } from "../../src/cloud-projects/index.js";
 import { loadConfig } from "../../src/config.js";
 import type { AgentRuntime, OpaqueId } from "../../src/contracts/index.js";
 import type { ProjectAccessRepository } from "../../src/projects/projectAccess.js";
@@ -141,6 +142,27 @@ describe("runner API foundation", () => {
     });
     assert.equal(denied.statusCode, 403);
     assert.equal(denied.json().error.code, "projectForbidden");
+  });
+
+  it("reports a stale cloud project catalog as unavailable instead of an internal error", async () => {
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication: { authenticate: async () => actor },
+        projectAccess: { hasProjectAccess: () => false },
+        cloudProjectCatalog: { read: async () => { throw new CloudProjectCatalogError("catalogStale"); } },
+        // A non-owner actor does not read the catalog during reconciliation.
+        reconcileCloudProjects: () => Promise.resolve(),
+      },
+    });
+
+    const response = await app.inject({ method: "GET", url: "/v1/cloud-projects" });
+    await app.close();
+
+    assert.equal(response.statusCode, 503);
+    assert.deepEqual(response.json(), {
+      error: { code: "catalogStale", message: "The project catalog is stale." },
+    });
   });
 
   it("fails closed on the protected runner route when authentication is absent", async () => {
