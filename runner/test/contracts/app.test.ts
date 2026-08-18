@@ -257,6 +257,21 @@ describe("runner API foundation", () => {
     assert.equal(unavailable.statusCode, 503);
     assert.equal(unavailable.json().error.code, "operatorWorkspaceUnavailable");
 
+    const availableApp = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication,
+        projectAccess,
+        operatorWorkspaceCapability: async () => ({ available: true, reason: "ready" }),
+      },
+    });
+    const available = await availableApp.inject({
+      method: "GET",
+      url: "/v1/projects/prj_000000000001/operator-workspace",
+    });
+    await availableApp.close();
+    assert.deepEqual(available.json(), { available: true, reason: "ready", protocolVersion: 2, surfaces: ["editor", "terminal"] });
+
     const forbiddenApp = buildRunnerApp({
       config: loadConfig({ RUNNER_ENV: "test" }),
       dependencies: {
@@ -292,14 +307,28 @@ describe("runner API foundation", () => {
         operatorWorkspaceGateway: gateway,
       },
     });
-    const created = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-1" } });
+    const created = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-1" }, payload: { surface: "editor" } });
+    const invalidSurface = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-2" }, payload: { surface: "shell" } });
     assert.equal(created.statusCode, 201);
+    assert.equal(invalidSurface.statusCode, 400);
     assert.doesNotMatch(created.body, /srv|tmux|shipglows-project/);
     const body = created.json();
     const closed = await app.inject({ method: "POST", url: `/v1/operator-sessions/${body.sessionId}/close` });
     await app.close();
     assert.equal(closed.statusCode, 200);
     assert.equal(closed.json().state, "closed");
+
+    const readOnlyApp = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication: { authenticate: async () => actor },
+        projectAccess: { hasProjectAccess: ({ capability }) => capability === "read" },
+        operatorWorkspaceGateway: gateway,
+      },
+    });
+    const denied = await readOnlyApp.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-readonly" }, payload: { surface: "terminal" } });
+    await readOnlyApp.close();
+    assert.equal(denied.statusCode, 403);
   });
 
   it("accepts bounded authenticated preview diagnostics without private payloads", async () => {
@@ -335,6 +364,41 @@ describe("runner API foundation", () => {
     assert.doesNotMatch(JSON.stringify(events), /secret|cookie|authorization/i);
   });
 
+  it("accepts redacted Workspace diagnostics only with mutate access", async () => {
+    const events: Record<string, string>[] = [];
+    const dependencies = {
+      authentication: { authenticate: async () => actor },
+      reconcileCloudProjects: () => Promise.resolve(),
+      workspaceDiagnosticSink: (event: Record<string, string>) => events.push(event),
+    };
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test", RUNNER_ALLOWED_ORIGINS: "https://app.shipglows.com" }),
+      dependencies: { ...dependencies, projectAccess: { hasProjectAccess: () => true } },
+    });
+    const accepted = await app.inject({
+      method: "POST",
+      url: "/v1/projects/prj_000000000001/workspace-diagnostics",
+      headers: { origin: "https://app.shipglows.com", "user-agent": "Mozilla/5.0 Firefox/141.0" },
+      payload: { diagnosticId: "wd_abc123def456", surface: "editor", stage: "recovery", code: "reported", occurredAt: "2026-08-18T02:00:00.000Z" },
+    });
+    await app.close();
+    assert.equal(accepted.statusCode, 202);
+    assert.deepEqual(events, [{ diagnosticId: "wd_abc123def456", projectId: "prj_000000000001", surface: "editor", stage: "recovery", code: "reported", browserFamily: "firefox", occurredAt: "2026-08-18T02:00:00.000Z" }]);
+
+    const readOnlyApp = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test", RUNNER_ALLOWED_ORIGINS: "https://app.shipglows.com" }),
+      dependencies: { ...dependencies, projectAccess: { hasProjectAccess: ({ capability }) => capability === "read" } },
+    });
+    const denied = await readOnlyApp.inject({
+      method: "POST",
+      url: "/v1/projects/prj_000000000001/workspace-diagnostics",
+      headers: { origin: "https://app.shipglows.com" },
+      payload: { diagnosticId: "wd_abc123def456", surface: "editor", stage: "recovery", code: "reported", occurredAt: "2026-08-18T02:00:00.000Z" },
+    });
+    await readOnlyApp.close();
+    assert.equal(denied.statusCode, 403);
+  });
+
   it("upgrades an operator session to a protected WebSocket", async () => {
     const pty: OperatorPty = {
       write: () => undefined,
@@ -354,6 +418,7 @@ describe("runner API foundation", () => {
       tenantId: actor.tenantId,
       userId: actor.userId,
       projectId: "prj_000000000001",
+      surface: "terminal",
       idempotencyKey: "workspace-websocket-1",
     });
     const app = buildRunnerApp({

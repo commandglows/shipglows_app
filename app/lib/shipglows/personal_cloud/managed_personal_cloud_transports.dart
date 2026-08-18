@@ -41,18 +41,24 @@ class ManagedProjectPreviewTransport
   );
 }
 
-class ManagedRemoteWorkspaceTransport implements RemoteWorkspaceTransport {
+class ManagedRemoteWorkspaceTransport
+    implements RemoteWorkspaceTransport, RemoteWorkspaceDiagnosticsTransport {
   const ManagedRemoteWorkspaceTransport(this.api);
   final ManagedRunnerApi api;
 
   @override
   Future<RemoteWorkspaceCapability> createCapability({
     required String projectId,
+    required RemoteWorkspaceSurface surface,
     required String idempotencyKey,
   }) async {
     try {
       final session = await api.createOperatorSession(
         projectId: projectId,
+        surface: switch (surface) {
+          RemoteWorkspaceSurface.editor => ManagedWorkspaceSurface.editor,
+          RemoteWorkspaceSurface.terminal => ManagedWorkspaceSurface.terminal,
+        },
         idempotencyKey: idempotencyKey,
       );
       return RemoteWorkspaceCapability(
@@ -80,6 +86,26 @@ class ManagedRemoteWorkspaceTransport implements RemoteWorkspaceTransport {
   @override
   Future<void> releaseCapability({required String sessionId}) =>
       api.closeOperatorSession(sessionId: sessionId);
+
+  @override
+  Future<void> reportWorkspaceDiagnostic({
+    required String projectId,
+    required RemoteWorkspaceSurface surface,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  }) => api.reportWorkspaceDiagnostic(
+    projectId: projectId,
+    surface: switch (surface) {
+      RemoteWorkspaceSurface.editor => ManagedWorkspaceSurface.editor,
+      RemoteWorkspaceSurface.terminal => ManagedWorkspaceSurface.terminal,
+    },
+    diagnosticId: diagnosticId,
+    stage: stage,
+    code: code,
+    occurredAt: occurredAt,
+  );
 }
 
 class _ManagedRemoteWorkspaceSocket implements RemoteWorkspaceSocket {
@@ -103,6 +129,8 @@ RemoteSurfaceException _surfaceError(ManagedRunnerException error) {
     'previewOriginDenied' => RemoteSurfaceFailure.denied,
     'previewExpired' => RemoteSurfaceFailure.expired,
     'operatorSessionActive' => RemoteSurfaceFailure.activeElsewhere,
+    'operatorSessionConflict' => RemoteSurfaceFailure.protocol,
+    'workspaceProtocolUnsupported' => RemoteSurfaceFailure.unsupported,
     'operatorWorkspaceUnavailable' ||
     'previewUnavailable' => RemoteSurfaceFailure.unavailable,
     _ => RemoteSurfaceFailure.network,

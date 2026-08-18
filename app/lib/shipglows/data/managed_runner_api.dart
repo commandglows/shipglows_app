@@ -147,11 +147,22 @@ class ManagedOperatorSession {
 abstract interface class ManagedWorkspaceTransport {
   Future<ManagedOperatorSession> createOperatorSession({
     required String projectId,
+    required ManagedWorkspaceSurface surface,
     required String idempotencyKey,
   });
   WebSocketChannel connectOperatorSession(ManagedOperatorSession session);
   Future<void> closeOperatorSession({required String sessionId});
+  Future<void> reportWorkspaceDiagnostic({
+    required String projectId,
+    required ManagedWorkspaceSurface surface,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  });
 }
+
+enum ManagedWorkspaceSurface { editor, terminal }
 
 abstract interface class ManagedStudioTransport {
   Future<StudioPreviewCapability> studioCapability({required String projectId});
@@ -1942,6 +1953,32 @@ class ManagedRunnerApi
   }
 
   @override
+  Future<void> reportWorkspaceDiagnostic({
+    required String projectId,
+    required ManagedWorkspaceSurface surface,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  }) async {
+    try {
+      await _dio.post<dynamic>(
+        '/v1/projects/${Uri.encodeComponent(projectId)}/workspace-diagnostics',
+        data: <String, Object?>{
+          'diagnosticId': diagnosticId,
+          'surface': surface.name,
+          'stage': stage,
+          'code': code,
+          'occurredAt': occurredAt.toUtc().toIso8601String(),
+        },
+        options: Options(headers: await _headers()),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  @override
   Future<StudioCompilationRoutingProjection> studioCompilationRouting({
     required String projectId,
     required String sourceRevision,
@@ -2409,12 +2446,34 @@ class ManagedRunnerApi
   @override
   Future<ManagedOperatorSession> createOperatorSession({
     required String projectId,
+    required ManagedWorkspaceSurface surface,
     required String idempotencyKey,
   }) async {
     try {
+      final capability = await _dio.get<dynamic>(
+        '/v1/projects/${Uri.encodeComponent(projectId)}/operator-workspace',
+        options: Options(headers: await _headers()),
+      );
+      final capabilityData = capability.data;
+      if (capabilityData is! Map ||
+          capabilityData['protocolVersion'] != 2 ||
+          capabilityData['surfaces'] is! List ||
+          !(capabilityData['surfaces'] as List).contains(surface.name)) {
+        throw const ManagedRunnerException(
+          code: 'workspaceProtocolUnsupported',
+          message:
+              'Le runner doit être mis à jour avant d’ouvrir cet espace de travail.',
+        );
+      }
+      if (capabilityData['available'] != true) {
+        throw const ManagedRunnerException(
+          code: 'operatorWorkspaceUnavailable',
+          message: 'Le Workspace n’est pas disponible pour ce projet.',
+        );
+      }
       final response = await _dio.post<dynamic>(
-        '/v1/projects/$projectId/operator-sessions',
-        data: const <String, Object?>{},
+        '/v1/projects/${Uri.encodeComponent(projectId)}/operator-sessions',
+        data: <String, Object?>{'surface': surface.name},
         options: Options(
           headers: {...await _headers(), 'Idempotency-Key': idempotencyKey},
         ),

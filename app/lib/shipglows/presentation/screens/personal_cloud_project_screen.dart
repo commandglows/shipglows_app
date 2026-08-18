@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../presentation/theme/app_theme.dart';
+import '../../personal_cloud/personal_cloud_models.dart';
 import '../../personal_cloud/personal_cloud_transports.dart';
 import '../../providers/personal_cloud/personal_cloud_transport_providers.dart';
 import '../../providers/personal_cloud/personal_cloud_projects_provider.dart';
@@ -10,7 +11,7 @@ import '../widgets/personal_cloud/project_preview_pane.dart';
 import '../widgets/personal_cloud/reconnecting_workspace_terminal.dart';
 import '../widgets/shipglows_scaffold.dart';
 
-enum PersonalCloudPane { preview, terminal }
+enum PersonalCloudPane { preview, editor, terminal }
 
 class PersonalCloudProjectScreen extends ConsumerWidget {
   const PersonalCloudProjectScreen({
@@ -145,7 +146,16 @@ class PersonalCloudProjectSurface extends StatefulWidget {
 
 class _PersonalCloudProjectSurfaceState
     extends State<PersonalCloudProjectSurface> {
-  PersonalCloudPane _selectedPane = PersonalCloudPane.preview;
+  PersonalCloudPane _selectedPane = PersonalCloudPane.editor;
+  PersonalCloudPane _workspacePane = PersonalCloudPane.editor;
+  bool _workspaceFocused = false;
+
+  void _selectPane(PersonalCloudPane pane) {
+    setState(() {
+      _selectedPane = pane;
+      if (pane != PersonalCloudPane.preview) _workspacePane = pane;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,23 +170,67 @@ class _PersonalCloudProjectSurfaceState
           transport: widget.previewTransport,
           frameBuilder: widget.previewFrameBuilder,
         );
-        final terminal = ReconnectingWorkspaceTerminal(
-          key: const ValueKey('personal-cloud-terminal-pane'),
-          projectId: widget.projectId,
-          projectName: widget.projectName,
-          transport: widget.workspaceTransport,
-          showAccessoryKeys: windowClass == AppWindowClass.compact,
-          reconnectPolicy: widget.workspaceReconnectPolicy,
-          delay: widget.workspaceDelay,
-        );
+        Widget workspace(RemoteWorkspaceSurface surface) =>
+            ReconnectingWorkspaceTerminal(
+              key: const ValueKey('personal-cloud-workspace-pane'),
+              projectId: widget.projectId,
+              projectName: widget.projectName,
+              transport: widget.workspaceTransport,
+              surface: surface,
+              showAccessoryKeys: windowClass == AppWindowClass.compact,
+              reconnectPolicy: widget.workspaceReconnectPolicy,
+              delay: widget.workspaceDelay,
+            );
+        final workspaceSurface = _workspacePane == PersonalCloudPane.terminal
+            ? RemoteWorkspaceSurface.terminal
+            : RemoteWorkspaceSurface.editor;
 
         if (windowClass == AppWindowClass.expanded) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: preview),
-              VerticalDivider(width: tokens.spacing.md),
-              Expanded(child: terminal),
+              if (!_workspaceFocused) ...[
+                Expanded(
+                  key: const ValueKey('personal-cloud-preview-column'),
+                  child: preview,
+                ),
+                VerticalDivider(width: tokens.spacing.md),
+              ],
+              Expanded(
+                key: const ValueKey('personal-cloud-workspace-column'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        _WorkspaceSurfaceSelector(
+                          selectedPane:
+                              _selectedPane == PersonalCloudPane.preview
+                              ? _workspacePane
+                              : _selectedPane,
+                          onSelected: _selectPane,
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          tooltip: _workspaceFocused
+                              ? 'Afficher la Preview à côté'
+                              : 'Agrandir l’espace de travail',
+                          onPressed: () => setState(
+                            () => _workspaceFocused = !_workspaceFocused,
+                          ),
+                          icon: Icon(
+                            _workspaceFocused
+                                ? Icons.fullscreen_exit_rounded
+                                : Icons.fullscreen_rounded,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: tokens.spacing.sm),
+                    Expanded(child: workspace(workspaceSurface)),
+                  ],
+                ),
+              ),
             ],
           );
         }
@@ -196,6 +250,11 @@ class _PersonalCloudProjectSurfaceState
                       label: Text('Preview'),
                     ),
                     ButtonSegment(
+                      value: PersonalCloudPane.editor,
+                      icon: Icon(Icons.code_rounded),
+                      label: Text('Éditeur'),
+                    ),
+                    ButtonSegment(
                       value: PersonalCloudPane.terminal,
                       icon: Icon(Icons.terminal_rounded),
                       label: Text('Terminal'),
@@ -204,7 +263,7 @@ class _PersonalCloudProjectSurfaceState
                   selected: {_selectedPane},
                   showSelectedIcon: false,
                   onSelectionChanged: (selection) {
-                    setState(() => _selectedPane = selection.single);
+                    _selectPane(selection.single);
                   },
                 ),
               ),
@@ -212,13 +271,47 @@ class _PersonalCloudProjectSurfaceState
             SizedBox(height: tokens.spacing.sm),
             Expanded(
               child: IndexedStack(
-                index: _selectedPane.index,
-                children: [preview, terminal],
+                index: _selectedPane == PersonalCloudPane.preview ? 0 : 1,
+                children: [preview, workspace(workspaceSurface)],
               ),
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _WorkspaceSurfaceSelector extends StatelessWidget {
+  const _WorkspaceSurfaceSelector({
+    required this.selectedPane,
+    required this.onSelected,
+  });
+
+  final PersonalCloudPane selectedPane;
+  final ValueChanged<PersonalCloudPane> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Choisir l’espace de travail',
+      child: SegmentedButton<PersonalCloudPane>(
+        segments: const [
+          ButtonSegment(
+            value: PersonalCloudPane.editor,
+            icon: Icon(Icons.code_rounded),
+            label: Text('Éditeur'),
+          ),
+          ButtonSegment(
+            value: PersonalCloudPane.terminal,
+            icon: Icon(Icons.terminal_rounded),
+            label: Text('Terminal'),
+          ),
+        ],
+        selected: {selectedPane},
+        showSelectedIcon: false,
+        onSelectionChanged: (selection) => onSelected(selection.single),
+      ),
     );
   }
 }

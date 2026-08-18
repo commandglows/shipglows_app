@@ -19,6 +19,7 @@ export interface RunnerConfig {
   readonly integrations: RunnerIntegrationsConfig;
   readonly runtimes: RunnerRuntimesConfig;
   readonly operatorWorkspaces: Readonly<Record<string, OperatorWorkspaceConfig>>;
+  readonly operatorWorkspaceUser?: string;
   readonly personalCloud: RunnerPersonalCloudConfig;
   readonly studio: RunnerStudioConfig;
   readonly localStudioAuthEnabled: boolean;
@@ -167,6 +168,7 @@ export function loadConfig(
   const studioEnabled = readBoolean(env["RUNNER_STUDIO_ENABLED"], "RUNNER_STUDIO_ENABLED", issues);
   const localStudioAuthEnabled = readBoolean(env["RUNNER_LOCAL_STUDIO_AUTH_ENABLED"], "RUNNER_LOCAL_STUDIO_AUTH_ENABLED", issues);
   const operatorWorkspaces = parseOperatorWorkspaces(env["RUNNER_OPERATOR_WORKSPACES"], issues);
+  const operatorWorkspaceUser = env["RUNNER_OPERATOR_WORKSPACE_USER"]?.trim();
   const personalCloudEnabled = readBoolean(env["RUNNER_PERSONAL_CLOUD_ENABLED"], "RUNNER_PERSONAL_CLOUD_ENABLED", issues);
   const personalCloudCatalogPath = env["RUNNER_CLOUD_PROJECT_CATALOG_PATH"] ?? "";
   const personalCloudAllowedRoots = (env["RUNNER_CLOUD_ALLOWED_ROOTS"] ?? "").split(",").map((value) => value.trim()).filter(Boolean);
@@ -280,6 +282,12 @@ export function loadConfig(
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(personalCloudTenantId)) issues.push("RUNNER_PERSONAL_CLOUD_TENANT_ID is required");
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(personalCloudUserId)) issues.push("RUNNER_PERSONAL_CLOUD_USER_ID is required");
     if (!firebaseEnabled) issues.push("RUNNER_PERSONAL_CLOUD_ENABLED requires FIREBASE_AUTH_ENABLED=true");
+    if (environment === "production" && !/^[a-z_][a-z0-9_-]{0,31}$/.test(operatorWorkspaceUser ?? "")) {
+      issues.push("RUNNER_OPERATOR_WORKSPACE_USER is required in production Personal Cloud and must be a Linux account name");
+    }
+  }
+  if (operatorWorkspaceUser !== undefined && !/^[a-z_][a-z0-9_-]{0,31}$/.test(operatorWorkspaceUser)) {
+    issues.push("RUNNER_OPERATOR_WORKSPACE_USER must be a Linux account name");
   }
   if (issues.length > 0) throw new ConfigError(issues);
 
@@ -311,6 +319,7 @@ export function loadConfig(
       eve: { enabled: eveEnabled },
     },
     operatorWorkspaces,
+    ...(operatorWorkspaceUser === undefined ? {} : { operatorWorkspaceUser }),
     personalCloud: personalCloudEnabled ? {
       enabled: true,
       catalogPath: personalCloudCatalogPath,

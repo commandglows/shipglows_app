@@ -98,6 +98,8 @@ describe("runner configuration", () => {
     assert.equal(loadConfig(env).personalCloud.enabled, true);
     assert.throws(() => loadConfig({ ...env, RUNNER_PERSONAL_CLOUD_FIREBASE_UID: "" }), /FIREBASE_UID/);
     assert.throws(() => loadConfig({ ...env, FIREBASE_AUTH_ENABLED: "false" }), /requires FIREBASE_AUTH_ENABLED/);
+    assert.throws(() => loadConfig({ ...env, RUNNER_ENV: "production" }), /RUNNER_OPERATOR_WORKSPACE_USER/);
+    assert.equal(loadConfig({ ...env, RUNNER_ENV: "production", RUNNER_OPERATOR_WORKSPACE_USER: "shipglows-workspace" }).operatorWorkspaceUser, "shipglows-workspace");
   });
 
   it("keeps Studio disabled by default and rejects production or incomplete enablement", () => {

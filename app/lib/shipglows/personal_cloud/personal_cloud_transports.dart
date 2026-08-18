@@ -25,10 +25,22 @@ abstract interface class RemoteWorkspaceSocket {
 abstract interface class RemoteWorkspaceTransport {
   Future<RemoteWorkspaceCapability> createCapability({
     required String projectId,
+    required RemoteWorkspaceSurface surface,
     required String idempotencyKey,
   });
 
   RemoteWorkspaceSocket connect(RemoteWorkspaceCapability capability);
 
   Future<void> releaseCapability({required String sessionId});
+}
+
+abstract interface class RemoteWorkspaceDiagnosticsTransport {
+  Future<void> reportWorkspaceDiagnostic({
+    required String projectId,
+    required RemoteWorkspaceSurface surface,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  });
 }

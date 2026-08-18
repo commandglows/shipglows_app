@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { IPty } from "node-pty";
 import * as nodePty from "node-pty";
 
@@ -19,20 +19,26 @@ export interface OperatorSession {
   readonly expiresAt: string;
 }
 
+export type OperatorWorkspaceSurface = "editor" | "terminal";
+
 interface StoredSession {
   readonly id: string;
   token: string | null;
   readonly projectId: string;
+  readonly surface: OperatorWorkspaceSurface;
   readonly expiresAt: string;
   readonly tenantId: string;
   readonly userId: string;
   readonly pty: OperatorPty;
+  readonly expiryTimer: { dispose(): void };
   attached: boolean;
   lastHeartbeatAt: number;
   readonly idempotencyKey: string;
+  retire: ((code?: number, reason?: string) => void) | undefined;
 }
 
 export interface OperatorSocket {
+  readonly bufferedAmount?: number;
   send(data: string): void;
   close(code?: number, reason?: string): void;
   on(event: "message", listener: (data: unknown) => void): void;
@@ -44,7 +50,11 @@ export interface OperatorWorkspaceTiming {
   readonly capabilityLifetimeMs?: number;
   readonly heartbeatTimeoutMs?: number;
   readonly schedule?: (listener: () => void, intervalMs: number) => { dispose(): void };
+  readonly scheduleOnce?: (listener: () => void, delayMs: number) => { dispose(): void };
 }
+
+const maximumOutputChunkBytes = 64 * 1024;
+const maximumSocketBufferBytes = 1024 * 1024;
 
 export class OperatorWorkspaceGateway {
   private readonly sessions = new Map<string, StoredSession>();
@@ -52,10 +62,11 @@ export class OperatorWorkspaceGateway {
   private readonly lifetimeMs: number;
   private readonly heartbeatTimeoutMs: number;
   private readonly schedule: (listener: () => void, intervalMs: number) => { dispose(): void };
+  private readonly scheduleOnce: (listener: () => void, delayMs: number) => { dispose(): void };
 
   constructor(
     private workspaces: Readonly<Record<string, OperatorWorkspaceConfig>>,
-    private readonly spawn: (config: OperatorWorkspaceConfig) => OperatorPty = spawnTmuxPty,
+    private readonly spawn: (config: OperatorWorkspaceConfig, surface: OperatorWorkspaceSurface) => OperatorPty = spawnTmuxPty,
     nowOrTiming: (() => number) | OperatorWorkspaceTiming = Date.now,
     legacyLifetimeMs = 60_000,
     private readonly allowedOrigin?: string,
@@ -65,6 +76,7 @@ export class OperatorWorkspaceGateway {
     this.lifetimeMs = timing.capabilityLifetimeMs ?? 60_000;
     this.heartbeatTimeoutMs = timing.heartbeatTimeoutMs ?? 30_000;
     this.schedule = timing.schedule ?? scheduleInterval;
+    this.scheduleOnce = timing.scheduleOnce ?? scheduleTimeout;
   }
 
   reconcileWorkspaces(workspaces: Readonly<Record<string, OperatorWorkspaceConfig>>): void {
@@ -77,26 +89,39 @@ export class OperatorWorkspaceGateway {
       : { available: true, reason: "A protected operator Workspace is available." };
   }
 
-  create(input: { tenantId: string; userId: string; projectId: string; idempotencyKey: string }): OperatorSession {
+  create(input: { tenantId: string; userId: string; projectId: string; surface: OperatorWorkspaceSurface; idempotencyKey: string }): OperatorSession {
     const config = this.workspaces[input.projectId];
     if (config === undefined) throw new OperatorWorkspaceError("operatorWorkspaceUnavailable", 503);
     for (const session of this.sessions.values()) {
       if (session.tenantId !== input.tenantId || session.userId !== input.userId || session.projectId !== input.projectId) continue;
       if (session.attached) throw new OperatorWorkspaceError("operatorSessionActive", 409);
-      if (session.idempotencyKey === input.idempotencyKey && session.token !== null && Date.parse(session.expiresAt) > this.now()) return publicSession(session);
+      if (session.idempotencyKey === input.idempotencyKey) {
+        if (session.surface !== input.surface) throw new OperatorWorkspaceError("operatorSessionConflict", 409);
+        if (session.token !== null && Date.parse(session.expiresAt) > this.now()) return publicSession(session);
+      }
       this.close(session.id);
     }
+    const id = `ops_${randomUUID()}`;
+    const expiresAt = new Date(this.now() + this.lifetimeMs).toISOString();
+    const pty = this.spawn(config, input.surface);
+    const expiryTimer = this.scheduleOnce(() => {
+      const current = this.sessions.get(id);
+      if (current !== undefined && current.token !== null && Date.parse(current.expiresAt) <= this.now()) this.close(id);
+    }, this.lifetimeMs);
     const session: StoredSession = {
-      id: `ops_${randomUUID()}`,
+      id,
       token: randomBytes(32).toString("base64url"),
       tenantId: input.tenantId,
       userId: input.userId,
       projectId: input.projectId,
-      expiresAt: new Date(this.now() + this.lifetimeMs).toISOString(),
-      pty: this.spawn(config),
+      surface: input.surface,
+      expiresAt,
+      pty,
+      expiryTimer,
       attached: false,
       lastHeartbeatAt: this.now(),
       idempotencyKey: input.idempotencyKey,
+      retire: undefined,
     };
     this.sessions.set(session.id, session);
     return publicSession(session);
@@ -118,29 +143,55 @@ export class OperatorWorkspaceGateway {
     }
     session.attached = true;
     session.token = null;
+    session.expiryTimer.dispose();
     session.lastHeartbeatAt = this.now();
     let released = false;
-    const dataSubscription = session.pty.onData((data) => socket.send(JSON.stringify({ type: "output", data })));
-    const exitSubscription = session.pty.onExit(() => {
-      socket.send(JSON.stringify({ type: "status", state: "closed" }));
-      socket.close(1000, "Workspace closed.");
-      releaseAttachment();
-      this.sessions.delete(sessionId);
-    });
-    const heartbeatSubscription = this.schedule(() => {
-      if (this.now() - session.lastHeartbeatAt <= this.heartbeatTimeoutMs) return;
-      socket.close(4408, "Workspace heartbeat expired.");
-      releaseAttachment();
-    }, Math.max(250, Math.floor(this.heartbeatTimeoutMs / 2)));
-    const releaseAttachment = (): void => {
+    const subscriptions: {
+      data?: { dispose(): void };
+      exit?: { dispose(): void };
+      heartbeat?: { dispose(): void };
+    } = {};
+    const releaseAttachment = (killPty: boolean): void => {
       if (released) return;
       released = true;
-      dataSubscription.dispose();
-      exitSubscription.dispose();
-      heartbeatSubscription.dispose();
+      subscriptions.data?.dispose();
+      subscriptions.exit?.dispose();
+      subscriptions.heartbeat?.dispose();
       session.attached = false;
+      session.retire = undefined;
+      this.sessions.delete(sessionId);
+      if (killPty) session.pty.kill();
     };
+    const retire = (code?: number, reason?: string): void => {
+      if (released) return;
+      releaseAttachment(true);
+      if (code !== undefined) socket.close(code, reason);
+    };
+    session.retire = retire;
+    subscriptions.data = session.pty.onData((data) => {
+      if (released) return;
+      if (Buffer.byteLength(data, "utf8") > maximumOutputChunkBytes || (socket.bufferedAmount ?? 0) > maximumSocketBufferBytes) {
+        retire(1013, "Workspace output exceeded the bounded client capacity.");
+        return;
+      }
+      try {
+        socket.send(JSON.stringify({ type: "output", data }));
+      } catch {
+        retire(1011, "Workspace stream failed.");
+      }
+    });
+    subscriptions.exit = session.pty.onExit(() => {
+      if (released) return;
+      try { socket.send(JSON.stringify({ type: "status", state: "closed" })); } catch { /* Socket is already unavailable. */ }
+      releaseAttachment(false);
+      socket.close(1000, "Workspace closed.");
+    });
+    subscriptions.heartbeat = this.schedule(() => {
+      if (this.now() - session.lastHeartbeatAt <= this.heartbeatTimeoutMs) return;
+      retire(4408, "Workspace heartbeat expired.");
+    }, Math.max(250, Math.floor(this.heartbeatTimeoutMs / 2)));
     socket.on("message", (raw) => {
+      if (released) return;
       const message = parseMessage(raw);
       if (message?.["type"] === "heartbeat") {
         session.lastHeartbeatAt = this.now();
@@ -149,15 +200,19 @@ export class OperatorWorkspaceGateway {
       if (message?.["type"] === "input" && typeof message["data"] === "string" && message["data"].length <= 16_384) session.pty.write(message["data"]);
       if (message?.["type"] === "resize" && typeof message["columns"] === "number" && typeof message["rows"] === "number" && validSize(message["columns"], message["rows"])) session.pty.resize(message["columns"], message["rows"]);
     });
-    socket.on("close", releaseAttachment);
+    socket.on("close", () => releaseAttachment(true));
     socket.send(JSON.stringify({ type: "status", state: "connected" }));
   }
 
   close(sessionId: string): boolean {
     const session = this.sessions.get(sessionId);
     if (session === undefined) return false;
-    this.sessions.delete(sessionId);
-    session.pty.kill();
+    if (session.retire !== undefined) session.retire(1000, "Workspace closed.");
+    else {
+      this.sessions.delete(sessionId);
+      session.expiryTimer.dispose();
+      session.pty.kill();
+    }
     return true;
   }
 
@@ -175,18 +230,81 @@ export class OperatorWorkspaceGateway {
 
 export class OperatorWorkspaceError extends Error {
   constructor(readonly code: string, readonly statusCode: number) {
-    super(code === "operatorSessionActive" ? "An operator Workspace is already attached." : "The operator Workspace is unavailable.");
+    super(
+      code === "operatorSessionActive"
+        ? "An operator Workspace is already attached."
+        : code === "operatorSessionConflict"
+          ? "The operator Workspace request conflicts with an existing idempotency key."
+          : "The operator Workspace is unavailable.",
+    );
   }
 }
 
-export function spawnTmuxPty(config: OperatorWorkspaceConfig): IPty {
-  return nodePty.spawn("tmux", ["new-session", "-A", "-s", config.tmuxSession, "-c", config.cwd], {
+export interface OperatorWorkspaceSpawnOptions {
+  readonly unixUser?: string;
+}
+
+export function spawnTmuxPty(
+  config: OperatorWorkspaceConfig,
+  surface: OperatorWorkspaceSurface,
+  options: OperatorWorkspaceSpawnOptions = {},
+): IPty {
+  const processInvocation = workspaceProcessInvocation(config, surface, options);
+  return nodePty.spawn(processInvocation.file, processInvocation.args, {
     name: "xterm-256color",
     cols: 120,
     rows: 32,
     cwd: config.cwd,
-    env: { ...process.env, TERM: "xterm-256color" },
+    env: workspaceEnvironment(),
   });
+}
+
+export function workspaceProcessInvocation(
+  config: OperatorWorkspaceConfig,
+  surface: OperatorWorkspaceSurface,
+  options: OperatorWorkspaceSpawnOptions = {},
+): { readonly file: string; readonly args: string[] } {
+  const isolated = options.unixUser !== undefined;
+  const invocation = tmuxInvocation(config, surface, isolated ? "/usr/bin/nvim" : "nvim");
+  if (!isolated) return { file: "tmux", args: invocation.args };
+  return {
+    file: "/usr/bin/sudo",
+    args: ["-n", "-H", "-u", options.unixUser ?? "", "--", "/usr/bin/tmux", ...invocation.args],
+  };
+}
+
+export function workspaceEnvironment(): Readonly<Record<string, string>> {
+  return {
+    PATH: "/usr/local/bin:/usr/bin:/bin",
+    LANG: "C.UTF-8",
+    TERM: "xterm-256color",
+    COLORTERM: "truecolor",
+  };
+}
+
+export function tmuxInvocation(
+  config: OperatorWorkspaceConfig,
+  surface: OperatorWorkspaceSurface,
+  nvimExecutable = "nvim",
+): { readonly args: string[]; readonly sessionName: string } {
+  if (surface === "terminal") {
+    return {
+      args: ["new-session", "-A", "-s", config.tmuxSession, "-c", config.cwd],
+      sessionName: config.tmuxSession,
+    };
+  }
+  const sessionName = editorSessionName(config.tmuxSession);
+  return {
+    args: ["new-session", "-A", "-s", sessionName, "-c", config.cwd, nvimExecutable],
+    sessionName,
+  };
+}
+
+function editorSessionName(base: string): string {
+  const direct = `${base}-nvim`;
+  if (direct.length <= 64) return direct;
+  const digest = createHash("sha256").update(base).digest("hex").slice(0, 8);
+  return `${base.slice(0, 49)}-nvim-${digest}`;
 }
 
 function publicSession(session: StoredSession): OperatorSession {
@@ -217,4 +335,10 @@ function scheduleInterval(listener: () => void, intervalMs: number): { dispose()
   const timer = setInterval(listener, intervalMs);
   timer.unref();
   return { dispose: () => clearInterval(timer) };
+}
+
+function scheduleTimeout(listener: () => void, delayMs: number): { dispose(): void } {
+  const timer = setTimeout(listener, delayMs);
+  timer.unref();
+  return { dispose: () => clearTimeout(timer) };
 }

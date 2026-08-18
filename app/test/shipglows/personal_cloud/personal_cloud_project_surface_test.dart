@@ -62,84 +62,123 @@ void main() {
       findsNothing,
     );
     expect(
-      find.byKey(const ValueKey('personal-cloud-terminal-pane')),
+      find.byKey(const ValueKey('personal-cloud-workspace-pane')),
       findsNothing,
     );
   });
 
-  testWidgets('keeps Preview and Terminal mounted in the compact surface', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final preview = _PreviewTransport([_readyPreview()]);
-    final workspace = _WorkspaceTransport([_WorkspaceSocket()]);
+  testWidgets(
+    'switches between Preview, Editor and Terminal with one Workspace',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final preview = _PreviewTransport([_readyPreview()]);
+      final workspace = _WorkspaceTransport([
+        _WorkspaceSocket(),
+        _WorkspaceSocket(),
+      ]);
 
-    await tester.pumpWidget(
-      _app(
-        PersonalCloudProjectSurface(
-          projectId: 'project-1',
-          projectName: 'Projet test',
-          previewTransport: preview,
-          workspaceTransport: workspace,
-          previewFrameBuilder: _previewFrame,
-          workspaceReconnectPolicy: const WorkspaceReconnectPolicy(
-            delays: [],
-            heartbeatInterval: null,
+      await tester.pumpWidget(
+        _app(
+          PersonalCloudProjectSurface(
+            projectId: 'project-1',
+            projectName: 'Projet test',
+            previewTransport: preview,
+            workspaceTransport: workspace,
+            previewFrameBuilder: _previewFrame,
+            workspaceReconnectPolicy: const WorkspaceReconnectPolicy(
+              delays: [],
+              heartbeatInterval: null,
+            ),
           ),
         ),
-      ),
-    );
-    await _pumpAsync(tester);
+      );
+      await _pumpAsync(tester);
 
-    expect(preview.openCount, 1);
-    expect(workspace.createCount, 1);
-    expect(find.text('Preview fixture'), findsOneWidget);
+      expect(preview.openCount, 1);
+      expect(workspace.createCount, 1);
+      expect(find.text('Éditeur Neovim'), findsOneWidget);
+      expect(workspace.surfaces, [RemoteWorkspaceSurface.editor]);
 
-    await tester.tap(find.text('Terminal'));
-    await _pumpAsync(tester);
-    expect(find.text('Workspace connecté'), findsOneWidget);
-    expect(find.text('Esc'), findsOneWidget);
+      await tester.tap(find.text('Terminal'));
+      await _pumpAsync(tester, frames: 12);
+      expect(
+        tester
+            .widget<SegmentedButton<PersonalCloudPane>>(
+              find.byType(SegmentedButton<PersonalCloudPane>),
+            )
+            .selected,
+        {PersonalCloudPane.terminal},
+      );
+      expect(
+        tester
+            .widget<ReconnectingWorkspaceTerminal>(
+              find.byKey(const ValueKey('personal-cloud-workspace-pane')),
+            )
+            .surface,
+        RemoteWorkspaceSurface.terminal,
+      );
+      expect(workspace.releasedSessionIds, contains('session-1'));
+      expect(workspace.surfaces, [
+        RemoteWorkspaceSurface.editor,
+        RemoteWorkspaceSurface.terminal,
+      ]);
+      expect(find.text('Terminal connecté'), findsOneWidget);
+      expect(find.text('Esc'), findsOneWidget);
 
-    await tester.tap(find.text('Preview'));
-    await _pumpAsync(tester);
-    expect(preview.openCount, 1);
-    expect(workspace.createCount, 1);
-    expect(find.text('Preview fixture'), findsOneWidget);
-  });
+      await tester.tap(find.text('Preview'));
+      await _pumpAsync(tester);
+      expect(preview.openCount, 1);
+      expect(workspace.createCount, 2);
+      expect(find.text('Preview fixture'), findsOneWidget);
+    },
+  );
 
-  testWidgets('shows Preview and Terminal together on expanded screens', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1440, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final workspace = _WorkspaceTransport([_WorkspaceSocket()]);
+  testWidgets(
+    'shows Preview and the Neovim editor together on expanded screens',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final workspace = _WorkspaceTransport([_WorkspaceSocket()]);
 
-    await tester.pumpWidget(
-      _app(
-        PersonalCloudProjectSurface(
-          projectId: 'project-1',
-          projectName: 'Projet test',
-          previewTransport: _PreviewTransport([_readyPreview()]),
-          workspaceTransport: workspace,
-          previewFrameBuilder: _previewFrame,
-          workspaceReconnectPolicy: const WorkspaceReconnectPolicy(
-            delays: [],
-            heartbeatInterval: null,
+      await tester.pumpWidget(
+        _app(
+          PersonalCloudProjectSurface(
+            projectId: 'project-1',
+            projectName: 'Projet test',
+            previewTransport: _PreviewTransport([_readyPreview()]),
+            workspaceTransport: workspace,
+            previewFrameBuilder: _previewFrame,
+            workspaceReconnectPolicy: const WorkspaceReconnectPolicy(
+              delays: [],
+              heartbeatInterval: null,
+            ),
           ),
         ),
-      ),
-    );
-    await _pumpAsync(tester);
+      );
+      await _pumpAsync(tester);
 
-    expect(find.text('Preview fixture'), findsOneWidget);
-    expect(find.text('Workspace connecté'), findsOneWidget);
-    expect(find.byType(VerticalDivider), findsOneWidget);
-  });
+      expect(find.text('Preview fixture'), findsOneWidget);
+      expect(find.text('Neovim connecté'), findsOneWidget);
+      expect(find.text('Éditeur Neovim'), findsOneWidget);
+      expect(find.byType(VerticalDivider), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Agrandir l’espace de travail'));
+      await _pumpAsync(tester);
+      expect(find.byType(VerticalDivider), findsNothing);
+      expect(workspace.createCount, 1);
+      expect(find.byTooltip('Afficher la Preview à côté'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Afficher la Preview à côté'));
+      await _pumpAsync(tester);
+      expect(find.byType(VerticalDivider), findsOneWidget);
+      expect(workspace.createCount, 1);
+    },
+  );
 
   testWidgets('retries a typed Preview failure without opening another tab', (
     tester,
@@ -262,6 +301,7 @@ void main() {
           projectId: 'project-1',
           projectName: 'Projet test',
           transport: transport,
+          surface: RemoteWorkspaceSurface.terminal,
           reconnectPolicy: const WorkspaceReconnectPolicy(
             delays: [Duration.zero],
             heartbeatInterval: null,
@@ -277,7 +317,56 @@ void main() {
     await _pumpAsync(tester);
     expect(transport.createCount, 2);
     expect(transport.releasedSessionIds, contains('session-1'));
-    expect(find.text('Workspace connecté'), findsOneWidget);
+    expect(find.text('Terminal connecté'), findsOneWidget);
+  });
+
+  testWidgets('stops reconnecting after repeated short-lived connections', (
+    tester,
+  ) async {
+    final sockets = [
+      _WorkspaceSocket(),
+      _WorkspaceSocket(),
+      _WorkspaceSocket(),
+    ];
+    final transport = _WorkspaceTransport(sockets);
+
+    await tester.pumpWidget(
+      _app(
+        ReconnectingWorkspaceTerminal(
+          projectId: 'project-1',
+          projectName: 'Projet test',
+          transport: transport,
+          surface: RemoteWorkspaceSurface.editor,
+          reconnectPolicy: const WorkspaceReconnectPolicy(
+            delays: [Duration.zero, Duration.zero],
+            heartbeatInterval: null,
+          ),
+          delay: (_) async {},
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+    await sockets[0].endFromServer();
+    await _pumpAsync(tester);
+    await sockets[1].endFromServer();
+    await _pumpAsync(tester);
+    await sockets[2].endFromServer();
+    await _pumpAsync(tester);
+
+    expect(transport.createCount, 3);
+    expect(find.text('Le flux Workspace a été interrompu.'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Reconnecter'), findsOneWidget);
+    expect(
+      find.text('L’environnement tmux reste conservé sur le serveur.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Diagnostic wd_'), findsOneWidget);
+    expect(
+      transport.diagnostics.where(
+        (event) => event['code'] == 'retry_exhausted',
+      ),
+      isNotEmpty,
+    );
   });
 
   testWidgets('renders an active-session conflict as a typed visible state', (
@@ -298,6 +387,7 @@ void main() {
           projectId: 'project-1',
           projectName: 'Projet test',
           transport: transport,
+          surface: RemoteWorkspaceSurface.terminal,
           reconnectPolicy: const WorkspaceReconnectPolicy(
             delays: [],
             heartbeatInterval: null,
@@ -311,7 +401,7 @@ void main() {
       find.text('Ce Workspace est déjà ouvert sur un autre appareil.'),
       findsOneWidget,
     );
-    expect(find.byIcon(Icons.desktop_access_disabled_outlined), findsOneWidget);
+    expect(find.text('Workspace déjà actif ailleurs'), findsOneWidget);
   });
 
   testWidgets('does not echo a server heartbeat frame', (tester) async {
@@ -322,6 +412,7 @@ void main() {
           projectId: 'project-1',
           projectName: 'Projet test',
           transport: _WorkspaceTransport([socket]),
+          surface: RemoteWorkspaceSurface.terminal,
           reconnectPolicy: const WorkspaceReconnectPolicy(
             delays: [],
             heartbeatInterval: null,
@@ -333,6 +424,42 @@ void main() {
     socket.emitFromServer('{"type":"heartbeat","state":"alive"}');
     await _pumpAsync(tester);
     expect(socket.sent, isEmpty);
+  });
+
+  testWidgets('keeps recovery available when stale cleanup fails', (
+    tester,
+  ) async {
+    final first = _WorkspaceSocket(closeFailure: true);
+    final second = _WorkspaceSocket();
+    final transport = _WorkspaceTransport([
+      first,
+      second,
+    ], releaseFailureCount: 1);
+    await tester.pumpWidget(
+      _app(
+        ReconnectingWorkspaceTerminal(
+          projectId: 'project-1',
+          projectName: 'Projet test',
+          transport: transport,
+          surface: RemoteWorkspaceSurface.editor,
+          reconnectPolicy: const WorkspaceReconnectPolicy(
+            delays: [Duration.zero],
+            heartbeatInterval: null,
+          ),
+          delay: (_) async {},
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+    await first.endFromServer();
+    await _pumpAsync(tester, frames: 12);
+
+    expect(transport.createCount, 2);
+    expect(find.text('Neovim connecté'), findsOneWidget);
+    expect(
+      transport.diagnostics.where((event) => event['code'] == 'cleanup_failed'),
+      isNotEmpty,
+    );
   });
 }
 
@@ -399,22 +526,32 @@ class _PreviewTransport
   }
 }
 
-class _WorkspaceTransport implements RemoteWorkspaceTransport {
-  _WorkspaceTransport(this.sockets, {this.createFailure});
+class _WorkspaceTransport
+    implements RemoteWorkspaceTransport, RemoteWorkspaceDiagnosticsTransport {
+  _WorkspaceTransport(
+    this.sockets, {
+    this.createFailure,
+    this.releaseFailureCount = 0,
+  });
 
   final List<_WorkspaceSocket> sockets;
   final RemoteSurfaceException? createFailure;
+  int releaseFailureCount;
   final releasedSessionIds = <String>[];
+  final surfaces = <RemoteWorkspaceSurface>[];
+  final diagnostics = <Map<String, Object>>[];
   var createCount = 0;
 
   @override
   Future<RemoteWorkspaceCapability> createCapability({
     required String projectId,
+    required RemoteWorkspaceSurface surface,
     required String idempotencyKey,
   }) async {
     final failure = createFailure;
     if (failure != null) throw failure;
     createCount += 1;
+    surfaces.add(surface);
     return RemoteWorkspaceCapability(
       sessionId: 'session-$createCount',
       token: 'opaque-$createCount',
@@ -428,12 +565,38 @@ class _WorkspaceTransport implements RemoteWorkspaceTransport {
 
   @override
   Future<void> releaseCapability({required String sessionId}) async {
+    if (releaseFailureCount > 0) {
+      releaseFailureCount -= 1;
+      throw StateError('fixture cleanup failure');
+    }
     releasedSessionIds.add(sessionId);
+  }
+
+  @override
+  Future<void> reportWorkspaceDiagnostic({
+    required String projectId,
+    required RemoteWorkspaceSurface surface,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  }) async {
+    diagnostics.add({
+      'projectId': projectId,
+      'surface': surface,
+      'diagnosticId': diagnosticId,
+      'stage': stage,
+      'code': code,
+      'occurredAt': occurredAt,
+    });
   }
 }
 
 class _WorkspaceSocket implements RemoteWorkspaceSocket {
+  _WorkspaceSocket({this.closeFailure = false});
+
   final _messages = StreamController<Object?>();
+  final bool closeFailure;
   final sent = <String>[];
   bool closed = false;
 
@@ -449,6 +612,7 @@ class _WorkspaceSocket implements RemoteWorkspaceSocket {
   @override
   Future<void> close() async {
     closed = true;
+    if (closeFailure) throw StateError('fixture socket close failure');
   }
 
   Future<void> endFromServer() => _messages.close();

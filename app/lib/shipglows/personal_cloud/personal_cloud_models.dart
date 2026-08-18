@@ -48,6 +48,8 @@ enum RemoteSurfaceFailure {
   unsupported,
 }
 
+enum RemoteWorkspaceSurface { editor, terminal }
+
 class RemoteSurfaceException implements Exception {
   const RemoteSurfaceException({
     required this.failure,

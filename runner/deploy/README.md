@@ -13,6 +13,7 @@ These files prepare the ready Personal Cloud architecture without granting or pe
 ## Server prerequisites and hard limits
 
 - Node `>=22.16.0 <25`, npm, PM2, Caddy 2 with standard `forward_auth`, systemd user services, `flock`, `curl`, `ss`, tmux and the existing ShipGlows Linux CLI.
+- A dedicated non-login `shipglows-workspace` Unix account owns tmux/Neovim execution. The runner account may invoke only `/usr/bin/tmux` as that account through passwordless sudo; the workspace account must not read the runner env, Firebase configuration, SQLite database, Caddy credentials, or unrelated repositories.
 - Public firewall: only the separately approved administration port plus TCP `80/443`. Never expose `3210`, `8080`, or project devserver ports.
 - Catalog refresh starts 30 seconds after the user manager settles and then runs 60 seconds after each completion. The service timeout is 45 seconds, below the runner reader TTL of 120 seconds; overlapping refreshes exit successfully under `flock`. User Caddy is regenerated/restarted only when the exact route set or its running state changes, so an unchanged timer tick does not churn active HMR sockets.
 - Runner: one forked PM2 instance, 512 MiB restart ceiling, ten rapid restart attempts, ten-second kill timeout, two concurrent runs and a 15-minute run limit by default.
@@ -30,6 +31,20 @@ install -m 0600 deploy/personal-cloud-refresh.env.example "$HOME/.config/shipglo
 ```
 
 Replace every `REPLACE_*` value in the private files. Keep the exact Firebase UID and Workspace JSON private. `npm ci` must include `tsx`, because the current runner start contract uses `node --import tsx`.
+
+Provision the workspace identity once, after reviewing the resolved runner user and repository paths:
+
+```bash
+sudo useradd --system --create-home --shell /usr/sbin/nologin shipglows-workspace
+sudo install -m 0440 /dev/stdin /etc/sudoers.d/shipglows-workspace <<'EOF'
+REPLACE_RUNNER_USER ALL=(shipglows-workspace) NOPASSWD: /usr/bin/tmux *
+EOF
+sudo visudo -cf /etc/sudoers.d/shipglows-workspace
+sudo setfacl -R -m u:shipglows-workspace:rwX /home/REPLACE_OPERATOR/projects/REPLACE_ALLOWED_REPOSITORY
+sudo setfacl -R -d -m u:shipglows-workspace:rwX /home/REPLACE_OPERATOR/projects/REPLACE_ALLOWED_REPOSITORY
+```
+
+Create one explicit ACL pair per allowlisted repository; never grant the account access to the operator home or the runner state/config directories. The runner launches `/usr/bin/sudo -n -H -u shipglows-workspace -- /usr/bin/tmux …` with a fixed `PATH`, locale and terminal variables only. Validate the sudoers file before restarting the runner, and remove it plus the repository ACLs to roll this isolation layer back.
 
 Install the refresh wrapper and user units without starting them:
 

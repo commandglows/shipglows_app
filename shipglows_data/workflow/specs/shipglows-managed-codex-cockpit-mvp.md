@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.31.3"
+artifact_version: "1.33.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-18"
-updated_at: "2026-08-17 22:45:49 UTC"
+updated_at: "2026-08-18 12:32:48 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -122,6 +122,7 @@ evidence:
   - "Local integration proof 2026-08-17: the new Flutter runtime exposes one persistent global project selector and one visual Settings project panel backed by a closed, in-memory development catalog containing exactly `shipglows_app` and `gocharbon`; no database provisioning, GitHub access, or mutation capability is granted."
   - "Local project-management proof 2026-08-17: the loopback runner owns one persistent workspace-bounded registry and redacted management API; the Flutter runtime exposes one Projects page for connect, activate, default, rename, archive/restore, and disconnect. Repository paths remain private, generic project mutation remains denied, and disconnect never deletes or changes Git files."
   - "Operator decision 2026-08-18: the current Personal Cloud milestone is Projects plus persistent Preview plus reconnectable Workspace; semantic Conversations and Studio remain available but are non-blocking for this milestone."
+  - "Operator decision 2026-08-18: Neovim is the primary Personal Cloud work surface; first ship a persistent server-selected tmux/PTY editor, then evolve behind a private runner gateway toward the official Neovim UI RPC protocol."
 next_step: "/102-sg-start ShipGlows Managed Agent Cockpit MVP"
 ---
 
@@ -134,6 +135,10 @@ next_step: "/102-sg-start ShipGlows Managed Agent Cockpit MVP"
 ShipGlows Managed Agent Cockpit MVP
 
 # Status
+
+Workspace excellence amendment, 2026-08-18: opening Éditeur or Terminal is a mutating project capability, not a read capability. Production Personal Cloud must launch tmux/Neovim as a dedicated non-login Unix account through a fixed, non-interactive sudo boundary and a minimal allowlisted environment; the runner identity and its credentials never enter the PTY. Workspace protocol v2 is negotiated before session creation. Browser leases, unattached capabilities, PTY output and WebSocket buffering are bounded, and cleanup failure cannot wedge reconnection. Flutter replaces terminal-shaped dead canvases with a recovery surface, redacted diagnostic ID and explicit reconnect/report actions, and expanded layouts provide a Neovim focus mode while preserving the active Workspace session.
+
+Neovim editor amendment, 2026-08-18: the Personal Cloud Workspace now distinguishes the closed server-owned surfaces `editor` and `terminal`. `editor` attaches to a stable derived tmux session and launches only the fixed `nvim` executable in the allowlisted project cwd; `terminal` preserves the existing allowlisted shell tmux session. Flutter presents Preview, Éditeur and Terminal while keeping at most one Workspace connection active. The later native Flutter renderer may consume normalized Neovim UI RPC events only through a private runner gateway; the raw Neovim socket and arbitrary RPC methods must never reach the client.
 
 Personal Cloud amendment, 2026-08-18: the current milestone is deliberately narrower than the complete Cockpit vision. Its release path is Projects + persistent Preview + reconnectable Workspace. Semantic Conversations and Studio remain supported product surfaces, but neither is a blocking dependency for this milestone and Studio keeps its separate capability contract. The existing CLI/tmux/Neovim workflow remains authoritative; the application becomes its authenticated remote window rather than replacing it. Firebase Auth uses one provisioned single-tenant UID, SQLite remains an operational projection, and Convex and Docker are deferred. `/101-sg-ready` returned SAFE after the companion contracts, PC-A ownership, OWASP gate, dependency freshness and ACP runtime authority were corrected; this specification is ready for bounded implementation.
 
@@ -163,10 +168,14 @@ After signing in, the user sees the runner-owned project catalog, can open each 
 - Web, Android and Windows use the same Flutter domain, state, API and UI modules. Flutter Web is the first end-to-end deployment proof; Android and Windows receive platform, contract and Workspace rendering proof in the MVP.
 - Windows uses the same Flutter domain, state, API and Workspace contracts; the MVP proves the Windows shell and terminal rendering contract without requiring WSL on the user's machine.
 - The operator Workspace can reconnect to an existing tmux session, resize the PTY, display terminal output, and launch Neovim; it is never silently opened from a normal agent conversation.
+- Personal Cloud exposes Preview, Éditeur and Terminal as distinct surfaces; Éditeur opens a persistent server-selected Neovim tmux session without showing or accepting a client-selected shell command.
 - Every Workspace reconnect uses a fresh project/actor capability and reattaches to the same server-owned tmux session after the previous socket lease has ended; terminal scrollback persistence remains owned by tmux, not Flutter or SQLite.
 - The runner accepts a Workspace WebSocket only when the authenticated request `Origin` exactly equals the configured ShipGlows application origin; prefix, suffix, wildcard, missing and `null` origins are rejected.
 - Client and runner exchange bounded heartbeat frames; a missed-heartbeat lease closes the WebSocket and releases the active attachment without killing tmux.
 - One actor/project/tmux tuple has at most one active WebSocket. A second attach returns `409 operatorSessionActive`; takeover is never implicit.
+- Read-only project members cannot create a Workspace session or submit Workspace diagnostics; both require the project mutation capability.
+- A protocol-v1 or otherwise incompatible runner is rejected before PTY allocation with a visible update-required state.
+- Expanded layouts can focus Éditeur or Terminal without creating a second Workspace connection; restoring the split returns Preview beside the same active Workspace.
 
 # Error Behavior
 
@@ -184,10 +193,13 @@ After signing in, the user sees the runner-owned project catalog, can open each 
 - A projection refresh failure never erases the last known Cockpit evidence; affected dimensions become stale or unknown with a timestamp and source diagnostic.
 - Repository content that attempts prompt injection cannot expand server permissions, reveal secrets, alter tenant/project selection, or bypass approval and sandbox policies.
 - Operator terminal failure, tmux loss, PTY disconnect or unsupported resize leaves the semantic Cockpit usable and shows a recoverable Workspace state; it never falls back to unbounded shell execution.
+- Workspace connection, stream, cleanup and retry exhaustion failures produce bounded redacted diagnostics keyed by a user-visible `wd_*` identifier; PTY bytes, commands, tokens, paths and raw exception text are excluded.
+- Slow WebSocket clients, oversized PTY chunks, expired unattached capabilities and missed heartbeat leases retire the browser/PTy attachment before accepting a replacement; tmux remains server-owned and persistent.
 - A Workspace disconnect transitions the client to a retryable state, clears its stale channel, and requests a fresh capability before reconnecting to the same tmux session.
 - Missing, `null`, wildcard, prefix-matched, suffix-matched or otherwise non-exact Workspace `Origin` is rejected before PTY attachment.
 - A missed heartbeat closes only the abandoned WebSocket/PTY attachment. It does not kill tmux, create a second session or expose a takeover path.
 - A concurrent Workspace attach is rejected with `409 operatorSessionActive`; the UI explains that another attachment is active and offers retry only after that lease closes.
+- Missing, unknown or conflicting Workspace surface values fail closed; reusing one idempotency key across `editor` and `terminal` returns a conflict instead of changing the process behind an issued capability.
 
 # Problem
 
@@ -568,6 +580,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Depends on: Tasks 2-4, 6, 8, and 9; the semantic agent surface must remain usable if Workspace is unavailable.
   - Validate with: authorization/expiry and capability-reuse rejection tests, exact-Origin negative matrix, tmux identity/allowlist tests, heartbeat expiry, PTY resize/fresh-capability reconnect tests, Web/Android/Windows rendering proof, Neovim launch fixture, disconnect cleanup, no-host-path/secret assertions, and deterministic concurrent-session rejection.
   - Implementation note (2026-08-03): the runner now issues one idempotent, short-lived project/actor capability, spawns only a server-allowlisted tmux session through a PTY, rejects invalid/expired/concurrent attachments, bounds input and resize frames, and closes by actor ownership. Flutter creates the capability, connects through the dedicated WebSocket channel, renders PTY output with `xterm`, forwards input/resize, and closes on disposal. Hosted reconnect, Neovim, and Web/Android/Windows rendering proof remain.
+  - Implementation note (2026-08-18): the local contract adds the closed `editor|terminal` surface. The runner derives a separate stable tmux name for Éditeur and passes fixed argv ending in `nvim`; Flutter defaults the Workspace to Éditeur, provides Preview/Éditeur/Terminal selection and disposes the previous Workspace before opening another. Direct Neovim UI RPC remains a later bounded batch behind a private normalized gateway, not part of this PTY slice.
 - [~] Task 12: Add observability, operational controls, and secure runbook.
   - Files: `runner/src/observability/**`, `app/lib/shipglows/observability/**`, `shipglows_data/technical/operator-guides/managed-agent-runner.md`, related tests.
   - Action: Integrate Sentry with strict before-send redaction, early Flutter/server initialization, release/build identity, safe diagnostics/log-copy with Paris/UTC headers, health endpoints, runtime auth/process/capability checks, workspace cleanup, quotas, SQLite backup/migration procedures, and incident recovery.
@@ -625,6 +638,7 @@ Personal Cloud follow-up batches are non-overlapping and override broader batch 
 - `AC-016b`: Workspace WebSocket admission requires exact configured `Origin`; missing, `null`, wildcard, prefix and suffix variants fail before PTY creation.
 - `AC-016c`: Bounded heartbeat expiry releases the abandoned browser attachment without killing tmux, and a concurrent attach deterministically returns `409 operatorSessionActive` with no implicit takeover.
 - `AC-016d`: Projects + persistent Preview + reconnectable Workspace is the current Personal Cloud completion gate; semantic Conversations and Studio remain usable when available but are not blocking dependencies for that gate.
+- `AC-016e`: The client may request only `editor` or `terminal`; the runner selects cwd, tmux identity and executable. Éditeur reconnects to one stable derived tmux session running fixed `nvim`, Terminal retains the allowlisted shell session, and one idempotency key cannot switch between them.
 - `AC-017`: At least one proprietary ShipGlows skill can run through bounded `just-bash` against a controlled snapshot, produce versioned evidence, and update health without accessing secrets or unrestricted network/filesystem state.
 - `AC-018`: Copied diagnostics begin with commit/build identity and Paris/UTC build timestamps, remain redacted, and are useful without direct Sentry dashboard access.
 - `AC-019`: The Cockpit shows only caller-authorized redacted run-state supervision; every MVP run records `manual`, and schedule/webhook/system-recommendation triggers are rejected without starting work.
@@ -644,6 +658,7 @@ Personal Cloud follow-up batches are non-overlapping and override broader batch 
   6. Prove Cockpit and conversation UX across responsive widths and failure states.
   7. Run authenticated Web end-to-end plus Android and Windows platform/API contract proof.
   8. Prove the separately authorized Workspace with tmux/PTY/Neovim fixtures and prove one bounded just-bash skill run.
+  9. Prove Preview/Éditeur/Terminal selection, a single active Workspace connection, fixed Neovim argv/session derivation, surface-schema rejection and idempotency conflict behavior.
   9. Run observability redaction, secret scans, docs coherence, metadata lint, dependency audit, full test/analyze/build, and `git diff --check`.
 - `checklist_path`: `shipglows_data/workflow/verification/shipglows-managed-agent-cockpit-mvp.md`.
 - `required_scenario_ids`:
@@ -753,6 +768,8 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-18 12:32:48 UTC | shipglows + sg-engineering + sg-design | GPT-5 Codex | Hardened the approved Neovim-first Workspace with mutation-only authorization, dedicated Unix execution identity, fixed PTY environment, protocol-v2 negotiation, bounded leases/backpressure, redacted diagnostics, non-wedging recovery and expanded Neovim focus mode. | local implementation verified: runner typecheck/lint/audit and 51 targeted tests pass; full runner suite is 376/377 with only the pre-existing Windows CRLF fixture mismatch; Flutter analysis, 24 targeted tests and the complete 163-test ShipGlows suite pass; no VM, deploy, commit or push action performed | Separately authorize hosted configuration and browser proof on the CAX11 |
+| 2026-08-18 11:54:48 UTC | sg-development + sg-design | GPT-5 Codex | Implemented the approved Neovim-first Personal Cloud slice: closed editor/terminal capability, stable server-derived Neovim tmux session, one active Flutter Workspace, visible bounded reconnect failure and private future UI RPC boundary. | local implementation proven: Flutter 22/22, runner 372/373 with the sole known Windows CRLF fixture failure, typecheck/lint/analyze/design drift/metadata/diff checks pass; browser composition proven; no deploy or push performed | Authorize a separate hosted rollout, then prove the real CAX11 Neovim session through app.shipglows.com |
 | 2026-08-17 22:45:49 UTC | 101-sg-ready | GPT-5 Codex | Rechecked the Personal Cloud priority, companion dependency versions, non-overlapping write ownership, Workspace reconnect policy, OWASP/ASVS gate and pinned ACP runtime authority after all P1 corrections. | SAFE; metadata, dependency, contradiction, canonical-structure and diff checks passed with no unresolved readiness blocker | /102-sg-start ShipGlows Managed Agent Cockpit MVP |
 | 2026-08-17 22:44:00 UTC | 101-sg-ready correction | GPT-5 Codex | Replaced the obsolete active app-server execution note with the pinned allowlisted Codex ACP local-stdio subprocess behind `AgentRuntime`; retained the previous app-server adapter unchanged and rollback-only with no wire-type leakage. | runtime-authority P1 corrected; targeted contradiction checks required | Rerun metadata, contradiction, structure and diff checks |
 | 2026-08-17 22:41:38 UTC | 101-sg-ready correction | GPT-5 Codex | Added the canonical OWASP Top 10:2025 and selected ASVS v5.0.0 security gate with trust boundaries, existing MCC evidence and hosted/provider residual owners. | security-gate P1 corrected; targeted checks required | Rerun metadata, structure and diff checks |
@@ -864,6 +881,10 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 # Current Chantier Flow
 
 ## Personal Cloud amendment — 2026-08-18
+
+The active local slice adds `Preview -> Éditeur -> Terminal` on top of the reconnectable Workspace. The first delivery uses the existing PTY boundary with fixed server-selected Neovim startup and one active Workspace connection. A later ready batch may replace only the editor rendering transport with normalized Neovim UI RPC while retaining PTY/tmux Terminal as fallback and never exposing raw RPC.
+
+The excellence pass adds `Workspace protocol v2 -> mutate authorization -> dedicated Unix identity -> fixed environment -> bounded PTY/WebSocket lease -> recoverable Flutter state`. A compact or expanded client never receives paths, tmux names, raw diagnostics or runner credentials. The expanded focus control changes composition only and does not allocate another Workspace capability.
 
 The active milestone is now `Projects -> persistent Preview -> reconnectable Workspace`. It preserves the existing CLI/PM2/tmux/Neovim workflow and adds an authenticated Flutter window onto it. Semantic Conversations and Studio remain valid independent surfaces, but neither blocks this milestone. The companion specs own the catalog/auth/SQLite foundation, preview ingress and later CAX11 rollout; no Docker or Convex dependency is introduced.
 

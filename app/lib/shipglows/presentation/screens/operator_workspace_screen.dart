@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:xterm/xterm.dart';
 
+import '../../../presentation/theme/app_theme.dart';
 import '../../data/managed_runner_api.dart';
 import '../../providers/managed_workspace_provider.dart';
 import '../widgets/shipglows_scaffold.dart';
@@ -47,22 +48,22 @@ class _WorkspaceUnavailableCard extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 640),
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(AppTheme.tokensOf(context).spacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.desktop_windows_outlined, size: 32),
-              const SizedBox(height: 16),
+              SizedBox(height: AppTheme.tokensOf(context).spacing.md),
               Text(
                 'Workspace avancé non disponible',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: AppTheme.tokensOf(context).spacing.sm),
               Text(
                 reason ??
                     'La passerelle opérateur doit être activée sur le serveur avant d’ouvrir une session interactive.',
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppTheme.tokensOf(context).spacing.md),
               const Text(
                 'Le Cockpit et les conversations Codex restent disponibles. Cette surface séparée ne recevra jamais de clé SSH ni de chemin serveur.',
               ),
@@ -79,7 +80,8 @@ class _InteractiveWorkspace extends ConsumerStatefulWidget {
   final String projectId;
 
   @override
-  ConsumerState<_InteractiveWorkspace> createState() => _InteractiveWorkspaceState();
+  ConsumerState<_InteractiveWorkspace> createState() =>
+      _InteractiveWorkspaceState();
 }
 
 class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
@@ -96,7 +98,8 @@ class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
     _terminal = Terminal(
       maxLines: 5000,
       onOutput: (data) => _send({'type': 'input', 'data': data}),
-      onResize: (width, height, _, _) => _send({'type': 'resize', 'columns': width, 'rows': height}),
+      onResize: (width, height, _, _) =>
+          _send({'type': 'resize', 'columns': width, 'rows': height}),
     );
     unawaited(_connect());
   }
@@ -104,35 +107,71 @@ class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
   Future<void> _connect() async {
     final transport = ref.read(managedWorkspaceTransportProvider);
     if (transport == null) {
-      setState(() { _connecting = false; _error = 'La connexion interactive n’est pas configurée dans cette application.'; });
+      setState(() {
+        _connecting = false;
+        _error =
+            'La connexion interactive n’est pas configurée dans cette application.';
+      });
       return;
     }
     try {
       final session = await transport.createOperatorSession(
         projectId: widget.projectId,
-        idempotencyKey: 'workspace-${widget.projectId}-${DateTime.now().microsecondsSinceEpoch}',
+        surface: ManagedWorkspaceSurface.terminal,
+        idempotencyKey:
+            'workspace-${widget.projectId}-${DateTime.now().microsecondsSinceEpoch}',
       );
       final channel = transport.connectOperatorSession(session);
       await channel.ready;
-      if (!mounted) { await channel.sink.close(); return; }
+      if (!mounted) {
+        await channel.sink.close();
+        return;
+      }
       _session = session;
       _channel = channel;
-      _subscription = channel.stream.listen(_receive, onError: (Object error) {
-        if (mounted) setState(() => _error = 'La connexion au Workspace a été interrompue.');
-      }, onDone: () {
-        if (mounted) setState(() => _connecting = false);
+      _subscription = channel.stream.listen(
+        _receive,
+        onError: (Object error) {
+          if (mounted) {
+            setState(
+              () => _error = 'La connexion au Workspace a été interrompue.',
+            );
+          }
+        },
+        onDone: () {
+          if (mounted) {
+            setState(() => _connecting = false);
+          }
+        },
+      );
+      setState(() {
+        _connecting = false;
+        _error = null;
       });
-      setState(() { _connecting = false; _error = null; });
     } catch (_) {
-      if (mounted) setState(() { _connecting = false; _error = 'Impossible d’ouvrir la session opérateur protégée.'; });
+      if (mounted) {
+        setState(() {
+          _connecting = false;
+          _error = 'Impossible d’ouvrir la session opérateur protégée.';
+        });
+      }
     }
   }
 
   void _receive(dynamic raw) {
     try {
       final decoded = jsonDecode(raw.toString());
-      if (decoded is Map && decoded['type'] == 'output' && decoded['data'] is String) _terminal.write(decoded['data'] as String);
-      if (decoded is Map && decoded['type'] == 'status' && decoded['state'] == 'closed' && mounted) setState(() => _error = 'La session Workspace est fermée.');
+      if (decoded is Map &&
+          decoded['type'] == 'output' &&
+          decoded['data'] is String) {
+        _terminal.write(decoded['data'] as String);
+      }
+      if (decoded is Map &&
+          decoded['type'] == 'status' &&
+          decoded['state'] == 'closed' &&
+          mounted) {
+        setState(() => _error = 'La session Workspace est fermée.');
+      }
     } catch (_) {
       // Malformed or unknown server frames are ignored and never rendered.
     }
@@ -148,20 +187,59 @@ class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
     final transport = ref.read(managedWorkspaceTransportProvider);
     unawaited(_subscription?.cancel());
     unawaited(_channel?.sink.close());
-    if (session != null && transport != null) unawaited(transport.closeOperatorSession(sessionId: session.sessionId));
+    if (session != null && transport != null) {
+      unawaited(transport.closeOperatorSession(sessionId: session.sessionId));
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = AppTheme.tokensOf(context);
     if (_connecting) return const Center(child: CircularProgressIndicator());
     if (_error != null && _channel == null) {
-      return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(_error!), const SizedBox(height: 16), FilledButton.icon(onPressed: () { setState(() { _connecting = true; _error = null; }); unawaited(_connect()); }, icon: const Icon(Icons.refresh), label: const Text('Réessayer'))]));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!),
+            SizedBox(height: tokens.spacing.md),
+            FilledButton.icon(
+              onPressed: () {
+                setState(() {
+                  _connecting = true;
+                  _error = null;
+                });
+                unawaited(_connect());
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      );
     }
     return Column(
       children: [
-        if (_error != null) MaterialBanner(content: Text(_error!), actions: [TextButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('Fermer'))]),
-        Expanded(child: ColoredBox(color: Colors.black, child: Padding(padding: const EdgeInsets.all(8), child: TerminalView(_terminal, autofocus: true)))),
+        if (_error != null)
+          MaterialBanner(
+            content: Text(_error!),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                child: const Text('Fermer'),
+              ),
+            ],
+          ),
+        Expanded(
+          child: ColoredBox(
+            color: Theme.of(context).colorScheme.surface,
+            child: Padding(
+              padding: EdgeInsets.all(tokens.spacing.sm),
+              child: TerminalView(_terminal, autofocus: true),
+            ),
+          ),
+        ),
       ],
     );
   }

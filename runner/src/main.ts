@@ -92,7 +92,11 @@ const cloudProjectCatalog = personalCloudConfig !== undefined
   : undefined;
 const operatorWorkspaceGateway = new OperatorWorkspaceGateway(
   config.operatorWorkspaces,
-  spawnTmuxPty,
+  (workspace, surface) => spawnTmuxPty(
+    workspace,
+    surface,
+    config.operatorWorkspaceUser === undefined ? {} : { unixUser: config.operatorWorkspaceUser },
+  ),
   {},
   60_000,
   personalCloudConfig?.appOrigin ?? config.server.allowedOrigins[0],
@@ -194,6 +198,9 @@ const dependencies = {
   ...(reconcileCloudProjects === undefined ? {} : { reconcileCloudProjects }),
   previewDiagnosticSink: (event: Record<string, string>) => {
     console.warn(JSON.stringify({ event: "preview.diagnostic", ...event }));
+  },
+  workspaceDiagnosticSink: (event: Record<string, string>) => {
+    console.warn(JSON.stringify({ event: "workspace.diagnostic", ...event }));
   },
   accessDiagnosticSink: (event: {
     method: string;

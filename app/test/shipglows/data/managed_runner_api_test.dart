@@ -140,6 +140,14 @@ void main() {
 
   test('sends valid empty JSON bodies for operator session commands', () async {
     final adapter = _RecordingAdapter((request, attempt) {
+      if (request.path.endsWith('/operator-workspace')) {
+        return _jsonResponse(200, {
+          'available': true,
+          'reason': 'ready',
+          'protocolVersion': 2,
+          'surfaces': ['editor', 'terminal'],
+        });
+      }
       if (request.path.endsWith('/close')) {
         return _jsonResponse(200, {'state': 'closed'});
       }
@@ -156,19 +164,63 @@ void main() {
 
     final session = await api.createOperatorSession(
       projectId: 'project-1',
+      surface: ManagedWorkspaceSurface.editor,
       idempotencyKey: 'workspace-stable-key',
+    );
+    await api.reportWorkspaceDiagnostic(
+      projectId: 'project-1',
+      surface: ManagedWorkspaceSurface.editor,
+      diagnosticId: 'wd_abc123def456',
+      stage: 'recovery',
+      code: 'reported',
+      occurredAt: DateTime.utc(2026, 8, 18, 12),
     );
     await api.closeOperatorSession(sessionId: session.sessionId);
 
-    expect(adapter.requests, hasLength(2));
-    expect(adapter.requests.first.method, 'POST');
-    expect(adapter.requests.first.data, <String, Object?>{});
+    expect(adapter.requests, hasLength(4));
+    expect(adapter.requests.first.method, 'GET');
+    expect(adapter.requests[1].method, 'POST');
+    expect(adapter.requests[1].data, <String, Object?>{'surface': 'editor'});
     expect(
-      adapter.requests.first.headers['Idempotency-Key'],
+      adapter.requests[1].headers['Idempotency-Key'],
       'workspace-stable-key',
     );
+    expect(adapter.requests[2].path, endsWith('/workspace-diagnostics'));
+    expect(adapter.requests[2].data, {
+      'diagnosticId': 'wd_abc123def456',
+      'surface': 'editor',
+      'stage': 'recovery',
+      'code': 'reported',
+      'occurredAt': '2026-08-18T12:00:00.000Z',
+    });
     expect(adapter.requests.last.method, 'POST');
     expect(adapter.requests.last.data, <String, Object?>{});
+  });
+
+  test('refuses an older runner before creating an operator session', () async {
+    final adapter = _RecordingAdapter(
+      (_, _) => _jsonResponse(200, {'available': true, 'reason': 'ready'}),
+    );
+    final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+      ..httpClientAdapter = adapter;
+    final api = ManagedRunnerApi(baseUrl: 'https://runner.example', dio: dio);
+
+    await expectLater(
+      api.createOperatorSession(
+        projectId: 'project-1',
+        surface: ManagedWorkspaceSurface.editor,
+        idempotencyKey: 'workspace-stable-key',
+      ),
+      throwsA(
+        isA<ManagedRunnerException>().having(
+          (error) => error.code,
+          'code',
+          'workspaceProtocolUnsupported',
+        ),
+      ),
+    );
+    expect(adapter.requests, hasLength(1));
+    expect(adapter.requests.single.method, 'GET');
   });
 
   test(

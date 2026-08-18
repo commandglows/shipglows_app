@@ -133,6 +133,15 @@ export interface RunnerAppDependencies {
     readonly browserFamily: string;
     readonly occurredAt: string;
   }) => void;
+  readonly workspaceDiagnosticSink?: (event: {
+    readonly diagnosticId: string;
+    readonly projectId: string;
+    readonly surface: "editor" | "terminal";
+    readonly stage: string;
+    readonly code: string;
+    readonly browserFamily: string;
+    readonly occurredAt: string;
+  }) => void;
   readonly accessDiagnosticSink?: (event: {
     readonly method: string;
     readonly route: string;
@@ -239,7 +248,7 @@ export function buildRunnerApp({
   const cloudProjectCatalog = dependencies.cloudProjectCatalog;
   const previewIngress = dependencies.previewIngress;
   const reconcileCloudProjects = dependencies.reconcileCloudProjects;
-  const previewDiagnosticWindows = new Map<string, { startedAt: number; count: number }>();
+  const surfaceDiagnosticWindows = new Map<string, { startedAt: number; count: number }>();
   const reconcileCloudProjectsGuard: preHandlerAsyncHookHandler = async (request) => {
     const actor = request.shipglowsActor;
     if (actor === undefined) throw new Error("Authenticated actor is missing.");
@@ -279,10 +288,10 @@ export function buildRunnerApp({
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       const now = Date.now();
       const key = `${actor.tenantId}:${actor.userId}`;
-      const current = previewDiagnosticWindows.get(key);
+      const current = surfaceDiagnosticWindows.get(key);
       const window = current === undefined || now - current.startedAt >= 60_000 ? { startedAt: now, count: 0 } : current;
       window.count += 1;
-      previewDiagnosticWindows.set(key, window);
+      surfaceDiagnosticWindows.set(key, window);
       if (window.count > 30) return await reply.status(429).send({ error: { code: "rateLimited", message: "Too many preview diagnostics." } });
       dependencies.previewDiagnosticSink?.({
         diagnosticId: request.body.diagnosticId,
@@ -485,7 +494,12 @@ export function buildRunnerApp({
       schema: {
         params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
         response: {
-          200: Type.Object({ available: Type.Boolean(), reason: Type.String() }, { $id: "shipglowz.v1.operator-workspace.capability", additionalProperties: false }),
+          200: Type.Object({
+            available: Type.Boolean(),
+            reason: Type.String(),
+            protocolVersion: Type.Literal(2),
+            surfaces: Type.Array(Type.Union([Type.Literal("editor"), Type.Literal("terminal")]), { minItems: 2, maxItems: 2 }),
+          }, { $id: "shipglowz.v2.operator-workspace.capability", additionalProperties: false }),
           503: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }),
         },
       },
@@ -496,19 +510,22 @@ export function buildRunnerApp({
       if (dependencies.operatorWorkspaceCapability === undefined) {
         return reply.status(503).send({ error: { code: "operatorWorkspaceUnavailable", message: "The operator Workspace is not configured on this runner." } });
       }
-      return dependencies.operatorWorkspaceCapability({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId });
+      const capability = await dependencies.operatorWorkspaceCapability({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId });
+      return { ...capability, protocolVersion: 2 as const, surfaces: ["editor", "terminal"] as const };
     },
   );
 
-  app.post<{ Params: { projectId: string }; Headers: { "idempotency-key": string } }>(
+  app.post<{ Params: { projectId: string }; Headers: { "idempotency-key": string }; Body: { surface: "editor" | "terminal" } }>(
     "/v1/projects/:projectId/operator-sessions",
     {
-      preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard, projectAuthorizationGuard(projectAccess, "read"), stateChangingOriginGuard(config.server.allowedOrigins)],
+      preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard, projectAuthorizationGuard(projectAccess, "mutate"), stateChangingOriginGuard(config.server.allowedOrigins)],
       schema: {
         params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
         headers: Type.Object({ "idempotency-key": Type.String({ minLength: 8, maxLength: 128 }) }, { additionalProperties: true }),
+        body: Type.Object({ surface: Type.Union([Type.Literal("editor"), Type.Literal("terminal")]) }, { additionalProperties: false }),
         response: {
           201: Type.Object({ sessionId: Type.String(), token: Type.String(), projectId: Type.String(), expiresAt: Type.String() }, { additionalProperties: false }),
+          409: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }),
           503: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }),
         },
       },
@@ -519,10 +536,13 @@ export function buildRunnerApp({
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       if (gateway === undefined) return reply.status(503).send({ error: { code: "operatorWorkspaceUnavailable", message: "The operator Workspace is not configured on this runner." } });
       try {
-        const session = gateway.create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, idempotencyKey: request.headers["idempotency-key"] });
+        const session = gateway.create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, surface: request.body.surface, idempotencyKey: request.headers["idempotency-key"] });
         return await reply.status(201).send({ sessionId: session.id, token: session.token, projectId: session.projectId, expiresAt: session.expiresAt });
       } catch (error) {
-        if (error instanceof OperatorWorkspaceError) return reply.status(503).send({ error: { code: error.code, message: error.message } });
+        if (error instanceof OperatorWorkspaceError) {
+          const status = error.statusCode === 409 ? 409 : 503;
+          return reply.status(status).send({ error: { code: error.code, message: error.message } });
+        }
         throw error;
       }
     },
@@ -1062,6 +1082,45 @@ export function buildRunnerApp({
         .header("cache-control", "no-cache")
         .header("x-accel-buffering", "no")
         .send(Readable.from(stream()));
+    },
+  );
+
+  app.post<{ Params: { projectId: string }; Body: { diagnosticId: string; surface: "editor" | "terminal"; stage: string; code: string; occurredAt: string } }>(
+    "/v1/projects/:projectId/workspace-diagnostics",
+    {
+      preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard, projectAuthorizationGuard(projectAccess, "mutate"), stateChangingOriginGuard(config.server.allowedOrigins)],
+      schema: {
+        params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128, pattern: "^[A-Za-z0-9_-]+$" }) }, { additionalProperties: false }),
+        body: Type.Object({
+          diagnosticId: Type.String({ minLength: 12, maxLength: 64, pattern: "^wd_[A-Za-z0-9]+$" }),
+          surface: Type.Union([Type.Literal("editor"), Type.Literal("terminal")]),
+          stage: Type.Union([Type.Literal("capability"), Type.Literal("stream"), Type.Literal("recovery")]),
+          code: Type.Union([Type.Literal("connect_failed"), Type.Literal("stream_closed"), Type.Literal("cleanup_failed"), Type.Literal("retry_exhausted"), Type.Literal("reported")]),
+          occurredAt: Type.String({ minLength: 20, maxLength: 40, format: "date-time" }),
+        }, { additionalProperties: false }),
+        response: { 202: Type.Object({ diagnosticId: Type.String(), accepted: Type.Literal(true) }, { additionalProperties: false }) },
+      },
+    },
+    async (request, reply) => {
+      const actor = request.shipglowsActor;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      const now = Date.now();
+      const key = `${actor.tenantId}:${actor.userId}`;
+      const current = surfaceDiagnosticWindows.get(key);
+      const window = current === undefined || now - current.startedAt >= 60_000 ? { startedAt: now, count: 0 } : current;
+      window.count += 1;
+      surfaceDiagnosticWindows.set(key, window);
+      if (window.count > 30) return await reply.status(429).send({ error: { code: "rateLimited", message: "Too many Workspace diagnostics." } });
+      dependencies.workspaceDiagnosticSink?.({
+        diagnosticId: request.body.diagnosticId,
+        projectId: request.params.projectId,
+        surface: request.body.surface,
+        stage: request.body.stage,
+        code: request.body.code,
+        browserFamily: browserFamily(request.headers["user-agent"]),
+        occurredAt: request.body.occurredAt,
+      });
+      return await reply.status(202).send({ diagnosticId: request.body.diagnosticId, accepted: true });
     },
   );
 

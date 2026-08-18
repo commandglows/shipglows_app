@@ -18,7 +18,7 @@ const socket: OperatorSocket = {
 const gateway = new OperatorWorkspaceGateway({ smoke: { cwd: process.cwd(), tmuxSession: sessionName } });
 
 try {
-  const capability = gateway.create({ tenantId: "smoke-tenant", userId: "smoke-user", projectId: "smoke", idempotencyKey: `smoke-${process.pid}` });
+  const capability = gateway.create({ tenantId: "smoke-tenant", userId: "smoke-user", projectId: "smoke", surface: "terminal", idempotencyKey: `smoke-${process.pid}` });
   assert.equal(JSON.stringify(capability).includes(process.cwd()), false);
   gateway.attach(capability.id, capability.token, socket);
   assert.equal(closed, undefined);
