@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.2"
+artifact_version: "1.0.1"
 project: "shipglows_app"
 created: "2026-08-18"
 created_at: "2026-08-17 22:23:23 UTC"
 updated: "2026-08-18"
-updated_at: "2026-08-18 13:43:00 UTC"
+updated_at: "2026-08-17 22:45:49 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -67,7 +67,7 @@ After the gateway, preview and Workspace contracts are locally green and separat
 ## Success Behavior
 
 - `app.shipglows.com` serves the exact approved Flutter release with Firebase public configuration and runner base URL.
-- `api.shipglows.com` terminates current HTTPS and proxies HTTP/WebSocket only to loopback runner port 3210.
+- `runner.shipglows.com` terminates current HTTPS and proxies HTTP/WebSocket only to loopback runner port 3210.
 - The preview DNS namespace resolves to the CAX11 and certificate admission accepts only catalog-known preview hosts.
 - Firewall exposes only required SSH administration and public HTTP/HTTPS; runner/devserver/user-Caddy ports remain private.
 - Runner, user-mode Caddy and project processes are supervised by the existing PM2/CLI design; system Caddy owns public ingress.
@@ -234,7 +234,6 @@ None. Host addresses, credentials and access are runtime inputs resolved under t
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
-| 2026-08-18 13:43:00 UTC | sg-bug | GPT-5 Codex | Replaced the browser-blocked public runner hostname contract with the dedicated `api.shipglows.com` HTTPS/WebSocket boundary while preserving Firebase login on `app.shipglows.com`. | implementation and hosted proof in progress under explicit operator authority | Validate the new host in Chrome before switching the production app |
 | 2026-08-17 22:45:49 UTC | 101-sg-ready | GPT-5 Codex | Rechecked dependency readiness, exact remote authority boundaries, backup/rollback, TLS/firewall/PM2/SQLite/reboot/browser proof, OWASP, ZOMBIES and no-deploy-without-approval invariants. | SAFE; metadata 4/4, structural and diff checks passed, while remote execution remains separately approval-gated | /102-sg-start ShipGlows Personal Cloud Rollout |
 | 2026-08-17 22:23:23 UTC | 100-sg-spec | GPT-5 Codex | Defined the gated Vercel/DNS/CAX11 rollout, rollback and reboot/browser proof contract. | reviewed; no remote authority granted | /101-sg-ready ShipGlows Personal Cloud Rollout |
 

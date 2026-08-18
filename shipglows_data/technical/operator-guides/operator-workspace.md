@@ -42,7 +42,7 @@ next_step: "Complete public TLS and authenticated actor/project provisioning, th
 - Implemented: protected capability discovery, idempotent session creation, short-lived capability, owner-only closure, dedicated WebSocket stream, allowlisted tmux PTY, bounded input/resize, Flutter `xterm` rendering, and explicit unavailable/interrupted states.
 - Server-smoke proven: real PTY, isolated tmux, resize, terminal input/output, installed Codex executable, no obvious secret markers in the bounded transcript, and temporary-session cleanup.
 - Last loopback proof: the supervised runner was healthy with its previous Supabase deployment and one server-owned Workspace allowlist. Repository source now targets Firebase, but the server migration and Firebase-authenticated smoke are still pending.
-- Public Personal Cloud uses the authenticated HTTPS/WebSocket boundary at `api.shipglows.com`; hosted Flutter Web, reconnect and Neovim require a current production proof after each ingress change.
+- Not yet publicly proven: HTTPS reverse proxy for `runner.shipglows.com`, provisioned authenticated actor/project, Flutter Web connection, long reconnect, Neovim, Android, and Windows rendering.
 
 ## Security Contract
 
@@ -74,7 +74,7 @@ Configuration validation rejects relative paths, malformed project ids, malforme
 
 The runner stays bound to loopback. Public delivery requires a root-managed HTTPS reverse proxy that:
 
-- owns `api.shipglows.com`;
+- owns `runner.shipglows.com`;
 - proxies HTTP and WebSocket upgrades to the loopback runner;
 - presents a valid certificate;
 - preserves the configured browser Origin boundary;
