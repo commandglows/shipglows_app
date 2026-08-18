@@ -45,9 +45,7 @@ class ManagedProjectSelector extends ConsumerWidget {
 
         final effectiveProjectId = resolveManagedProjectId(
           selection: selection,
-          availableProjectIds: registry
-              .where((project) => !project.isArchived)
-              .map((project) => project.id),
+          availableProjectIds: projects.map((project) => project.id),
           defaultProjectId: _defaultProjectId(registry),
         );
         CockpitProject? selected;

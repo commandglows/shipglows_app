@@ -138,6 +138,39 @@ void main() {
     expect(session.expiresAt.isUtc, isTrue);
   });
 
+  test('sends valid empty JSON bodies for operator session commands', () async {
+    final adapter = _RecordingAdapter((request, attempt) {
+      if (request.path.endsWith('/close')) {
+        return _jsonResponse(200, {'state': 'closed'});
+      }
+      return _jsonResponse(201, {
+        'sessionId': 'ops_123',
+        'token': 'opaque-capability',
+        'projectId': 'project-1',
+        'expiresAt': '2026-08-03T15:00:00Z',
+      });
+    });
+    final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
+      ..httpClientAdapter = adapter;
+    final api = ManagedRunnerApi(baseUrl: 'https://runner.example', dio: dio);
+
+    final session = await api.createOperatorSession(
+      projectId: 'project-1',
+      idempotencyKey: 'workspace-stable-key',
+    );
+    await api.closeOperatorSession(sessionId: session.sessionId);
+
+    expect(adapter.requests, hasLength(2));
+    expect(adapter.requests.first.method, 'POST');
+    expect(adapter.requests.first.data, <String, Object?>{});
+    expect(
+      adapter.requests.first.headers['Idempotency-Key'],
+      'workspace-stable-key',
+    );
+    expect(adapter.requests.last.method, 'POST');
+    expect(adapter.requests.last.data, <String, Object?>{});
+  });
+
   test(
     'refreshes Firebase auth once after 401 and replays the same command',
     () async {

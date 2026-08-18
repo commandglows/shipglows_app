@@ -5,14 +5,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../presentation/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../data/managed_runner_api.dart';
+import '../providers/managed_runner_provider.dart';
+import '../providers/personal_cloud/personal_cloud_projects_provider.dart';
+import '../providers/personal_cloud/personal_cloud_transport_providers.dart';
+import '../../core/app_config.dart';
 import 'auth_provider.dart';
 
-enum ShipGlowsAuthGateStatus { loading, signedOut, signedIn, error }
+enum ShipGlowsAuthGateStatus { loading, signedOut, signedIn, denied, error }
+
+typedef ShipGlowsSessionAuthorizer =
+    Future<void> Function(ShipGlowsSession session);
 
 class ShipGlowsAuthGate extends ConsumerStatefulWidget {
-  const ShipGlowsAuthGate({required this.child, super.key});
+  const ShipGlowsAuthGate({
+    required this.child,
+    this.authorizeSession,
+    super.key,
+  });
 
   final Widget child;
+  final ShipGlowsSessionAuthorizer? authorizeSession;
 
   @override
   ConsumerState<ShipGlowsAuthGate> createState() => _ShipGlowsAuthGateState();
@@ -22,6 +35,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
   StreamSubscription<ShipGlowsAuthState>? _subscription;
   ShipGlowsAuthGateStatus _status = ShipGlowsAuthGateStatus.loading;
   String? _message;
+  int _authGeneration = 0;
 
   ShipGlowsAuthProvider get _auth => ref.read(shipGlowsAuthProvider);
 
@@ -34,7 +48,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
       return;
     }
     _subscription = auth.authStateChanges.listen(
-      _applyAuthState,
+      (state) => unawaited(_applyAuthState(state)),
       onError: (Object _) =>
           _showError('La session n’a pas pu être vérifiée. Réessayez.'),
     );
@@ -45,7 +59,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     try {
       final session = await _auth.currentSession();
       if (!mounted) return;
-      _applyAuthState(
+      await _applyAuthState(
         session == null
             ? const ShipGlowsAuthState.signedOut()
             : ShipGlowsAuthState.signedIn(session),
@@ -55,14 +69,65 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     }
   }
 
-  void _applyAuthState(ShipGlowsAuthState state) {
+  Future<void> _applyAuthState(ShipGlowsAuthState state) async {
     if (!mounted) return;
+    final generation = ++_authGeneration;
+    final session = state.session;
+    _invalidatePersonalCloudState();
+    if (state.status == ShipGlowsAuthStatus.signedOut || session == null) {
+      setState(() {
+        _status = ShipGlowsAuthGateStatus.signedOut;
+        _message = null;
+      });
+      return;
+    }
     setState(() {
-      _status = state.status == ShipGlowsAuthStatus.signedIn
-          ? ShipGlowsAuthGateStatus.signedIn
-          : ShipGlowsAuthGateStatus.signedOut;
+      _status = ShipGlowsAuthGateStatus.loading;
       _message = null;
     });
+    try {
+      await (widget.authorizeSession?.call(session) ??
+              _authorizeWithRunner(session))
+          .timeout(const Duration(seconds: 15));
+      if (!mounted || generation != _authGeneration) return;
+      setState(() => _status = ShipGlowsAuthGateStatus.signedIn);
+    } on ManagedRunnerException catch (error) {
+      if (!mounted || generation != _authGeneration) return;
+      final denied = error.statusCode == 401 || error.statusCode == 403;
+      setState(() {
+        _status = denied
+            ? ShipGlowsAuthGateStatus.denied
+            : ShipGlowsAuthGateStatus.error;
+        _message = denied
+            ? 'Ce compte n’a pas accès à ce Personal Cloud.'
+            : 'Le Personal Cloud ne répond pas. Réessayez.';
+      });
+    } on TimeoutException {
+      if (!mounted || generation != _authGeneration) return;
+      _showError('La vérification d’accès a expiré. Réessayez.');
+    } catch (_) {
+      if (!mounted || generation != _authGeneration) return;
+      _showError('L’accès au Personal Cloud n’a pas pu être vérifié.');
+    }
+  }
+
+  Future<void> _authorizeWithRunner(ShipGlowsSession _) async {
+    if (!AppConfig.personalCloudEnabled) return;
+    final client = ref.read(managedRunnerApiProvider);
+    if (client is! ManagedRunnerApi) {
+      throw const ManagedRunnerException(
+        code: 'runnerUnavailable',
+        message: 'The managed runner is unavailable.',
+      );
+    }
+    await client.loadPersonalCloudProjects();
+  }
+
+  void _invalidatePersonalCloudState() {
+    ref.invalidate(managedRunnerApiProvider);
+    ref.invalidate(personalCloudProjectsProvider);
+    ref.invalidate(projectPreviewTransportProvider);
+    ref.invalidate(remoteWorkspaceTransportProvider);
   }
 
   void _showError(String message) {
@@ -82,7 +147,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
       await _auth.signInWithGoogle();
       final session = await _auth.currentSession(forceRefresh: true);
       if (!mounted) return;
-      _applyAuthState(
+      await _applyAuthState(
         session == null
             ? const ShipGlowsAuthState.signedOut()
             : ShipGlowsAuthState.signedIn(session),
@@ -98,7 +163,9 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     setState(() => _status = ShipGlowsAuthGateStatus.loading);
     try {
       await _auth.signOut();
-      if (mounted) _applyAuthState(const ShipGlowsAuthState.signedOut());
+      if (mounted) {
+        await _applyAuthState(const ShipGlowsAuthState.signedOut());
+      }
     } catch (_) {
       _showError('La déconnexion a échoué. Réessayez.');
     }
@@ -114,40 +181,14 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
   Widget build(BuildContext context) {
     if (!_auth.requiresAuthentication) return widget.child;
     if (_status == ShipGlowsAuthGateStatus.signedIn) {
-      return _AuthenticatedSurface(onSignOut: _signOut, child: widget.child);
+      return widget.child;
     }
     return _AuthenticationSurface(
       status: _status,
       message: _message,
       onSignIn: _signIn,
       onRetry: _restoreSession,
-    );
-  }
-}
-
-class _AuthenticatedSurface extends StatelessWidget {
-  const _AuthenticatedSurface({required this.onSignOut, required this.child});
-
-  final Future<void> Function() onSignOut;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        child,
-        PositionedDirectional(
-          top: AppTheme.tokensOf(context).spacing.sm,
-          end: AppTheme.tokensOf(context).spacing.sm,
-          child: SafeArea(
-            child: IconButton.filledTonal(
-              tooltip: 'Se déconnecter',
-              onPressed: onSignOut,
-              icon: const Icon(Icons.logout_rounded),
-            ),
-          ),
-        ),
-      ],
+      onSignOut: _signOut,
     );
   }
 }
@@ -158,18 +199,21 @@ class _AuthenticationSurface extends StatelessWidget {
     required this.message,
     required this.onSignIn,
     required this.onRetry,
+    required this.onSignOut,
   });
 
   final ShipGlowsAuthGateStatus status;
   final String? message;
   final Future<void> Function() onSignIn;
   final Future<void> Function() onRetry;
+  final Future<void> Function() onSignOut;
 
   @override
   Widget build(BuildContext context) {
     final tokens = AppTheme.tokensOf(context);
     final isLoading = status == ShipGlowsAuthGateStatus.loading;
     final isError = status == ShipGlowsAuthGateStatus.error;
+    final isDenied = status == ShipGlowsAuthGateStatus.denied;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -186,10 +230,10 @@ class _AuthenticationSurface extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isError
+                        isError || isDenied
                             ? Icons.lock_reset_rounded
                             : Icons.cloud_rounded,
-                        color: isError
+                        color: isError || isDenied
                             ? tokens.health.critical
                             : Theme.of(context).colorScheme.primary,
                       ),
@@ -213,7 +257,13 @@ class _AuthenticationSurface extends StatelessWidget {
                       SizedBox(height: tokens.spacing.lg),
                       if (isLoading)
                         const CircularProgressIndicator()
-                      else if (isError) ...[
+                      else if (isDenied) ...[
+                        FilledButton.icon(
+                          onPressed: onSignOut,
+                          icon: const Icon(Icons.switch_account_rounded),
+                          label: const Text('Changer de compte'),
+                        ),
+                      ] else if (isError) ...[
                         FilledButton.icon(
                           onPressed: onSignIn,
                           icon: const Icon(Icons.login_rounded),

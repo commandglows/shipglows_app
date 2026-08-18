@@ -1804,6 +1804,9 @@ class ManagedRunnerApi
              BaseOptions(
                baseUrl: baseUrl,
                headers: {'Content-Type': 'application/json'},
+               connectTimeout: const Duration(seconds: 12),
+               sendTimeout: const Duration(seconds: 12),
+               receiveTimeout: const Duration(seconds: 12),
              ),
            ) {
     final tokenProvider = accessTokenProvider;
@@ -1910,6 +1913,29 @@ class ManagedRunnerApi
         ),
       );
       return origin;
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
+  Future<void> reportPersonalCloudPreviewDiagnostic({
+    required String projectId,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  }) async {
+    try {
+      await _dio.post<dynamic>(
+        '/v1/projects/${Uri.encodeComponent(projectId)}/preview-diagnostics',
+        data: <String, Object?>{
+          'diagnosticId': diagnosticId,
+          'stage': stage,
+          'code': code,
+          'occurredAt': occurredAt.toUtc().toIso8601String(),
+        },
+        options: Options(headers: await _headers()),
+      );
     } on DioException catch (error) {
       throw _mapError(error);
     }
@@ -2388,6 +2414,7 @@ class ManagedRunnerApi
     try {
       final response = await _dio.post<dynamic>(
         '/v1/projects/$projectId/operator-sessions',
+        data: const <String, Object?>{},
         options: Options(
           headers: {...await _headers(), 'Idempotency-Key': idempotencyKey},
         ),
@@ -2426,6 +2453,7 @@ class ManagedRunnerApi
     try {
       await _dio.post<dynamic>(
         '/v1/operator-sessions/$sessionId/close',
+        data: const <String, Object?>{},
         options: Options(headers: await _headers()),
       );
     } on DioException catch (error) {

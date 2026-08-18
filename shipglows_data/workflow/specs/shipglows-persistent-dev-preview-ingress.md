@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.1"
+artifact_version: "1.0.3"
 project: "shipglows_app"
 created: "2026-08-18"
 created_at: "2026-08-17 22:23:23 UTC"
 updated: "2026-08-18"
-updated_at: "2026-08-17 22:45:49 UTC"
+updated_at: "2026-08-18 02:55:35 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -34,6 +34,8 @@ evidence:
   - "Operator decision 2026-08-18: remote previews inside ShipGlows App are the immediate product need; SSH tunnels and separate browser tabs are rejected as the normal workflow."
   - "Repository inspection 2026-08-18: the CLI already generates path-based Caddy routes from PM2, but path prefixes are fragile for absolute assets and devserver HMR."
   - "Repository inspection 2026-08-18: Studio preview is a separate instrumented semantic bridge with production enablement forbidden; generic dev preview must not reuse or weaken that contract."
+  - "Hosted proof 2026-08-18: the Preview surface exposes automatic and operator-triggered browser recovery guidance with retry, first-party new-tab fallback and URL copy actions on app.shipglows.com."
+  - "Hosted proof 2026-08-18: a blocked Vivaldi iframe remains paired with a persistent diagnostic action, while bounded authenticated client events are emitted as secret-free structured PM2 logs."
 next_step: "/102-sg-start ShipGlows Persistent Dev Preview Ingress"
 ---
 
@@ -179,6 +181,7 @@ Use stable per-project preview subdomains. A root-managed public Caddy terminate
 - `PDI-006`: unknown catalog slugs cannot trigger certificate issuance.
 - `PDI-007`: Flutter renders Preview in-app with recovery states and canonical design tokens.
 - `PDI-008`: no Studio capability, semantic command or compile claim is introduced.
+- `PDI-009`: a connected-but-empty frame always retains a visible recovery action, and every reported incident receives a bounded correlation ID without logging cookies, tokens, terminal input or Preview content.
 - ZOMBIES coverage: zero/one/many preview hosts; boundary TTL/header/body/WS/slug limits; interfaces across Flutter-runner-Caddy-devserver; exceptional expiry/replay/reload/HMR/process failure; simplest solution retains the existing two Caddy ownership layers.
 
 ## Test Strategy
@@ -222,9 +225,11 @@ None. Stable subdomains, authenticated POST bootstrap, host-only cookies, dual C
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-18 02:55:35 UTC | sg-bug | GPT-5 Codex | Repaired the silent gray Preview state with a persistent diagnostic banner and added an authenticated, rate-limited, closed-schema diagnostic endpoint emitting redacted structured PM2 logs. | Flutter tests 8/8, Runner diagnostic route 1/1, typecheck, targeted lint, hosted Vivaldi blocked-frame rendering and production health passed. | Use the displayed correlation ID for direct PM2 diagnosis when a user reports an incident. |
+| 2026-08-18 02:37:23 UTC | sg-development | GPT-5 Codex | Added a bounded browser-block recovery state to the generic Preview, including timeout/error guidance, permanent help access, retry, user-gesture new-tab fallback and URL copy. | Flutter widget tests 8/8 and targeted analysis passed; production Vercel build deployed and the hosted help surface was rendered on app.shipglows.com. | Continue the remaining ingress/browser proof under the Personal Cloud rollout. |
 | 2026-08-17 22:45:49 UTC | 101-sg-ready | GPT-5 Codex | Rechecked canonical structure, dependency freshness, ticket/cookie secrecy, HTTP plus WebSocket/HMR authorization, exact Host/Origin boundaries, Studio separation, OWASP, ZOMBIES and the single sequential PC-A CLI writer. | SAFE; metadata 4/4, structural and diff checks passed, and no unresolved readiness blocker remains | /102-sg-start ShipGlows Persistent Dev Preview Ingress |
 | 2026-08-17 22:23:23 UTC | 100-sg-spec | GPT-5 Codex | Specified stable authenticated dev-preview ingress without replacing the CLI or conflating Studio. | reviewed; readiness and fresh Caddy documentation review required | /101-sg-ready ShipGlows Persistent Dev Preview Ingress |
 
 ## Current Chantier Flow
 
-`100-sg-spec` (reviewed) -> `101-sg-ready` (SAFE; ready) -> `102-sg-start` (next; not started) -> `103-sg-verify` (not started) -> `104-sg-end` (not started) -> `005-sg-ship` (not authorized) -> `004-sg-deploy` (owned by personal-cloud rollout after separate remote authority)
+`100-sg-spec` (reviewed) -> `101-sg-ready` (SAFE; ready) -> `102-sg-start` (active; browser-recovery slice deployed) -> `103-sg-verify` (slice verified; full ingress proof remains) -> `104-sg-end` (not started) -> `005-sg-ship` (not authorized) -> `004-sg-deploy` (browser-recovery slice live; full rollout remains owned by personal-cloud rollout)

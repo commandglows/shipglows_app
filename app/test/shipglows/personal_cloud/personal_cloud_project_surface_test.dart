@@ -1,15 +1,72 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shipglows_app/presentation/theme/app_theme.dart';
 import 'package:shipglows_app/shipglows/personal_cloud/personal_cloud_models.dart';
 import 'package:shipglows_app/shipglows/personal_cloud/personal_cloud_transports.dart';
+import 'package:shipglows_app/shipglows/providers/personal_cloud/personal_cloud_projects_provider.dart';
 import 'package:shipglows_app/shipglows/presentation/screens/personal_cloud_project_screen.dart';
 import 'package:shipglows_app/shipglows/presentation/widgets/personal_cloud/project_preview_pane.dart';
 import 'package:shipglows_app/shipglows/presentation/widgets/personal_cloud/reconnecting_workspace_terminal.dart';
 
 void main() {
+  testWidgets('blocks a deep link outside the authorized project catalog', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/project/foreign/cloud',
+      routes: [
+        GoRoute(
+          path: '/project/:name/cloud',
+          builder: (_, _) => const PersonalCloudProjectScreen(
+            projectId: 'foreign-project',
+            projectName: 'Foreign',
+          ),
+        ),
+        GoRoute(
+          path: '/projects',
+          builder: (_, _) => const Scaffold(body: Text('Projects')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          personalCloudProjectsProvider.overrideWith(
+            (ref) async => const [
+              PersonalCloudProject(
+                id: 'authorized-project',
+                name: 'Authorized',
+                status: 'online',
+                preview: true,
+                workspace: true,
+              ),
+            ],
+          ),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.lightTheme,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    expect(find.text('Projet non autorisé'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('personal-cloud-preview-pane')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('personal-cloud-terminal-pane')),
+      findsNothing,
+    );
+  });
+
   testWidgets('keeps Preview and Terminal mounted in the compact surface', (
     tester,
   ) async {
@@ -117,6 +174,79 @@ void main() {
     expect(preview.openCount, 2);
     expect(find.text('Preview fixture'), findsOneWidget);
     expect(find.text('Connectée'), findsOneWidget);
+  });
+
+  testWidgets('guides recovery when the embedded Preview stays blocked', (
+    tester,
+  ) async {
+    Uri? openedOrigin;
+    final preview = _PreviewTransport([_readyPreview(), _readyPreview()]);
+
+    await tester.pumpWidget(
+      _app(
+        ProjectPreviewPane(
+          projectId: 'project-1',
+          projectName: 'Projet test',
+          transport: preview,
+          previewLoadTimeout: Duration.zero,
+          openExternal: (origin) async {
+            openedOrigin = origin;
+            return true;
+          },
+          frameBuilder: (_, _, _, _) => const SizedBox.expand(),
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    expect(
+      find.text('La Preview semble bloquée par le navigateur'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('bouclier'), findsOneWidget);
+    expect(find.text('J’ai autorisé, réessayer'), findsOneWidget);
+    expect(find.text('Copier l’URL'), findsOneWidget);
+
+    await tester.tap(find.text('Ouvrir dans un nouvel onglet'));
+    await tester.pump();
+    expect(openedOrigin, Uri.parse('https://project.preview.shipglows.com'));
+
+    await tester.tap(find.text('J’ai autorisé, réessayer'));
+    await _pumpAsync(tester);
+    expect(preview.openCount, 2);
+  });
+
+  testWidgets('keeps browser recovery help available after a frame load', (
+    tester,
+  ) async {
+    final preview = _PreviewTransport([_readyPreview()]);
+    await tester.pumpWidget(
+      _app(
+        ProjectPreviewPane(
+          projectId: 'project-1',
+          projectName: 'Projet test',
+          transport: preview,
+          frameBuilder: (_, _, onLoaded, _) {
+            scheduleMicrotask(onLoaded);
+            return const SizedBox.expand();
+          },
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    expect(find.text('La Preview ne s’affiche pas ?'), findsOneWidget);
+    expect(find.byTooltip('Aide navigateur Preview'), findsOneWidget);
+    await tester.tap(find.byTooltip('Aide navigateur Preview'));
+    await tester.pump();
+    expect(
+      find.text('La Preview semble bloquée par le navigateur'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Signaler le problème'));
+    await tester.pump();
+    expect(preview.diagnostics.last['code'], 'reported');
+    expect(find.textContaining('Diagnostic pd_'), findsWidgets);
   });
 
   testWidgets('uses a fresh capability after a terminal disconnect', (
@@ -234,11 +364,13 @@ Widget _previewFrame(
   return const Center(child: Text('Preview fixture'));
 }
 
-class _PreviewTransport implements ProjectPreviewTransport {
+class _PreviewTransport
+    implements ProjectPreviewTransport, ProjectPreviewDiagnosticsTransport {
   _PreviewTransport(this.results);
 
   final List<Object> results;
   var openCount = 0;
+  final diagnostics = <Map<String, Object>>[];
 
   @override
   Future<ProjectPreviewSnapshot> openPreview({
@@ -247,6 +379,23 @@ class _PreviewTransport implements ProjectPreviewTransport {
     final result = results[openCount++];
     if (result is RemoteSurfaceException) throw result;
     return result as ProjectPreviewSnapshot;
+  }
+
+  @override
+  Future<void> reportPreviewDiagnostic({
+    required String projectId,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  }) async {
+    diagnostics.add({
+      'projectId': projectId,
+      'diagnosticId': diagnosticId,
+      'stage': stage,
+      'code': code,
+      'occurredAt': occurredAt,
+    });
   }
 }
 

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shipglows_app/presentation/theme/app_theme.dart';
 import 'package:shipglows_app/shipglows/auth/auth_provider.dart';
 import 'package:shipglows_app/shipglows/auth/shipglows_auth_gate.dart';
+import 'package:shipglows_app/shipglows/data/managed_runner_api.dart';
 import 'package:shipglows_app/shipglows/providers/auth_provider.dart';
 
 void main() {
@@ -16,7 +17,7 @@ void main() {
 
     expect(find.text('Contenu protégé'), findsOneWidget);
     expect(find.text('Se connecter avec Google'), findsNothing);
-    expect(find.byTooltip('Se déconnecter'), findsNothing);
+    expect(find.bySemanticsLabel('Se déconnecter'), findsNothing);
   });
 
   testWidgets('shows signed-out, loading and signed-in states', (tester) async {
@@ -32,22 +33,6 @@ void main() {
 
     expect(auth.signInCount, 1);
     expect(find.text('Contenu protégé'), findsOneWidget);
-    expect(find.byTooltip('Se déconnecter'), findsOneWidget);
-  });
-
-  testWidgets('signs out without leaving protected content mounted', (
-    tester,
-  ) async {
-    final auth = _FakeAuthProvider(session: _session());
-    await tester.pumpWidget(_app(auth));
-    await _pumpAsync(tester);
-
-    await tester.tap(find.byTooltip('Se déconnecter'));
-    await _pumpAsync(tester);
-
-    expect(auth.signOutCount, 1);
-    expect(find.text('Contenu protégé'), findsNothing);
-    expect(find.text('Se connecter avec Google'), findsOneWidget);
   });
 
   testWidgets('renders a recoverable typed popup error without token details', (
@@ -72,13 +57,41 @@ void main() {
     expect(find.textContaining('opaque-token'), findsNothing);
     expect(find.text('Revérifier la session'), findsOneWidget);
   });
+
+  testWidgets('never mounts protected content for a server-denied account', (
+    tester,
+  ) async {
+    final auth = _FakeAuthProvider(session: _session());
+    await tester.pumpWidget(
+      _app(
+        auth,
+        authorizeSession: (_) async => throw const ManagedRunnerException(
+          code: 'unauthorized',
+          message: 'Unauthorized.',
+          statusCode: 401,
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    expect(find.text('Contenu protégé'), findsNothing);
+    expect(
+      find.text('Ce compte n’a pas accès à ce Personal Cloud.'),
+      findsOneWidget,
+    );
+    expect(find.text('Changer de compte'), findsOneWidget);
+  });
 }
 
-Widget _app(ShipGlowsAuthProvider auth) => ProviderScope(
+Widget _app(
+  ShipGlowsAuthProvider auth, {
+  ShipGlowsSessionAuthorizer? authorizeSession,
+}) => ProviderScope(
   overrides: [shipGlowsAuthProvider.overrideWithValue(auth)],
   child: MaterialApp(
     theme: AppTheme.lightTheme,
     home: ShipGlowsAuthGate(
+      authorizeSession: authorizeSession,
       child: const Scaffold(body: Text('Contenu protégé')),
     ),
   ),

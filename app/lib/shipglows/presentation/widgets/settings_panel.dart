@@ -5,6 +5,7 @@ import '../../../presentation/theme/app_theme.dart';
 import '../../providers/app_preferences_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import 'managed_projects_settings_panel.dart';
+import 'profile_settings_group.dart';
 import 'settings_primitives.dart';
 
 class ShipGlowsSettingsPanel extends ConsumerWidget {
@@ -23,6 +24,8 @@ class ShipGlowsSettingsPanel extends ConsumerWidget {
       shrinkWrap: compact,
       padding: EdgeInsets.all(tokens.spacing.lg),
       children: [
+        const ShipGlowsProfileSettingsGroup(),
+        SizedBox(height: tokens.spacing.sm),
         const ManagedProjectsSettingsPanel(),
         SizedBox(height: tokens.spacing.sm),
         ShipGlowsSettingsGroup(

@@ -4,7 +4,8 @@ import '../data/managed_runner_api.dart';
 import 'personal_cloud_models.dart';
 import 'personal_cloud_transports.dart';
 
-class ManagedProjectPreviewTransport implements ProjectPreviewTransport {
+class ManagedProjectPreviewTransport
+    implements ProjectPreviewTransport, ProjectPreviewDiagnosticsTransport {
   const ManagedProjectPreviewTransport(this.api);
   final ManagedRunnerApi api;
 
@@ -23,6 +24,21 @@ class ManagedProjectPreviewTransport implements ProjectPreviewTransport {
       throw _surfaceError(error);
     }
   }
+
+  @override
+  Future<void> reportPreviewDiagnostic({
+    required String projectId,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  }) => api.reportPersonalCloudPreviewDiagnostic(
+    projectId: projectId,
+    diagnosticId: diagnosticId,
+    stage: stage,
+    code: code,
+    occurredAt: occurredAt,
+  );
 }
 
 class ManagedRemoteWorkspaceTransport implements RemoteWorkspaceTransport {

@@ -192,6 +192,17 @@ const dependencies = {
   ...(cloudProjectCatalog === undefined ? {} : { cloudProjectCatalog }),
   ...(previewIngress === undefined ? {} : { previewIngress }),
   ...(reconcileCloudProjects === undefined ? {} : { reconcileCloudProjects }),
+  previewDiagnosticSink: (event: Record<string, string>) => {
+    console.warn(JSON.stringify({ event: "preview.diagnostic", ...event }));
+  },
+  accessDiagnosticSink: (event: {
+    method: string;
+    route: string;
+    statusCode: 401 | 403;
+    requestId: string;
+  }) => {
+    console.warn(JSON.stringify({ event: "access.denied", ...event }));
+  },
   ...(studioCapability === undefined ? {} : { studioCapability }),
   ...(studioSessions === undefined ? {} : { studioSessions }),
   ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime.executor }),

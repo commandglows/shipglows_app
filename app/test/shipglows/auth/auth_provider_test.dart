@@ -38,6 +38,9 @@ FirebaseSessionSnapshot _session({DateTime? expiresAt}) =>
       userId: 'user_000000000001',
       accessToken: 'signed.access.token',
       expiresAt: expiresAt,
+      displayName: 'Diane',
+      email: 'diane@example.com',
+      providerId: 'google.com',
     );
 
 void main() {
@@ -76,6 +79,9 @@ void main() {
       final session = await provider.currentSession();
 
       expect(session?.userId, 'user_000000000001');
+      expect(session?.displayName, 'Diane');
+      expect(session?.email, 'diane@example.com');
+      expect(session?.providerId, 'google.com');
       expect(source.forceRefreshValues, [false]);
       await source.dispose();
     },

@@ -186,13 +186,61 @@ class _PersonalCloudProjectsScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(personalCloudProjectsProvider),
         ),
         data: (items) => items.isEmpty
-            ? const Center(child: Text('Aucun projet cloud disponible.'))
+            ? _PersonalCloudOnboarding(
+                onRefresh: () => ref.invalidate(personalCloudProjectsProvider),
+              )
             : ListView.separated(
                 itemCount: items.length,
                 separatorBuilder: (_, _) => SizedBox(height: tokens.spacing.sm),
                 itemBuilder: (context, index) =>
                     _PersonalCloudProjectCard(project: items[index]),
               ),
+      ),
+    );
+  }
+}
+
+class _PersonalCloudOnboarding extends StatelessWidget {
+  const _PersonalCloudOnboarding({required this.onRefresh});
+
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppTheme.tokensOf(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: tokens.conversation.messageMaxWidth,
+        ),
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(tokens.spacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.add_to_queue_rounded, size: 44),
+                SizedBox(height: tokens.spacing.sm),
+                Text(
+                  'Connecter votre premier projet',
+                  style: Theme.of(context).textTheme.titleLarge,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: tokens.spacing.xs),
+                const Text(
+                  'Démarrez ou enregistrez le projet avec la CLI ShipGlows sur votre serveur. Il apparaîtra automatiquement ici, sans saisir de chemin ni exposer de port.',
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: tokens.spacing.md),
+                FilledButton.icon(
+                  onPressed: onRefresh,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('J’ai connecté mon projet'),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

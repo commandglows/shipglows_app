@@ -8,6 +8,7 @@ import type { AgentRuntime, OpaqueId } from "../../src/contracts/index.js";
 import type { ProjectAccessRepository } from "../../src/projects/projectAccess.js";
 import { OperatorWorkspaceGateway, type OperatorPty } from "../../src/operator-workspace/index.js";
 import { createBuildIdentity, RunnerDiagnostics } from "../../src/observability/index.js";
+import type { PreviewIngressService } from "../../src/preview-ingress/index.js";
 
 const actor: ActorContext = {
   tenantId: "ten_000000000001",
@@ -16,6 +17,31 @@ const actor: ActorContext = {
 };
 
 describe("runner API foundation", () => {
+  it("logs bounded access denials without credentials or query values", async () => {
+    const events: unknown[] = [];
+    const authentication: AuthenticationAdapter = {
+      authenticate: async () => null,
+    };
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication,
+        accessDiagnosticSink: (event) => events.push(event),
+      },
+    });
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/diagnostics?token=must-not-leak",
+      headers: { authorization: "Bearer must-not-leak" },
+    });
+    await app.close();
+
+    assert.equal(response.statusCode, 401);
+    assert.equal(events.length, 1);
+    const serialized = JSON.stringify(events);
+    assert.doesNotMatch(serialized, /must-not-leak/);
+    assert.match(serialized, /diagnostics/);
+  });
   it("serves a minimal liveness response without build, config, or path details", async () => {
     const app = buildRunnerApp({
       config: loadConfig({ RUNNER_ENV: "test" }, { cwd: "/srv/private" }),
@@ -167,6 +193,53 @@ describe("runner API foundation", () => {
     assert.equal(response.json().projects[0].health.dimensions[1].status, "notReported");
   });
 
+  it("uses the Personal Cloud catalog display name instead of an internal project id", async () => {
+    const projectId = "prj_000000000001";
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication: { authenticate: async () => actor },
+        reconcileCloudProjects: async () => undefined,
+        cloudProjectCatalog: {
+          read: async () => ({
+            version: "shipglows.cli-project-catalog.v1",
+            generatedAt: new Date().toISOString(),
+            entries: [{
+              projectId,
+              displayName: "shipglows-site",
+              previewSlug: "shipglows-site",
+              status: "online",
+              capabilities: { preview: true, workspace: true },
+              privateRuntime: { cwd: "C:\\workspace", port: 3000, tmuxSession: "shipglows-site" },
+            }],
+          }),
+        },
+        cockpitStore: {
+          listCockpitProjects: () => [{
+            id: projectId,
+            name: projectId,
+            repositoryFullName: projectId,
+            accessState: "available",
+            health: {
+              overallStatus: "notReported",
+              coverage: 0,
+              dimensions: [],
+            },
+            conversationCount: 0,
+            activeRunCount: 0,
+          }],
+        },
+      },
+    });
+
+    const response = await app.inject({ method: "GET", url: "/v1/cockpit" });
+    await app.close();
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.json().projects[0].name, "shipglows-site");
+    assert.equal(response.json().projects[0].repositoryFullName, "shipglows-site");
+  });
+
   it("keeps the operator Workspace capability tenant-scoped and unavailable by default", async () => {
     const authentication: AuthenticationAdapter = { authenticate: async () => actor };
     const projectAccess: ProjectAccessRepository = { hasProjectAccess: () => true };
@@ -227,6 +300,90 @@ describe("runner API foundation", () => {
     await app.close();
     assert.equal(closed.statusCode, 200);
     assert.equal(closed.json().state, "closed");
+  });
+
+  it("accepts bounded authenticated preview diagnostics without private payloads", async () => {
+    const events: Record<string, string>[] = [];
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test", RUNNER_ALLOWED_ORIGINS: "https://app.shipglows.com" }),
+      dependencies: {
+        authentication: { authenticate: async () => actor },
+        projectAccess: { hasProjectAccess: () => true },
+        cloudProjectCatalog: { read: async () => ({ version: "shipglows.cli-project-catalog.v1" as const, generatedAt: new Date().toISOString(), entries: [] }) },
+        previewIngress: {} as PreviewIngressService,
+        reconcileCloudProjects: () => Promise.resolve(),
+        previewDiagnosticSink: (event) => events.push(event),
+      },
+    });
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/projects/prj_000000000001/preview-diagnostics",
+      headers: { origin: "https://app.shipglows.com", "user-agent": "Mozilla/5.0 Chrome/140.0" },
+      payload: { diagnosticId: "pd_abc123def456", stage: "frame", code: "timeout", occurredAt: "2026-08-18T02:00:00.000Z" },
+    });
+    const rejected = await app.inject({
+      method: "POST",
+      url: "/v1/projects/prj_000000000001/preview-diagnostics",
+      headers: { origin: "https://app.shipglows.com" },
+      payload: { diagnosticId: "pd_abc123def456", stage: "frame", code: "timeout", occurredAt: "2026-08-18T02:00:00.000Z", cookie: "secret" },
+    });
+    await app.close();
+
+    assert.equal(response.statusCode, 202);
+    assert.deepEqual(events, [{ diagnosticId: "pd_abc123def456", projectId: "prj_000000000001", stage: "frame", code: "timeout", browserFamily: "chromium", occurredAt: "2026-08-18T02:00:00.000Z" }]);
+    assert.equal(rejected.statusCode, 400);
+    assert.doesNotMatch(JSON.stringify(events), /secret|cookie|authorization/i);
+  });
+
+  it("upgrades an operator session to a protected WebSocket", async () => {
+    const pty: OperatorPty = {
+      write: () => undefined,
+      resize: () => undefined,
+      kill: () => undefined,
+      onData: () => ({ dispose: () => undefined }),
+      onExit: () => ({ dispose: () => undefined }),
+    };
+    const gateway = new OperatorWorkspaceGateway(
+      { prj_000000000001: { cwd: "/srv/private/project", tmuxSession: "shipglows-project" } },
+      () => pty,
+      {},
+      60_000,
+      "https://app.shipglows.com",
+    );
+    const capability = gateway.create({
+      tenantId: actor.tenantId,
+      userId: actor.userId,
+      projectId: "prj_000000000001",
+      idempotencyKey: "workspace-websocket-1",
+    });
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: { operatorWorkspaceGateway: gateway },
+    });
+    await app.ready();
+
+    let resolveConnected!: (value: string) => void;
+    const connectedPromise = new Promise<string>((resolve) => { resolveConnected = resolve; });
+    const socket = await app.injectWS(
+      `/v1/operator-sessions/${capability.id}/stream`,
+      {
+        headers: {
+          origin: "https://app.shipglows.com",
+          "sec-websocket-protocol": `shipglows.workspace.${capability.token}`,
+        },
+      },
+      {
+        onInit: (client) => client.once("message", (data) => {
+          assert.ok(Buffer.isBuffer(data));
+          resolveConnected(data.toString("utf8"));
+        }),
+      },
+    );
+    const connected = await connectedPromise;
+    socket.terminate();
+    await app.close();
+
+    assert.deepEqual(JSON.parse(connected), { type: "status", state: "connected" });
   });
 
   it("resolves a canonical project identity only through the tenant-scoped server directory", async () => {

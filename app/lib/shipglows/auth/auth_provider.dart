@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 enum ShipGlowsAuthStatus { signedOut, signedIn }
 
@@ -25,11 +26,19 @@ class ShipGlowsSession {
     required this.userId,
     required this.accessToken,
     required this.expiresAt,
+    this.displayName,
+    this.email,
+    this.photoUrl,
+    this.providerId,
   });
 
   final String userId;
   final String accessToken;
   final DateTime? expiresAt;
+  final String? displayName;
+  final String? email;
+  final String? photoUrl;
+  final String? providerId;
 }
 
 class ShipGlowsAuthState {
@@ -83,11 +92,19 @@ class FirebaseSessionSnapshot {
     required this.userId,
     required this.accessToken,
     required this.expiresAt,
+    this.displayName,
+    this.email,
+    this.photoUrl,
+    this.providerId,
   });
 
   final String userId;
   final String accessToken;
   final DateTime? expiresAt;
+  final String? displayName;
+  final String? email;
+  final String? photoUrl;
+  final String? providerId;
 
   bool isExpiredAt(DateTime now) =>
       expiresAt != null && !expiresAt!.isAfter(now);
@@ -131,6 +148,13 @@ class FirebaseFlutterSessionSource implements FirebaseSessionSource {
       userId: user.uid,
       accessToken: accessToken,
       expiresAt: token.expirationTime?.toUtc(),
+      displayName: user.displayName,
+      email: user.email,
+      photoUrl: user.photoURL,
+      providerId: user.providerData
+          .map((provider) => provider.providerId)
+          .where((providerId) => providerId.isNotEmpty)
+          .firstOrNull,
     );
   }
 }
@@ -168,6 +192,7 @@ class FirebaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
     try {
       await signIn();
     } on FirebaseAuthException catch (error) {
+      debugPrint('ShipGlows Google sign-in failed: ${error.code}.');
       throw _mapFirebaseAuthError(error);
     }
   }
@@ -252,6 +277,10 @@ class FirebaseShipGlowsAuthProvider implements ShipGlowsAuthProvider {
       userId: snapshot.userId,
       accessToken: snapshot.accessToken,
       expiresAt: snapshot.expiresAt,
+      displayName: snapshot.displayName,
+      email: snapshot.email,
+      photoUrl: snapshot.photoUrl,
+      providerId: snapshot.providerId,
     );
   }
 }

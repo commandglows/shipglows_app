@@ -125,6 +125,30 @@ export interface RunnerAppDependencies {
   readonly cloudProjectCatalog?: CloudProjectCatalogReader;
   readonly previewIngress?: PreviewIngressService;
   readonly reconcileCloudProjects?: (actor: { readonly tenantId: string; readonly userId: string }) => Promise<void>;
+  readonly previewDiagnosticSink?: (event: {
+    readonly diagnosticId: string;
+    readonly projectId: string;
+    readonly stage: string;
+    readonly code: string;
+    readonly browserFamily: string;
+    readonly occurredAt: string;
+  }) => void;
+  readonly accessDiagnosticSink?: (event: {
+    readonly method: string;
+    readonly route: string;
+    readonly statusCode: 401 | 403;
+    readonly requestId: string;
+  }) => void;
+}
+
+function browserFamily(userAgent: string | undefined): string {
+  const value = userAgent?.toLowerCase() ?? "";
+  if (value.includes("vivaldi")) return "vivaldi";
+  if (value.includes("edg/")) return "edge";
+  if (value.includes("firefox/")) return "firefox";
+  if (value.includes("safari/") && !value.includes("chrome/")) return "safari";
+  if (value.includes("chrome/")) return "chromium";
+  return "unknown";
 }
 
 function eventFrame(event: PersistedEvent): string {
@@ -180,6 +204,8 @@ export function buildRunnerApp({
 }) {
   const app = Fastify({ logger: false, bodyLimit: 16 * 1024 });
   void app.register(websocket, { options: { maxPayload: 20 * 1024 } });
+  void app.register((routeScope, _options, done) => {
+  const app = routeScope;
   app.setValidatorCompiler(TypeBoxValidatorCompiler);
   installErrorHandler(app);
   app.addHook("onRequest", async (request, reply) => {
@@ -198,11 +224,22 @@ export function buildRunnerApp({
       .header("Access-Control-Max-Age", "600");
     if (request.method === "OPTIONS") return reply.status(204).send();
   });
+  app.addHook("onResponse", async (request, reply) => {
+    if (reply.statusCode !== 401 && reply.statusCode !== 403) return;
+    dependencies.accessDiagnosticSink?.({
+      method: request.method,
+      route: request.routeOptions.url ?? request.url.split("?", 1)[0] ?? "unknown",
+      statusCode: reply.statusCode,
+      requestId: request.id,
+    });
+  });
+  app.options("*", async (_request, reply) => reply.status(404).send());
   const authentication = dependencies.authentication ?? new DisabledAuthenticationAdapter();
   const projectAccess = dependencies.projectAccess ?? noProjectAccess;
   const cloudProjectCatalog = dependencies.cloudProjectCatalog;
   const previewIngress = dependencies.previewIngress;
   const reconcileCloudProjects = dependencies.reconcileCloudProjects;
+  const previewDiagnosticWindows = new Map<string, { startedAt: number; count: number }>();
   const reconcileCloudProjectsGuard: preHandlerAsyncHookHandler = async (request) => {
     const actor = request.shipglowsActor;
     if (actor === undefined) throw new Error("Authenticated actor is missing.");
@@ -226,6 +263,37 @@ export function buildRunnerApp({
     });
   }
   if (previewIngress !== undefined && cloudProjectCatalog !== undefined) {
+    app.post<{ Params: { projectId: string }; Body: { diagnosticId: string; stage: string; code: string; occurredAt: string } }>("/v1/projects/:projectId/preview-diagnostics", {
+      preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard, projectAuthorizationGuard(projectAccess, "read"), stateChangingOriginGuard(config.server.allowedOrigins)],
+      schema: {
+        params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128, pattern: "^[A-Za-z0-9_-]+$" }) }),
+        body: Type.Object({
+          diagnosticId: Type.String({ minLength: 12, maxLength: 64, pattern: "^pd_[A-Za-z0-9]+$" }),
+          stage: Type.Union([Type.Literal("bootstrap"), Type.Literal("frame"), Type.Literal("recovery")]),
+          code: Type.Union([Type.Literal("timeout"), Type.Literal("frame_error"), Type.Literal("browser_help"), Type.Literal("popup_blocked"), Type.Literal("reported")]),
+          occurredAt: Type.String({ minLength: 20, maxLength: 40, format: "date-time" }),
+        }, { additionalProperties: false }),
+      },
+    }, async (request, reply) => {
+      const actor = request.shipglowsActor;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      const now = Date.now();
+      const key = `${actor.tenantId}:${actor.userId}`;
+      const current = previewDiagnosticWindows.get(key);
+      const window = current === undefined || now - current.startedAt >= 60_000 ? { startedAt: now, count: 0 } : current;
+      window.count += 1;
+      previewDiagnosticWindows.set(key, window);
+      if (window.count > 30) return await reply.status(429).send({ error: { code: "rateLimited", message: "Too many preview diagnostics." } });
+      dependencies.previewDiagnosticSink?.({
+        diagnosticId: request.body.diagnosticId,
+        projectId: request.params.projectId,
+        stage: request.body.stage,
+        code: request.body.code,
+        browserFamily: browserFamily(request.headers["user-agent"]),
+        occurredAt: request.body.occurredAt,
+      });
+      return await reply.status(202).send({ diagnosticId: request.body.diagnosticId, accepted: true });
+    });
     app.post<{ Params: { projectId: string }; Body: Record<string, never> }>("/v1/projects/:projectId/preview-ticket", {
       preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard, projectAuthorizationGuard(projectAccess, "read"), stateChangingOriginGuard(config.server.allowedOrigins)],
       schema: { params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }), body: Type.Object({}) },
@@ -378,7 +446,7 @@ export function buildRunnerApp({
   app.get(
     "/v1/cockpit",
     {
-      preHandler: [authenticationGuard(authentication)],
+      preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard],
       schema: { response: { 200: cockpitResponse, 503: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }) } },
     },
     async (request, reply) => {
@@ -387,17 +455,25 @@ export function buildRunnerApp({
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       if (store === undefined) return reply.status(503).send({ error: { code: "cockpitUnavailable", message: "Cockpit projection is unavailable." } });
       const projects = store.listCockpitProjects({ tenantId: actor.tenantId, userId: actor.userId });
+      const cloudNames = cloudProjectCatalog === undefined
+        ? new Map<string, string>()
+        : new Map((await cloudProjectCatalog.read()).entries.map((project) => [project.projectId, project.displayName]));
       return {
         generatedAt: new Date().toISOString(),
-        projects: projects.map((project: CockpitProjectRecord) => ({
-          id: project.id,
-          name: project.name,
-          repositoryFullName: project.repositoryFullName,
-          accessState: project.accessState,
-          conversationCount: project.conversationCount,
-          activeRunCount: project.activeRunCount,
-          health: project.health,
-        })),
+        projects: projects.map((project: CockpitProjectRecord) => {
+          const cloudName = cloudNames.get(project.id);
+          return {
+            id: project.id,
+            name: cloudName ?? project.name,
+            repositoryFullName: cloudName !== undefined && project.repositoryFullName === project.id
+              ? cloudName
+              : project.repositoryFullName,
+            accessState: project.accessState,
+            conversationCount: project.conversationCount,
+            activeRunCount: project.activeRunCount,
+            health: project.health,
+          };
+        }),
       };
     },
   );
@@ -989,5 +1065,7 @@ export function buildRunnerApp({
     },
   );
 
+  done();
+  });
   return app;
 }

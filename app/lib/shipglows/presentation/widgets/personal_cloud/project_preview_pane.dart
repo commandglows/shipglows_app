@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../presentation/theme/app_theme.dart';
 import '../../../personal_cloud/personal_cloud_models.dart';
@@ -15,12 +17,16 @@ typedef ProjectPreviewFrameBuilder =
       VoidCallback onFailed,
     );
 
+typedef ProjectPreviewExternalOpener = Future<bool> Function(Uri origin);
+
 class ProjectPreviewPane extends StatefulWidget {
   const ProjectPreviewPane({
     required this.projectId,
     required this.projectName,
     required this.transport,
     this.frameBuilder,
+    this.previewLoadTimeout = const Duration(seconds: 12),
+    this.openExternal,
     super.key,
   });
 
@@ -28,6 +34,8 @@ class ProjectPreviewPane extends StatefulWidget {
   final String projectName;
   final ProjectPreviewTransport? transport;
   final ProjectPreviewFrameBuilder? frameBuilder;
+  final Duration previewLoadTimeout;
+  final ProjectPreviewExternalOpener? openExternal;
 
   @override
   State<ProjectPreviewPane> createState() => _ProjectPreviewPaneState();
@@ -37,11 +45,17 @@ class _ProjectPreviewPaneState extends State<ProjectPreviewPane> {
   ProjectPreviewSnapshot? _snapshot;
   RemoteSurfaceException? _failure;
   bool _loading = true;
+  bool _showBrowserHelp = false;
+  bool _manualBrowserHelp = false;
   int _reloadRevision = 0;
+  Timer? _loadTimer;
+  late final String _diagnosticId;
 
   @override
   void initState() {
     super.initState();
+    _diagnosticId =
+        'pd_${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}';
     unawaited(_open());
   }
 
@@ -54,12 +68,21 @@ class _ProjectPreviewPaneState extends State<ProjectPreviewPane> {
     }
   }
 
+  @override
+  void dispose() {
+    _loadTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _open() async {
     final transport = widget.transport;
     setState(() {
       _loading = true;
+      _showBrowserHelp = false;
+      _manualBrowserHelp = false;
       _failure = null;
     });
+    _loadTimer?.cancel();
     if (transport == null) {
       setState(() {
         _loading = false;
@@ -90,6 +113,7 @@ class _ProjectPreviewPaneState extends State<ProjectPreviewPane> {
         _loading = snapshot.canRender;
         _reloadRevision += 1;
       });
+      if (snapshot.canRender) _startLoadTimer();
     } on RemoteSurfaceException catch (error) {
       if (mounted) {
         setState(() {
@@ -128,6 +152,7 @@ class _ProjectPreviewPaneState extends State<ProjectPreviewPane> {
               status: _statusLabel,
               icon: Icons.visibility_outlined,
               onRetry: _canRetry ? _open : null,
+              onHelp: snapshot?.canRender == true ? _toggleBrowserHelp : null,
             ),
             Expanded(
               child: Stack(
@@ -151,6 +176,46 @@ class _ProjectPreviewPaneState extends State<ProjectPreviewPane> {
                           liveRegion: true,
                           label: 'Connexion à la Preview en cours',
                           child: const CircularProgressIndicator(),
+                        ),
+                      ),
+                    ),
+                  if (_showBrowserHelp && snapshot?.canRender == true)
+                    ColoredBox(
+                      color: Theme.of(context).colorScheme.surface,
+                      child: _PreviewBrowserHelp(
+                        origin: snapshot!.origin!,
+                        onRetry: _open,
+                        onOpenExternal: _openInNewTab,
+                        onCopy: _copyPreviewUrl,
+                        onReport: _reportProblem,
+                        diagnosticId: _diagnosticId,
+                      ),
+                    ),
+                  if (snapshot?.canRender == true && !_showBrowserHelp)
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Material(
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: tokens.spacing.md,
+                            vertical: tokens.spacing.xs,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.help_outline_rounded),
+                              SizedBox(width: tokens.spacing.xs),
+                              const Flexible(
+                                child: Text('La Preview ne s’affiche pas ?'),
+                              ),
+                              SizedBox(width: tokens.spacing.xs),
+                              TextButton(
+                                onPressed: _toggleBrowserHelp,
+                                child: const Text('Diagnostiquer'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -186,19 +251,101 @@ class _ProjectPreviewPaneState extends State<ProjectPreviewPane> {
   }
 
   void _markLoaded() {
-    if (mounted) setState(() => _loading = false);
+    _loadTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _loading = false;
+        if (!_manualBrowserHelp) _showBrowserHelp = false;
+      });
+    }
   }
 
   void _markFrameFailed() {
     if (!mounted) return;
+    _loadTimer?.cancel();
     setState(() {
       _loading = false;
+      _showBrowserHelp = true;
       _failure = const RemoteSurfaceException(
         failure: RemoteSurfaceFailure.network,
         message: 'La Preview ne répond plus. Le projet reste inchangé.',
         retryable: true,
       );
     });
+    _reportDiagnostic(stage: 'frame', code: 'frame_error');
+  }
+
+  void _startLoadTimer() {
+    _loadTimer?.cancel();
+    _loadTimer = Timer(widget.previewLoadTimeout, () {
+      if (!mounted || !_loading || _snapshot?.canRender != true) return;
+      setState(() {
+        _loading = false;
+        _showBrowserHelp = true;
+      });
+      _reportDiagnostic(stage: 'frame', code: 'timeout');
+    });
+  }
+
+  void _toggleBrowserHelp() {
+    setState(() {
+      _loading = false;
+      _manualBrowserHelp = !_manualBrowserHelp;
+      _showBrowserHelp = _manualBrowserHelp;
+    });
+    if (_showBrowserHelp) {
+      _reportDiagnostic(stage: 'recovery', code: 'browser_help');
+    }
+  }
+
+  void _reportDiagnostic({required String stage, required String code}) {
+    final transport = widget.transport;
+    if (transport is! ProjectPreviewDiagnosticsTransport) return;
+    final diagnosticsTransport =
+        transport as ProjectPreviewDiagnosticsTransport;
+    unawaited(
+      diagnosticsTransport
+          .reportPreviewDiagnostic(
+            projectId: widget.projectId,
+            diagnosticId: _diagnosticId,
+            stage: stage,
+            code: code,
+            occurredAt: DateTime.now().toUtc(),
+          )
+          .catchError((_) {}),
+    );
+  }
+
+  Future<void> _reportProblem() async {
+    _reportDiagnostic(stage: 'recovery', code: 'reported');
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Diagnostic $_diagnosticId enregistré.')),
+    );
+  }
+
+  Future<void> _openInNewTab(Uri origin) async {
+    final opened =
+        await (widget.openExternal?.call(origin) ??
+            launchUrl(origin, webOnlyWindowName: '_blank'));
+    if (!opened && mounted) {
+      _reportDiagnostic(stage: 'recovery', code: 'popup_blocked');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Le navigateur a bloqué le nouvel onglet. Autorisez les pop-ups puis réessayez.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _copyPreviewUrl(Uri origin) async {
+    await Clipboard.setData(ClipboardData(text: origin.toString()));
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('URL de la Preview copiée.')));
   }
 
   bool get _canRetry {
@@ -243,18 +390,98 @@ class _ProjectPreviewPaneState extends State<ProjectPreviewPane> {
   }
 }
 
+class _PreviewBrowserHelp extends StatelessWidget {
+  const _PreviewBrowserHelp({
+    required this.origin,
+    required this.onRetry,
+    required this.onOpenExternal,
+    required this.onCopy,
+    required this.onReport,
+    required this.diagnosticId,
+  });
+
+  final Uri origin;
+  final Future<void> Function() onRetry;
+  final Future<void> Function(Uri) onOpenExternal;
+  final Future<void> Function(Uri) onCopy;
+  final Future<void> Function() onReport;
+  final String diagnosticId;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppTheme.tokensOf(context);
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(tokens.spacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.shield_outlined),
+            SizedBox(height: tokens.spacing.sm),
+            Text(
+              'La Preview semble bloquée par le navigateur',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: tokens.spacing.sm),
+            const Text(
+              'Autorisez les cookies, les pop-ups et le contenu intégré pour app.shipglows.com et *.preview.shipglows.com. Sur Vivaldi, cliquez sur le bouclier près de la barre d’adresse et autorisez ce site.',
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: tokens.spacing.md),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: tokens.spacing.sm,
+              runSpacing: tokens.spacing.sm,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('J’ai autorisé, réessayer'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => onOpenExternal(origin),
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: const Text('Ouvrir dans un nouvel onglet'),
+                ),
+                TextButton.icon(
+                  onPressed: () => onCopy(origin),
+                  icon: const Icon(Icons.copy_rounded),
+                  label: const Text('Copier l’URL'),
+                ),
+                TextButton.icon(
+                  onPressed: onReport,
+                  icon: const Icon(Icons.bug_report_outlined),
+                  label: const Text('Signaler le problème'),
+                ),
+              ],
+            ),
+            SizedBox(height: tokens.spacing.sm),
+            SelectableText(
+              'Diagnostic : $diagnosticId',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PaneHeader extends StatelessWidget {
   const _PaneHeader({
     required this.title,
     required this.status,
     required this.icon,
     this.onRetry,
+    this.onHelp,
   });
 
   final String title;
   final String status;
   final IconData icon;
   final Future<void> Function()? onRetry;
+  final VoidCallback? onHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -272,6 +499,14 @@ class _PaneHeader extends StatelessWidget {
             child: Text(title, style: Theme.of(context).textTheme.titleMedium),
           ),
           Semantics(liveRegion: true, child: Text(status)),
+          if (onHelp != null) ...[
+            SizedBox(width: tokens.spacing.xs),
+            IconButton(
+              tooltip: 'Aide navigateur Preview',
+              onPressed: onHelp,
+              icon: const Icon(Icons.shield_outlined),
+            ),
+          ],
           if (onRetry != null) ...[
             SizedBox(width: tokens.spacing.xs),
             IconButton(

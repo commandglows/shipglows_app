@@ -4,6 +4,16 @@ abstract interface class ProjectPreviewTransport {
   Future<ProjectPreviewSnapshot> openPreview({required String projectId});
 }
 
+abstract interface class ProjectPreviewDiagnosticsTransport {
+  Future<void> reportPreviewDiagnostic({
+    required String projectId,
+    required String diagnosticId,
+    required String stage,
+    required String code,
+    required DateTime occurredAt,
+  });
+}
+
 abstract interface class RemoteWorkspaceSocket {
   Future<void> get ready;
   Stream<Object?> get messages;
