@@ -104,7 +104,7 @@ flutter analyze
 ## Current Limits
 
 - No automatic push, merge, deployment, or canonical-branch mutation.
-- Interactive PTY/tmux rendering is implemented and the managed runner has one server-owned ShipGlows allowlist. Public use remains unavailable until `runner.shipglows.com` has its HTTPS reverse-proxy route and an authenticated actor/project is provisioned.
+- Interactive PTY/tmux rendering is implemented and the managed runner has one server-owned ShipGlows allowlist. Production uses the authenticated HTTPS API boundary at `api.shipglows.com`; project ports remain loopback-only.
 - No claim of complete Web/Android/Windows parity until platform proof passes.
 - Firebase Auth is the active identity adapter behind a provider-neutral boundary. Convex is the target product data layer; Fastify/SQLite is the documented execution-plane exception. Live Firebase and hosted-runner proof remain incomplete.
 

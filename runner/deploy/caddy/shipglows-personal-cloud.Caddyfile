@@ -22,7 +22,7 @@
 	}
 }
 
-runner.shipglows.com {
+api.shipglows.com {
 	encode zstd gzip
 	import shipglows_runner_headers
 

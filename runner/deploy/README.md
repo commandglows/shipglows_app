@@ -4,7 +4,7 @@ These files prepare the ready Personal Cloud architecture without granting or pe
 
 ## Fixed topology
 
-- `https://runner.shipglows.com` -> system Caddy -> runner `127.0.0.1:3210`, including the operator Workspace WebSocket.
+- `https://api.shipglows.com` -> system Caddy -> runner `127.0.0.1:3210`, including the operator Workspace WebSocket.
 - `https://<slug>.preview.shipglows.com` -> on-demand TLS ask -> preview session bootstrap or runner `forward_auth` -> user Caddy `127.0.0.1:8080` -> catalog-owned loopback devserver.
 - `/v1/preview/session` is the only preview-host route sent directly to the runner. `/v1/preview/authorize` and `/v1/preview/tls-ask` are never publicly routed.
 - The authorization cookie and bearer header are removed before the request reaches a devserver. Caddy preserves the original Host and supports HTTP and WebSocket/HMR proxying.
