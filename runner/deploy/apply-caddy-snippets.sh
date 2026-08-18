@@ -11,8 +11,8 @@ source_site="$deploy_dir/caddy/shipglows-personal-cloud.Caddyfile"
 root_config="/etc/caddy/Caddyfile"
 global_dir="/etc/caddy/global-options-enabled"
 site_dir="/etc/caddy/sites-enabled"
-target_global="$global_dir/00-shipglows-global.Caddyfile"
-target_site="$site_dir/shipglows-personal-cloud.Caddyfile"
+target_global="$global_dir/00-shipglows-global.caddy"
+target_site="$site_dir/shipglows-personal-cloud.caddy"
 backup_root="/var/backups/shipglows-personal-cloud/caddy"
 
 require_command() {
