@@ -22,6 +22,18 @@ describe("public installer pages", () => {
     }
   });
 
+  it("documents the supported Linux families and automatic skill corpus selection", () => {
+    const english = JSON.stringify(installPages.shipglows.en);
+    const french = JSON.stringify(installPages.shipglows.fr);
+
+    expect(english).toContain("Ubuntu, Debian");
+    expect(english).toContain("SHIPGLOWS_INSTALL_COMPONENTS=all");
+    expect(english).toContain("public skill corpus");
+    expect(french).toContain("Ubuntu, Debian");
+    expect(french).toContain("SHIPGLOWS_INSTALL_COMPONENTS=all");
+    expect(french).toContain("corpus public de skills");
+  });
+
   it("switches the public installer between its English and French routes", () => {
     expect(alternatePath("/shipglows", "fr")).toBe("/fr/shipglows");
     expect(alternatePath("/fr/shipglows", "en")).toBe("/shipglows");
