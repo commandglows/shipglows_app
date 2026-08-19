@@ -1430,9 +1430,34 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
       try {
         run(db, "INSERT OR IGNORE INTO tenants VALUES(?, ?)", tenantId, `local:${tenantId}`);
         run(db, "INSERT OR IGNORE INTO users VALUES(?, ?)", userId, `local:${userId}`);
-        run(db, "INSERT OR IGNORE INTO tenant_users VALUES(?, ?, ?)", tenantId, userId, "owner");
+        run(
+          db,
+          `INSERT INTO tenant_users(tenant_id, user_id, role)
+           SELECT ?, ?, 'owner'
+           WHERE NOT EXISTS(
+             SELECT 1 FROM tenant_users WHERE tenant_id = ? AND user_id = ?
+           )`,
+          tenantId,
+          userId,
+          tenantId,
+          userId,
+        );
         run(db, "INSERT OR IGNORE INTO projects VALUES(?, ?, NULL)", projectId, tenantId);
-        run(db, "INSERT OR IGNORE INTO memberships VALUES(?, ?, ?, ?)", tenantId, projectId, userId, "read");
+        run(
+          db,
+          `INSERT INTO memberships(tenant_id, project_id, user_id, capability)
+           SELECT ?, ?, ?, 'read'
+           WHERE NOT EXISTS(
+             SELECT 1 FROM memberships
+             WHERE tenant_id = ? AND project_id = ? AND user_id = ? AND capability = 'read'
+           )`,
+          tenantId,
+          projectId,
+          userId,
+          tenantId,
+          projectId,
+          userId,
+        );
         db.exec("COMMIT");
       } catch (error) {
         db.exec("ROLLBACK");

@@ -263,7 +263,13 @@ export function buildRunnerApp({
     app.get("/v1/cloud-projects", { preHandler: [authenticationGuard(authentication), reconcileCloudProjectsGuard] }, async (request) => {
       const actor = request.shipglowsActor;
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
-      const snapshot = await cloudProjectCatalog.read();
+      let snapshot;
+      try {
+        snapshot = await cloudProjectCatalog.read();
+      } catch (error) {
+        if (error instanceof CloudProjectCatalogError) throw new HttpError(503, error.code, error.message);
+        throw error;
+      }
       const projects = [];
       for (const project of snapshot.entries) {
         if (await projectAccess.hasProjectAccess({ tenantId: actor.tenantId, userId: actor.userId, projectId: project.projectId, capability: "read" })) projects.push(redactCloudProject(project));

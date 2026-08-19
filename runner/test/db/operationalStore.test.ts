@@ -233,6 +233,29 @@ describe("SQLite operational projection", () => {
     store.close();
   });
 
+  it("reconciles a local project target without duplicating actor or access rows", async () => {
+    const path = await databasePath("local-project-reconciliation");
+    const store = await openOperationalStore(path);
+    const target = { tenantId: ids.tenantA, userId: ids.userA, projectId: ids.projectA };
+
+    store.ensureLocalProjectContextTarget(target);
+    store.ensureLocalProjectContextTarget(target);
+    store.close();
+
+    const database = new DatabaseSync(path, { readOnly: true });
+    const tenantUsers = database.prepare(
+      "SELECT COUNT(*) AS count FROM tenant_users WHERE tenant_id = ? AND user_id = ?",
+    ).get(target.tenantId, target.userId) as { count: number };
+    const memberships = database.prepare(
+      `SELECT COUNT(*) AS count FROM memberships
+       WHERE tenant_id = ? AND project_id = ? AND user_id = ? AND capability = 'read'`,
+    ).get(target.tenantId, target.projectId, target.userId) as { count: number };
+    database.close();
+
+    assert.equal(tenantUsers.count, 1);
+    assert.equal(memberships.count, 1);
+  });
+
   it("resolves cross-namespace project identities only for an authorized tenant member", async () => {
     const store = await openOperationalStore(await databasePath("project-identities"));
     seed(store);
