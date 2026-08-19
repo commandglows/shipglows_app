@@ -12,7 +12,8 @@ describe("installer route contract", () => {
 
   it.each([["install.astro", 'href="/shipglows"'], ["fr/install.astro", 'href="/fr/shipglows"']])("keeps %s plugin-first with a local runtime link", async (route, link) => {
     const source = await readFile(resolve(root, "src/pages", route), "utf8");
-    expect(source).toContain("codex plugin marketplace add");
+    expect(source).toContain("codex plugin marketplace add commandglows/shipglows");
+    expect(source).not.toContain("dianedef/ShipGlows");
     expect(source).toContain(link);
   });
 });

@@ -121,7 +121,7 @@ maintenance.
 Install ShipGlows in Codex by adding the repository marketplace source:
 
 ```bash
-codex plugin marketplace add dianedef/ShipGlows --ref main --sparse .agents/plugins --sparse plugins/shipglows
+codex plugin marketplace add commandglows/shipglows --ref main --sparse .agents/plugins --sparse plugins/shipglows
 ```
 
 Then restart Codex, open the plugin directory, install `shipglows` from the
