@@ -42,6 +42,8 @@ describe("Windows toolchain public surfaces", () => {
     expect(installer).toContain("Flutter for web, Android, and Windows");
     expect(installer).toContain("ShipGlows.AgentInstructions.psm1");
     expect(installer).toContain("ShipGlows.Auth.psm1");
-    expect(installer).toContain("$entries.Count -ne 7");
+    expect(installer).toContain("ShipGlows.InstallerEngine.psm1");
+    expect(installer).toContain("ShipGlows.InstallerConsole.psm1");
+    expect(installer).toContain("$entries.Count -ne 16");
   });
 });

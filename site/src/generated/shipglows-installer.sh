@@ -6,7 +6,8 @@ set -eu
 REPO_URL="${SHIPGLOWS_REPO_URL:-https://github.com/commandglows/shipglows.git}"
 BRANCH="${SHIPGLOWS_BRANCH:-main}"
 REQUESTED_MODE="${SHIPGLOWS_INSTALL_MODE:-}"
-REQUESTED_SURFACE="${SHIPGLOWS_INSTALL_SURFACE:-runtime}"
+REQUESTED_SURFACE="${SHIPGLOWS_INSTALL_SURFACE:-}"
+REQUESTED_COMPONENTS="${SHIPGLOWS_INSTALL_COMPONENTS:-ask}"
 PUBLIC_INSTALL_URL="${SHIPGLOWS_INSTALL_URL:-https://shipglows.com/shipglows-script}"
 CURRENT_UID="$(id -u)"
 CURRENT_USER="$(id -un 2>/dev/null || printf '%s' "${USER:-unknown}")"
@@ -29,7 +30,14 @@ normalize_mode() {
 }
 
 resolve_install_surface() {
-    INSTALL_SURFACE="$(normalize_mode "$REQUESTED_SURFACE")"
+    if [ -n "$REQUESTED_SURFACE" ]; then
+        INSTALL_SURFACE="$(normalize_mode "$REQUESTED_SURFACE")"
+    else
+        case ",$(normalize_mode "$REQUESTED_COMPONENTS")," in
+            *,all,*|*,skills,*|*,corpus,*) INSTALL_SURFACE=corpus ;;
+            *) INSTALL_SURFACE=runtime ;;
+        esac
+    fi
     case "$INSTALL_SURFACE" in
         runtime|cli)
             INSTALL_SURFACE=runtime
@@ -116,6 +124,7 @@ resolve_install_mode() {
 INSTALL_MODE=""
 resolve_install_mode || exit 1
 resolve_install_surface || exit 1
+export SHIPGLOWS_INSTALL_SURFACE="$INSTALL_SURFACE"
 
 if [ "$INSTALL_SURFACE" = codex-plugin ]; then
     log "Surface sélectionnée: plugin Codex (aucun clone runtime ni corpus)."

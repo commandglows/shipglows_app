@@ -91,8 +91,9 @@ function Extract-ShipglowsWindowsFiles([string]$ArchivePath, [string]$Destinatio
         $entries += $installerEntries[0]
     }
     if ($FullMode) {
-        $entries += @($archiveEntries | Where-Object { $_ -match '^[^/]+/cli/windows/(ShipGlows\.DevServer\.psm1|ShipGlows\.CodexMcp\.psm1|ShipGlows\.MobileToolchain\.psm1|ShipGlows\.AgentInstructions\.psm1|ShipGlows\.Auth\.psm1|shipglows-devserver\.ps1|install-devserver\.ps1)$' })
-        if ($entries.Count -ne 7) { Fail 'The ShipGlows archive is missing native Windows DevServer, mobile toolchain, authentication, agent instructions, or Codex MCP files.' }
+        $entries += @($archiveEntries | Where-Object { $_ -match '^[^/]+/cli/windows/(ShipGlows\.DevServer\.psm1|ShipGlows\.FlutterSupervisor\.ps1|ShipGlows\.ProjectCatalogRefresh\.ps1|ShipGlows\.CodexMcp\.psm1|ShipGlows\.MobileToolchain\.psm1|ShipGlows\.InstallerEngine\.psm1|ShipGlows\.InstallerConsole\.psm1|ShipGlows\.AgentInstructions\.psm1|ShipGlows\.Auth\.psm1|shipglows-devserver\.ps1|install-devserver\.ps1)$' })
+        $entries += @($archiveEntries | Where-Object { $_ -match '^[^/]+/cli/environment/(?:__init__\.py|core\.py|mise_backend\.py|shipglows_environment\.py|schemas/shipglows-environment-v1\.schema\.json)$' })
+        if ($entries.Count -ne 16) { Fail 'The ShipGlows archive is missing native Windows DevServer, project catalogue refresher, Flutter supervisor, installer engine/UI, authentication, agent instructions, or environment control-plane files.' }
     }
 
     & $tarPath -xf $ArchivePath -C $DestinationPath $entries
@@ -148,6 +149,161 @@ function Assert-PowerShellSyntax([string]$Path) {
     }
 }
 
+function Assert-EnvironmentPackage([string]$EnvironmentDirectory) {
+    $required = @(
+        '__init__.py',
+        'core.py',
+        'mise_backend.py',
+        'shipglows_environment.py',
+        'schemas\shipglows-environment-v1.schema.json'
+    )
+    foreach ($relativePath in $required) {
+        $path = Join-Path $EnvironmentDirectory $relativePath
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Fail "Installed environment control-plane file not found: $path" }
+    }
+    try {
+        [void]([IO.File]::ReadAllText((Join-Path $EnvironmentDirectory 'schemas\shipglows-environment-v1.schema.json')) | ConvertFrom-Json)
+    } catch {
+        Fail 'Installed environment control-plane schema is not valid JSON.'
+    }
+}
+
+function Test-SgManagedRelativePath([string]$Path) {
+    if ([string]::IsNullOrWhiteSpace($Path) -or [IO.Path]::IsPathRooted($Path)) { return $false }
+    $normalized = $Path.Replace('\','/')
+    $segments = @($normalized.Split('/'))
+    if (-not $segments.Count) { return $false }
+    return @($segments | Where-Object { $_ -in @('','.', '..') }).Count -eq 0
+}
+
+function Get-SgRuntimeUpdateOperation {
+    param([string]$RuntimeRoot,[string]$PayloadRoot,[string[]]$ManagedRelativePaths,[string]$SourceCommit)
+    if (-not (Test-Path -LiteralPath $RuntimeRoot -PathType Container)) { return 'install' }
+    $statePath = Join-Path $RuntimeRoot '.shipglows-install.json'
+    if (-not (Test-Path -LiteralPath $statePath -PathType Leaf)) { return 'repair' }
+    try { $state = [IO.File]::ReadAllText($statePath) | ConvertFrom-Json }
+    catch { return 'repair' }
+    if ([string]$state.sourceCommit -cne $SourceCommit) { return 'update' }
+    foreach ($relative in $ManagedRelativePaths) {
+        if (-not (Test-SgManagedRelativePath $relative)) { return 'repair' }
+        $source = Join-Path $PayloadRoot $relative.Replace('/','\')
+        $target = Join-Path $RuntimeRoot $relative.Replace('/','\')
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf) -or -not (Test-Path -LiteralPath $target -PathType Leaf)) { return 'repair' }
+        if ((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -cne (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash) { return 'repair' }
+    }
+    return 'no-op'
+}
+
+function Invoke-SgRuntimePayloadTransaction {
+    param(
+        [Parameter(Mandatory=$true)][string]$PayloadRoot,
+        [Parameter(Mandatory=$true)][string]$RuntimeRoot,
+        [Parameter(Mandatory=$true)][string[]]$ManagedRelativePaths,
+        [string]$ManagedManifestName = '.shipglows-runtime-files.json',
+        [Parameter(Mandatory=$true)][scriptblock]$Action
+    )
+    $payloadFull = [IO.Path]::GetFullPath($PayloadRoot).TrimEnd('\')
+    $runtimeFull = [IO.Path]::GetFullPath($RuntimeRoot).TrimEnd('\')
+    $managed = @($ManagedRelativePaths | ForEach-Object { $_.Replace('\','/') } | Sort-Object -Unique)
+    if (-not $managed.Count) { throw 'Runtime transaction requires at least one managed file.' }
+    foreach ($relative in $managed) {
+        if (-not (Test-SgManagedRelativePath $relative)) { throw "Unsafe managed runtime path: $relative" }
+        $source = Join-Path $payloadFull $relative.Replace('/','\')
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Staged runtime file is missing: $relative" }
+    }
+
+    if (-not (Test-SgManagedRelativePath $ManagedManifestName) -or $ManagedManifestName.Contains('/')) { throw 'Managed runtime manifest name is unsafe.' }
+    $manifestPath = Join-Path $runtimeFull $ManagedManifestName
+    $previous = @()
+    if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
+        try {
+            $decodedManifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
+            foreach ($item in $decodedManifest) { $previous += [string]$item }
+        }
+        catch { throw 'Existing managed-runtime manifest is invalid; update stopped before mutation.' }
+        foreach ($relative in $previous) {
+            if (-not (Test-SgManagedRelativePath ([string]$relative))) { throw 'Existing managed-runtime manifest contains an unsafe path.' }
+        }
+    }
+    $affected = @($managed + @($previous | ForEach-Object { ([string]$_).Replace('\','/') }) | Sort-Object -Unique)
+    $backupRoot = Join-Path ([IO.Path]::GetTempPath()) ('sg-runtime-rollback-' + [guid]::NewGuid().ToString('N'))
+    $existing = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    $runtimeExisted = Test-Path -LiteralPath $runtimeFull -PathType Container
+    $existingDirectories = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    if ($runtimeExisted) {
+        foreach ($directory in @(Get-ChildItem -LiteralPath $runtimeFull -Recurse -Force -Directory)) {
+            [void]$existingDirectories.Add($directory.FullName)
+        }
+    }
+    $runtimeParent = Split-Path -Parent $runtimeFull
+    New-Item -ItemType Directory -Path $runtimeParent -Force | Out-Null
+    $lockPath = Join-Path $runtimeParent '.shipglows-runtime-update.lock'
+    try { $lockStream = [IO.File]::Open($lockPath,[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None) }
+    catch { throw "A ShipGlows runtime update is already in progress for: $runtimeFull" }
+    try {
+        New-Item -ItemType Directory -Path $runtimeFull,$backupRoot -Force | Out-Null
+        foreach ($relative in $affected) {
+            $target = Join-Path $runtimeFull $relative.Replace('/','\')
+            if (Test-Path -LiteralPath $target -PathType Leaf) {
+                [void]$existing.Add($relative)
+                $backup = Join-Path $backupRoot $relative.Replace('/','\')
+                New-Item -ItemType Directory -Path (Split-Path -Parent $backup) -Force | Out-Null
+                Copy-Item -LiteralPath $target -Destination $backup
+            }
+        }
+        $manifestExisted = Test-Path -LiteralPath $manifestPath -PathType Leaf
+        if ($manifestExisted) { Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $backupRoot 'manifest.json') }
+
+        foreach ($relative in $managed) {
+            $source = Join-Path $payloadFull $relative.Replace('/','\')
+            $target = Join-Path $runtimeFull $relative.Replace('/','\')
+            New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+            $temporary = "$target.shipglows-new-$([guid]::NewGuid().ToString('N'))"
+            try {
+                Copy-Item -LiteralPath $source -Destination $temporary
+                Move-Item -LiteralPath $temporary -Destination $target -Force
+            } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force } }
+        }
+        foreach ($relative in @($previous | ForEach-Object { ([string]$_).Replace('\','/') })) {
+            if ($managed -notcontains $relative) {
+                $stale = Join-Path $runtimeFull $relative.Replace('/','\')
+                if (Test-Path -LiteralPath $stale -PathType Leaf) { Remove-Item -LiteralPath $stale -Force }
+            }
+        }
+        $manifestContent = $managed | ConvertTo-Json -Compress
+        if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf) -or [IO.File]::ReadAllText($manifestPath) -cne $manifestContent) {
+            [IO.File]::WriteAllText($manifestPath,$manifestContent,[Text.UTF8Encoding]::new($false))
+        }
+        & $Action
+    } catch {
+        foreach ($relative in $affected) {
+            $target = Join-Path $runtimeFull $relative.Replace('/','\')
+            if (Test-Path -LiteralPath $target -PathType Leaf) { Remove-Item -LiteralPath $target -Force }
+            if ($existing.Contains($relative)) {
+                $backup = Join-Path $backupRoot $relative.Replace('/','\')
+                New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+                Copy-Item -LiteralPath $backup -Destination $target
+            }
+        }
+        if (Test-Path -LiteralPath $manifestPath -PathType Leaf) { Remove-Item -LiteralPath $manifestPath -Force }
+        $manifestBackup = Join-Path $backupRoot 'manifest.json'
+        if (Test-Path -LiteralPath $manifestBackup -PathType Leaf) { Copy-Item -LiteralPath $manifestBackup -Destination $manifestPath }
+        foreach ($directory in @(Get-ChildItem -LiteralPath $runtimeFull -Recurse -Force -Directory | Sort-Object { $_.FullName.Length } -Descending)) {
+            if (-not $existingDirectories.Contains($directory.FullName) -and -not @(Get-ChildItem -LiteralPath $directory.FullName -Force).Count) {
+                Remove-Item -LiteralPath $directory.FullName -Force
+            }
+        }
+        if (-not $runtimeExisted -and (Test-Path -LiteralPath $runtimeFull -PathType Container) -and -not @(Get-ChildItem -LiteralPath $runtimeFull -Force).Count) {
+            Remove-Item -LiteralPath $runtimeFull -Force
+        }
+        throw
+    } finally {
+        if (Test-Path -LiteralPath $backupRoot) { Remove-Item -LiteralPath $backupRoot -Recurse -Force -ErrorAction SilentlyContinue }
+        if ($lockStream) { $lockStream.Dispose() }
+        if (Test-Path -LiteralPath $lockPath -PathType Leaf) { Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue }
+    }
+}
+
 if (Get-Command wsl.exe -ErrorAction SilentlyContinue) {
     $wslProbeOutput = (& wsl.exe -e sh -lc 'printf ok' 2>$null | Out-String).Trim()
     if ($LASTEXITCODE -eq 0 -and $wslProbeOutput -eq 'ok') {
@@ -161,18 +317,14 @@ $source = Resolve-GitHubSource -RepositoryUrl $RepoUrl -Ref $Branch
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("shipglows-windows-" + [guid]::NewGuid().ToString('N'))
 $archivePath = Join-Path $tempRoot 'shipglows.zip'
 $extractRoot = Join-Path $tempRoot 'extract'
-$localDirectory = Join-Path $ShipglowsDir 'local'
-$localInstaller = Join-Path $localDirectory 'install_local.ps1'
+$payloadRoot = Join-Path $tempRoot 'payload'
+$localInstaller = Join-Path $ShipglowsDir 'local\install_local.ps1'
 $windowsDirectory = Join-Path $ShipglowsDir 'cli\windows'
+$environmentDirectory = Join-Path $ShipglowsDir 'cli\environment'
 New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
 New-Item -ItemType Directory -Path $extractRoot -Force | Out-Null
-New-Item -ItemType Directory -Path $ShipglowsDir -Force | Out-Null
 $defaultHiddenParent = [IO.Path]::GetFullPath((Join-Path $env:USERPROFILE '.shipglows')).TrimEnd('\')
 $defaultRuntimeRoot = [IO.Path]::GetFullPath((Join-Path $defaultHiddenParent 'runtime')).TrimEnd('\')
-if ([IO.Path]::GetFullPath($ShipglowsDir).TrimEnd('\') -eq $defaultRuntimeRoot) {
-    $hiddenParentItem = Get-Item -LiteralPath $defaultHiddenParent -Force
-    $hiddenParentItem.Attributes = $hiddenParentItem.Attributes -bor [IO.FileAttributes]::Hidden
-}
 
 try {
     Write-Info "Downloading ShipGlows Windows files from commit $($source.Commit)..."
@@ -188,55 +340,66 @@ try {
         if ($installerCandidates.Count -ne 1) {
             Fail 'The ShipGlows archive must contain exactly one local/install_local.ps1.'
         }
-        New-Item -ItemType Directory -Path $localDirectory -Force | Out-Null
-        Copy-Item -LiteralPath $installerCandidates[0].FullName -Destination $localInstaller -Force
+        $managedRelativePaths = @('local/install_local.ps1')
+        $stagedLocalInstaller = Join-Path $payloadRoot 'local\install_local.ps1'
+        New-Item -ItemType Directory -Path (Split-Path -Parent $stagedLocalInstaller) -Force | Out-Null
+        Copy-Item -LiteralPath $installerCandidates[0].FullName -Destination $stagedLocalInstaller
+        Assert-PowerShellSyntax -Path $stagedLocalInstaller
     } else {
         $windowsCandidates = @(
             Get-ChildItem -LiteralPath $extractRoot -Recurse -Force -Directory -Filter 'windows' |
                 Where-Object { Test-Path (Join-Path $_.FullName 'install-devserver.ps1') }
         )
         if ($windowsCandidates.Count -ne 1) { Fail 'Native Windows DevServer directory was not found in the archive.' }
-        New-Item -ItemType Directory -Path $windowsDirectory -Force | Out-Null
-        Get-ChildItem -LiteralPath $windowsCandidates[0].FullName -Force -File | Copy-Item -Destination $windowsDirectory -Force
+        $environmentCandidates = @(
+            Get-ChildItem -LiteralPath $extractRoot -Recurse -Force -Directory -Filter 'environment' |
+                Where-Object {
+                    (Test-Path (Join-Path $_.FullName 'shipglows_environment.py')) -and
+                    (Test-Path (Join-Path $_.FullName 'schemas\shipglows-environment-v1.schema.json'))
+                }
+        )
+        if ($environmentCandidates.Count -ne 1) { Fail 'Environment control-plane directory was not found in the archive.' }
+        $windowsFiles = @('ShipGlows.DevServer.psm1','ShipGlows.FlutterSupervisor.ps1','ShipGlows.ProjectCatalogRefresh.ps1','ShipGlows.CodexMcp.psm1','ShipGlows.MobileToolchain.psm1','ShipGlows.InstallerEngine.psm1','ShipGlows.InstallerConsole.psm1','ShipGlows.AgentInstructions.psm1','ShipGlows.Auth.psm1','shipglows-devserver.ps1','install-devserver.ps1')
+        $pythonFiles = @('__init__.py','core.py','mise_backend.py','shipglows_environment.py')
+        $managedRelativePaths = @($windowsFiles | ForEach-Object { "cli/windows/$_" }) + @($pythonFiles | ForEach-Object { "cli/environment/$_" }) + @('cli/environment/schemas/shipglows-environment-v1.schema.json') + @('bin/ShipGlows.DevServer.psm1','bin/ShipGlows.FlutterSupervisor.ps1','bin/ShipGlows.ProjectCatalogRefresh.ps1','bin/ShipGlows.Auth.psm1','bin/ShipGlows.MobileToolchain.psm1','bin/shipglows-devserver.ps1')
+        $stagedWindows = Join-Path $payloadRoot 'cli\windows'
+        $stagedEnvironment = Join-Path $payloadRoot 'cli\environment'
+        $stagedBin = Join-Path $payloadRoot 'bin'
+        New-Item -ItemType Directory -Path $stagedWindows,(Join-Path $stagedEnvironment 'schemas'),$stagedBin -Force | Out-Null
+        foreach ($windowsFile in $windowsFiles) {
+            Copy-Item -LiteralPath (Join-Path $windowsCandidates[0].FullName $windowsFile) -Destination (Join-Path $stagedWindows $windowsFile)
+            Assert-PowerShellSyntax -Path (Join-Path $stagedWindows $windowsFile)
+        }
+        foreach ($pythonFile in $pythonFiles) { Copy-Item -LiteralPath (Join-Path $environmentCandidates[0].FullName $pythonFile) -Destination (Join-Path $stagedEnvironment $pythonFile) }
+        Copy-Item -LiteralPath (Join-Path $environmentCandidates[0].FullName 'schemas\shipglows-environment-v1.schema.json') -Destination (Join-Path $stagedEnvironment 'schemas\shipglows-environment-v1.schema.json')
+        Assert-EnvironmentPackage -EnvironmentDirectory $stagedEnvironment
+        foreach ($launcherModule in @('ShipGlows.DevServer.psm1','ShipGlows.FlutterSupervisor.ps1','ShipGlows.ProjectCatalogRefresh.ps1','ShipGlows.Auth.psm1','ShipGlows.MobileToolchain.psm1')) { Copy-Item -LiteralPath (Join-Path $stagedWindows $launcherModule) -Destination (Join-Path $stagedBin $launcherModule) }
+        Copy-Item -LiteralPath (Join-Path $stagedWindows 'shipglows-devserver.ps1') -Destination (Join-Path $stagedBin 'shipglows-devserver.ps1')
     }
-} finally {
-    Remove-PathIfPresent $tempRoot
-}
-
-Write-Info "Source commit: $($source.Commit)"
-
-if ($InstallMode -eq 'local') {
-    if (-not (Test-Path -LiteralPath $localInstaller)) {
-        Fail "Installed Windows local installer not found: $localInstaller"
+    $installState = [ordered]@{ schemaVersion=1; sourceCommit=$source.Commit; installMode=$InstallMode }
+    [IO.File]::WriteAllText((Join-Path $payloadRoot '.shipglows-install.json'),($installState | ConvertTo-Json -Compress),[Text.UTF8Encoding]::new($false))
+    $managedRelativePaths = @($managedRelativePaths) + @('.shipglows-install.json')
+    $runtimeOperation = Get-SgRuntimeUpdateOperation -RuntimeRoot $ShipglowsDir -PayloadRoot $payloadRoot -ManagedRelativePaths $managedRelativePaths -SourceCommit $source.Commit
+    Write-Info "Source commit: $($source.Commit)"
+    Write-Info "Runtime operation: $runtimeOperation"
+    if ($DownloadOnly) { Write-Info 'Download-only validation completed without changing the installed runtime.'; exit 0 }
+    Invoke-SgRuntimePayloadTransaction -PayloadRoot $payloadRoot -RuntimeRoot $ShipglowsDir -ManagedRelativePaths $managedRelativePaths -ManagedManifestName ".shipglows-runtime-files.$InstallMode.json" -Action {
+        if ([IO.Path]::GetFullPath($ShipglowsDir).TrimEnd('\') -eq $defaultRuntimeRoot) {
+            $hiddenParentItem = Get-Item -LiteralPath $defaultHiddenParent -Force
+            $hiddenParentItem.Attributes = $hiddenParentItem.Attributes -bor [IO.FileAttributes]::Hidden
+        }
+        if ($InstallMode -eq 'local') {
+            Write-Info 'Starting native Windows local setup.'
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $localInstaller
+            if ($LASTEXITCODE -ne 0) { throw 'Native Windows configuration failed.' }
+        } else {
+            Write-Info 'Installing the native Windows DevServer launcher.'
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $windowsDirectory 'install-devserver.ps1') -ShipglowsDir $ShipglowsDir
+            if ($LASTEXITCODE -ne 0) { throw 'Native Windows DevServer installation failed.' }
+        }
     }
-    $localInstallerHash = (Get-FileHash -LiteralPath $localInstaller -Algorithm SHA256).Hash
-    Write-Info "Installed local installer: $localInstaller"
-    Write-Info "SHA256: $localInstallerHash"
-    Assert-PowerShellSyntax -Path $localInstaller
-    Write-Info 'PowerShell syntax validation passed.'
-}
-
-if ($InstallMode -eq 'full') {
-    foreach ($required in @('ShipGlows.DevServer.psm1','ShipGlows.CodexMcp.psm1','ShipGlows.MobileToolchain.psm1','ShipGlows.AgentInstructions.psm1','ShipGlows.Auth.psm1','shipglows-devserver.ps1','install-devserver.ps1')) {
-        Assert-PowerShellSyntax -Path (Join-Path $windowsDirectory $required)
-    }
-    Write-Info 'Native Windows DevServer files installed.'
-}
-
-if ($DownloadOnly) {
-    Write-Info 'Download-only validation completed.'
-    exit 0
-}
-
-if ($InstallMode -eq 'local') {
-    Write-Info 'Starting native Windows local setup.'
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $localInstaller
-    if ($LASTEXITCODE -ne 0) { Fail 'Native Windows configuration failed.' }
-} else {
-    Write-Info 'Installing the native Windows DevServer launcher.'
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $windowsDirectory 'install-devserver.ps1') -ShipglowsDir $ShipglowsDir
-    if ($LASTEXITCODE -ne 0) { Fail 'Native Windows DevServer installation failed.' }
-}
+    Write-Info 'Validated runtime activation completed.'
+} finally { Remove-PathIfPresent $tempRoot }
 
 Write-Host ''
 Write-Host 'ShipGlows native Windows installation completed.' -ForegroundColor Green
