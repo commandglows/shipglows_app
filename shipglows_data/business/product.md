@@ -61,7 +61,7 @@ The second promise is planned, not implemented or publicly available. Its govern
 
 ## Primary Surfaces
 
-- Cockpit: cross-project health, activity, diagnostics, and evidence freshness.
+- Cockpit: cross-project health, explainable AI readiness, activity, diagnostics, and evidence freshness.
 - Project detail: project state, health dimensions, recent evidence, and actions.
 - Conversations: semantic agent events, messages, approvals, interruption, and resume.
 - Operator Workspace: optional advanced surface with a separately authorized, short-lived PTY/tmux connection rendered directly in Flutter.
@@ -74,6 +74,7 @@ The second promise is planned, not implemented or publicly available. Its govern
 - GitHub App access and managed worktrees are server-owned.
 - Codex app-server is the first complete agent adapter behind a runtime-neutral interface.
 - Cockpit and conversation state are projected by the managed runner.
+- Catalog-backed projects have a locally implemented, advisory AI-readiness score with explicit evidence and recommendations; hosted availability remains subject to runner deployment proof.
 - Interactive PTY/tmux rendering is implemented in Flutter and the runner. A real server smoke proves resize, input/output, isolated tmux attachment, Codex execution, and cleanup.
 - The active runner is allowlisted and healthy on loopback, but the Workspace is not publicly usable yet: HTTPS routing and authenticated actor/project provisioning remain incomplete.
 

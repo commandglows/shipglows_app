@@ -29,6 +29,7 @@ import { GitHubAppProjectSource, UnavailableGitHubProjectSource } from "./projec
 import { LocalProjectContextGenerator } from "./projectContextGenerator.js";
 import { FileCloudProjectCatalogReader, findCloudProjectByHost } from "./cloud-projects/index.js";
 import { PreviewIngressService } from "./preview-ingress/index.js";
+import { BoundedProjectAiReadinessEvaluator } from "./ai-readiness/index.js";
 
 const config = loadConfig();
 const require = createRequire(import.meta.url);
@@ -91,6 +92,7 @@ const personalCloudConfig = config.personalCloud.enabled ? config.personalCloud 
 const cloudProjectCatalog = personalCloudConfig !== undefined
   ? new FileCloudProjectCatalogReader(personalCloudConfig.catalogPath, personalCloudConfig.allowedRoots)
   : undefined;
+const aiReadinessEvaluator = new BoundedProjectAiReadinessEvaluator();
 const operatorWorkspaceGateway = new OperatorWorkspaceGateway(
   config.operatorWorkspaces,
   (workspace, surface) => spawnTmuxPty(
@@ -198,6 +200,7 @@ const dependencies = {
   projectContextStore: store,
   ...(projectContextGenerator === undefined ? {} : { projectContextGenerator }),
   cockpitStore: localStudioProjects?.cockpitStore ?? store,
+  aiReadinessEvaluator,
   ...(localStudioProjects === undefined ? {} : { localProjectManagement: localStudioProjects.management }),
   ...(localStudioProjects === undefined ? {} : { projectWorkspaceResolver: (input: Parameters<typeof localStudioProjects.management.resolveLocalRepository>[0]) => localStudioProjects.management.resolveLocalRepository(input) }),
   ...(githubProjectSource === undefined ? {} : { githubProjectSource }),

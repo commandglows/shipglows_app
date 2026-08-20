@@ -5,6 +5,7 @@ import '../../../../domain/project_health/project_health_models.dart';
 import '../../../../presentation/theme/app_theme.dart';
 import '../../../data/cockpit/cockpit_models.dart';
 import 'project_health_matrix.dart';
+import 'ai_readiness_summary.dart';
 
 class CockpitProjectCard extends StatelessWidget {
   const CockpitProjectCard.server({required CockpitProject project, super.key})
@@ -56,6 +57,10 @@ class CockpitProjectCard extends StatelessWidget {
             ProjectHealthMatrixView(projectName: name, health: health),
             SizedBox(height: tokens.spacing.md),
             _CoverageSummary(health: health),
+            if (server case final project?) ...[
+              SizedBox(height: tokens.spacing.md),
+              AiReadinessSummary(readiness: project.aiReadiness),
+            ],
             if (server case final project?) ...[
               SizedBox(height: tokens.spacing.sm),
               Text(

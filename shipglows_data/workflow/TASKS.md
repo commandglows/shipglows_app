@@ -38,7 +38,7 @@
 
 🔴 [shipglows_app] task: Build the managed multi-agent Cockpit MVP with a private runner, provider-neutral contracts and operator-safe execution boundaries | status: in_progress | area: managed-agent-cockpit | id: managed-agent-cockpit-mvp
 🔴 [shipglows_app] task: Publish the managed runner through system Caddy and complete the first authenticated browser Workspace proof | status: blocked | area: managed-agent-cockpit | id: managed-agent-cockpit-public-workspace-proof | blocker: sudo access unavailable for the root-managed Caddy TLS route | evidence: private runner and real tmux/PTY/Codex smoke pass; public TLS fails before the runner | resume_when: sudo access is available | next: install the prepared Caddy route, provision the first authorized identity and project, then run the browser proof
-🟠 [shipglows_app] task: Ajouter un score de préparation IA pour les projets gérés (schémas, structure, indexabilité, vitesse, llms.txt, sitemap, etc.) | status: todo | area: managed-project-ai-readiness | id: managed-project-ai-readiness-score | source: décision utilisateur 2026-08-08 | next: définir le contrat de scoring et le flux d’audit par projet
+🟠 [shipglows_app] task: Ajouter un score de préparation IA pour les projets gérés (schémas, structure, indexabilité, vitesse, llms.txt, sitemap, etc.) | status: done | area: managed-project-ai-readiness | id: managed-project-ai-readiness-score | source: décision utilisateur 2026-08-08 | evidence: évaluateur borné, contrat Cockpit et rendu Flutter vérifiés localement | next: autoriser séparément un déploiement avant toute preuve hébergée
 
 
 ## Historical Completed Work

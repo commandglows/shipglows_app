@@ -18,6 +18,64 @@ enum ConversationState {
   failed,
 }
 
+enum AiReadinessStatus { ready, needsWork, partial, unavailable }
+
+enum AiReadinessCheckId {
+  structure,
+  schemas,
+  agentGuidance,
+  llmsText,
+  sitemap,
+  fastFeedback,
+}
+
+enum AiReadinessCheckOutcome { passed, warning, missing, notApplicable }
+
+class AiReadinessCheck {
+  const AiReadinessCheck({
+    required this.id,
+    required this.outcome,
+    required this.earnedPoints,
+    required this.maxPoints,
+    required this.summary,
+  });
+
+  final AiReadinessCheckId id;
+  final AiReadinessCheckOutcome outcome;
+  final int earnedPoints;
+  final int maxPoints;
+  final String summary;
+}
+
+class ProjectAiReadiness {
+  const ProjectAiReadiness({
+    required this.version,
+    required this.status,
+    required this.score,
+    required this.coverage,
+    required this.evaluatedAt,
+    required this.checks,
+    required this.recommendations,
+  });
+
+  const ProjectAiReadiness.unavailable()
+    : version = 'shipglows.ai-readiness.v1',
+      status = AiReadinessStatus.unavailable,
+      score = null,
+      coverage = 0,
+      evaluatedAt = null,
+      checks = const [],
+      recommendations = const [];
+
+  final String version;
+  final AiReadinessStatus status;
+  final int? score;
+  final double coverage;
+  final DateTime? evaluatedAt;
+  final List<AiReadinessCheck> checks;
+  final List<String> recommendations;
+}
+
 enum ConversationEventType {
   conversationCreated,
   conversationTitleChanged,
@@ -68,6 +126,7 @@ class CockpitProject {
     required this.health,
     required this.conversationCount,
     required this.activeRunCount,
+    this.aiReadiness = const ProjectAiReadiness.unavailable(),
   });
 
   final String id;
@@ -77,6 +136,7 @@ class CockpitProject {
   final ProjectHealthMatrix health;
   final int conversationCount;
   final int activeRunCount;
+  final ProjectAiReadiness aiReadiness;
 
   bool get actionsEnabled => accessState == ProjectAccessState.available;
 }

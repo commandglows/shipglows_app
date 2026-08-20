@@ -43,6 +43,109 @@ class CockpitDtoMapper {
       health: matrix,
       conversationCount: _requiredNonNegativeInt(json, 'conversationCount'),
       activeRunCount: _requiredNonNegativeInt(json, 'activeRunCount'),
+      aiReadiness: _aiReadinessFromJson(_requiredMap(json, 'aiReadiness')),
+    );
+  }
+
+  ProjectAiReadiness _aiReadinessFromJson(Map<String, Object?> json) {
+    const version = 'shipglows.ai-readiness.v1';
+    if (_requiredString(json, 'version') != version) {
+      throw const FormatException('Unsupported AI readiness version.');
+    }
+    final status = switch (_requiredString(json, 'status')) {
+      'ready' => AiReadinessStatus.ready,
+      'needsWork' => AiReadinessStatus.needsWork,
+      'partial' => AiReadinessStatus.partial,
+      'unavailable' => AiReadinessStatus.unavailable,
+      _ => throw const FormatException('Unsupported AI readiness status.'),
+    };
+    final rawScore = json['score'];
+    final score = rawScore == null ? null : _asInt(rawScore, 'score');
+    if (score != null && (score < 0 || score > 100)) {
+      throw const FormatException('AI readiness score must be 0 through 100.');
+    }
+    if ((status == AiReadinessStatus.ready ||
+            status == AiReadinessStatus.needsWork) !=
+        (score != null)) {
+      throw const FormatException('AI readiness score contradicts its status.');
+    }
+    final coverage = _requiredDouble(json, 'coverage');
+    if (coverage < 0 || coverage > 1) {
+      throw const FormatException('AI readiness coverage must be 0 through 1.');
+    }
+    final checks = _requiredList(json, 'checks')
+        .map((value) => _aiReadinessCheckFromJson(_asMap(value, 'checks')))
+        .toList(growable: false);
+    if (checks.length > AiReadinessCheckId.values.length ||
+        checks.map((check) => check.id).toSet().length != checks.length) {
+      throw const FormatException('AI readiness checks must be unique.');
+    }
+    if ((status == AiReadinessStatus.ready ||
+            status == AiReadinessStatus.needsWork) &&
+        checks.length != AiReadinessCheckId.values.length) {
+      throw const FormatException(
+        'Complete AI readiness results require all checks.',
+      );
+    }
+    final recommendations = _requiredList(json, 'recommendations')
+        .map((value) {
+          if (value is String && value.trim().isNotEmpty) return value;
+          throw const FormatException(
+            'AI readiness recommendations must be non-empty strings.',
+          );
+        })
+        .toList(growable: false);
+    if (recommendations.length > 3) {
+      throw const FormatException(
+        'AI readiness recommendations cannot exceed three.',
+      );
+    }
+    return ProjectAiReadiness(
+      version: version,
+      status: status,
+      score: score,
+      coverage: coverage,
+      evaluatedAt: _requiredDateTime(json, 'evaluatedAt'),
+      checks: List.unmodifiable(checks),
+      recommendations: List.unmodifiable(recommendations),
+    );
+  }
+
+  AiReadinessCheck _aiReadinessCheckFromJson(Map<String, Object?> json) {
+    final id = switch (_requiredString(json, 'id')) {
+      'structure' => AiReadinessCheckId.structure,
+      'schemas' => AiReadinessCheckId.schemas,
+      'agentGuidance' => AiReadinessCheckId.agentGuidance,
+      'llmsText' => AiReadinessCheckId.llmsText,
+      'sitemap' => AiReadinessCheckId.sitemap,
+      'fastFeedback' => AiReadinessCheckId.fastFeedback,
+      _ => throw const FormatException('Unsupported AI readiness check.'),
+    };
+    final outcome = switch (_requiredString(json, 'outcome')) {
+      'passed' => AiReadinessCheckOutcome.passed,
+      'warning' => AiReadinessCheckOutcome.warning,
+      'missing' => AiReadinessCheckOutcome.missing,
+      'notApplicable' => AiReadinessCheckOutcome.notApplicable,
+      _ => throw const FormatException(
+        'Unsupported AI readiness check outcome.',
+      ),
+    };
+    final earnedPoints = _requiredNonNegativeInt(json, 'earnedPoints');
+    final maxPoints = _requiredNonNegativeInt(json, 'maxPoints');
+    if (maxPoints < 1 || earnedPoints > maxPoints) {
+      throw const FormatException('AI readiness check points are invalid.');
+    }
+    if (outcome == AiReadinessCheckOutcome.notApplicable && earnedPoints != 0) {
+      throw const FormatException(
+        'A non-applicable AI readiness check cannot earn points.',
+      );
+    }
+    return AiReadinessCheck(
+      id: id,
+      outcome: outcome,
+      earnedPoints: earnedPoints,
+      maxPoints: maxPoints,
+      summary: _requiredString(json, 'summary'),
     );
   }
 

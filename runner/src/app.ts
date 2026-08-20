@@ -42,6 +42,7 @@ import { registerProjectContextRoutes } from "./projectContextRoutes.js";
 import type { ProjectContextGenerator } from "./projectContextRoutes.js";
 import { CloudProjectCatalogError, redactCloudProject, type CloudProjectCatalogReader } from "./cloud-projects/index.js";
 import { PreviewIngressError, type PreviewIngressService } from "./preview-ingress/index.js";
+import { unavailableAiReadinessProjection, type ProjectAiReadinessEvaluator } from "./ai-readiness/index.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -68,9 +69,29 @@ const cockpitDimension = Type.Object({
   dimension: Type.String(), status: Type.String(), summary: Type.Record(Type.String(), Type.Unknown()),
   producer: Type.String(), evidenceCount: Type.Integer({ minimum: 0 }), sourceCommit: Type.Union([Type.String(), Type.Null()]), checkedAt: Type.Union([Type.String(), Type.Null()]),
 }, { additionalProperties: false });
+const aiReadinessCheck = Type.Object({
+  id: Type.Union([
+    Type.Literal("structure"), Type.Literal("schemas"), Type.Literal("agentGuidance"),
+    Type.Literal("llmsText"), Type.Literal("sitemap"), Type.Literal("fastFeedback"),
+  ]),
+  outcome: Type.Union([Type.Literal("passed"), Type.Literal("warning"), Type.Literal("missing"), Type.Literal("notApplicable")]),
+  earnedPoints: Type.Integer({ minimum: 0, maximum: 100 }),
+  maxPoints: Type.Integer({ minimum: 1, maximum: 100 }),
+  summary: Type.String({ minLength: 1, maxLength: 256 }),
+}, { additionalProperties: false });
+const aiReadinessProjection = Type.Object({
+  version: Type.Literal("shipglows.ai-readiness.v1"),
+  status: Type.Union([Type.Literal("ready"), Type.Literal("needsWork"), Type.Literal("partial"), Type.Literal("unavailable")]),
+  score: Type.Union([Type.Integer({ minimum: 0, maximum: 100 }), Type.Null()]),
+  coverage: Type.Number({ minimum: 0, maximum: 1 }),
+  evaluatedAt: Type.String(),
+  checks: Type.Array(aiReadinessCheck, { maxItems: 6 }),
+  recommendations: Type.Array(Type.String({ minLength: 1, maxLength: 256 }), { maxItems: 3 }),
+}, { additionalProperties: false });
 const cockpitResponse = Type.Object({ generatedAt: Type.String(), projects: Type.Array(Type.Object({
   id: Type.String(), name: Type.String(), repositoryFullName: Type.String(), accessState: Type.String(), conversationCount: Type.Integer({ minimum: 0 }), activeRunCount: Type.Integer({ minimum: 0 }),
   health: Type.Object({ overallStatus: Type.String(), coverage: Type.Number(), dimensions: Type.Array(cockpitDimension) }, { additionalProperties: false }),
+  aiReadiness: aiReadinessProjection,
 }, { additionalProperties: false })) }, { $id: "shipglowz.v1.cockpit.response", additionalProperties: false });
 
 const LivenessResponseSchema = Type.Object(
@@ -103,6 +124,7 @@ export interface RunnerAppDependencies {
   readonly auditStore?: Pick<OperationalStore, "createConversation" | "createRun" | "appendEvent" | "saveRuntimeSession" | "checkpointRun"> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
   readonly eventStore?: Pick<OperationalStore, "getConversation" | "listEvents"> & Partial<Pick<OperationalStore, "listConversations" | "getApproval" | "getRun">>;
   readonly cockpitStore?: Pick<OperationalStore, "listCockpitProjects">;
+  readonly aiReadinessEvaluator?: ProjectAiReadinessEvaluator;
   readonly projectContextStore?: Pick<OperationalStore, "getLatestProjectContextBundle">;
   readonly projectContextGenerator?: ProjectContextGenerator;
   readonly localProjectManagement?: LocalProjectManagement;
@@ -470,13 +492,17 @@ export function buildRunnerApp({
       if (actor === undefined) throw new Error("Authenticated actor is missing.");
       if (store === undefined) return reply.status(503).send({ error: { code: "cockpitUnavailable", message: "Cockpit projection is unavailable." } });
       const projects = store.listCockpitProjects({ tenantId: actor.tenantId, userId: actor.userId });
-      const cloudNames = cloudProjectCatalog === undefined
-        ? new Map<string, string>()
-        : new Map((await cloudProjectCatalog.read()).entries.map((project) => [project.projectId, project.displayName]));
+      const cloudProjects = cloudProjectCatalog === undefined
+        ? new Map<string, Awaited<ReturnType<CloudProjectCatalogReader["read"]>>["entries"][number]>()
+        : new Map((await cloudProjectCatalog.read()).entries.map((project) => [project.projectId, project]));
       return {
         generatedAt: new Date().toISOString(),
-        projects: projects.map((project: CockpitProjectRecord) => {
-          const cloudName = cloudNames.get(project.id);
+        projects: await Promise.all(projects.map(async (project: CockpitProjectRecord) => {
+          const cloudProject = cloudProjects.get(project.id);
+          const cloudName = cloudProject?.displayName;
+          const aiReadiness = cloudProject === undefined || dependencies.aiReadinessEvaluator === undefined
+            ? unavailableAiReadinessProjection()
+            : await dependencies.aiReadinessEvaluator.evaluate(cloudProject.privateRuntime.cwd);
           return {
             id: project.id,
             name: cloudName ?? project.name,
@@ -487,8 +513,9 @@ export function buildRunnerApp({
             conversationCount: project.conversationCount,
             activeRunCount: project.activeRunCount,
             health: project.health,
+            aiReadiness,
           };
-        }),
+        })),
       };
     },
   );

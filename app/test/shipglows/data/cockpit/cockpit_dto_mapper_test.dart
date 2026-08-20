@@ -38,6 +38,38 @@ void main() {
               },
               'conversationCount': 3,
               'activeRunCount': 1,
+              'aiReadiness': <String, Object?>{
+                'version': 'shipglows.ai-readiness.v1',
+                'status': 'needsWork',
+                'score': 65,
+                'coverage': 1.0,
+                'evaluatedAt': '2026-07-18T07:30:00Z',
+                'checks': <Object?>[
+                  for (final id in <String>[
+                    'structure',
+                    'schemas',
+                    'agentGuidance',
+                    'llmsText',
+                    'sitemap',
+                    'fastFeedback',
+                  ])
+                    <String, Object?>{
+                      'id': id,
+                      'outcome': id == 'structure' ? 'passed' : 'missing',
+                      'earnedPoints': id == 'structure' ? 20 : 0,
+                      'maxPoints':
+                          id == 'structure' ||
+                              id == 'agentGuidance' ||
+                              id == 'fastFeedback'
+                          ? 20
+                          : id == 'sitemap'
+                          ? 10
+                          : 15,
+                      'summary': '$id evidence',
+                    },
+                ],
+                'recommendations': <Object?>['Add agent guidance.'],
+              },
             },
           ],
         },
@@ -55,6 +87,67 @@ void main() {
       expect(
         project.health.dimension(HealthDimension.tech).summary,
         'Checks pass',
+      );
+      expect(project.aiReadiness.score, 65);
+      expect(project.aiReadiness.checks, hasLength(6));
+      expect(
+        project.aiReadiness.checks.first.outcome,
+        AiReadinessCheckOutcome.passed,
+      );
+    });
+
+    test('rejects contradictory or duplicate AI readiness evidence', () {
+      Map<String, Object?> projectWith(Map<String, Object?> readiness) =>
+          <String, Object?>{
+            'id': 'prj_demo',
+            'name': 'Demo',
+            'repositoryFullName': 'shipglows/demo',
+            'accessState': 'available',
+            'health': <String, Object?>{
+              'overallStatus': 'unknown',
+              'coverage': 0.0,
+              'dimensions': <Object?>[],
+            },
+            'conversationCount': 0,
+            'activeRunCount': 0,
+            'aiReadiness': readiness,
+          };
+
+      final base = <String, Object?>{
+        'version': 'shipglows.ai-readiness.v1',
+        'status': 'partial',
+        'score': null,
+        'coverage': 0.2,
+        'evaluatedAt': '2026-07-18T07:30:00Z',
+        'checks': <Object?>[
+          <String, Object?>{
+            'id': 'structure',
+            'outcome': 'passed',
+            'earnedPoints': 20,
+            'maxPoints': 20,
+            'summary': 'Structure present',
+          },
+        ],
+        'recommendations': <Object?>[],
+      };
+
+      expect(
+        () => const CockpitDtoMapper().projectFromJson(
+          projectWith(<String, Object?>{...base, 'score': 80}),
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => const CockpitDtoMapper().projectFromJson(
+          projectWith(<String, Object?>{
+            ...base,
+            'checks': <Object?>[
+              ...(base['checks']! as List<Object?>),
+              ...(base['checks']! as List<Object?>),
+            ],
+          }),
+        ),
+        throwsFormatException,
       );
     });
 

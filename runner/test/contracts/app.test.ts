@@ -203,6 +203,38 @@ describe("runner API foundation", () => {
             activeRunCount: 0,
           }],
         },
+        aiReadinessEvaluator: {
+          evaluate: async () => ({
+            version: "shipglows.ai-readiness.v1",
+            status: "ready",
+            score: 100,
+            coverage: 1,
+            evaluatedAt: "2026-08-20T08:00:00.000Z",
+            checks: [
+              { id: "structure", outcome: "passed", earnedPoints: 20, maxPoints: 20, summary: "Structure is discoverable." },
+              { id: "schemas", outcome: "passed", earnedPoints: 15, maxPoints: 15, summary: "Schemas are discoverable." },
+              { id: "agentGuidance", outcome: "passed", earnedPoints: 20, maxPoints: 20, summary: "Guidance is discoverable." },
+              { id: "llmsText", outcome: "passed", earnedPoints: 15, maxPoints: 15, summary: "llms.txt is discoverable." },
+              { id: "sitemap", outcome: "passed", earnedPoints: 10, maxPoints: 10, summary: "Sitemap is discoverable." },
+              { id: "fastFeedback", outcome: "passed", earnedPoints: 20, maxPoints: 20, summary: "Fast checks are discoverable." },
+            ],
+            recommendations: [],
+          }),
+        },
+        cloudProjectCatalog: {
+          read: async () => ({
+            version: "shipglows.cli-project-catalog.v1",
+            generatedAt: new Date().toISOString(),
+            entries: [{
+              projectId: "prj_000000000001",
+              displayName: "Demo",
+              previewSlug: "demo",
+              status: "online",
+              capabilities: { preview: true, workspace: true },
+              privateRuntime: { cwd: "/srv/demo", port: 3000, tmuxSession: "demo" },
+            }],
+          }),
+        },
       },
     });
 
@@ -213,6 +245,8 @@ describe("runner API foundation", () => {
     assert.equal(response.json().projects[0].health.overallStatus, "stale");
     assert.equal(response.json().projects[0].health.coverage, 0.2);
     assert.equal(response.json().projects[0].health.dimensions[1].status, "notReported");
+    assert.equal(response.json().projects[0].aiReadiness.score, 100);
+    assert.equal(response.json().projects[0].aiReadiness.checks.length, 6);
   });
 
   it("uses the Personal Cloud catalog display name instead of an internal project id", async () => {
