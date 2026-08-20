@@ -43,11 +43,22 @@ class CockpitDtoMapper {
       health: matrix,
       conversationCount: _requiredNonNegativeInt(json, 'conversationCount'),
       activeRunCount: _requiredNonNegativeInt(json, 'activeRunCount'),
-      aiReadiness: _aiReadinessFromJson(_requiredMap(json, 'aiReadiness')),
+      aiReadiness: json.containsKey('aiReadiness')
+          ? _aiReadinessFromJson(_requiredMap(json, 'aiReadiness'))
+          : const ProjectAiReadiness.unavailable(),
     );
   }
 
   ProjectAiReadiness _aiReadinessFromJson(Map<String, Object?> json) {
+    _requireOnlyKeys(json, const <String>{
+      'version',
+      'status',
+      'score',
+      'coverage',
+      'evaluatedAt',
+      'checks',
+      'recommendations',
+    }, 'aiReadiness');
     const version = 'shipglows.ai-readiness.v1';
     if (_requiredString(json, 'version') != version) {
       throw const FormatException('Unsupported AI readiness version.');
@@ -70,7 +81,7 @@ class CockpitDtoMapper {
       throw const FormatException('AI readiness score contradicts its status.');
     }
     final coverage = _requiredDouble(json, 'coverage');
-    if (coverage < 0 || coverage > 1) {
+    if (!coverage.isFinite || coverage < 0 || coverage > 1) {
       throw const FormatException('AI readiness coverage must be 0 through 1.');
     }
     final checks = _requiredList(json, 'checks')
@@ -80,6 +91,13 @@ class CockpitDtoMapper {
         checks.map((check) => check.id).toSet().length != checks.length) {
       throw const FormatException('AI readiness checks must be unique.');
     }
+    for (var index = 1; index < checks.length; index += 1) {
+      if (checks[index - 1].id.index >= checks[index].id.index) {
+        throw const FormatException(
+          'AI readiness checks must use canonical order.',
+        );
+      }
+    }
     if ((status == AiReadinessStatus.ready ||
             status == AiReadinessStatus.needsWork) &&
         checks.length != AiReadinessCheckId.values.length) {
@@ -87,9 +105,36 @@ class CockpitDtoMapper {
         'Complete AI readiness results require all checks.',
       );
     }
+    final complete =
+        status == AiReadinessStatus.ready ||
+        status == AiReadinessStatus.needsWork;
+    if (complete && (coverage - 1).abs() > 0.0001) {
+      throw const FormatException(
+        'Complete AI readiness results require full coverage.',
+      );
+    }
+    if (status == AiReadinessStatus.unavailable &&
+        (coverage != 0 || checks.isNotEmpty)) {
+      throw const FormatException(
+        'Unavailable AI readiness cannot contain check evidence.',
+      );
+    }
+    if (status == AiReadinessStatus.partial &&
+        (checks.length == AiReadinessCheckId.values.length ||
+            (coverage - checks.length / AiReadinessCheckId.values.length)
+                    .abs() >
+                0.0001)) {
+      throw const FormatException(
+        'Partial AI readiness coverage contradicts its checks.',
+      );
+    }
     final recommendations = _requiredList(json, 'recommendations')
         .map((value) {
-          if (value is String && value.trim().isNotEmpty) return value;
+          if (value is String &&
+              value.trim().isNotEmpty &&
+              value.length <= 256) {
+            return value;
+          }
           throw const FormatException(
             'AI readiness recommendations must be non-empty strings.',
           );
@@ -99,6 +144,42 @@ class CockpitDtoMapper {
       throw const FormatException(
         'AI readiness recommendations cannot exceed three.',
       );
+    }
+    if (complete) {
+      final applicable = checks
+          .where(
+            (check) => check.outcome != AiReadinessCheckOutcome.notApplicable,
+          )
+          .toList(growable: false);
+      final earned = applicable.fold<int>(
+        0,
+        (total, check) => total + check.earnedPoints,
+      );
+      final maximum = applicable.fold<int>(
+        0,
+        (total, check) => total + check.maxPoints,
+      );
+      final expectedScore = (earned / maximum * 100).round();
+      final requiredPassed =
+          <AiReadinessCheckId>{
+            AiReadinessCheckId.structure,
+            AiReadinessCheckId.agentGuidance,
+            AiReadinessCheckId.fastFeedback,
+          }.every(
+            (id) => checks.any(
+              (check) =>
+                  check.id == id &&
+                  check.outcome == AiReadinessCheckOutcome.passed,
+            ),
+          );
+      final expectedStatus = expectedScore >= 80 && requiredPassed
+          ? AiReadinessStatus.ready
+          : AiReadinessStatus.needsWork;
+      if (score != expectedScore || status != expectedStatus) {
+        throw const FormatException(
+          'AI readiness score or status contradicts its checks.',
+        );
+      }
     }
     return ProjectAiReadiness(
       version: version,
@@ -112,6 +193,13 @@ class CockpitDtoMapper {
   }
 
   AiReadinessCheck _aiReadinessCheckFromJson(Map<String, Object?> json) {
+    _requireOnlyKeys(json, const <String>{
+      'id',
+      'outcome',
+      'earnedPoints',
+      'maxPoints',
+      'summary',
+    }, 'aiReadiness.check');
     final id = switch (_requiredString(json, 'id')) {
       'structure' => AiReadinessCheckId.structure,
       'schemas' => AiReadinessCheckId.schemas,
@@ -132,20 +220,39 @@ class CockpitDtoMapper {
     };
     final earnedPoints = _requiredNonNegativeInt(json, 'earnedPoints');
     final maxPoints = _requiredNonNegativeInt(json, 'maxPoints');
-    if (maxPoints < 1 || earnedPoints > maxPoints) {
+    final expectedMaxPoints = switch (id) {
+      AiReadinessCheckId.structure ||
+      AiReadinessCheckId.agentGuidance ||
+      AiReadinessCheckId.fastFeedback => 20,
+      AiReadinessCheckId.schemas || AiReadinessCheckId.llmsText => 15,
+      AiReadinessCheckId.sitemap => 10,
+    };
+    if (maxPoints != expectedMaxPoints || earnedPoints > maxPoints) {
       throw const FormatException('AI readiness check points are invalid.');
     }
-    if (outcome == AiReadinessCheckOutcome.notApplicable && earnedPoints != 0) {
+    final outcomeMatchesPoints = switch (outcome) {
+      AiReadinessCheckOutcome.passed => earnedPoints == maxPoints,
+      AiReadinessCheckOutcome.warning =>
+        earnedPoints > 0 && earnedPoints < maxPoints,
+      AiReadinessCheckOutcome.missing => earnedPoints == 0,
+      AiReadinessCheckOutcome.notApplicable =>
+        id == AiReadinessCheckId.sitemap && earnedPoints == 0,
+    };
+    if (!outcomeMatchesPoints) {
       throw const FormatException(
-        'A non-applicable AI readiness check cannot earn points.',
+        'AI readiness check outcome contradicts its points.',
       );
+    }
+    final summary = _requiredString(json, 'summary');
+    if (summary.length > 256) {
+      throw const FormatException('AI readiness check summary is too long.');
     }
     return AiReadinessCheck(
       id: id,
       outcome: outcome,
       earnedPoints: earnedPoints,
       maxPoints: maxPoints,
-      summary: _requiredString(json, 'summary'),
+      summary: summary,
     );
   }
 
@@ -268,6 +375,17 @@ class CockpitDtoMapper {
     Map<String, Object?> json,
     String key,
   ) => _asMap(json[key], key);
+
+  static void _requireOnlyKeys(
+    Map<String, Object?> json,
+    Set<String> allowed,
+    String context,
+  ) {
+    if (!json.keys.every(allowed.contains) ||
+        !allowed.every(json.containsKey)) {
+      throw FormatException('$context has an unsupported shape.');
+    }
+  }
 
   static Map<String, Object?> _asMap(Object? value, String key) {
     if (value case final Map<Object?, Object?> raw) {

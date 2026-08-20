@@ -1,7 +1,7 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.2.0"
+artifact_version: "1.3.0"
 project: "shipglows_app"
 created: "2026-08-20"
 updated: "2026-08-20"
@@ -75,7 +75,7 @@ The Cockpit reports project health but cannot answer whether an agent can effici
 
 Add a server-owned `ProjectAiReadinessEvaluator` that inspects only allowlisted project roots through bounded metadata reads, then attach its explainable projection to the existing Cockpit response. Add a compact Flutter card section that shows the score, coverage, check outcomes, and up to three prioritized recommendations without creating a second visual system.
 
-The version-1 weights are fixed and visible: structure 20, schemas/contracts 15, agent guidance 20, `llms.txt` 15, sitemap/indexability 10, and fast feedback 20. The public score is `round(earned / applicable maximum × 100)`; a non-web project excludes the sitemap check from both numerator and denominator. Coverage is the fraction of applicable checks actually completed before a scan boundary or error.
+The version-1 weights are fixed and visible: structure 20, schemas/contracts 15, agent guidance 20, `llms.txt` 15, sitemap/indexability 10, and fast feedback 20. The public score is `round(earned / applicable maximum × 100)`; a non-web project excludes the sitemap check from both numerator and denominator. `ready` requires a score of at least 80 and passed structure, agent-guidance, and fast-feedback checks. Coverage is the fraction of the six checks whose result is conclusive before a scan boundary or error.
 
 # Scope In
 
@@ -93,9 +93,11 @@ The version-1 weights are fixed and visible: structure 20, schemas/contracts 15,
 # Constraints
 
 - Use the existing catalog containment boundary; never accept a client-supplied repository path.
-- Inspect at most 5,000 directory entries to depth four and read only allowlisted metadata files with a per-file limit of 256 KiB.
+- Stream at most 5,000 directory entries to depth four, inspect at most 16 package manifests, read each through a `max + 1` bounded buffer of 256 KiB, and run at most four repository scans concurrently with same-root single-flight.
 - Never follow symlinks, execute manifests, interpolate paths into a shell, or return private paths/file content.
+- Reject repository roots whose canonical path differs from the catalog path and fail closed when a scanned directory or manifest identity changes during inspection.
 - Preserve missing/partial/unavailable truth and deterministic output ordering.
+- Keep an older runner response without `aiReadiness` usable as an explicit unavailable state during local rollout; once present, the nested versioned object remains closed and strictly validated.
 - Flutter visual changes consume the existing `AppTheme` authority and add no raw visual literals.
 
 # Test Contract
@@ -196,6 +198,9 @@ None. The operator authorized autonomous implementation of the P1 scope; remote 
 | 2026-08-20 | sg-development | GPT-5 | Implemented the bounded evaluator, authenticated Cockpit projection, strict Flutter mapping, and token-owned responsive summary. | complete | Run the proportional local verification contract. |
 | 2026-08-20 | 103-sg-verify | GPT-5 | Verified 386 runner tests, 171 Flutter tests, static analysis, lint, audit, metadata, design drift, responsive goldens, and redaction boundaries. | locally_verified | Reconcile closure records and create the authorized local commit. |
 | 2026-08-20 | 104-sg-end | GPT-5 | Aligned the task, spec, technical map, product context, and local-only delivery boundary. | closed_local_scope | Keep hosted deployment and proof separate. |
+| 2026-08-20 | 103-sg-verify | GPT-5 | Reopened the local proof after an excellence audit found material gaps in scan boundaries, concurrent work, partial evidence, score consistency, compatibility, accessibility, and adversarial coverage. | not_verified | Repair the existing P1 scope without expanding delivery authority. |
+| 2026-08-20 | sg-development | GPT-5 | Hardened canonical filesystem inspection, bounded and coalesced scans, made partial evidence honest, enforced semantic score invariants across runner and Flutter, and exposed accessible coverage states. | complete | Rerun the full local standard and excellence proof. |
+| 2026-08-20 | 103-sg-verify | GPT-5 | Reverified 392 runner tests, 174 Flutter tests, 40 focused runner contracts, 10 focused Flutter contracts, three responsive goldens, static analysis, lint, dependency audit, metadata, design drift, and redaction boundaries. | excellent_local | Create the authorized corrective local commit; keep hosted proof separate. |
 
 # Current Chantier Flow
 
@@ -204,6 +209,6 @@ None. The operator authorized autonomous implementation of the P1 scope; remote 
 | Spec | complete | Explainable weights, bounded inspection, fail-closed states, UI authority and proof path defined | Preserve as contract authority |
 | Readiness | complete | Product, security, ZOMBIES, dependency and validation decisions resolved | None |
 | Implementation | complete | Runner evaluator, authenticated projection, strict mapper and responsive Flutter summary integrated | None |
-| Verification | locally_verified | Full runner and Flutter suites plus static, security, metadata, visual and drift checks passed | Preserve hosted boundary |
-| Closure | closed_local_scope | Spec, tracker, technical map and product context reconciled | Create the authorized local commit |
-| Delivery | local_commit_authorized | Push and deployment remain explicitly unauthorized | Seek separate authority only if hosted availability is wanted |
+| Verification | excellent_local | A fresh adversarial pass repaired the first implementation, then full runner and Flutter suites plus focused contract, static, security, metadata, visual and drift checks passed | Preserve hosted boundary |
+| Closure | closed_local_scope | Spec, tracker, technical map and product context reflect the hardened implementation and its local-only claim | Create the authorized corrective local commit |
+| Delivery | local_commit_authorized | The corrective local commit is authorized; push and deployment remain explicitly unauthorized | Seek separate authority only if hosted availability is wanted |

@@ -19,10 +19,14 @@ class AiReadinessSummary extends StatelessWidget {
       AiReadinessStatus.unavailable => 'Not evaluated',
     };
     final semanticScore = score == null ? statusLabel : '$score out of 100';
+    final coveragePercent = (readiness.coverage * 100).round();
+    final coverageLabel = readiness.status == AiReadinessStatus.unavailable
+        ? 'Evidence coverage: unavailable'
+        : 'Evidence coverage: $coveragePercent%';
     return Semantics(
       container: true,
       explicitChildNodes: true,
-      label: 'AI readiness: $semanticScore',
+      label: 'AI readiness: $semanticScore. $coverageLabel',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -43,7 +47,18 @@ class AiReadinessSummary extends StatelessWidget {
             ],
           ),
           SizedBox(height: tokens.spacing.xs),
-          LinearProgressIndicator(value: score == null ? 0 : score / 100),
+          if (score != null)
+            ExcludeSemantics(
+              child: LinearProgressIndicator(value: score / 100),
+            ),
+          if (score != null) SizedBox(height: tokens.spacing.xs),
+          Text(coverageLabel),
+          if (readiness.status == AiReadinessStatus.partial) ...[
+            SizedBox(height: tokens.spacing.xs),
+            ExcludeSemantics(
+              child: LinearProgressIndicator(value: readiness.coverage),
+            ),
+          ],
           if (readiness.checks.isNotEmpty) ...[
             SizedBox(height: tokens.spacing.sm),
             Wrap(
@@ -77,34 +92,43 @@ class _ReadinessCheckChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = AppTheme.tokensOf(context);
-    final (label, color, icon) = switch (check.outcome) {
+    final (label, outcomeLabel, color, icon) = switch (check.outcome) {
       AiReadinessCheckOutcome.passed => (
         _checkLabel(check.id),
+        'passed',
         tokens.health.healthy,
         Icons.check_circle_outline,
       ),
       AiReadinessCheckOutcome.warning => (
         _checkLabel(check.id),
+        'warning',
         tokens.health.warning,
         Icons.warning_amber_rounded,
       ),
       AiReadinessCheckOutcome.missing => (
         _checkLabel(check.id),
+        'missing',
         tokens.health.critical,
         Icons.error_outline,
       ),
       AiReadinessCheckOutcome.notApplicable => (
         _checkLabel(check.id),
+        'not applicable',
         tokens.health.unknown,
         Icons.remove_circle_outline,
       ),
     };
-    return Tooltip(
-      message: check.summary,
-      child: Chip(
-        avatar: Icon(icon, color: color),
-        label: Text(label),
-        side: BorderSide(color: color),
+    return Semantics(
+      label: '$label: $outcomeLabel. ${check.summary}',
+      child: ExcludeSemantics(
+        child: Tooltip(
+          message: check.summary,
+          child: Chip(
+            avatar: Icon(icon, color: color),
+            label: Text(label),
+            side: BorderSide(color: color),
+          ),
+        ),
       ),
     );
   }

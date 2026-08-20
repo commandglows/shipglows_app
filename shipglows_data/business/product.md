@@ -1,10 +1,10 @@
 ---
 artifact: product_context
 metadata_schema_version: "1.0"
-artifact_version: "2.2.0"
+artifact_version: "2.2.1"
 project: "shipglows_app"
 created: "2026-04-26"
-updated: "2026-08-15"
+updated: "2026-08-20"
 status: reviewed
 source_skill: 300-sg-docs
 scope: product

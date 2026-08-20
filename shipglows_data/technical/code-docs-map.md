@@ -1,10 +1,10 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "1.7.1"
+artifact_version: "1.7.2"
 project: "shipglows_app"
 created: "2026-05-08"
-updated: "2026-08-17"
+updated: "2026-08-20"
 status: active
 source_skill: 300-sg-docs
 scope: "code-docs-map"

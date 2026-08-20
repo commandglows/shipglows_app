@@ -41,7 +41,7 @@ void main() {
               'aiReadiness': <String, Object?>{
                 'version': 'shipglows.ai-readiness.v1',
                 'status': 'needsWork',
-                'score': 65,
+                'score': 20,
                 'coverage': 1.0,
                 'evaluatedAt': '2026-07-18T07:30:00Z',
                 'checks': <Object?>[
@@ -88,7 +88,7 @@ void main() {
         project.health.dimension(HealthDimension.tech).summary,
         'Checks pass',
       );
-      expect(project.aiReadiness.score, 65);
+      expect(project.aiReadiness.score, 20);
       expect(project.aiReadiness.checks, hasLength(6));
       expect(
         project.aiReadiness.checks.first.outcome,
@@ -117,7 +117,7 @@ void main() {
         'version': 'shipglows.ai-readiness.v1',
         'status': 'partial',
         'score': null,
-        'coverage': 0.2,
+        'coverage': 1 / 6,
         'evaluatedAt': '2026-07-18T07:30:00Z',
         'checks': <Object?>[
           <String, Object?>{
@@ -149,6 +149,62 @@ void main() {
         ),
         throwsFormatException,
       );
+      expect(
+        () => const CockpitDtoMapper().projectFromJson(
+          projectWith(<String, Object?>{...base, 'unexpected': true}),
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => const CockpitDtoMapper().projectFromJson(
+          projectWith(<String, Object?>{
+            'version': 'shipglows.ai-readiness.v1',
+            'status': 'ready',
+            'score': 100,
+            'coverage': 1.0,
+            'evaluatedAt': '2026-07-18T07:30:00Z',
+            'checks': <Object?>[
+              for (final entry in <(String, int)>[
+                ('structure', 20),
+                ('schemas', 15),
+                ('agentGuidance', 20),
+                ('llmsText', 15),
+                ('sitemap', 10),
+                ('fastFeedback', 20),
+              ])
+                <String, Object?>{
+                  'id': entry.$1,
+                  'outcome': 'missing',
+                  'earnedPoints': 0,
+                  'maxPoints': entry.$2,
+                  'summary': 'Missing evidence',
+                },
+            ],
+            'recommendations': <Object?>[],
+          }),
+        ),
+        throwsFormatException,
+      );
+    });
+
+    test('keeps an older Cockpit response usable without AI readiness', () {
+      final project = const CockpitDtoMapper().projectFromJson(
+        <String, Object?>{
+          'id': 'prj_demo',
+          'name': 'Demo',
+          'repositoryFullName': 'shipglows/demo',
+          'accessState': 'available',
+          'health': <String, Object?>{
+            'overallStatus': 'unknown',
+            'coverage': 0.0,
+            'dimensions': <Object?>[],
+          },
+          'conversationCount': 0,
+          'activeRunCount': 0,
+        },
+      );
+
+      expect(project.aiReadiness.status, AiReadinessStatus.unavailable);
     });
 
     test('rejects a server aggregate that fabricates healthy state', () {

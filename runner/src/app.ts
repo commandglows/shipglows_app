@@ -42,7 +42,7 @@ import { registerProjectContextRoutes } from "./projectContextRoutes.js";
 import type { ProjectContextGenerator } from "./projectContextRoutes.js";
 import { CloudProjectCatalogError, redactCloudProject, type CloudProjectCatalogReader } from "./cloud-projects/index.js";
 import { PreviewIngressError, type PreviewIngressService } from "./preview-ingress/index.js";
-import { unavailableAiReadinessProjection, type ProjectAiReadinessEvaluator } from "./ai-readiness/index.js";
+import { isValidAiReadinessProjection, unavailableAiReadinessProjection, type ProjectAiReadinessEvaluator } from "./ai-readiness/index.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -500,9 +500,15 @@ export function buildRunnerApp({
         projects: await Promise.all(projects.map(async (project: CockpitProjectRecord) => {
           const cloudProject = cloudProjects.get(project.id);
           const cloudName = cloudProject?.displayName;
-          const aiReadiness = cloudProject === undefined || dependencies.aiReadinessEvaluator === undefined
-            ? unavailableAiReadinessProjection()
-            : await dependencies.aiReadinessEvaluator.evaluate(cloudProject.privateRuntime.cwd);
+          let aiReadiness = unavailableAiReadinessProjection();
+          if (cloudProject !== undefined && dependencies.aiReadinessEvaluator !== undefined) {
+            try {
+              const evaluated = await dependencies.aiReadinessEvaluator.evaluate(cloudProject.privateRuntime.cwd);
+              if (isValidAiReadinessProjection(evaluated)) aiReadiness = evaluated;
+            } catch {
+              // One project evaluation cannot make the tenant Cockpit unavailable.
+            }
+          }
           return {
             id: project.id,
             name: cloudName ?? project.name,

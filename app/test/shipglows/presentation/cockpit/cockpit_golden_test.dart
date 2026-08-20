@@ -40,6 +40,7 @@ void main() {
           _snapshot(
             accessState: ProjectAccessState.installationSuspended,
             status: HealthStatus.stale,
+            aiReadiness: _partialReadiness(),
           ),
         ),
       );
@@ -185,6 +186,7 @@ ProjectHealth _localProject() => ProjectHealth(
 CockpitSnapshot _snapshot({
   ProjectAccessState accessState = ProjectAccessState.available,
   HealthStatus status = HealthStatus.warning,
+  ProjectAiReadiness aiReadiness = const ProjectAiReadiness.unavailable(),
 }) => CockpitSnapshot(
   generatedAt: DateTime.utc(2026, 8, 11),
   projects: [
@@ -205,6 +207,34 @@ CockpitSnapshot _snapshot({
       ]),
       conversationCount: 2,
       activeRunCount: 1,
+      aiReadiness: aiReadiness,
     ),
+  ],
+);
+
+ProjectAiReadiness _partialReadiness() => ProjectAiReadiness(
+  version: 'shipglows.ai-readiness.v1',
+  status: AiReadinessStatus.partial,
+  score: null,
+  coverage: 1 / 3,
+  evaluatedAt: DateTime.utc(2026, 8, 20),
+  checks: const <AiReadinessCheck>[
+    AiReadinessCheck(
+      id: AiReadinessCheckId.structure,
+      outcome: AiReadinessCheckOutcome.passed,
+      earnedPoints: 20,
+      maxPoints: 20,
+      summary: 'Structure is discoverable.',
+    ),
+    AiReadinessCheck(
+      id: AiReadinessCheckId.schemas,
+      outcome: AiReadinessCheckOutcome.passed,
+      earnedPoints: 15,
+      maxPoints: 15,
+      summary: 'Schemas are discoverable.',
+    ),
+  ],
+  recommendations: const <String>[
+    'Complete the bounded scan before using missing evidence.',
   ],
 );

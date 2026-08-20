@@ -296,6 +296,68 @@ describe("runner API foundation", () => {
     assert.equal(response.json().projects[0].repositoryFullName, "shipglows-site");
   });
 
+  it("isolates invalid or failed AI readiness evaluation from the Cockpit", async () => {
+    for (const evaluate of [
+      async () => ({
+        version: "shipglows.ai-readiness.v1" as const,
+        status: "ready" as const,
+        score: 100,
+        coverage: 1,
+        evaluatedAt: "2026-08-20T08:00:00.000Z",
+        checks: [
+          { id: "structure" as const, outcome: "missing" as const, earnedPoints: 0, maxPoints: 20, summary: "Missing." },
+          { id: "schemas" as const, outcome: "missing" as const, earnedPoints: 0, maxPoints: 15, summary: "Missing." },
+          { id: "agentGuidance" as const, outcome: "missing" as const, earnedPoints: 0, maxPoints: 20, summary: "Missing." },
+          { id: "llmsText" as const, outcome: "missing" as const, earnedPoints: 0, maxPoints: 15, summary: "Missing." },
+          { id: "sitemap" as const, outcome: "missing" as const, earnedPoints: 0, maxPoints: 10, summary: "Missing." },
+          { id: "fastFeedback" as const, outcome: "missing" as const, earnedPoints: 0, maxPoints: 20, summary: "Missing." },
+        ],
+        recommendations: [],
+      }),
+      async () => { throw new Error("private evaluator failure"); },
+    ]) {
+      const projectId = "prj_000000000001";
+      const app = buildRunnerApp({
+        config: loadConfig({ RUNNER_ENV: "test" }),
+        dependencies: {
+          authentication: { authenticate: async () => actor },
+          cockpitStore: {
+            listCockpitProjects: () => [{
+              id: projectId,
+              name: "Demo",
+              repositoryFullName: "shipglows/demo",
+              accessState: "available",
+              health: { overallStatus: "unknown", coverage: 0, dimensions: [] },
+              conversationCount: 0,
+              activeRunCount: 0,
+            }],
+          },
+          aiReadinessEvaluator: { evaluate },
+          cloudProjectCatalog: {
+            read: async () => ({
+              version: "shipglows.cli-project-catalog.v1",
+              generatedAt: new Date().toISOString(),
+              entries: [{
+                projectId,
+                displayName: "Demo",
+                previewSlug: "demo",
+                status: "online",
+                capabilities: { preview: true, workspace: false },
+                privateRuntime: { cwd: "/srv/demo" },
+              }],
+            }),
+          },
+        },
+      });
+
+      const response = await app.inject({ method: "GET", url: "/v1/cockpit" });
+      await app.close();
+
+      assert.equal(response.statusCode, 200);
+      assert.equal(response.json().projects[0].aiReadiness.status, "unavailable");
+    }
+  });
+
   it("keeps the operator Workspace capability tenant-scoped and unavailable by default", async () => {
     const authentication: AuthenticationAdapter = { authenticate: async () => actor };
     const projectAccess: ProjectAccessRepository = { hasProjectAccess: () => true };
