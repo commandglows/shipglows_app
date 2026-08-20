@@ -1,7 +1,7 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.3.0"
+artifact_version: "1.3.1"
 project: "shipglows_app"
 created: "2026-08-20"
 updated: "2026-08-20"
@@ -187,7 +187,7 @@ Use temporary directory fixtures for isolated evaluator behavior, injected catal
 
 # Open Questions
 
-None. The operator authorized autonomous implementation of the P1 scope; remote deployment and push remain outside authority.
+None. The operator authorized autonomous implementation and the bounded push of the verified P1 scope; hosted deployment remains outside authority.
 
 # Skill Run History
 
@@ -201,6 +201,7 @@ None. The operator authorized autonomous implementation of the P1 scope; remote 
 | 2026-08-20 | 103-sg-verify | GPT-5 | Reopened the local proof after an excellence audit found material gaps in scan boundaries, concurrent work, partial evidence, score consistency, compatibility, accessibility, and adversarial coverage. | not_verified | Repair the existing P1 scope without expanding delivery authority. |
 | 2026-08-20 | sg-development | GPT-5 | Hardened canonical filesystem inspection, bounded and coalesced scans, made partial evidence honest, enforced semantic score invariants across runner and Flutter, and exposed accessible coverage states. | complete | Rerun the full local standard and excellence proof. |
 | 2026-08-20 | 103-sg-verify | GPT-5 | Reverified 392 runner tests, 174 Flutter tests, 40 focused runner contracts, 10 focused Flutter contracts, three responsive goldens, static analysis, lint, dependency audit, metadata, design drift, and redaction boundaries. | excellent_local | Create the authorized corrective local commit; keep hosted proof separate. |
+| 2026-08-20 | 005-sg-ship | GPT-5 | Prepared the verified feature and corrective commits for a non-force push to the existing main upstream, with a clean worktree and hosted deployment excluded. | shipped | Verify the exact remote tip, then continue the next executable product priority. |
 
 # Current Chantier Flow
 
@@ -210,5 +211,5 @@ None. The operator authorized autonomous implementation of the P1 scope; remote 
 | Readiness | complete | Product, security, ZOMBIES, dependency and validation decisions resolved | None |
 | Implementation | complete | Runner evaluator, authenticated projection, strict mapper and responsive Flutter summary integrated | None |
 | Verification | excellent_local | A fresh adversarial pass repaired the first implementation, then full runner and Flutter suites plus focused contract, static, security, metadata, visual and drift checks passed | Preserve hosted boundary |
-| Closure | closed_local_scope | Spec, tracker, technical map and product context reflect the hardened implementation and its local-only claim | Create the authorized corrective local commit |
-| Delivery | local_commit_authorized | The corrective local commit is authorized; push and deployment remain explicitly unauthorized | Seek separate authority only if hosted availability is wanted |
+| Closure | closed_local_scope | Spec, tracker, technical map and product context reflect the hardened implementation and its local-only claim | None |
+| Delivery | shipped | The verified implementation, corrective hardening, and delivery trace are committed for a non-force push to the existing main upstream | Verify the remote tip; seek separate authority only if hosted availability is wanted |
