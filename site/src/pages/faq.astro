@@ -56,7 +56,7 @@ const items = [
   },
   {
     q: "Does ShipGlows back up agent work to GitHub?",
-    a: "For approved technical chantiers, the ShipGlows workflow requires exact-scope commits and pushes after validated milestones and before clean closure. It also checks for work that still exists only locally when a mutating chantier starts or resumes, before sensitive operations, and at closure. A push proves remote Git persistence, not deployment, and ShipGlows does not guarantee GitHub availability, repository protection settings, or zero data loss.",
+    a: "For approved technical chantiers, ShipGlows saves each completed block in a commit containing only that work, then pushes it to the project's Git repository. It also spots work that still exists only on one machine when changes start or resume, before sensitive operations, and before completion. A push proves remote backup, not deployment, and ShipGlows does not guarantee GitHub availability, repository protection settings, or zero data loss.",
     links: [
       ["Read the full explanation", "/blog/is-your-agent-work-actually-backed-up"],
       ["Inspect the workflow docs", "/docs#git-continuity"]

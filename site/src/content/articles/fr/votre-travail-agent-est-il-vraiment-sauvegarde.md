@@ -1,7 +1,7 @@
 ---
 title: "Votre agent a modifié le code. Mais votre travail est-il vraiment sauvegardé ?"
-description: "Pourquoi le développement assisté par IA a besoin de commits par jalon, de persistance distante, de reprise après interruption et d’une distinction claire entre sauvegarde et déploiement."
-summary: "Écrire des fichiers ne suffit pas à protéger un chantier. ShipGlows utilise des jalons Git et des états de livraison explicites pour garder le travail des agents traçable et récupérable."
+description: "Pourquoi le développement assisté par IA a besoin de points de reprise utiles dans Git, d’une sauvegarde distante, d’une reprise après interruption et d’une distinction claire entre sauvegarde et déploiement."
+summary: "Écrire des fichiers ne suffit pas à protéger votre travail. ShipGlows regroupe chaque bloc terminé dans son propre commit et indique clairement s’il est local, sauvegardé ou déployé."
 publishDate: 2026-08-21
 locale: "fr"
 articleKey: "git-backed-agent-work"
@@ -20,7 +20,7 @@ readingTime: "6 min"
 
 Un agent IA peut modifier vingt fichiers, réussir tous les contrôles locaux et laisser malgré tout le résultat entier vulnérable sur une seule machine.
 
-C’est l’écart inconfortable entre **générer du code** et **assurer la continuité d’un chantier**. Un working tree n’est pas une sauvegarde. Un commit local n’est pas une sauvegarde distante. Un push n’est pas un déploiement.
+C’est l’écart inconfortable entre **générer du code** et **protéger le résultat**. Des fichiers non enregistrés dans Git ne sont pas une sauvegarde. Un commit local n’est pas une sauvegarde distante. Un push n’est pas un déploiement.
 
 Pour un solopreneur, ces distinctions comptent. Il n’y a pas forcément un second développeur qui surveille la branche, un release manager qui vérifie ce qui a atteint GitHub ou une équipe d’exploitation qui reconstruira le travail après un incident. Le workflow doit rendre l’état visible lui-même.
 
@@ -38,11 +38,11 @@ Plusieurs situations fréquentes contredisent cette impression :
 
 Aucun de ces états n’est exceptionnel. Le problème est de les laisser invisibles.
 
-## Protéger des jalons cohérents, pas chaque frappe clavier
+## Sauvegarder le travail terminé, pas chaque frappe clavier
 
 La solution n’est pas de committer après chaque sauvegarde de fichier. Cela créerait du bruit plutôt que des points de reprise utiles.
 
-ShipGlows considère comme jalon une tranche cohérente de travail, avec un résultat stable et une preuve proportionnée réussie. Une fois cette tranche validée, le workflow gouverné impose un commit au périmètre exact et un push ordinaire vers le dépôt distant résolu avant de commencer le jalon suivant.
+ShipGlows attend qu’un bloc cohérent de travail produise un résultat stable et passe les contrôles adaptés. Il enregistre alors ce bloc dans un commit qui contient uniquement le travail concerné, puis l’envoie vers le dépôt Git du projet avant de poursuivre.
 
 On obtient ainsi des points de reprise utiles sans transformer l’historique Git en flux de captures arbitraires.
 
@@ -54,7 +54,7 @@ ShipGlows sépare trois états de preuve.
 
 ### Local
 
-Les changements ne sont pas committés, ou le commit concerné n’est pas encore prouvé accessible depuis le dépôt distant résolu. Le travail peut être utile et validé, mais il dépend toujours de la machine actuelle.
+Les changements ne sont pas committés, ou le commit concerné n’est pas encore disponible depuis le dépôt distant du projet. Le travail peut être utile et validé, mais il dépend toujours de la machine actuelle.
 
 ### Sauvegardé
 
@@ -93,11 +93,11 @@ Cette limite est essentielle : un point de reprise n’est utile que si son cont
 
 ShipGlows peut décrire honnêtement un workflow Git gouverné qui :
 
-- committe et pousse les jalons validés ;
+- committe et pousse les blocs de travail terminés et validés ;
 - refuse une clôture propre pour un travail modifié resté local ;
 - contrôle l’état vulnérable aux frontières utiles ;
 - préserve les modifications sans rapport hors du périmètre livré ;
-- distingue persistance distante et preuve de déploiement.
+- distingue sauvegarde distante et preuve de déploiement.
 
 Il ne garantit ni la disponibilité de GitHub, ni l’absence absolue de perte, ni les protections du dépôt, ni le succès de la CI, ni une mise en production sans surveillance. Ces affirmations demandent des preuves fournisseur et une configuration propre au projet.
 

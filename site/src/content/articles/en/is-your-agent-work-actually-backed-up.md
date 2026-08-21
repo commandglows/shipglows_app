@@ -1,7 +1,7 @@
 ---
 title: "Your agent changed the code. But is your work actually backed up?"
-description: "Why AI-assisted development needs milestone commits, remote persistence, interruption recovery, and a clear distinction between backup and deployment."
-summary: "Writing files is not the same as protecting a chantier. ShipGlows uses Git milestones and explicit delivery states to keep agent work traceable and recoverable."
+description: "Why AI-assisted development needs useful Git recovery points, remote backup, interruption recovery, and a clear distinction between backup and deployment."
+summary: "Writing files is not the same as protecting your work. ShipGlows uses commits that contain one completed block of work and clear delivery states to make agent work easy to trace and recover."
 publishDate: 2026-08-21
 locale: "en"
 articleKey: "git-backed-agent-work"
@@ -20,7 +20,7 @@ readingTime: "6 min"
 
 An AI agent can change twenty files, pass every local check, and still leave the entire result vulnerable on one machine.
 
-That is the uncomfortable gap between **code generation** and **delivery continuity**. A working tree is not a backup. A local commit is not a remote backup. A remote push is not a deployment.
+That is the uncomfortable gap between **code generation** and **protecting the result**. Uncommitted files are not a backup. A local commit is not a remote backup. A remote push is not a deployment.
 
 For a solo founder, those distinctions matter. There may be no second engineer watching the branch, no release manager checking what reached GitHub, and no operations team reconstructing the work after a crash. The workflow itself has to make the state visible.
 
@@ -38,11 +38,11 @@ Several common states contradict that assumption:
 
 None of these states is inherently unusual. The problem is allowing them to stay invisible.
 
-## Protect coherent milestones, not every keystroke
+## Save completed work, not every keystroke
 
 The answer is not to commit after every file save. That would produce noise rather than useful recovery points.
 
-ShipGlows treats a milestone as a coherent slice of work with a stable outcome and proportional passing proof. Once that slice is validated, the governed workflow requires an exact-scope commit and an ordinary push to the resolved upstream before the next milestone begins.
+ShipGlows waits for a coherent block of work to have a stable result and the right checks to pass. It then saves that block in a commit containing only the relevant work and pushes it to the project's Git repository before moving on.
 
 This creates useful recovery points without turning Git history into a stream of arbitrary snapshots.
 
@@ -54,7 +54,7 @@ ShipGlows separates three evidence states.
 
 ### Local
 
-Changes are uncommitted, or the relevant commit is not yet proven reachable from the resolved upstream. The work may be useful and validated, but it still depends on the current machine.
+Changes are uncommitted, or the relevant commit is not yet available from the project's remote repository. The work may be useful and validated, but it still depends on the current machine.
 
 ### Backed up
 
@@ -93,11 +93,11 @@ That boundary matters: a recovery point is useful only when its contents and own
 
 ShipGlows can truthfully describe a governed Git workflow that:
 
-- commits and pushes validated milestones;
+- commits and pushes completed, validated blocks of work;
 - refuses clean closure for local-only changed work;
 - checks for vulnerable state at meaningful boundaries;
 - preserves unrelated changes outside the delivery scope;
-- distinguishes remote persistence from deployment evidence.
+- distinguishes remote backup from proof of deployment.
 
 It does not guarantee GitHub availability, zero data loss, repository protection settings, successful CI, or unattended production shipping. Those claims require provider evidence and project-specific configuration.
 
