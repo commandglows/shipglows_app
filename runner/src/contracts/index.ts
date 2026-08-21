@@ -21,13 +21,17 @@ export type SafePayload = Readonly<Record<string, unknown>>;
 export type RuntimeAccessMode = "readOnly" | "workspaceWrite";
 export interface RuntimeWorkspace {
   readonly root: string;
-  readonly kind: "project" | "isolated";
+  readonly kind: "project" | "isolated" | "canonical";
+}
+export interface ProjectWorkspace {
+  readonly root: string;
+  readonly deliveryBranch: "main" | "preview";
 }
 export type ProjectWorkspaceResolver = (input: {
   readonly tenantId: string;
   readonly userId: string;
   readonly projectId: string;
-}) => Promise<string | null> | string | null;
+}) => Promise<ProjectWorkspace | string | null> | ProjectWorkspace | string | null;
 
 export interface RuntimeSession {
   readonly runtimeSessionId: OpaqueId;

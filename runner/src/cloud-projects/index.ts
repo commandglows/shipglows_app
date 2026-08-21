@@ -17,6 +17,7 @@ export interface CloudProjectCatalogEntry {
   readonly displayName: string;
   readonly previewSlug: string;
   readonly status: CloudProjectRuntimeStatus;
+  readonly deliveryBranch: "main" | "preview";
   readonly capabilities: {
     readonly preview: boolean;
     readonly workspace: boolean;
@@ -137,7 +138,7 @@ export function findCloudProjectByHost(
 }
 
 function parseEntry(value: unknown, allowedRoots: readonly string[]): CloudProjectCatalogEntry {
-  if (!isRecord(value) || !hasOnlyKeys(value, ["id", "displayName", "previewSlug", "status", "source", "cwd", "port", "tmuxSession"])) invalid();
+  if (!isRecord(value) || !hasOnlyKeys(value, ["id", "displayName", "previewSlug", "status", "source", "cwd", "port", "tmuxSession", "deliveryBranch"], ["port", "tmuxSession", "deliveryBranch"])) invalid();
   const projectId = value["id"];
   const displayName = value["displayName"];
   const previewSlug = value["previewSlug"];
@@ -146,6 +147,7 @@ function parseEntry(value: unknown, allowedRoots: readonly string[]): CloudProje
   const cwd = value["cwd"];
   const port = value["port"];
   const tmuxSession = value["tmuxSession"];
+  const deliveryBranch = value["deliveryBranch"] ?? "main";
   if (typeof projectId !== "string" || !ID_PATTERN.test(projectId)) invalid();
   if (!isCliText(displayName, 255)) invalid();
   if (typeof previewSlug !== "string" || !SLUG_PATTERN.test(previewSlug) || RESERVED_PREVIEW_SLUGS.has(previewSlug)) invalid();
@@ -153,6 +155,7 @@ function parseEntry(value: unknown, allowedRoots: readonly string[]): CloudProje
   if (!isCliText(cwd, 4_096) || !isAbsolute(cwd) || !isContained(cwd, allowedRoots)) invalid();
   if (port !== null && (!Number.isInteger(port) || (port as number) < 1 || (port as number) > 65_535)) invalid();
   if (tmuxSession !== null && !isCliText(tmuxSession, 255)) invalid();
+  if (deliveryBranch !== "main" && deliveryBranch !== "preview") invalid();
   const live = rawStatus === "online" || rawStatus === "launching";
   const validTmuxSession = typeof tmuxSession === "string" && TMUX_PATTERN.test(tmuxSession) ? tmuxSession : undefined;
   const status: CloudProjectRuntimeStatus = rawStatus === "errored" || rawStatus === "unknown" ? "unavailable" : rawStatus;
@@ -161,6 +164,7 @@ function parseEntry(value: unknown, allowedRoots: readonly string[]): CloudProje
     displayName,
     previewSlug,
     status,
+    deliveryBranch,
     capabilities: { preview: live && typeof port === "number", workspace: validTmuxSession !== undefined },
     privateRuntime: {
       cwd: resolve(cwd),
@@ -182,9 +186,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[], optional: readonly string[] = ["port", "tmuxSession"]): boolean {
   const allowed = new Set(keys);
-  return Object.keys(value).every((key) => allowed.has(key)) && keys.filter((key) => key !== "port" && key !== "tmuxSession").every((key) => key in value);
+  const optionalKeys = new Set(optional);
+  return Object.keys(value).every((key) => allowed.has(key)) && keys.filter((key) => !optionalKeys.has(key)).every((key) => key in value);
 }
 
 function isCliRuntimeStatus(value: unknown): value is "online" | "launching" | "stopped" | "errored" | "unknown" {

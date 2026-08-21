@@ -31,7 +31,7 @@ export interface LocalProjectContextSource {
     readonly tenantId: string;
     readonly userId: string;
     readonly projectId: string;
-  }): string | null;
+  }): string | { readonly root: string } | null;
 }
 
 export class ProjectContextGenerationError extends Error {
@@ -149,10 +149,11 @@ export class LocalProjectContextGenerator {
   }
 
   async #refresh(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }): Promise<ProjectContextBundle> {
-    const repositoryPath = this.source.resolveLocalRepository(input);
-    if (repositoryPath === null) {
+    const resolvedRepository = this.source.resolveLocalRepository(input);
+    if (resolvedRepository === null) {
       throw new ProjectContextGenerationError("localSourceUnavailable", "A readable local repository is required to refresh project context.");
     }
+    const repositoryPath = typeof resolvedRepository === "string" ? resolvedRepository : resolvedRepository.root;
     let root: string;
     try {
       root = realpathSync(repositoryPath);

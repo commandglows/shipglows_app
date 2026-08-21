@@ -16,6 +16,7 @@ const dimensions = Object.freeze(["tech", "content", "seo", "performance", "secu
 const platformNames = Object.freeze(["astro", "flutter", "node", "python", "rust"] as const);
 type ProjectReadiness = "ready" | "degraded" | "accessLost";
 type ProjectSourceKind = "local" | "github";
+type DeliveryBranch = "main" | "preview";
 
 interface PersistedGitHubBinding {
   readonly installationId: number;
@@ -36,6 +37,7 @@ export interface LocalManagedProject {
   readonly isArchived: boolean;
   readonly builtin: boolean;
   readonly studioAvailable: boolean;
+  readonly deliveryBranch: DeliveryBranch;
 }
 
 export interface PublicManagedProject {
@@ -56,6 +58,7 @@ export interface PublicManagedProject {
   readonly builtin: boolean;
   /** Compatibility field for older Flutter clients. */
   readonly studioAvailable: boolean;
+  readonly deliveryBranch: DeliveryBranch;
 }
 
 export interface LocalProjectManagement {
@@ -66,7 +69,7 @@ export interface LocalProjectManagement {
   disconnect(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }): void;
   disconnectGitHub(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }): PublicManagedProject | null;
   updateGitHubReadiness(input: { readonly tenantId: string; readonly userId: string; readonly installationId: number; readonly state: "ready" | "degraded" | "accessLost" }): void;
-  resolveLocalRepository(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }): string | null;
+  resolveLocalRepository(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }): { readonly root: string; readonly deliveryBranch: DeliveryBranch } | null;
 }
 
 interface LocalCockpitStore {
@@ -119,6 +122,7 @@ function publicProject(project: LocalManagedProject): PublicManagedProject {
     isArchived: project.isArchived,
     builtin: project.builtin,
     studioAvailable: active && readable && project.studioAvailable,
+    deliveryBranch: project.deliveryBranch,
   });
 }
 
@@ -240,7 +244,7 @@ export class LocalProjectRegistry {
     resolveLocalRepository: (input: Parameters<LocalProjectManagement["resolveLocalRepository"]>[0]) => {
       if (!isLocalStudioActor(input)) return null;
       const project = this.#projects.find((item) => item.id === input.projectId && !item.isArchived);
-      return project?.repositoryPath ?? null;
+      return project?.repositoryPath === undefined ? null : { root: project.repositoryPath, deliveryBranch: project.deliveryBranch };
     },
     connect: (input: Parameters<LocalProjectManagement["connect"]>[0]) => {
       this.#assertActor(input);
@@ -267,6 +271,7 @@ export class LocalProjectRegistry {
         isArchived: false,
         builtin: false,
         studioAvailable: false,
+        deliveryBranch: "main",
       });
       this.#projects = [...this.#projects, project];
       this.#save();
@@ -301,6 +306,7 @@ export class LocalProjectRegistry {
         isArchived: false,
         builtin: false,
         studioAvailable: false,
+        deliveryBranch: "main",
       });
       this.#projects = [...this.#projects, project];
       this.#save();
@@ -346,6 +352,7 @@ export class LocalProjectRegistry {
             isArchived: item.isArchived,
             builtin: item.builtin,
             studioAvailable: item.studioAvailable,
+            deliveryBranch: item.deliveryBranch,
           });
         });
       }
@@ -373,6 +380,7 @@ export class LocalProjectRegistry {
         isArchived: project.isArchived,
         builtin: project.builtin,
         studioAvailable: project.studioAvailable,
+        deliveryBranch: project.deliveryBranch,
       });
       this.#projects = this.#projects.map((item) => item.id === project.id ? updated : item);
       this.#save();
@@ -413,11 +421,11 @@ export class LocalProjectRegistry {
         const parsed: unknown = JSON.parse(readFileSync(this.#storagePath, "utf8"));
         if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("schema");
         const catalog = parsed as Record<string, unknown>;
-        if ((catalog["schemaVersion"] !== 1 && catalog["schemaVersion"] !== 2) || !Array.isArray(catalog["projects"])) throw new Error("schema");
+        if ((catalog["schemaVersion"] !== 1 && catalog["schemaVersion"] !== 2 && catalog["schemaVersion"] !== 3) || !Array.isArray(catalog["projects"])) throw new Error("schema");
         const projects = catalog["projects"].map((project: unknown) => this.#validatePersistedProject(project, catalog["schemaVersion"]));
         if (new Set(projects.map((project) => project.id)).size !== projects.length) throw new Error("duplicate id");
         if (projects.length > 0 && projects.filter((project) => project.isDefault && !project.isArchived).length !== 1) throw new Error("invalid default");
-        if (catalog["schemaVersion"] === 1) {
+        if (catalog["schemaVersion"] !== 3) {
           this.#projects = projects;
           this.#save();
         }
@@ -438,6 +446,7 @@ export class LocalProjectRegistry {
         isArchived: false,
         builtin: true,
         studioAvailable: project.id === this.#studioProjectId,
+        deliveryBranch: "main" as const,
       });
     });
     this.#projects = projects;
@@ -455,6 +464,7 @@ export class LocalProjectRegistry {
     const isDefault = record["isDefault"];
     const isArchived = record["isArchived"];
     const builtin = record["builtin"];
+    const deliveryBranchValue = record["deliveryBranch"];
     if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(id) ||
       typeof name !== "string" || name.trim().length < 1 || name.length > 80 ||
       typeof repositoryFullName !== "string" || normalizedGitHubFullName(repositoryFullName) === null ||
@@ -475,6 +485,11 @@ export class LocalProjectRegistry {
         ? repositoryOrigin(repositoryPath) ?? (builtin ? normalizedGitHubFullName(repositoryFullName) ?? undefined : undefined)
         : undefined;
     if (repositoryPath === undefined && github === undefined) throw new Error("project source");
+    const deliveryBranch: DeliveryBranch = deliveryBranchValue === undefined && (schemaVersion === 1 || schemaVersion === 2)
+      ? "main"
+      : deliveryBranchValue === "main" || deliveryBranchValue === "preview"
+        ? deliveryBranchValue
+        : (() => { throw new Error("delivery branch"); })();
     const persistedPlatforms = record["detectedPlatforms"];
     const detectedPlatforms = Array.isArray(persistedPlatforms) && persistedPlatforms.every((item) => typeof item === "string" && platformNames.includes(item as typeof platformNames[number]))
       ? Object.freeze(persistedPlatforms.map((item) => String(item)))
@@ -491,6 +506,7 @@ export class LocalProjectRegistry {
       isArchived,
       builtin,
       studioAvailable: id === this.#studioProjectId,
+      deliveryBranch,
     });
   }
 
@@ -512,7 +528,7 @@ export class LocalProjectRegistry {
   #save(): void {
     mkdirSync(dirname(this.#storagePath), { recursive: true });
     const temporaryPath = `${this.#storagePath}.tmp`;
-    writeFileSync(temporaryPath, `${JSON.stringify({ schemaVersion: 2, projects: this.#projects }, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
+    writeFileSync(temporaryPath, `${JSON.stringify({ schemaVersion: 3, projects: this.#projects }, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
     renameSync(temporaryPath, this.#storagePath);
   }
 }

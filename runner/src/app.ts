@@ -10,7 +10,7 @@ import {
 } from "./auth/index.js";
 import type { RunnerConfig } from "./config.js";
 import { HttpError, installErrorHandler, CommandRequestSchemas, VersionResponseSchema } from "./contracts/index.js";
-import type { CockpitProjectRecord, OperationalStore } from "./db/index.js";
+import { ProjectConversationBusyError, type CockpitProjectRecord, type OperationalStore } from "./db/index.js";
 import type { PersistedEvent } from "./db/index.js";
 import type { AgentRuntime, SafePayload } from "./contracts/index.js";
 import type { ProjectWorkspaceResolver } from "./contracts/index.js";
@@ -43,6 +43,7 @@ import type { ProjectContextGenerator } from "./projectContextRoutes.js";
 import { CloudProjectCatalogError, redactCloudProject, type CloudProjectCatalogReader } from "./cloud-projects/index.js";
 import { PreviewIngressError, type PreviewIngressService } from "./preview-ingress/index.js";
 import { isValidAiReadinessProjection, unavailableAiReadinessProjection, type ProjectAiReadinessEvaluator } from "./ai-readiness/index.js";
+import { ProjectDeliveryError, type ProjectDeliveryRepository } from "./workspaces/projectDelivery.js";
 
 const ProjectAuthorizationResponseSchema = Type.Object(
   {
@@ -122,7 +123,7 @@ export interface RunnerAppDependencies {
   readonly authentication?: AuthenticationAdapter;
   readonly projectAccess?: ProjectAccessRepository;
   readonly auditStore?: Pick<OperationalStore, "createConversation" | "createRun" | "appendEvent" | "saveRuntimeSession" | "checkpointRun"> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
-  readonly eventStore?: Pick<OperationalStore, "getConversation" | "listEvents"> & Partial<Pick<OperationalStore, "listConversations" | "getApproval" | "getRun">>;
+  readonly eventStore?: Pick<OperationalStore, "getConversation" | "listEvents"> & Partial<Pick<OperationalStore, "listConversations" | "getApproval" | "getRun" | "closeConversation">>;
   readonly cockpitStore?: Pick<OperationalStore, "listCockpitProjects">;
   readonly aiReadinessEvaluator?: ProjectAiReadinessEvaluator;
   readonly projectContextStore?: Pick<OperationalStore, "getLatestProjectContextBundle">;
@@ -137,9 +138,10 @@ export interface RunnerAppDependencies {
   readonly fixExecutor?: FixCommandExecutor;
   readonly idempotencyStore?: Pick<OperationalStore, "executeIdempotentAsync">;
   readonly approvalStore?: Pick<OperationalStore, "getApproval" | "getRun" | "getRuntimeSession" | "resolveApproval" | "appendEvent">;
-  readonly conversationStore?: Pick<OperationalStore, "createConversation" | "getConversation" | "createRun" | "getRun" | "getLatestRun" | "saveRuntimeSession" | "getRuntimeSession" | "checkpointRun" | "appendEvent"> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
+  readonly conversationStore?: Pick<OperationalStore, "createConversation" | "getConversation" | "createRun" | "getRun" | "getLatestRun" | "saveRuntimeSession" | "getRuntimeSession" | "checkpointRun" | "appendEvent"> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval" | "closeConversation">>;
   readonly agentRuntime?: AgentRuntime;
   readonly executionAdmission?: ExecutionAdmissionService;
+  readonly projectDelivery?: ProjectDeliveryRepository;
   readonly diagnostics?: RunnerDiagnostics;
   readonly studioCapability?: StudioCapabilityResolver;
   readonly studioSessions?: StudioSessionService;
@@ -727,11 +729,47 @@ export function buildRunnerApp({
       try {
         const outcome = await idempotencyStore.executeIdempotentAsync({ tenantId: actor.tenantId, actorUserId: actor.userId, scope: `conversation:create:${request.params.projectId}`, key: request.headers["idempotency-key"] }, async () => ({
           statusCode: 201,
-          body: (await new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission, dependencies.projectWorkspaceResolver).create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, title: request.body.title })) as unknown as SafePayload,
+          body: (await new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission, dependencies.projectWorkspaceResolver, dependencies.projectDelivery).create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, title: request.body.title })) as unknown as SafePayload,
         }));
         return await reply.status(outcome.response.statusCode).send(outcome.response.body);
       } catch (error: unknown) {
+        if (error instanceof ProjectConversationBusyError) return reply.status(409).send({ error: { code: "projectBusy", message: error.message } });
+        if (error instanceof ProjectDeliveryError) return reply.status(409).send({ error: { code: error.code, message: "The project checkout is not ready for managed delivery." } });
         if (error instanceof ConversationCommandError) return reply.status(503).send({ error: { code: error.code, message: error.message } });
+        throw error;
+      }
+    },
+  );
+
+  app.post<{
+    Params: { projectId: string; conversationId: string };
+    Body: Record<string, never>;
+    Headers: { "idempotency-key": string };
+  }>(
+    "/v1/projects/:projectId/conversations/:conversationId/close",
+    {
+      preHandler: [authenticationGuard(authentication), projectAuthorizationGuard(projectAccess, "mutate"), stateChangingOriginGuard(config.server.allowedOrigins)],
+      schema: {
+        params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }), conversationId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
+        body: Type.Object({}, { additionalProperties: false }),
+        headers: Type.Object({ "idempotency-key": Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: true }),
+        response: { 200: Type.Object({ state: Type.Literal("completed") }, { additionalProperties: false }) },
+      },
+    },
+    async (request, reply) => {
+      const actor = request.shipglowsActor;
+      const store = dependencies.eventStore;
+      const idempotencyStore = dependencies.idempotencyStore;
+      if (actor === undefined) throw new Error("Authenticated actor is missing.");
+      if (store?.closeConversation === undefined || idempotencyStore === undefined) return reply.status(503).send({ error: { code: "conversationsUnavailable", message: "Conversation closing is unavailable." } });
+      try {
+        const outcome = await idempotencyStore.executeIdempotentAsync({ tenantId: actor.tenantId, actorUserId: actor.userId, scope: `conversation:close:${request.params.conversationId}`, key: request.headers["idempotency-key"] }, () => {
+          store.closeConversation?.({ tenantId: actor.tenantId, projectId: request.params.projectId, conversationId: request.params.conversationId });
+          return Promise.resolve({ statusCode: 200, body: { state: "completed" } });
+        });
+        return await reply.status(outcome.response.statusCode).send(outcome.response.body);
+      } catch (error) {
+        if (error instanceof ProjectConversationBusyError) return reply.status(409).send({ error: { code: "projectBusy", message: error.message } });
         throw error;
       }
     },
@@ -752,7 +790,7 @@ export function buildRunnerApp({
     if (idempotencyStore === undefined) return reply.status(503).send({ error: { code: "idempotencyUnavailable", message: "Durable command replay is unavailable." } });
     try {
       const outcome = await idempotencyStore.executeIdempotentAsync({ tenantId: actor.tenantId, actorUserId: actor.userId, scope: `conversation:${action}:${request.params.conversationId}`, key: request.headers["idempotency-key"] }, async () => {
-        const service = new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission, dependencies.projectWorkspaceResolver);
+        const service = new ConversationCommandService(store, runtime, dependencies.eventHub, config.limits, dependencies.runAdmission, dependencies.executionAdmission, dependencies.projectWorkspaceResolver, dependencies.projectDelivery);
         const result = action === "message"
           ? await service.message({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, conversationId: request.params.conversationId, text: request.body.text ?? "" })
           : action === "interrupt"
@@ -858,6 +896,7 @@ export function buildRunnerApp({
             dependencies.runAdmission,
             dependencies.executionAdmission,
             dependencies.projectWorkspaceResolver,
+            dependencies.projectDelivery,
           ).start({
             tenantId: actor.tenantId,
             userId: actor.userId,
@@ -867,6 +906,10 @@ export function buildRunnerApp({
         }));
         return await reply.status(outcome.response.statusCode).send(outcome.response.body);
       } catch (error: unknown) {
+        if (error instanceof ProjectConversationBusyError) {
+          return reply.status(409).send({ error: { code: "projectBusy", message: error.message } });
+        }
+        if (error instanceof ProjectDeliveryError) return reply.status(409).send({ error: { code: error.code, message: "The project checkout is not ready for managed delivery." } });
         if (error instanceof RunLimitError && error.code === "runQuotaExceeded") {
           return reply.status(429).send({ error: { code: error.code, message: error.message } });
         }
@@ -942,6 +985,10 @@ export function buildRunnerApp({
         }));
         return await reply.status(outcome.response.statusCode).send(outcome.response.body);
       } catch (error: unknown) {
+        if (error instanceof ProjectConversationBusyError) {
+          return reply.status(409).send({ error: { code: "projectBusy", message: error.message } });
+        }
+        if (error instanceof ProjectDeliveryError) return reply.status(409).send({ error: { code: error.code, message: "The project checkout is not ready for managed delivery." } });
         if (error instanceof FixUnavailableError) {
           return reply.status(503).send({ error: { code: error.code, message: error.message } });
         }

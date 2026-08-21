@@ -6,14 +6,12 @@ import '../../../providers/managed_conversation_provider.dart';
 class ConversationTabs extends StatelessWidget {
   const ConversationTabs({
     required this.workspace,
-    required this.onAdd,
     required this.onSelect,
     required this.onClose,
     super.key,
   });
 
   final ManagedConversationWorkspaceState workspace;
-  final VoidCallback onAdd;
   final ValueChanged<int> onSelect;
   final ValueChanged<int> onClose;
 
@@ -51,11 +49,6 @@ class ConversationTabs extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Nouvelle conversation',
-            onPressed: onAdd,
-            icon: const Icon(Icons.add),
           ),
         ],
       ),

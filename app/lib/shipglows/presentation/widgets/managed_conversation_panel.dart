@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -66,9 +68,8 @@ class _ManagedConversationPanelState
             SizedBox(height: tokens.spacing.sm),
             ConversationTabs(
               workspace: workspace,
-              onAdd: notifier.addTab,
               onSelect: notifier.selectTab,
-              onClose: notifier.closeTab,
+              onClose: (index) => unawaited(notifier.closeTab(index)),
             ),
             SizedBox(height: tokens.spacing.xs),
             Text(

@@ -508,7 +508,7 @@ export class AcpRuntime implements AgentRuntime {
     readonly accessMode: RuntimeAccessMode;
     readonly workspace: RuntimeWorkspace;
   }): Promise<RuntimeSession> {
-    if (input.accessMode === "workspaceWrite" && input.workspace.kind !== "isolated") {
+    if (input.accessMode === "workspaceWrite" && input.workspace.kind !== "isolated" && input.workspace.kind !== "canonical") {
       throw new RuntimeCapabilityError(this.id, ["isolatedWorkspaces"]);
     }
       if (this.#sessions.size >= 64) throw new Error("ACP session limit reached.");

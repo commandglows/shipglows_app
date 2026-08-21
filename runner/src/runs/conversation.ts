@@ -5,12 +5,13 @@ import type { OperationalStore, PersistedRun } from "../db/index.js";
 import type { EventHub } from "../events/index.js";
 import { RunAdmission, RunLimitError } from "./limits.js";
 import type { ExecutionAdmissionService } from "./execution.js";
+import type { ProjectDeliveryRepository } from "../workspaces/projectDelivery.js";
 
 export type ConversationCommandStore = Pick<
   OperationalStore,
   "createConversation" | "getConversation" | "createRun" | "getRun" | "getLatestRun" | "saveRuntimeSession" |
   "getRuntimeSession" | "checkpointRun" | "appendEvent"
-> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval">>;
+> & Partial<Pick<OperationalStore, "createApproval" | "getApproval" | "resolveApproval" | "closeConversation">>;
 
 export interface ConversationResult {
   readonly conversationId: string;
@@ -59,6 +60,7 @@ export class ConversationCommandService {
     private readonly admission: RunAdmission = new RunAdmission(),
     private readonly execution?: ExecutionAdmissionService,
     private readonly resolveWorkspace?: ProjectWorkspaceResolver,
+    private readonly delivery?: ProjectDeliveryRepository,
   ) {}
 
   #appendEvent(input: Parameters<ConversationCommandStore["appendEvent"]>[0]): void {
@@ -67,15 +69,19 @@ export class ConversationCommandService {
   }
 
   async create(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string; readonly title: string }): Promise<ConversationResult> {
-    const workspaceRoot = await this.resolveWorkspace?.(input) ?? null;
-    if (workspaceRoot === null) throw new ConversationCommandError("runtimeUnavailable", "A trusted project workspace is unavailable.");
+    const resolvedWorkspace = await this.resolveWorkspace?.(input) ?? null;
+    if (resolvedWorkspace === null) throw new ConversationCommandError("runtimeUnavailable", "A trusted project workspace is unavailable.");
+    const workspace = typeof resolvedWorkspace === "string"
+      ? { root: resolvedWorkspace, deliveryBranch: "main" as const }
+      : resolvedWorkspace;
+    const admitted = this.delivery === undefined ? workspace : await this.delivery.admit(workspace);
     const conversationId = id("cnv");
     this.store.createConversation({ id: conversationId, tenantId: input.tenantId, projectId: input.projectId, createdBy: input.userId, title: input.title });
     try {
       const session = await this.runtime.createSession({
         conversationId: opaque(conversationId),
         accessMode: "readOnly",
-        workspace: { root: workspaceRoot, kind: "project" },
+        workspace: { root: admitted.root, kind: "project" },
       });
       this.store.saveRuntimeSession({
         id: id("ses"),
@@ -86,6 +92,7 @@ export class ConversationCommandService {
         state: session.state,
       });
     } catch {
+      this.store.closeConversation?.({ tenantId: input.tenantId, projectId: input.projectId, conversationId });
       throw new ConversationCommandError("runtimeUnavailable", "The runtime could not create the conversation session.");
     }
     this.#appendEvent({
@@ -210,13 +217,15 @@ export class ConversationCommandService {
     if (conversation?.projectId !== input.projectId) throw new ConversationCommandError("conversationNotFound", "The conversation was not found.");
     const currentSession = this.store.getRuntimeSession({ tenantId: input.tenantId, conversationId: input.conversationId });
     if (currentSession === undefined) throw new ConversationCommandError("runtimeUnavailable", "The runtime session is unavailable.");
-    const workspaceRoot = await this.resolveWorkspace?.(input) ?? null;
-    if (workspaceRoot === null) throw new ConversationCommandError("runtimeUnavailable", "A trusted project workspace is unavailable.");
+    const resolvedWorkspace = await this.resolveWorkspace?.(input) ?? null;
+    if (resolvedWorkspace === null) throw new ConversationCommandError("runtimeUnavailable", "A trusted project workspace is unavailable.");
+    const workspace = typeof resolvedWorkspace === "string" ? { root: resolvedWorkspace, deliveryBranch: "main" as const } : resolvedWorkspace;
+    const admitted = this.delivery === undefined ? workspace : await this.delivery.admit(workspace);
     try {
       const session = await this.runtime.resumeSession({
         runtimeSessionId: opaque(currentSession.runtimeSessionId),
         accessMode: "readOnly",
-        workspace: { root: workspaceRoot, kind: "project" },
+        workspace: { root: admitted.root, kind: "project" },
       });
       this.store.saveRuntimeSession({ id: id("ses"), tenantId: input.tenantId, conversationId: input.conversationId, runtimeId: this.runtime.id, runtimeSessionId: String(session.runtimeSessionId), state: session.state });
     } catch {

@@ -9,6 +9,7 @@ import { SecretPayloadError, type OpaqueId, type ResolvedExecutionEnvelope } fro
 import {
   MigrationPolicyError,
   openOperationalStore,
+  ProjectConversationBusyError,
   RepositoryBindingError,
 } from "../../src/db/index.js";
 import {
@@ -125,6 +126,24 @@ function skillEvidenceEnvelope(overrides: {
 }
 
 describe("SQLite operational projection", () => {
+  it("durably serializes one active conversation per project and releases it explicitly", async () => {
+    const path = await databasePath("conversation-lease");
+    let store = await openOperationalStore(path);
+    seed(store);
+    store.close();
+    store = await openOperationalStore(path);
+    assert.throws(() => store.createConversation({
+      id: "cnv_000000000002", tenantId: ids.tenantA, projectId: ids.projectA,
+      createdBy: ids.userA, title: "Concurrent",
+    }), ProjectConversationBusyError);
+    store.closeConversation({ tenantId: ids.tenantA, projectId: ids.projectA, conversationId: ids.conversationA });
+    assert.doesNotThrow(() => store.createConversation({
+      id: "cnv_000000000002", tenantId: ids.tenantA, projectId: ids.projectA,
+      createdBy: ids.userA, title: "Next",
+    }));
+    store.close();
+  });
+
   it("persists one secret-safe tenant-scoped execution envelope", async () => {
     const store = await openOperationalStore(await databasePath("execution-envelope"));
     seed(store);
@@ -331,7 +350,7 @@ describe("SQLite operational projection", () => {
         defaultBranch: "main",
       },
     });
-    assert.equal(store.schemaVersion(), 8);
+    assert.equal(store.schemaVersion(), 9);
     assert.deepEqual(
       store.getGitHubRepositoryBinding({ tenantId: ids.tenantA, projectId: ids.projectA }),
       {
@@ -487,7 +506,7 @@ describe("SQLite operational projection", () => {
     const path = await databasePath("restart");
     let store = await openOperationalStore(path);
     seed(store);
-    assert.equal(store.schemaVersion(), 8);
+    assert.equal(store.schemaVersion(), 9);
     assert.throws(() => store.migrateDown(), MigrationPolicyError);
     store.close();
 
@@ -570,7 +589,7 @@ describe("SQLite operational projection", () => {
     legacy.close();
 
     const store = await openOperationalStore(path);
-    assert.equal(store.schemaVersion(), 8);
+    assert.equal(store.schemaVersion(), 9);
     seed(store);
     assert.equal(
       store.createRun({

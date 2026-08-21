@@ -1,10 +1,10 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.1.2"
+artifact_version: "1.2.0"
 project: "shipglows_app"
 created: "2026-08-11"
-updated: "2026-08-16"
+updated: "2026-08-21"
 status: draft
 source_skill: "001-sg-build"
 scope: "managed-agent-runner-operations"
@@ -56,7 +56,7 @@ Run from the repository's `runner` directory with a private, access-controlled d
 npm run backup:sqlite -- --database /absolute/path/live.sqlite --destination-dir /absolute/path/backups
 ```
 
-The command requires an existing regular SQLite file, creates a unique destination, refuses overwrite, uses SQLite's online backup mechanism, and validates both `PRAGMA integrity_check` and schema v8. Successful output contains only the generated basename, schema version, page count and creation timestamp. Treat the backup as sensitive even though routine runner payloads are secret-safe.
+The command requires an existing regular SQLite file, creates a unique destination, refuses overwrite, uses SQLite's online backup mechanism, and validates both `PRAGMA integrity_check` and schema v9. Successful output contains only the generated basename, schema version, page count and creation timestamp. Treat the backup as sensitive even though routine runner payloads are secret-safe.
 
 ## Restore drill
 
@@ -66,7 +66,17 @@ The command requires an existing regular SQLite file, creates a unique destinati
 4. Run the local runner test gates and verify schema version, expected tenant/project counts and authenticated diagnostics.
 5. Promote only through the deployment's controlled rollback procedure; retain the prior live file until the restored runner is stable.
 
-The automated proof covers migration from schema v2 to v8, backup integrity and restored tenant data. It does not prove retention policy, remote storage, encryption-at-rest, hosted rollback or disaster recovery.
+The automated proof covers migration from schema v2 to v9, backup integrity, restored tenant data, and the durable one-open-conversation constraint. It does not prove retention policy, remote storage, encryption-at-rest, hosted rollback or disaster recovery.
+
+## Conversation and delivery recovery
+
+- `projectBusy`: open the existing conversation. Close it explicitly only after its queued/running work has ended; do not edit SQLite to bypass the lease.
+- `deliveryBranchMismatch`: switch the repository through the normal operator workflow to its server-configured `main` or `preview` branch, then retry.
+- `deliveryCheckoutDirty`: inspect and commit or deliberately discard changes outside the runner. The runner never resets them.
+- `deliveryRemoteAdvanced` or `deliveryDiverged`: synchronize manually and restore a clean, non-divergent checkout. The runner never rebases or force-pushes.
+- `deliveryPushRejected`: inspect branch protection and remote state. Do not add a fallback branch or force flag.
+
+The active runner creates no managed audit/fix worktree. Pre-existing `.shipglows-workspaces` content is historical state: preserve it until an operator separately reviews and authorizes cleanup.
 
 ## Incident boundaries
 

@@ -9,6 +9,7 @@ const project: CloudProjectCatalogEntry = {
   displayName: "Alpha",
   previewSlug: "alpha",
   status: "online",
+  deliveryBranch: "main",
   capabilities: { preview: true, workspace: true },
   privateRuntime: { cwd: "/srv/private/alpha", port: 4173, tmuxSession: "alpha" },
 };

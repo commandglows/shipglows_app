@@ -5,6 +5,7 @@ import type { OperationalStore } from "../db/index.js";
 import type { EventHub } from "../events/index.js";
 import { RunAdmission, RunLimitError } from "./limits.js";
 import type { ExecutionAdmissionService } from "./execution.js";
+import type { ProjectDeliveryRepository } from "../workspaces/projectDelivery.js";
 
 export type AuditCommandStore = Pick<
   OperationalStore,
@@ -49,6 +50,7 @@ export class AuditCommandService {
     private readonly admission: RunAdmission = new RunAdmission(),
     private readonly execution?: ExecutionAdmissionService,
     private readonly resolveWorkspace?: ProjectWorkspaceResolver,
+    private readonly delivery?: ProjectDeliveryRepository,
   ) {}
 
   #appendEvent(input: Parameters<AuditCommandStore["appendEvent"]>[0]) {
@@ -155,8 +157,12 @@ export class AuditCommandService {
     readonly scope: string;
   }): Promise<AuditCommandResult> {
     if (!/^[\u0020-\u007E]{1,128}$/.test(input.scope)) throw new Error("Audit scope is invalid.");
-    const workspaceRoot = await this.resolveWorkspace?.(input) ?? null;
-    if (workspaceRoot === null) throw new Error("Trusted project workspace is unavailable.");
+    const resolvedWorkspace = await this.resolveWorkspace?.(input) ?? null;
+    if (resolvedWorkspace === null) throw new Error("Trusted project workspace is unavailable.");
+    const workspace = typeof resolvedWorkspace === "string"
+      ? { root: resolvedWorkspace, deliveryBranch: "main" as const }
+      : resolvedWorkspace;
+    const admitted = this.delivery === undefined ? workspace : await this.delivery.admit(workspace);
     if (!this.admission.acquire(input.tenantId, this.limits.maxConcurrentRunsPerTenant)) {
       throw new RunLimitError("runQuotaExceeded", "The tenant has reached its active run quota.");
     }
@@ -193,7 +199,7 @@ export class AuditCommandService {
       const session = await this.runtime.createSession({
         conversationId: opaque(conversationId),
         accessMode: "readOnly",
-        workspace: { root: workspaceRoot, kind: "project" },
+        workspace: { root: admitted.root, kind: "project" },
       });
       this.store.saveRuntimeSession({
         id: id("ses"),

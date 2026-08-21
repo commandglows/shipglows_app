@@ -307,6 +307,11 @@ class ManagedConversationNotifier
         'offline' => 'Le runner est hors ligne. Réessayez dans un instant.',
         'timeout' => 'Le runner met trop de temps à répondre. Réessayez.',
         'streamDisconnected' => 'La connexion au runner a été interrompue.',
+        'projectBusy' => 'Ce projet a déjà une conversation active. Fermez-la avant d’en démarrer une autre.',
+        'deliveryBranchMismatch' => 'Le projet n’est pas sur sa branche de livraison configurée.',
+        'deliveryCheckoutDirty' => 'Le projet contient des changements non validés. La livraison est suspendue.',
+        'deliveryRemoteAdvanced' || 'deliveryDiverged' =>
+          'La branche distante a avancé. Synchronisez le projet avant de continuer.',
         _ => 'La conversation ne peut pas continuer pour le moment.',
       };
     }
@@ -452,9 +457,7 @@ class ManagedConversationWorkspaceNotifier
   bool get supportsManagedTasks => client is ManagedRunnerTaskClient;
 
   void addTab() {
-    if (state.tabs.isNotEmpty) {
-      unawaited(state.active.notifier.pauseEvents());
-    }
+    if (state.tabs.isNotEmpty) return;
     final tab = _createTab(number: state.tabs.length + 1);
     state = state.copyWith(
       tabs: [...state.tabs, tab],
@@ -492,23 +495,18 @@ class ManagedConversationWorkspaceNotifier
     try {
       final summaries = await client!.listConversations(projectId: projectId);
       if (summaries.isEmpty || state.tabs.length != 1) return;
+      ManagedConversationSummary? activeSummary;
+      for (final summary in summaries) {
+        if (summary.state != 'completed') activeSummary = summary;
+      }
+      if (activeSummary == null) return;
       final first = state.tabs.first;
       if (first.notifier.state.conversationId != null) return;
-      first.title = summaries.first.title;
+      first.title = activeSummary.title;
       first.notifier.restoreConversation(
-        conversationId: summaries.first.conversationId,
-        state: summaries.first.state,
+        conversationId: activeSummary.conversationId,
+        state: activeSummary.state,
       );
-      for (final summary in summaries.skip(1)) {
-        addTab();
-        final tab = state.tabs.last;
-        tab.title = summary.title;
-        tab.notifier.restoreConversation(
-          conversationId: summary.conversationId,
-          state: summary.state,
-        );
-      }
-      selectTab(0);
       _refresh();
     } catch (error) {
       // The local tab remains usable; a later refresh can retry reconciliation.
@@ -526,33 +524,49 @@ class ManagedConversationWorkspaceNotifier
     state.active.notifier.resumeEvents();
   }
 
-  void closeTab(int index) {
+  Future<void> closeTab(int index) async {
     if (index < 0 || index >= state.tabs.length) return;
     final removed = state.tabs[index];
-    final tabs = [...state.tabs]..removeAt(index);
-    if (tabs.isEmpty) {
-      final replacement = _createTab(number: 1);
-      state = ManagedConversationWorkspaceState(
-        tabs: [replacement],
-        activeIndex: 0,
-      );
-      _tabSubscriptions.remove(removed.notifier)?.call();
-      removed.notifier.dispose();
-      return;
+    final conversationId = removed.notifier.state.conversationId;
+    if (conversationId != null) {
+      if (client is! ManagedConversationLifecycleClient) return;
+      final lifecycle = client as ManagedConversationLifecycleClient;
+      try {
+        await lifecycle.closeConversation(
+          projectId: projectId,
+          conversationId: conversationId,
+          idempotencyKey: _taskKey('close'),
+        );
+      } catch (error) {
+        removed.notifier.reportCommandFailure(error);
+        return;
+      }
     }
+    final replacement = _createTab(number: 1);
+    state = ManagedConversationWorkspaceState(
+      tabs: [replacement],
+      activeIndex: 0,
+    );
     _tabSubscriptions.remove(removed.notifier)?.call();
     removed.notifier.dispose();
-    final activeIndex = state.activeIndex > index
-        ? state.activeIndex - 1
-        : state.activeIndex >= tabs.length
-        ? tabs.length - 1
-        : state.activeIndex;
-    tabs[activeIndex].unread = false;
-    state = ManagedConversationWorkspaceState(
-      tabs: tabs,
-      activeIndex: activeIndex,
+  }
+
+  void _reportBusy() {
+    activeNotifier.reportCommandFailure(
+      const ManagedRunnerException(
+        code: 'projectBusy',
+        message: 'The project already has an active conversation.',
+        statusCode: 409,
+      ),
     );
-    state.active.notifier.resumeEvents();
+  }
+
+  bool get _hasActiveConversation {
+    if (activeState.conversationId != null) {
+      _reportBusy();
+      return true;
+    }
+    return false;
   }
 
   Future<void> createConversation() => activeNotifier.createConversation();
@@ -570,7 +584,7 @@ class ManagedConversationWorkspaceNotifier
     final taskClient = client;
     if (taskClient is! ManagedRunnerTaskClient) return;
     final commands = taskClient as ManagedRunnerTaskClient;
-    if (activeState.conversationId != null) addTab();
+    if (_hasActiveConversation) return;
     try {
       final result = await commands.runAudit(
         projectId: projectId,
@@ -593,7 +607,7 @@ class ManagedConversationWorkspaceNotifier
     final taskClient = client;
     if (taskClient is! ManagedRunnerTaskClient) return;
     final commands = taskClient as ManagedRunnerTaskClient;
-    if (activeState.conversationId != null) addTab();
+    if (_hasActiveConversation) return;
     try {
       final result = await commands.runFix(
         projectId: projectId,

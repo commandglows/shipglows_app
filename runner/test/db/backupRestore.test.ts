@@ -19,29 +19,29 @@ describe("SQLite operational backup", () => {
     live.createTenant({ id: "ten_backup_fixture", identityRef: "firebase-backup-fixture" });
 
     const result = await live.backupTo(paths.backup);
-    assert.equal(result.schemaVersion, 8);
+    assert.equal(result.schemaVersion, 9);
     assert.ok(result.pages >= 1);
     live.close();
 
     const restored = await openOperationalStore(paths.backup);
-    assert.equal(restored.schemaVersion(), 8);
+    assert.equal(restored.schemaVersion(), 9);
     assert.deepEqual(restored.listTenantIds(), ["ten_backup_fixture"]);
     restored.close();
   });
 
-  it("migrates a legacy v2 fixture before producing a restorable v8 backup", async () => {
+  it("migrates a legacy v2 fixture before producing a restorable v9 backup", async () => {
     const paths = await fixturePaths();
     const fixture = new DatabaseSync(paths.live);
     fixture.exec("CREATE TABLE meta(version INTEGER NOT NULL); INSERT INTO meta VALUES(2);");
     fixture.close();
 
     const migrated = await openOperationalStore(paths.live);
-    assert.equal(migrated.schemaVersion(), 8);
+    assert.equal(migrated.schemaVersion(), 9);
     await migrated.backupTo(paths.backup);
     migrated.close();
 
     const restored = await openOperationalStore(paths.backup);
-    assert.equal(restored.schemaVersion(), 8);
+    assert.equal(restored.schemaVersion(), 9);
     restored.close();
   });
 

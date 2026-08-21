@@ -28,7 +28,6 @@ void main() {
         home: Scaffold(
           body: ConversationTabs(
             workspace: workspace,
-            onAdd: () {},
             onSelect: (_) {},
             onClose: (index) => closed = index,
           ),

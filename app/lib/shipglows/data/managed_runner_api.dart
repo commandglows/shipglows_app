@@ -1396,6 +1396,14 @@ abstract interface class ManagedRunnerClient {
   });
 }
 
+abstract interface class ManagedConversationLifecycleClient {
+  Future<void> closeConversation({
+    required String projectId,
+    required String conversationId,
+    required String idempotencyKey,
+  });
+}
+
 enum ManagedProjectReadiness { ready, degraded, accessLost }
 
 enum ManagedGitHubConnectionState {
@@ -1798,6 +1806,7 @@ abstract interface class ManagedRunnerTaskClient {
 class ManagedRunnerApi
     implements
         ManagedRunnerClient,
+        ManagedConversationLifecycleClient,
         ManagedActivityReviewClient,
         ManagedProjectContextClient,
         ManagedRunnerTaskClient,
@@ -2948,6 +2957,21 @@ class ManagedRunnerApi
       body: {'title': title},
       idempotencyKey: idempotencyKey,
       parser: ManagedConversationResult.fromJson,
+    );
+  }
+
+  @override
+  Future<void> closeConversation({
+    required String projectId,
+    required String conversationId,
+    required String idempotencyKey,
+  }) async {
+    await _command<Map<String, dynamic>>(
+      'POST',
+      '/v1/projects/$projectId/conversations/$conversationId/close',
+      body: const <String, dynamic>{},
+      idempotencyKey: idempotencyKey,
+      parser: (json) => json,
     );
   }
 

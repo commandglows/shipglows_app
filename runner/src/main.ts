@@ -8,16 +8,9 @@ import { AcpRuntime, StdioAcpConnection } from "./agent-runtime/acp/index.js";
 import { loadConfig } from "./config.js";
 import { openOperationalStore } from "./db/index.js";
 import { EventHub } from "./events/index.js";
-import {
-  GitHubAppInstallationTokenIssuer,
-  GitHubRepositoryAccessVerifier,
-  GitHubRestRepositoryApi,
-  ShortLivedInstallationTokenService,
-} from "./github/index.js";
 import { RunAdmission } from "./runs/limits.js";
 import { ManagedFixCommandExecutor } from "./runs/fix.js";
-import { GitHubAppGitTransport, LocalWorkspaceManager, ProcessGitCommand } from "./workspaces/index.js";
-import { WorkspaceCleanupWorker } from "./workspaces/cleanup.js";
+import { ProjectDeliveryRepository } from "./workspaces/projectDelivery.js";
 import { OperatorWorkspaceGateway, spawnTmuxPty } from "./operator-workspace/index.js";
 import { ExecutionAdmissionService, LocalManagedExecutionProvider } from "./runs/execution.js";
 import { ExecutionProviderRegistry } from "./contracts/index.js";
@@ -88,10 +81,18 @@ const diagnostics = new RunnerDiagnostics({
 const eventHub = new EventHub();
 const runAdmission = new RunAdmission();
 const executionAdmission = new ExecutionAdmissionService(store, new ExecutionProviderRegistry([new LocalManagedExecutionProvider()]), config.limits);
+const projectDelivery = new ProjectDeliveryRepository();
 const personalCloudConfig = config.personalCloud.enabled ? config.personalCloud : undefined;
 const cloudProjectCatalog = personalCloudConfig !== undefined
   ? new FileCloudProjectCatalogReader(personalCloudConfig.catalogPath, personalCloudConfig.allowedRoots)
   : undefined;
+const projectWorkspaceResolver = async (input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }) => {
+  const local = localStudioProjects?.management.resolveLocalRepository(input) ?? null;
+  if (local !== null) return local;
+  if (cloudProjectCatalog === undefined || input.tenantId !== personalCloudConfig?.tenantId || input.userId !== personalCloudConfig.userId) return null;
+  const project = (await cloudProjectCatalog.read()).entries.find((entry) => entry.projectId === input.projectId);
+  return project === undefined ? null : { root: project.privateRuntime.cwd, deliveryBranch: project.deliveryBranch };
+};
 const aiReadinessEvaluator = new BoundedProjectAiReadinessEvaluator();
 const operatorWorkspaceGateway = new OperatorWorkspaceGateway(
   config.operatorWorkspaces,
@@ -165,32 +166,9 @@ const previewIngress = personalCloudConfig !== undefined && cloudProjectCatalog 
       personalCloudConfig.appOrigin,
     )
   : undefined;
-const fixRuntime = config.integrations.github.enabled && agentRuntime !== undefined
-  ? (() => {
-      const github = config.integrations.github;
-      if (github.appId === undefined || github.privateKey === undefined) {
-        throw new Error("GitHub App credentials are required for the fix executor.");
-      }
-      const verifier = new GitHubRepositoryAccessVerifier(
-        new ShortLivedInstallationTokenService(
-          new GitHubAppInstallationTokenIssuer({
-            appId: github.appId,
-            privateKey: github.privateKey,
-            ...(github.apiBaseUrl === undefined ? {} : { apiBaseUrl: github.apiBaseUrl }),
-          }),
-        ),
-        new GitHubRestRepositoryApi(github.apiBaseUrl === undefined ? {} : { apiBaseUrl: github.apiBaseUrl }),
-      );
-      return LocalWorkspaceManager.create({ root: resolve(config.cwd, ".shipglows-workspaces") }).then((workspaces) => {
-        const transport = new GitHubAppGitTransport(new ProcessGitCommand(), verifier.withVerifiedRepository.bind(verifier));
-        return {
-          executor: new ManagedFixCommandExecutor(store, agentRuntime, workspaces, transport, eventHub, config.limits, runAdmission, executionAdmission),
-          cleanupWorker: new WorkspaceCleanupWorker(store, workspaces, transport),
-        };
-      });
-    })()
+const resolvedFixRuntime = agentRuntime !== undefined
+  ? new ManagedFixCommandExecutor(store, agentRuntime, projectWorkspaceResolver, projectDelivery, eventHub, config.limits, runAdmission, executionAdmission)
   : undefined;
-const resolvedFixRuntime = await fixRuntime;
 const dependencies = {
   projectAccess,
   auditStore: store,
@@ -202,7 +180,7 @@ const dependencies = {
   cockpitStore: localStudioProjects?.cockpitStore ?? store,
   aiReadinessEvaluator,
   ...(localStudioProjects === undefined ? {} : { localProjectManagement: localStudioProjects.management }),
-  ...(localStudioProjects === undefined ? {} : { projectWorkspaceResolver: (input: Parameters<typeof localStudioProjects.management.resolveLocalRepository>[0]) => localStudioProjects.management.resolveLocalRepository(input) }),
+  projectWorkspaceResolver,
   ...(githubProjectSource === undefined ? {} : { githubProjectSource }),
   idempotencyStore: store,
   eventHub,
@@ -210,6 +188,7 @@ const dependencies = {
   operatorWorkspaceCapability: ({ projectId }: { projectId: string }) => Promise.resolve(operatorWorkspaceGateway.capability(projectId)),
   runAdmission,
   executionAdmission,
+  projectDelivery,
   diagnostics,
   ...(cloudProjectCatalog === undefined ? {} : { cloudProjectCatalog }),
   ...(previewIngress === undefined ? {} : { previewIngress }),
@@ -230,14 +209,12 @@ const dependencies = {
   },
   ...(studioCapability === undefined ? {} : { studioCapability }),
   ...(studioSessions === undefined ? {} : { studioSessions }),
-  ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime.executor }),
+  ...(resolvedFixRuntime === undefined ? {} : { fixExecutor: resolvedFixRuntime }),
   ...(localStudioAuthentication !== undefined ? { authentication: localStudioAuthentication } : authentication === undefined ? {} : { authentication }),
   ...(agentRuntime === undefined ? {} : { agentRuntime }),
 };
 const app = buildRunnerApp({ config, dependencies });
-resolvedFixRuntime?.cleanupWorker.start();
 app.addHook("onClose", async () => {
-  resolvedFixRuntime?.cleanupWorker.stop();
   await agentRuntime?.close();
   store.recoverInFlightRuns({ occurredAt: new Date().toISOString() });
   store.close();

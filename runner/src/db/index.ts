@@ -24,6 +24,9 @@ export type { EvidenceHealthStatus as HealthStatus, HealthDimension } from "../h
 export class MigrationPolicyError extends Error {}
 export class RepositoryBindingError extends Error {}
 export class RunStateError extends Error {}
+export class ProjectConversationBusyError extends Error {
+  readonly code = "projectBusy";
+}
 
 export type RunState = "queued" | "running" | "interrupted" | "completed" | "failed";
 export type RunTaskKind = "audit" | "fix" | "conversation";
@@ -277,6 +280,11 @@ export interface OperationalStore {
     readonly projectId: string;
     readonly createdBy: string;
     readonly title: string;
+  }): void;
+  closeConversation(input: {
+    readonly tenantId: string;
+    readonly projectId: string;
+    readonly conversationId: string;
   }): void;
   resolveActor(input: {
     readonly subject: string;
@@ -799,7 +807,24 @@ function createSchema(db: DatabaseSync): void {
     `);
     migratedVersion = 8;
   }
-  if (migratedVersion !== 8) {
+  if (migratedVersion === 8) {
+    db.exec(`
+      ALTER TABLE conversations ADD COLUMN closed_at TEXT;
+      UPDATE conversations SET closed_at = CURRENT_TIMESTAMP, state = 'completed'
+      WHERE id NOT IN (
+        SELECT id FROM conversations AS newest
+        WHERE newest.rowid = (
+          SELECT MAX(candidate.rowid) FROM conversations AS candidate
+          WHERE candidate.tenant_id = newest.tenant_id AND candidate.project_id = newest.project_id
+        )
+      );
+      CREATE UNIQUE INDEX conversations_one_active_project_idx
+        ON conversations(tenant_id, project_id) WHERE closed_at IS NULL;
+      UPDATE meta SET version = 9;
+    `);
+    migratedVersion = 9;
+  }
+  if (migratedVersion !== 9) {
     throw new Error(`Unsupported SQLite schema version ${migratedVersion}`);
   }
 }
@@ -832,13 +857,13 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
           if (integrity === undefined || readString(integrity, "integrity_check") !== "ok") {
             throw new Error("Operational backup integrity check failed.");
           }
-          if (version === undefined || readNumber(version, "version") !== 8) {
+          if (version === undefined || readNumber(version, "version") !== 9) {
             throw new Error("Operational backup schema version is invalid.");
           }
         } finally {
           restored.close();
         }
-        return { schemaVersion: 8, pages, createdAt: new Date().toISOString() };
+        return { schemaVersion: 9, pages, createdAt: new Date().toISOString() };
       } catch (error) {
         if (await pathExists(destination)) await unlink(destination);
         throw error;
@@ -1568,8 +1593,22 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
     },
     grantProjectMembership: ({ tenantId, projectId, userId, capability }) =>
       run(db, "INSERT INTO memberships VALUES(?, ?, ?, ?)", tenantId, projectId, userId, capability),
-    createConversation: ({ id, tenantId, projectId, createdBy, title }) =>
-      run(db, "INSERT INTO conversations VALUES(?, ?, ?, ?, ?, ?)", id, tenantId, projectId, createdBy, title, "idle"),
+    createConversation: ({ id, tenantId, projectId, createdBy, title }) => {
+      try {
+        run(db, "INSERT INTO conversations(id, tenant_id, project_id, created_by, title, state, closed_at) VALUES(?, ?, ?, ?, ?, 'idle', NULL)", id, tenantId, projectId, createdBy, title);
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("conversations.tenant_id, conversations.project_id")) {
+          throw new ProjectConversationBusyError("This project already has an active conversation.");
+        }
+        throw error;
+      }
+    },
+    closeConversation: ({ tenantId, projectId, conversationId }) => {
+      const activeRuns = oneRow(db, "SELECT 1 FROM runs WHERE tenant_id = ? AND project_id = ? AND conversation_id = ? AND state IN ('queued', 'running') LIMIT 1", tenantId, projectId, conversationId);
+      if (activeRuns !== undefined) throw new ProjectConversationBusyError("The conversation still has active work.");
+      const result = db.prepare("UPDATE conversations SET state = 'completed', closed_at = ? WHERE tenant_id = ? AND project_id = ? AND id = ? AND closed_at IS NULL").run(new Date().toISOString(), tenantId, projectId, conversationId);
+      if (Number(result.changes) !== 1) throw new RunStateError("Active conversation is unavailable for this project.");
+    },
     resolveActor: ({ subject, tenantId }) => {
       const row = oneRow(
         db,

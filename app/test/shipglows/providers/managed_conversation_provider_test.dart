@@ -43,7 +43,7 @@ void main() {
     notifier.dispose();
   });
 
-  test('keeps independent conversation tabs for one project', () async {
+  test('keeps exactly one active conversation for one project', () async {
     final runner = _FakeManagedRunner();
     final workspace = ManagedConversationWorkspaceNotifier(
       projectId: 'project-1',
@@ -52,22 +52,22 @@ void main() {
 
     expect(workspace.state.tabs, hasLength(1));
     workspace.addTab();
-    expect(workspace.state.tabs, hasLength(2));
-    expect(workspace.state.activeIndex, 1);
+    expect(workspace.state.tabs, hasLength(1));
+    expect(workspace.state.activeIndex, 0);
 
     await workspace.createConversation();
     expect(workspace.activeNotifier.state.conversationId, 'conversation-1');
-    workspace.selectTab(0);
-    expect(workspace.activeNotifier.state.conversationId, isNull);
-    workspace.closeTab(0);
+    await workspace.closeTab(0);
     expect(workspace.state.tabs, hasLength(1));
     expect(workspace.state.activeIndex, 0);
+    expect(workspace.activeNotifier.state.conversationId, isNull);
+    expect(runner.closedConversations, ['conversation-1']);
     workspace.dispose();
   });
 
   test(
     'replaces the final tab atomically without publishing an empty state',
-    () {
+    () async {
       final workspace = ManagedConversationWorkspaceNotifier(
         projectId: 'project-1',
         client: null,
@@ -75,7 +75,7 @@ void main() {
       final observedLengths = <int>[];
       workspace.addListener((value) => observedLengths.add(value.tabs.length));
 
-      workspace.closeTab(0);
+      await workspace.closeTab(0);
 
       expect(workspace.state.tabs, hasLength(1));
       expect(observedLengths, isNot(contains(0)));
@@ -122,7 +122,8 @@ void main() {
   });
 }
 
-class _FakeManagedRunner implements ManagedRunnerClient {
+class _FakeManagedRunner
+    implements ManagedRunnerClient, ManagedConversationLifecycleClient {
   final eventsController =
       StreamController<ManagedConversationEvent>.broadcast();
   final createdKeys = <String>[];
@@ -130,6 +131,16 @@ class _FakeManagedRunner implements ManagedRunnerClient {
   final approvals = <_ApprovalCall>[];
   var interruptions = 0;
   var resumptions = 0;
+  final closedConversations = <String>[];
+
+  @override
+  Future<void> closeConversation({
+    required String projectId,
+    required String conversationId,
+    required String idempotencyKey,
+  }) async {
+    closedConversations.add(conversationId);
+  }
 
   @override
   Future<ManagedWorkspaceCapability> workspaceCapability({

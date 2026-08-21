@@ -71,7 +71,7 @@ There is one product runtime. Modules outside it are dormant code, not a compati
 - TypeScript / Fastify managed runner
 - SQLite operational projection
 - Firebase Auth identity adapter behind provider-neutral contracts
-- GitHub App repository authorization and managed worktrees
+- Server-owned canonical project checkout with one fixed `main` or `preview` delivery branch
 - Codex app-server first agent adapter behind `AgentRuntime`
 - The existing ShipGlows read-only terminal TUI lives in `/home/claude/shipglowz/tui`; this Flutter app does not own the Bun/OpenTUI package.
 - The authenticated operator workspace—implemented terminal rendering, allowlisted tmux attachment, planned Neovim proof, and bounded file operations—belongs to this repository's Flutter `app/` plus managed `runner/`, and remains separate from the read-only TUI and ordinary customer permissions.

@@ -13,11 +13,11 @@ describe("fix command policy", () => {
     assert.throws(() => assertFixRequest({ issueId: "issue-42", instruction: "x".repeat(4001) }));
   });
 
-  it("requires the isolated workspace capability before execution", () => {
+  it("requires session and turn capabilities before execution", () => {
     assert.throws(
       () => assertFixRuntime({ id: "fake", capabilities: new Set(["sessions"]) }),
-      /isolatedWorkspaces/,
+      /turns/,
     );
-    assert.doesNotThrow(() => assertFixRuntime({ id: "fake", capabilities: new Set(["isolatedWorkspaces"]) }));
+    assert.doesNotThrow(() => assertFixRuntime({ id: "fake", capabilities: new Set(["sessions", "turns"]) }));
   });
 });

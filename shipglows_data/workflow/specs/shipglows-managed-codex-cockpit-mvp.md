@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.33.0"
+artifact_version: "1.34.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
-updated: "2026-08-18"
-updated_at: "2026-08-18 12:32:48 UTC"
+updated: "2026-08-21"
+updated_at: "2026-08-21 18:19:37 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -162,7 +162,7 @@ After signing in, the user sees the runner-owned project catalog, can open each 
 - The conversation view renders normalized semantic events: user messages, assistant messages, reasoning summaries when available, command/tool activity, file changes, plans, approvals, warnings, errors, usage/status metadata, completion, runtime identity, and capability limitations.
 - The user can submit a message, launch a predefined audit, launch a proposed fix, interrupt an active turn, resume a thread, and answer a required approval from dedicated controls.
 - Read-only audits run against a managed clone without write permission to the canonical branch.
-- Fixes run in one isolated worktree and branch per mutating conversation; they never push, merge, or modify the canonical branch automatically in this MVP.
+- Each project has exactly one open semantic conversation and one server-configured delivery branch, `main` or `preview`. Fixes use the canonical clean checkout and finish with one non-force push to that branch; no worktree, temporary branch, merge, deploy, reset, rebase or force-push is available.
 - Completed audits and fixes produce a normalized result that can update Cockpit evidence and propose tracker changes while GitHub/Markdown remains canonical.
 - Refreshing or reopening the Flutter app restores project, conversation, and run state from the managed server without requiring terminal attachment.
 - Web, Android and Windows use the same Flutter domain, state, API and UI modules. Flutter Web is the first end-to-end deployment proof; Android and Windows receive platform, contract and Workspace rendering proof in the MVP.
@@ -184,7 +184,7 @@ After signing in, the user sees the runner-owned project catalog, can open each 
 - If the managed server cannot start or authenticate the selected runtime, the conversation reports `runtimeUnavailable` with a redacted diagnostic and retry action; it does not fall back to an exposed terminal or silently change provider.
 - If the event stream disconnects, the UI shows `reconnecting`, resumes from the last acknowledged event cursor, and reconciles from persisted conversation state before accepting a duplicate action.
 - Duplicate command submissions with the same idempotency key return the original action/run instead of starting a second run.
-- A second mutating run for the same project is rejected with HTTP `409` and code `projectBusy`; the user may retry after the active run ends, and no second writable worktree starts.
+- A second conversation for the same project is rejected with HTTP `409` and code `projectBusy`, including after runner restart. The existing conversation must be closed explicitly after active work ends before another can start.
 - A timeout or user interrupt ends the active turn, keeps prior events, marks the result `interrupted` or `timedOut`, and permits a deliberate resume.
 - An approval timeout or denial blocks the requested privileged action and leaves an explicit denied/expired approval event.
 - Until provider-neutral proposed-action metadata can be verified, only an isolated `fix` run may approve a privileged runtime request; audit and ordinary conversation approvals fail closed without calling the runtime.
@@ -210,11 +210,11 @@ The active ShipGlows runtime now contains the Flutter Cockpit, server-backed pro
 Build a semantic multi-agent client inside the active Flutter runtime and a dedicated ShipGlows control plane beside it:
 
 1. The Flutter app authenticates the user, displays the Cockpit and conversation tabs, sends typed commands, and consumes normalized server events.
-2. A Node.js/TypeScript Fastify service validates the selected identity-provider session, verifies project authorization with the GitHub App, owns managed clones/worktrees, persists durable run projections, and selects an agent runtime and execution provider from server-owned policy.
+2. A Node.js/TypeScript Fastify service validates identity and project authorization, owns the canonical server checkout and fixed delivery-branch policy, persists durable run/conversation projections, and selects an agent runtime and execution provider from server-owned policy.
 3. `AgentRuntime` is a ShipGlows-owned port for runtime capability discovery, sessions/threads, turns, interruption, approvals, normalized events and redacted diagnostics. One generic ACP adapter runs local stdio agents behind that port; pinned Codex ACP is the first configured agent. ACP is never a direct public endpoint.
 4. The public app protocol uses authenticated HTTP commands plus Server-Sent Events with resumable cursors for semantic work. The operator Workspace uses a separate short-lived authenticated PTY capability; raw runtime transports, SSH credentials, host paths and tmux control stay internal.
 5. GitHub repositories and ShipGlows Markdown remain canonical. SQLite on the managed runner stores operational projections such as users, project bindings, runtime/session mappings, run states/checkpoints, event cursors, approvals, capability decisions and idempotency records; it does not become the canonical repository-content store.
-6. Read-only audits use managed clones. Fixes use isolated worktrees/branches and stop at a reviewable local result in this MVP.
+6. Audits and conversations use the canonical clean checkout. Fixes may write only there after exact branch/remote admission and deliver only through a non-force push to the configured `main` or `preview` branch.
 7. `ExecutionProvider` keeps disposable agent/audit work separate from persistent operator work: `just-bash` may execute bounded read-only skill checks against a controlled snapshot, a future sandbox may execute disposable code-agent work, and only the operator Workspace may attach persistent tmux/Neovim. Real repository mutations and provider actions stay in the managed runner policy boundary.
 8. The operator Workspace uses a separately authenticated, short-lived capability to a server-side PTY/tmux gateway. Flutter renders it; Flutter Web/Android/Windows never receive SSH credentials or direct host access.
 
@@ -246,7 +246,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Flutter is applied as the canonical authenticated application stack.
 - Firebase Auth is the current identity baseline behind a portable `AuthProvider` interface. Dormant Clerk code is not a product runtime and may only contribute a narrowly reviewed concept if directly integrated into ShipGlows.
 - GitHub App remains the repository authorization authority from the ready foundational specifications.
-- The Convex backend baseline is intentionally not used for the runtime executor because this feature requires supervised agent runtimes, managed Git clones/worktrees, local filesystem isolation, resumable event streaming, and bounded OS-level execution. A dedicated Node.js/TypeScript Fastify server is the documented exception.
+- The Convex backend baseline is intentionally not used for the runtime executor because this feature requires supervised agent runtimes, canonical Git checkout admission, local filesystem isolation, resumable event streaming, and bounded OS-level execution. A dedicated Node.js/TypeScript Fastify server is the documented exception.
 - TypeScript is selected because it fits the event-heavy Fastify control plane, supports server-side JWT/JWKS validation for the selected identity provider, and typed adapters can isolate every runtime transport from the Flutter contract.
 - SQLite is selected for the MVP runner's operational projection because the managed server is the execution authority, the data is reconstructable from runtime/repository state, and a transactional local store avoids adding a second remote control plane before behavior is proven. The repository/Markdown authority rule remains unchanged.
 - Hosted Firestore is not an MVP runner dependency. The Flutter Cockpit reads the versioned runner API and the runner owns its SQLite operational projection. Any later Firestore synchronization must stay a rebuildable projection behind a separate contract.
@@ -272,7 +272,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - Fake second-runtime conformance fixture proving Flutter and policy do not branch on Codex-only wire types.
 - Firebase Auth authentication for Web, Android and Windows through one Dart adapter; server-side ID-token/JWKS validation behind the runner's `AuthProvider` interface.
 - GitHub App repository authorization and short-lived installation-token use on the server.
-- Managed clone reuse for audits and isolated worktree/branch creation for fixes, selected through server-owned `ExecutionProvider` policy.
+- Canonical checkout reuse with a server-owned `main|preview` delivery branch, durable one-conversation admission, clean/divergence guards, and non-force push.
 - Read-only ingestion of existing ShipGlows Markdown and GitHub evidence into Cockpit health.
 - Safe generation of proposed tracker updates as run artifacts; canonical write-back requires an explicit user-approved later operation.
 - Sentry-backed client/server runtime diagnostics with redaction, release identity, and environment tags.
@@ -284,7 +284,7 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 
 - Exposing a general-purpose unrestricted terminal, raw SSH credentials, root shell, arbitrary command execution, or arbitrary tmux session to users.
 - Asking end users to install, configure, update, or monitor any agent runtime, tmux, Git, GitHub credentials, or the ShipGlows server.
-- Automatic push, pull-request creation, merge, deployment, production mutation, or direct write to a default branch.
+- Pull-request creation, merge, deployment, production mutation outside the configured checkout, force-push, arbitrary branches, and client-selected delivery targets.
 - Fully autonomous self-improvement without observable run state, bounded permissions, and human-controlled mutation gates.
 - Billing, metering plans, marketplace packaging, and organization administration beyond project authorization.
 - Public/SEO marketing-site changes.
@@ -306,8 +306,8 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 - GitHub App installation tokens are short-lived, scoped to the required repository/permissions, generated server-side, and never persisted in SQLite or sent to Flutter.
 - Runtime credentials and login state are managed server secrets and never cross the runner boundary.
 - Audit prompts and fix prompts have server-owned templates, bounded user additions, maximum sizes, and explicit permission profiles.
-- Audit work is read-only. Fix work uses one isolated worktree/branch per conversation and cannot target the canonical branch directly.
-- One mutating run per project may be active; read-only concurrency is bounded by server capacity and per-user/project quotas.
+- Audit work is read-only. Fix work targets only the server-configured canonical `main` or `preview` checkout and pushes only after clean-tree and unchanged-remote verification.
+- One conversation per project may be open. SQLite enforces this across concurrent requests and restarts; no read-only conversation bypass exists.
 - `manual` is the only accepted `RunIntent` trigger in the MVP. Reserved automatic trigger values are rejected until a separate approved specification enables them.
 - A `ProjectContextBundle` is server-built from approved, versioned and redacted tenant/project evidence. A runtime receives no arbitrary client-selected context, no cross-tenant bundle and no untracked persistent memory.
 - Raw command output and file content are size-limited, redacted, and normalized before streaming or persistence.
@@ -332,9 +332,9 @@ Warp Oz informs this contract as an external pattern only. ShipGlows remains the
 # Invariants
 
 - One ShipGlows project equals exactly one GitHub repository.
-- One project may have many conversations; one conversation belongs to exactly one project and one tenant.
+- One project may retain many closed conversations in history but has exactly one open conversation; each conversation belongs to exactly one project and one tenant.
 - One ShipGlows conversation maps to one selected-runtime thread/session identifier stored server-side; raw runtime identifiers are never authorization proof.
-- One mutating conversation owns one isolated worktree and branch for its lifetime.
+- One open conversation owns the project delivery lease and uses its server-configured canonical checkout and `main|preview` branch.
 - The normal agent surface shows semantic conversation events. The separately gated operator Workspace may show a live PTY terminal.
 - GitHub decides repository access for repository-sensitive actions.
 - Repository/Markdown files decide canonical project and tracker content.
@@ -422,7 +422,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 - Fastify validates the Firebase ID token through server-side issuer, audience, algorithm, and JWKS checks on every request and never trusts client-decoded claims alone. No alternate auth runtime is supported.
 - Runner data access is filtered by tenant and user membership before any project/conversation lookup result is returned.
 - Repository-sensitive actions revalidate GitHub App installation access and required permissions immediately before clone, refresh, audit, or fix setup.
-- GitHub Contents read access permits projection, audit, and local isolated fix work. A future push or pull-request feature must separately require and verify the necessary write permissions before that capability is added.
+- GitHub Contents read access permits projection and audit. Configured fix delivery requires the server's existing write-capable Git remote; pull requests and broader GitHub mutations remain separate capabilities.
 - Approval authorization is scoped to the requesting tenant/project/conversation and one pending approval. Replays return the prior resolution.
 - Workspace authorization is a separate capability from agent conversation access. It requires an explicit operator role/flag, fresh project membership, and a server-owned allowlist of tmux session identifiers.
 
@@ -481,7 +481,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
 - Repository is renamed, transferred, archived, deleted, made private, or removed from the installation.
 - Default branch advances after audit checkout but before a proposed fix starts.
 - Two users request fixes for the same project at once.
-- A worktree remains after a crash or timeout.
+- A conversation is interrupted by restart while its canonical checkout contains an incomplete or dirty change.
 - Repository content contains instructions to exfiltrate secrets or alter runner policy.
 - Tool output contains ANSI controls, binary data, huge lines, token-like values, or private filesystem paths.
 - An approval is denied, expires, is replayed, or arrives after interruption.
@@ -511,7 +511,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Implementation note (2026-08-11): runner Firebase ID-token/JWKS verification, subject-to-tenant actor resolution, malformed/invalid/cross-tenant fail-closed tests, a protected read-only authorization-route fixture, and the Flutter provider-neutral Firebase session/refresh adapter are complete. The task remains in progress until Linux REST/OIDC support and a provider-configured runner deployment prove the same boundary end-to-end.
 - [~] Task 3: Implement GitHub App access and managed workspace lifecycle.
   - Files: `runner/src/github/**`, `runner/src/workspaces/**`, `runner/test/github/**`, `runner/test/workspaces/**`.
-  - Action: Generate narrowed short-lived installation tokens, verify repo permissions, clone/fetch managed repos, create isolated fix worktrees/branches, enforce path/symlink boundaries, lock project mutation, and clean abandoned workspaces.
+  - Action: Generate narrowed short-lived installation tokens for read operations, verify repository permissions, resolve canonical checkouts from the server catalog, enforce path/symlink and exact `main|preview` boundaries, serialize conversations durably, and deliver fixes by unchanged-remote non-force push.
   - User story link: Lets ShipGlows operate repositories while hiding server and Git mechanics.
   - Depends on: Tasks 1-2.
   - Validate with: fake GitHub contract tests, local Git fixtures, path traversal/symlink tests, concurrency tests, cleanup tests, and forbidden-token scans.
@@ -533,11 +533,11 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Implementation note (2026-08-17): the runner now selects a generic ACP adapter under the unchanged `AgentRuntime` product boundary and launches pinned `@agentclientprotocol/codex-acp` over local stdio. Every session carries a trusted project/isolated workspace descriptor and explicit read-only/workspace-write policy; the adapter confirms `session/set_mode` and denies broad or unbound workspace fallback. Approval requests are persisted against the active run before publication, expire durably on cancellation/terminal outcomes, and approval maps only to ACP `allow_once`. Raw NDJSON lines, provider updates and retained identifiers are bounded before parsing or projection, with path/token sanitization and normalized events; a framing violation idempotently closes the SDK connection and terminates the child. Overflow uses the same bounded hard-stop primitive as interrupt, closes and removes the session before terminal acknowledgement, preserves approval-expiry and terminal control events, and rejects later prompts/callbacks. Non-`end_turn` stop reasons cannot become successful completion. Child exit/error, bounded interruption, runtime shutdown, startup reconciliation and session cleanup are supervised. A real local Codex ACP smoke proved session creation, one no-tool prompt, streamed agent update and `end_turn`; it did not prove restart resume. The ACP adapter deliberately does not advertise public resume and rejects unsafe cold resume. Durable workspace descriptors across runner restarts require a separately approved data migration. The previous Codex app-server adapter is unchanged and retained only as rollback.
 - [~] Task 6: Implement command API, SSE resume, audit/fix policy, and run orchestration.
   - Files: `runner/src/routes/**`, `runner/src/runs/**`, `runner/src/policies/**`, `runner/test/routes/**`, `runner/test/runs/**`.
-  - Action: Add the versioned endpoints, redacted Cockpit operations summary, idempotency, event cursors, heartbeat, quotas, timeout/interrupt behavior, approval flow, server-owned `RunPolicy` resolution, manual-only `RunIntent` validation, explicit context-bundle attachment, allowlisted audit templates, isolated fix templates, and explicit no-push/no-merge gates.
+  - Action: Add the versioned endpoints, redacted Cockpit operations summary, idempotency, event cursors, heartbeat, quotas, timeout/interrupt behavior, approval flow, server-owned `RunPolicy`, manual-only `RunIntent`, explicit context attachment, allowlisted audit/fix templates, one-conversation admission, fixed delivery-branch guards, and explicit no-merge/no-deploy/no-force gates.
   - User story link: Turns buttons and conversation input into safe, observable agent work.
   - Depends on: Tasks 2-5.
   - Validate with: API integration tests for success, disconnect, replay, denial, timeout, project-busy, quota, access-loss, stale-state reconciliation, tenant-safe operations summaries, rejected automatic triggers, and no implicit runtime/provider change.
-  - Implementation note (2026-08-02): the first tenant/project-protected audit route now creates a durable run and invokes the selected runtime through the neutral command service; runtime events are persisted and exposed through a bounded cursor-based SSE replay route, with optional tenant/conversation-scoped live fan-out after persistence and a bounded idle window. State-changing Origin policy is implemented from `RUNNER_ALLOWED_ORIGINS`; per-tenant admission, maximum duration and interrupt reconciliation are implemented for the current audit command. Conversation create/message/interrupt/resume routes now use the same server-owned session/run boundary and durable idempotency contract. Both `POST /audits` and `POST /fixes` require durable idempotency and replay from SQLite; fixes additionally revalidate a tenant-owned GitHub binding, create an isolated server-owned worktree, start Codex with its internal workspace when GitHub/Codex are configured, and fail closed otherwise. A periodic cleanup worker reconciles due worktrees without exposing paths. Flutter integration and real-provider proof remain.
+  - Implementation note (2026-08-21): schema v9 and a partial unique index enforce one open conversation per tenant/project across concurrency and restart. Create/audit/fix share the canonical project resolver and exact `main|preview` delivery guard. The runner rejects dirty, mismatched, advanced or divergent checkouts without mutation; completed fixes must be committed and clean, recheck the admitted remote head, and use one ordinary non-force push. `main.ts` no longer creates managed worktrees or starts their cleanup worker. Flutter restores one open conversation, removes multi-tab creation, closes through the authenticated idempotent server route, and maps busy/delivery failures visibly. Historical worktree code and physical directories are preserved but inactive.
 - [x] Task 6a: Make provider admission and execution an explicit, durable runner boundary.
   - Files: `runner/src/contracts/index.ts`, `runner/src/runs/execution.ts`, `runner/src/runs/{audit,fix,conversation}.ts`, `runner/src/db/index.ts`, `runner/src/main.ts`, `runner/src/app.ts`, `runner/test/contracts/**`, `runner/test/runs/**`, `runner/test/db/**`.
   - Action: Replace the marker-only `ExecutionProvider` with a typed registry, server-owned policy resolver and local managed provider. Resolve and persist an immutable secret-safe envelope before preflight; require manual-only intent, selected runtime/provider/capabilities, bounded resource budget and deadline. Preflight must precede workspace/session/turn creation. Persist one tenant-scoped opaque execution record with additive migration; return explicit completed/failed/delegated outcomes; cancel using only opaque run/execution identifiers. Preserve existing fail-closed restart interruption rather than claiming recovery until a future distributed-execution contract exists.
@@ -623,14 +623,14 @@ Personal Cloud follow-up batches are non-overlapping and override broader batch 
 - `AC-004a`: Codex ACP passes the first complete `AgentRuntime` adapter smoke; normalized contract tests prove Flutter, health, authorization and public API behavior do not depend on ACP or Codex wire types.
 - `AC-004b`: A request whose selected runtime lacks a required capability is rejected before execution with a stable, user-visible capability error; ShipGlows never silently changes runtime or expands permissions.
 - `AC-005`: A user can launch a read-only audit and see queued, running, progress, result, error, interrupted, and retry states.
-- `AC-006`: A user can launch a proposed fix only in an isolated worktree/branch; the MVP cannot automatically push, merge, deploy, or mutate the default branch.
+- `AC-006`: A user can launch a fix only from the clean canonical checkout on its server-configured `main|preview` branch; success performs one non-force push, while dirty/diverged/advanced/rejected delivery fails without reset, rebase, merge, deploy, force or fallback branch.
 - `AC-007`: Approval requests are visible and can be approved/denied only by an authorized actor; denial, expiry, replay, and disconnect are recoverable and audited.
 - `AC-008`: GitHub access is revalidated server-side before repo-sensitive work; revoked access blocks action while preserving stale readable projection.
 - `AC-009`: HTTP retry and SSE reconnect cannot duplicate conversations, turns, runs, approvals, or tracker proposals.
 - `AC-010`: Cross-tenant/project identifiers, traversal paths, oversized payloads, prompt-injection attempts, and client-selected policies are rejected server-side.
 - `AC-011`: No GitHub/runtime/Firebase secret, token, cookie, tokenized URL, local path, environment value, raw private file, or unrestricted command output appears in client payloads, persisted events, logs, or Sentry.
 - `AC-012`: Web passes a complete authenticated end-to-end scenario; Android and Windows pass platform, responsive UI, terminal-rendering contract, and API compatibility proof.
-- `AC-013`: Server restart, selected-runtime process failure, event disconnect, timeout, project-busy, quota, SQLite failure, and abandoned-worktree scenarios preserve understandable state and bounded recovery.
+- `AC-013`: Server restart, selected-runtime failure, event disconnect, timeout, project-busy, quota, SQLite failure, dirty checkout, divergence and rejected-push scenarios preserve understandable state and bounded recovery.
 - `AC-014`: Completed run evidence can update the Cockpit and create a proposed tracker change while repository/Markdown remains canonical.
 - `AC-015`: A non-technical user can complete sign-in, select a project, launch an audit, inspect progress/result, and start a follow-up conversation without infrastructure instructions.
 - `AC-016`: An explicitly authorized operator can open one Workspace, attach to one allowlisted tmux session, resize/reconnect the PTY, launch Neovim, and close the session without exposing host paths, credentials, or arbitrary shell selection.
@@ -647,13 +647,13 @@ Personal Cloud follow-up batches are non-overlapping and override broader batch 
 
 # Test Contract
 
-- `surface`: Flutter Web, Android and Windows active ShipGlows runtime; Node.js/TypeScript managed control plane; `AgentRuntime`/`ExecutionProvider`/`CapabilityBroker` contracts; generic ACP local-stdio adapter with pinned Codex ACP first agent; Firebase Auth identity adapter; GitHub App access layer; managed clone/worktree layer; SQLite operational projection; authenticated SSE/HTTP API plus separate authenticated PTY channel; Cockpit health projection; semantic conversation UI; operator Workspace; Sentry diagnostics; operator docs; bounded just-bash skill execution. Convex is the target product data layer but its first projection is outside this proof. Marketing site, production push/merge/deploy, iOS shell, Linux desktop application launch, additional live ACP agents, and unrestricted shell access are outside this proof.
+- `surface`: Flutter Web, Android and Windows active ShipGlows runtime; Node.js/TypeScript managed control plane; `AgentRuntime`/`ExecutionProvider`/`CapabilityBroker` contracts; generic ACP local-stdio adapter with pinned Codex ACP first agent; Firebase Auth identity adapter; GitHub App access layer; canonical checkout/delivery guard; SQLite operational projection; authenticated SSE/HTTP API plus separate authenticated PTY channel; Cockpit health projection; semantic conversation UI; operator Workspace; Sentry diagnostics; operator docs; bounded just-bash skill execution. Convex is the target product data layer but its first projection is outside this proof. Marketing site, merge/deploy, iOS shell, Linux desktop application launch, additional live ACP agents, and unrestricted shell access are outside this proof.
 - `proof_profile`: high-risk authenticated runtime and agent-execution proof. Required evidence combines official-doc freshness, runner unit/contract/integration/security tests, Flutter unit/widget/platform tests, authenticated Web browser proof, Android and Windows build/session/adapter proof, local managed Git/Codex-first-adapter smoke plus fake second-adapter conformance proof, restart/reconnect/idempotency proof, tenant isolation, secret/redaction scans, Sentry and diagnostics redaction, metadata lint, design-system drift check, dependency audit, and diff hygiene.
 - `proof_order`:
   1. Freeze shared request/response/event/error schemas and threat boundaries.
   2. Prove auth, tenant isolation, GitHub access, workspace safety, persistence, and idempotency before enabling runtime execution.
   3. Prove Codex-first-adapter event normalization, second-adapter conformance and process recovery with fakes before a local live smoke.
-  4. Prove audit read-only and fix isolation/no-push gates before wiring action buttons.
+  4. Prove one-conversation admission, audit read-only behavior, exact delivery branch, clean/divergence guards, and non-force push before wiring action buttons.
   5. Prove Flutter auth/API/reconnect state with fixtures before live integration.
   6. Prove Cockpit and conversation UX across responsive widths and failure states.
   7. Run authenticated Web end-to-end plus Android and Windows platform/API contract proof.
@@ -670,7 +670,7 @@ Personal Cloud follow-up batches are non-overlapping and override broader batch 
   - `MCC-004b`: an unavailable or under-capable runtime is rejected before execution; no implicit fallback or permission expansion occurs.
   - `MCC-005`: SSE cursor resume and duplicate HTTP retry produce exactly-once observable actions.
   - `MCC-006`: read-only audit cannot mutate repository state.
-  - `MCC-007`: fix uses an isolated worktree/branch and cannot push, merge, deploy, or target the default branch.
+- `MCC-007`: one project conversation owns the canonical `main|preview` delivery lease; fix delivery is clean, remote-head-stable and non-force, with no worktree, temporary branch, merge, deploy or fallback.
   - `MCC-008`: approval approve/deny/expire/replay is authorized, idempotent, visible, and audited.
   - `MCC-009`: revoked/stale GitHub access blocks repo-sensitive action but preserves stale projection.
   - `MCC-010`: cross-tenant/project access and open-stream access after membership loss are denied.
@@ -692,14 +692,14 @@ Personal Cloud follow-up batches are non-overlapping and override broader batch 
   - `MCC-026`: an active local execution becomes a bounded interrupted state after restart; the MVP never claims drain, remote preservation or reattach without a dedicated provider implementation.
 - `required_results`: all scenario IDs pass or are explicitly blocked by unavailable external credentials under the narrow exception below; no critical/high security defect remains; no unsupported production claim is added; every failed external smoke retains complete fake/local contract proof and an exact operator follow-up; full Flutter and runner checks pass; changed governance artifacts pass metadata lint; design-system drift is addressed; working-tree changes remain scoped and preserve pre-existing operator edits.
 - `exception_with_proof`: live Firebase, GitHub App, Sentry ingestion, and Codex-first-adapter authenticated smoke calls may be deferred only when credentials or provider configuration are unavailable in the local environment. The implementation must still provide complete fake/local contract tests, disabled-by-default secure adapters, redaction proof, exact configuration diagnostics, and a verification checklist that marks the live scenario blocked rather than passed. A live Codex smoke may use the server's existing authenticated Codex installation without exposing credentials. A live OpenCode/Kilo adapter is explicitly outside this MVP proof. No release may be described as production-ready until all required live provider scenarios pass.
-- `exception_without_proof`: none for tenant isolation, authorization middleware, idempotency, event ordering/resume, audit read-only policy, fix worktree isolation, no-push/no-merge gates, path/symlink containment, prompt/output bounds, secret redaction, health unknown semantics, accessible failure states, metadata lint, dependency audit, and diff hygiene.
+- `exception_without_proof`: none for tenant isolation, authorization middleware, one-conversation admission, idempotency, event ordering/resume, audit read-only policy, exact delivery branch, clean/divergence/non-force gates, path/symlink containment, prompt/output bounds, secret redaction, health unknown semantics, accessible failure states, metadata lint, dependency audit, and diff hygiene.
 
 # Test Strategy
 
 - Unit tests for every schema, state transition, health aggregation rule, redactor, policy, and mapper.
 - Contract tests with fake Firebase Auth, GitHub App, Codex adapter, second agent adapter, filesystem, clock, and Sentry transports.
 - SQLite migration, transaction, tenant boundary, idempotency, restart, backup, and restore tests.
-- Local Git fixtures for clone/fetch, renamed default branch, worktree isolation, concurrent mutation lock, symlink/traversal rejection, and abandoned-worktree cleanup.
+- Local Git fixtures for fetch, `main|preview`, dirty checkout, remote advance, divergence, non-force push, durable conversation serialization, symlink/traversal rejection, and inactive legacy-worktree bootstrap proof.
 - API integration tests for auth, commands, approvals, quotas, timeouts, interruption, cursor resume, access loss, and malformed input.
 - Contract tests for operations-summary tenant isolation, manual-only run admission, immutable policy resolution, bounded context provenance and forbidden automatic triggers.
 - Contract and migration tests for immutable execution-envelope persistence, provider capability/preflight rejection, opaque cancellation, no-fallback behavior, v6-to-v7 compatibility, tenant isolation and restart interruption semantics.
@@ -722,7 +722,7 @@ Personal Cloud follow-up batches are non-overlapping and override broader batch 
 - High prompt-injection risk: repository content can attempt to influence tools or exfiltrate secrets.
 - High product-trust risk: presenting dormant auth/GitHub modules as live integration would mislead the operator and users.
 - Medium architecture risk: raw app-server protocol coupling could make the Flutter client brittle; normalization isolates it.
-- Medium operations risk: agent-runtime process crashes, stale worktrees, SQLite corruption, and token expiry need explicit recovery.
+- Medium operations risk: agent-runtime crashes, dirty canonical checkouts, remote divergence, SQLite corruption, and token expiry need explicit recovery.
 - Medium architecture risk: distributed-worker recovery could be overstated before ShipGlows has a durable remote provider and distributed lease. This MVP records local execution truth and reports restart interruption; drain/reattach is deferred to a separately reviewed execution-provider slice.
 - Medium cost/availability risk: unbounded turns, output, concurrency, or retries could exhaust server and model quotas.
 - Medium UX risk: a terminal clone would be visually noisy and inaccessible; semantic event rendering requires careful progress/error design.
@@ -768,6 +768,7 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-21 18:19:37 UTC | sg-development | GPT-5 Codex | Replaced active managed worktrees with one durable open conversation and one server-owned canonical delivery branch per project; added fail-closed checkout/remote admission, non-force delivery, explicit close semantics and a single-conversation Flutter surface while preserving historical worktrees. | implementation verified locally: 396 runner tests, runner typecheck/lint/audit, 174 Flutter tests and Flutter analysis pass; no deployment performed | Commit and push the coherent slice to `origin/main`, then continue the next P0 without parallel project conversations |
 | 2026-08-18 12:32:48 UTC | shipglows + sg-engineering + sg-design | GPT-5 Codex | Hardened the approved Neovim-first Workspace with mutation-only authorization, dedicated Unix execution identity, fixed PTY environment, protocol-v2 negotiation, bounded leases/backpressure, redacted diagnostics, non-wedging recovery and expanded Neovim focus mode. | local implementation verified: runner typecheck/lint/audit and 51 targeted tests pass; full runner suite is 376/377 with only the pre-existing Windows CRLF fixture mismatch; Flutter analysis, 24 targeted tests and the complete 163-test ShipGlows suite pass; no VM, deploy, commit or push action performed | Separately authorize hosted configuration and browser proof on the CAX11 |
 | 2026-08-18 11:54:48 UTC | sg-development + sg-design | GPT-5 Codex | Implemented the approved Neovim-first Personal Cloud slice: closed editor/terminal capability, stable server-derived Neovim tmux session, one active Flutter Workspace, visible bounded reconnect failure and private future UI RPC boundary. | local implementation proven: Flutter 22/22, runner 372/373 with the sole known Windows CRLF fixture failure, typecheck/lint/analyze/design drift/metadata/diff checks pass; browser composition proven; no deploy or push performed | Authorize a separate hosted rollout, then prove the real CAX11 Neovim session through app.shipglows.com |
 | 2026-08-17 22:45:49 UTC | 101-sg-ready | GPT-5 Codex | Rechecked the Personal Cloud priority, companion dependency versions, non-overlapping write ownership, Workspace reconnect policy, OWASP/ASVS gate and pinned ACP runtime authority after all P1 corrections. | SAFE; metadata, dependency, contradiction, canonical-structure and diff checks passed with no unresolved readiness blocker | /102-sg-start ShipGlows Managed Agent Cockpit MVP |
@@ -879,6 +880,14 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 | 2026-08-11 18:26:17 UTC | 300-sg-docs + 007-sg-content | GPT-5 Codex | Reconciled contributor guidance, public app README, technical context, runtime/code maps, the active MVP contract, and historical migration records with one ShipGlows runtime, Firebase Auth, Convex target data plane, and Fastify/SQLite execution-plane exception. Historical cleanup documents and their two originating specs are now explicitly superseded. | documentation is current for the implemented Cockpit baseline; live Firebase, hosted runner, Sentry and public Workspace proof remain open and are not claimed complete | Continue the hosted Firebase/Runner proof from the documented single-runtime baseline |
 
 # Current Chantier Flow
+
+## Single-conversation delivery amendment — 2026-08-21
+
+The operator replaced the managed-worktree model with a deliberately simpler project invariant: one open conversation, one canonical checkout, and one server-owned `main` or `preview` delivery branch per project. SQLite schema v9 is the durable conversation lease. Admission fetches without changing the checkout, requires the exact branch and a clean non-divergent tree, and captures the remote head. A successful fix must leave a clean commit and is delivered by one non-force push only if the remote head is unchanged. Any dirty tree, branch mismatch, remote advance, divergence, or push rejection is explicit and non-destructive.
+
+The active runner bootstrap no longer instantiates the worktree manager or cleanup worker. Historical worktree utilities, tests, records, and physical directories are retained as history and compatibility evidence; they are not an active execution fallback. Flutter exposes one conversation tab, restores only the open conversation, and requires an authenticated idempotent close before a replacement conversation can begin.
+
+`102-sg-start` (implemented locally) -> `103-sg-verify` (runner concurrency/restart/Git guards plus Flutter one-conversation regression) -> `005-sg-ship` (authorized non-force push to `origin/main`) -> no deployment in this slice.
 
 ## Personal Cloud amendment — 2026-08-18
 

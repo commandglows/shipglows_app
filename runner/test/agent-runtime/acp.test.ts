@@ -155,7 +155,7 @@ describe("ACP runtime adapter", () => {
     assert.deepEqual(connection.calls[2]?.input, { sessionId: "acp_session_1", modeId: "read-only" });
   });
 
-  it("enforces declared modes and isolated workspace write policy", async () => {
+  it("enforces declared modes and trusted writable workspace policy", async () => {
     const write = harness();
     await assert.rejects(write.runtime.createSession({
       conversationId: opaque("conversation_write_wrong"),
@@ -170,6 +170,14 @@ describe("ACP runtime adapter", () => {
       workspace: { root: "C:\\isolated", kind: "isolated" },
     });
     assert.deepEqual(isolated.connection.calls[2]?.input, { sessionId: "acp_session_1", modeId: "agent" });
+
+    const canonical = harness();
+    await canonical.runtime.createSession({
+      conversationId: opaque("conversation_canonical"),
+      accessMode: "workspaceWrite",
+      workspace: { root: "C:\\canonical", kind: "canonical" },
+    });
+    assert.deepEqual(canonical.connection.calls[2]?.input, { sessionId: "acp_session_1", modeId: "agent" });
 
     const unavailable = harness();
     unavailable.connection.newSessionResult = { sessionId: "no_modes" };
