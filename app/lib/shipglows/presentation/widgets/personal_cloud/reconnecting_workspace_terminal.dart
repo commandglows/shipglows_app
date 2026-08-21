@@ -77,6 +77,7 @@ class _ReconnectingWorkspaceTerminalState
   static const _terminalScrollbackLines = 5000;
 
   late final Terminal _terminal;
+  late final Future<void> _workspaceTerminalFontReady;
   late final String _diagnosticId;
   RemoteWorkspaceSocket? _socket;
   RemoteWorkspaceCapability? _capability;
@@ -96,6 +97,7 @@ class _ReconnectingWorkspaceTerminalState
     super.initState();
     _diagnosticId =
         'wd_${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}';
+    _workspaceTerminalFontReady = AppTheme.loadWorkspaceTerminalFont();
     _terminal = Terminal(
       maxLines: _terminalScrollbackLines,
       onOutput: (data) => _send({'type': 'input', 'data': data}),
@@ -501,14 +503,20 @@ class _ReconnectingWorkspaceTerminalState
                   _connectionState == WorkspaceConnectionState.connected ||
                       _connectionState == WorkspaceConnectionState.connecting ||
                       _connectionState == WorkspaceConnectionState.reconnecting
-                  ? TerminalView(
-                      _terminal,
-                      autofocus: true,
-                      deleteDetection: shouldUseWorkspaceDeleteDetection(
-                        isWeb: kIsWeb,
-                        platform: defaultTargetPlatform,
+                  ? FutureBuilder<void>(
+                      future: _workspaceTerminalFontReady,
+                      builder: (context, _) => TerminalView(
+                        _terminal,
+                        autofocus: true,
+                        deleteDetection: shouldUseWorkspaceDeleteDetection(
+                          isWeb: kIsWeb,
+                          platform: defaultTargetPlatform,
+                        ),
+                        padding: EdgeInsets.all(tokens.spacing.xs),
+                        textStyle: TerminalStyle.fromTextStyle(
+                          AppTheme.workspaceTerminalTextStyle(context),
+                        ),
                       ),
-                      padding: EdgeInsets.all(tokens.spacing.xs),
                     )
                   : _WorkspaceRecoveryPanel(
                       state: _connectionState,

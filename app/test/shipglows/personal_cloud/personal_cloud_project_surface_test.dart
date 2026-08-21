@@ -494,6 +494,48 @@ void main() {
     );
   });
 
+  testWidgets('uses one declared monospace style for editor and terminal', (
+    tester,
+  ) async {
+    final transport = _WorkspaceTransport([
+      _WorkspaceSocket(),
+      _WorkspaceSocket(),
+    ]);
+
+    Widget workspace(RemoteWorkspaceSurface surface) => _app(
+      ReconnectingWorkspaceTerminal(
+        projectId: 'project-1',
+        projectName: 'Projet test',
+        transport: transport,
+        surface: surface,
+        reconnectPolicy: const WorkspaceReconnectPolicy(
+          delays: [],
+          heartbeatInterval: null,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(workspace(RemoteWorkspaceSurface.editor));
+    await _pumpAsync(tester);
+    final editorView = tester.widget<TerminalView>(find.byType(TerminalView));
+    final declaredStyle = AppTheme.workspaceTerminalTextStyle(
+      tester.element(find.byType(TerminalView)),
+    );
+
+    expect(editorView.textStyle.fontFamily, declaredStyle.fontFamily);
+    expect(editorView.textStyle.fontFamily, startsWith('RobotoMono'));
+
+    await tester.pumpWidget(workspace(RemoteWorkspaceSurface.terminal));
+    await _pumpAsync(tester, frames: 12);
+    final terminalView = tester.widget<TerminalView>(find.byType(TerminalView));
+
+    expect(terminalView.textStyle.fontFamily, editorView.textStyle.fontFamily);
+    expect(
+      terminalView.textStyle.fontFamilyFallback,
+      editorView.textStyle.fontFamilyFallback,
+    );
+  });
+
   testWidgets(
     'pastes exact bracketed text and recovers after clipboard failure',
     (tester) async {

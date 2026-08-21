@@ -40,6 +40,14 @@ class AppTheme {
         AppThemeTokens.forBrightness(theme.brightness);
   }
 
+  static TextStyle workspaceTerminalTextStyle(BuildContext context) =>
+      GoogleFonts.robotoMono(textStyle: Theme.of(context).textTheme.bodyMedium);
+
+  static Future<void> loadWorkspaceTerminalFont() async {
+    GoogleFonts.robotoMono();
+    await GoogleFonts.pendingFonts();
+  }
+
   static ThemeData _buildTheme(
     Brightness brightness, {
     TextTheme Function(TextTheme base)? typographyBuilder,
