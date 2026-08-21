@@ -95,6 +95,45 @@ const editorialPath = "/docs#editorial-governance";
       </div>
     </section>
 
+    <section class="section" id="git-continuity">
+      <div class="section-heading">
+        <p class="eyebrow">Work protected with Git</p>
+        <h2>Your work is backed up. You can always see what changed.</h2>
+        <p>
+          Agent work is fragile when it exists only on one machine. For
+          approved technical chantiers, ShipGlows saves each completed block
+          in a commit containing only that work, then pushes it to the project's
+          Git repository. A lightweight check looks for work that has not yet been
+          backed up when changes start or resume, before sensitive operations,
+          and before completion. When everything is safe, that check stays silent.
+        </p>
+      </div>
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Local</h3>
+          <p>Changes or commits still exist only on the current machine.</p>
+        </article>
+        <article class="doc-card">
+          <h3>Backed up</h3>
+          <p>The relevant commit is available from the project's remote Git repository.</p>
+        </article>
+        <article class="doc-card">
+          <h3>Deployed</h3>
+          <p>Matching provider evidence confirms the intended commit on a named preview, staging, or production target.</p>
+        </article>
+      </div>
+      <div class="cta-panel">
+        <p>
+          A push proves remote backup, not deployment. ShipGlows does not
+          guarantee GitHub availability, zero data loss, repository protection
+          settings, or unattended production shipping.
+        </p>
+        <a class="button button-secondary" href="/blog/is-your-agent-work-actually-backed-up">
+          Read the full explanation
+        </a>
+      </div>
+    </section>
+
     <section class="section" id="editorial-governance">
       <div class="cta-panel">
         <p class="eyebrow">Public Métiers</p>

@@ -62,6 +62,47 @@ const focusTagCombos = [
       </div>
     </section>
 
+    <section class="section" id="git-continuity">
+      <div class="section-heading">
+        <p class="eyebrow">Votre travail protégé avec Git</p>
+        <h2>Votre travail est sauvegardé. Vous retrouvez facilement chaque modification.</h2>
+        <p>
+          Le travail d’un agent reste fragile tant qu’il existe sur une seule
+          machine. Pour les chantiers techniques approuvés, ShipGlows enregistre
+          chaque bloc terminé dans un commit qui contient uniquement ce travail,
+          puis l’envoie vers le dépôt Git du projet. Un contrôle léger recherche le travail qui
+          n’est pas encore sauvegardé au début ou à la reprise des modifications,
+          avant une opération sensible et avant de terminer. Quand tout est en
+          sécurité, ce contrôle reste silencieux.
+        </p>
+      </div>
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Local</h3>
+          <p>Les changements ou commits existent encore uniquement sur la machine actuelle.</p>
+        </article>
+        <article class="doc-card">
+          <h3>Sauvegardé</h3>
+          <p>Le commit concerné est disponible depuis le dépôt Git distant du projet.</p>
+        </article>
+        <article class="doc-card">
+          <h3>Déployé</h3>
+          <p>Une preuve du fournisseur confirme le commit attendu sur une cible nommée de preview, staging ou production.</p>
+        </article>
+      </div>
+      <div class="cta-panel">
+        <p>
+          Un push prouve la sauvegarde distante, pas le déploiement. ShipGlows
+          ne garantit ni la disponibilité de GitHub, ni l’absence absolue de
+          perte, ni les protections du dépôt, ni une mise en production sans
+          garde-fous.
+        </p>
+        <a class="button button-secondary" href="/fr/blog/votre-travail-agent-est-il-vraiment-sauvegarde">
+          Lire l’explication complète
+        </a>
+      </div>
+    </section>
+
     <section class="section">
       <div class="doc-grid">
         <article class="doc-card">

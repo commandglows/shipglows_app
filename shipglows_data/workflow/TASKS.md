@@ -8,6 +8,7 @@
 
 **Top priority**: Ship the dashboard read-only projection local contract, then decide the next product slice: wire the projection panel into the active dashboard route or start real Firebase/Firestore read integration.
 
+🟢 [shipglows_app] task: Publier l’article bilingue qui explique les handoffs et relie le concept aux skills ShipGlows | status: done | area: public-education | id: educational-handoff-article | spec: shipglows_data/workflow/specs/educational-handoff-article.md | verification: parité FR/EN, métadonnées, liens internes, claims, redaction et diff hygiene vérifiés sans build local | ship_status: shipped | next: revoir la preview de la PR 13 puis fusionner après validation visuelle
 🔴 [shipglows_app] task: Run `/sf-ready` for `shipglows-github-managed-clone-indexer.md` so the managed clone/indexer boundary can move from draft to implementation-ready | status: done
 🔴 [shipglows_app] task: Implement the GitHub managed clone/indexer slice after readiness: server-side access-check contract, local/fake runner, projection DTOs, stale/deleted/parse-failed tests | status: done
 🔴 [shipglows_app] task: Run `/sf-verify` for `shipglows-github-managed-clone-indexer.md` before closing or shipping the implementation | status: done

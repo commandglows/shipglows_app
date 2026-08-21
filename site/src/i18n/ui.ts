@@ -167,7 +167,8 @@ export const homeCopy = {
         ["Weak framing gets challenged early", "When a brief leaves a material business choice unresolved, ShipGlows surfaces the consequence and proposes a professional direction instead of silently guessing."],
         ["One métier owns the outcome", "Planning, design, development, marketing, documentation, experience, quality, and release remain distinct expert responsibilities without making you orchestrate their internals."],
         ["Choices look beyond the next task", "Plans and handoffs frame options around customer value, trust, leverage, risk, and durable priority rather than short-sighted technical controls."],
-        ["Completion stays tied to evidence", "Verification checks the accepted outcome, relevant risks, public claims, documentation, and delivery state before a chantier is presented as complete."]
+        ["Completion stays tied to evidence", "Verification checks the accepted outcome, relevant risks, public claims, documentation, and delivery state before a chantier is presented as complete."],
+        ["Your work is backed up", "Completed work is saved in Git and pushed to your remote repository. ShipGlows spots work that still exists on only one machine and clearly separates backup from deployment."]
       ]
     },
     agentLoop: {
@@ -245,7 +246,8 @@ export const homeCopy = {
         ["Les cadrages faibles sont questionnés tôt", "Lorsqu’un brief laisse un choix business matériel non résolu, ShipGlows expose la conséquence et propose une direction professionnelle au lieu de deviner en silence."],
         ["Un métier porte le résultat", "Planning, design, développement, marketing, documentation, expérience, qualité et release restent des responsabilités expertes distinctes sans vous obliger à orchestrer leurs rouages."],
         ["Les choix regardent au-delà de la prochaine tâche", "Plans et handoffs cadrent les options autour de la valeur client, de la confiance, du levier, du risque et des priorités durables plutôt que de contrôles techniques à courte vue."],
-        ["La fin reste liée aux preuves", "La vérification confronte le résultat accepté, les risques pertinents, les claims publics, la documentation et l’état de livraison avant de présenter un chantier comme terminé."]
+        ["La fin reste liée aux preuves", "La vérification confronte le résultat accepté, les risques pertinents, les claims publics, la documentation et l’état de livraison avant de présenter un chantier comme terminé."],
+        ["Votre travail est sauvegardé", "Le travail terminé est enregistré dans Git puis envoyé vers votre dépôt distant. ShipGlows repère ce qui existe encore sur une seule machine et distingue clairement sauvegarde et mise en ligne."]
       ]
     },
     agentLoop: {
@@ -314,7 +316,8 @@ export const sharedHomeSections = {
         "decision-quality contract",
         "claim and documentation gates",
         "verification and audit proof",
-        "environment and release operations"
+        "environment and release operations",
+        "Git backup for completed work"
       ]
     },
     pricing: {
@@ -391,7 +394,8 @@ export const sharedHomeSections = {
         "contrat de qualité de décision",
         "portes de claims et documentation",
         "preuves de vérification et d’audit",
-        "opérations d’environnement et de release"
+        "opérations d’environnement et de release",
+        "sauvegarde Git du travail terminé"
       ]
     },
     pricing: {

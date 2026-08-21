@@ -55,6 +55,14 @@ const items = [
     a: "Because a stronger prompt still leaves you to reconstruct context, judge unclear scope, and notice drift after the fact. ShipGlows makes the handoff more explicit through context, task contracts, and verification instead of relying on one increasingly elaborate instruction."
   },
   {
+    q: "Does ShipGlows back up agent work to GitHub?",
+    a: "For approved technical chantiers, ShipGlows saves each completed block in a commit containing only that work, then pushes it to the project's Git repository. It also spots work that still exists only on one machine when changes start or resume, before sensitive operations, and before completion. A push proves remote backup, not deployment, and ShipGlows does not guarantee GitHub availability, repository protection settings, or zero data loss.",
+    links: [
+      ["Read the full explanation", "/blog/is-your-agent-work-actually-backed-up"],
+      ["Inspect the workflow docs", "/docs#git-continuity"]
+    ]
+  },
+  {
     q: "Does ShipGlows choose the fastest path by default?",
     a: "No. It aims to help you avoid a fast-looking path that leaves an avoidable problem behind. Its decision-quality contract lets speed, cost, and convenience decide only when the relevant options are already equivalent on correctness, security posture, maintainability, performance, and proof."
   },
