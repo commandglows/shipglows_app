@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../presentation/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
@@ -35,7 +36,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
   StreamSubscription<ShipGlowsAuthState>? _subscription;
   ShipGlowsAuthGateStatus _status = ShipGlowsAuthGateStatus.loading;
   String? _message;
-  String? _diagnosticId;
+  _AuthDiagnostic? _diagnostic;
   int _authGeneration = 0;
   bool _interactiveSignIn = false;
 
@@ -81,14 +82,14 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
       setState(() {
         _status = ShipGlowsAuthGateStatus.signedOut;
         _message = null;
-        _diagnosticId = null;
+        _diagnostic = null;
       });
       return;
     }
     setState(() {
       _status = ShipGlowsAuthGateStatus.loading;
       _message = null;
-      _diagnosticId = null;
+      _diagnostic = null;
     });
     try {
       await (widget.authorizeSession?.call(session) ??
@@ -98,14 +99,15 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
       _invalidatePersonalCloudState();
       setState(() {
         _status = ShipGlowsAuthGateStatus.signedIn;
-        _diagnosticId = null;
+        _diagnostic = null;
       });
     } on ManagedRunnerException catch (error) {
       if (!mounted || generation != _authGeneration) return;
       final denied = error.statusCode == 403;
-      final diagnosticId = _recordDiagnostic(
+      final diagnostic = _recordDiagnostic(
         stage: 'runner',
         code: error.statusCode == 401 ? 'firebase_token_rejected' : error.code,
+        statusCode: error.statusCode,
       );
       setState(() {
         _status = denied
@@ -116,7 +118,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
             : error.statusCode == 401
             ? 'Votre session Firebase a été refusée. Reconnectez-vous.'
             : 'Le Personal Cloud ne répond pas. Réessayez.';
-        _diagnosticId = diagnosticId;
+        _diagnostic = diagnostic;
       });
     } on TimeoutException {
       if (!mounted || generation != _authGeneration) return;
@@ -158,11 +160,29 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     ref.invalidate(remoteWorkspaceTransportProvider);
   }
 
-  String _recordDiagnostic({required String stage, required String code}) {
+  _AuthDiagnostic _recordDiagnostic({
+    required String stage,
+    required String code,
+    int? statusCode,
+  }) {
     final id =
         'auth_${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}';
-    debugPrint('ShipGlows auth diagnostic=$id stage=$stage code=$code');
-    return id;
+    final safeCode = RegExp(r'^[A-Za-z][A-Za-z0-9_-]{0,63}$').hasMatch(code)
+        ? code
+        : 'unknown';
+    final safeStatusCode = statusCode != null &&
+            statusCode >= 100 &&
+            statusCode <= 599
+        ? statusCode
+        : null;
+    debugPrint('ShipGlows auth diagnostic=$id stage=$stage code=$safeCode');
+    return _AuthDiagnostic(
+      id: id,
+      stage: stage,
+      code: safeCode,
+      statusCode: safeStatusCode,
+      occurredAt: DateTime.now().toUtc(),
+    );
   }
 
   void _showError(
@@ -174,7 +194,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     setState(() {
       _status = ShipGlowsAuthGateStatus.error;
       _message = message;
-      _diagnosticId = _recordDiagnostic(stage: stage, code: code);
+      _diagnostic = _recordDiagnostic(stage: stage, code: code);
     });
   }
 
@@ -182,6 +202,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     setState(() {
       _status = ShipGlowsAuthGateStatus.loading;
       _message = null;
+      _diagnostic = null;
     });
     try {
       _interactiveSignIn = true;
@@ -211,7 +232,10 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
   }
 
   Future<void> _signOut() async {
-    setState(() => _status = ShipGlowsAuthGateStatus.loading);
+    setState(() {
+      _status = ShipGlowsAuthGateStatus.loading;
+      _diagnostic = null;
+    });
     try {
       await _auth.signOut();
       if (mounted) {
@@ -237,7 +261,7 @@ class _ShipGlowsAuthGateState extends ConsumerState<ShipGlowsAuthGate> {
     return _AuthenticationSurface(
       status: _status,
       message: _message,
-      diagnosticId: _diagnosticId,
+      diagnostic: _diagnostic,
       onSignIn: _signIn,
       onRetry: _restoreSession,
       onSignOut: _signOut,
@@ -249,7 +273,7 @@ class _AuthenticationSurface extends StatelessWidget {
   const _AuthenticationSurface({
     required this.status,
     required this.message,
-    required this.diagnosticId,
+    required this.diagnostic,
     required this.onSignIn,
     required this.onRetry,
     required this.onSignOut,
@@ -257,10 +281,32 @@ class _AuthenticationSurface extends StatelessWidget {
 
   final ShipGlowsAuthGateStatus status;
   final String? message;
-  final String? diagnosticId;
+  final _AuthDiagnostic? diagnostic;
   final Future<void> Function() onSignIn;
   final Future<void> Function() onRetry;
   final Future<void> Function() onSignOut;
+
+  Future<void> _copyDiagnostic(
+    BuildContext context,
+    _AuthDiagnostic diagnostic,
+  ) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: diagnostic.copyText));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Diagnostic copié.')),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La copie a échoué. Sélectionnez le diagnostic manuellement.',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -308,12 +354,21 @@ class _AuthenticationSurface extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      if (diagnosticId != null) ...[
+                      if (diagnostic != null) ...[
                         SizedBox(height: tokens.spacing.sm),
                         SelectableText(
-                          'Diagnostic : $diagnosticId',
+                          diagnostic!.visibleText,
                           style: Theme.of(context).textTheme.bodySmall,
                           textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: tokens.spacing.sm),
+                        OutlinedButton.icon(
+                          onPressed: () => _copyDiagnostic(
+                            context,
+                            diagnostic!,
+                          ),
+                          icon: const Icon(Icons.copy_rounded),
+                          label: const Text('Copier le diagnostic'),
                         ),
                       ],
                       SizedBox(height: tokens.spacing.lg),
@@ -352,4 +407,43 @@ class _AuthenticationSurface extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AuthDiagnostic {
+  const _AuthDiagnostic({
+    required this.id,
+    required this.stage,
+    required this.code,
+    required this.occurredAt,
+    this.statusCode,
+  });
+
+  final String id;
+  final String stage;
+  final String code;
+  final DateTime occurredAt;
+  final int? statusCode;
+
+  String get stageLabel => switch (stage) {
+    'runner' => 'Connexion à l’API',
+    'firebase_popup' => 'Connexion Google',
+    'session' => 'Vérification de la session',
+    _ => 'Connexion sécurisée',
+  };
+
+  Iterable<String> get _diagnosticLines sync* {
+    yield 'Diagnostic : $id';
+    yield 'Étape : $stageLabel';
+    yield 'Code : $code';
+    if (statusCode case final status?) yield 'HTTP : $status';
+    yield 'Heure UTC : ${occurredAt.toUtc().toIso8601String()}';
+  }
+
+  String get visibleText => _diagnosticLines.join('\n');
+
+  String get copyText => [
+    'ShipGlows — diagnostic de connexion',
+    ..._diagnosticLines,
+    ...AppConfig.buildIdentityHeader(),
+  ].join('\n');
 }

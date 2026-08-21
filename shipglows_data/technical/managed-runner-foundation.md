@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "3.6.0"
+artifact_version: "3.6.1"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-21"
@@ -204,6 +204,7 @@ The endpoint is not registered with a resolver in `main.ts`. Its local fake-veri
 - Firebase Auth is the identity adapter. The runner verifies an access token with the project's JWKS, accepts only RS256 ID tokens with its expected issuer and audience, then resolves the JWT subject through a tenant membership lookup.
 - Personal Cloud provisions every valid Firebase subject into a deterministic isolated personal tenant. A private server-owned UID-to-project-to-capability map alone admits selected subjects to the shared managed-project tenant; reconciliation grants only each project's declared `read` or `mutate` membership, and a stale prior personal binding is extended transactionally without changing the stable internal user identity.
 - Flutter exposes a provider-neutral `ShipGlowsAuthProvider`. The optional Firebase adapter maps only `userId`, access token and expiry into that contract; no Firebase wire type reaches feature code.
+- The Flutter authentication recovery surface converts provider and runner failures into one client-owned allowlisted diagnostic containing only an opaque local ID, safe stage label, normalized error code, optional HTTP status, UTC occurrence time and build identity. The visible summary remains selectable and can be copied explicitly; raw exceptions, response bodies, tokens, cookies, OAuth data and private configuration never enter that diagnostic.
 - A Flutter build without both `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID` and `FIREBASE_PROJECT_ID` keeps the local dashboard available with an explicitly disabled auth adapter. The Firebase client configuration is public application metadata; privileged Firebase service-account credentials remain server-only.
 - GitHub access uses a GitHub App rather than OAuth or a personal access token. Enabling it requires the server-only `GITHUB_APP_ID` and `GITHUB_PRIVATE_KEY`; classic `GITHUB_TOKEN` configuration is rejected.
 - A GitHub App issuer signs a short app JWT, requests one installation token limited to one repository and `Contents: read`, and refuses expired, long-lived, widened, or permission-expanded responses. The token is scoped to one internal callback and is never cached, returned, logged, or persisted.

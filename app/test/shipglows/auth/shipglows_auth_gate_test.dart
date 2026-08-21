@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipglows_app/presentation/theme/app_theme.dart';
 import 'package:shipglows_app/shipglows/auth/auth_provider.dart';
@@ -81,6 +82,119 @@ void main() {
     );
     expect(find.text('Se connecter avec Google'), findsOneWidget);
     expect(find.textContaining('Diagnostic : auth_'), findsOneWidget);
+  });
+
+  testWidgets('copies a redacted runner failure diagnostic', (tester) async {
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardText = (call.arguments as Map<Object?, Object?>)['text']
+              as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    final auth = _FakeAuthProvider(session: _session());
+    await tester.pumpWidget(
+      _app(
+        auth,
+        authorizeSession: (_) async => throw const ManagedRunnerException(
+          code: 'requestFailed',
+          message: 'raw server response with opaque-token',
+          statusCode: 502,
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    expect(
+      find.text('Le Personal Cloud ne répond pas. Réessayez.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Étape : Connexion à l’API'), findsOneWidget);
+    expect(find.textContaining('Code : requestFailed'), findsOneWidget);
+    expect(find.textContaining('HTTP : 502'), findsOneWidget);
+
+    await tester.tap(find.text('Copier le diagnostic'));
+    await tester.pump();
+
+    expect(clipboardText, contains('Étape : Connexion à l’API'));
+    expect(clipboardText, contains('Code : requestFailed'));
+    expect(clipboardText, contains('HTTP : 502'));
+    expect(clipboardText, contains('Diagnostic : auth_'));
+    expect(clipboardText, isNot(contains('opaque-token')));
+    expect(clipboardText, isNot(contains('raw server response')));
+    expect(find.text('Diagnostic copié.'), findsOneWidget);
+  });
+
+  testWidgets('replaces an untrusted runner error code before display', (
+    tester,
+  ) async {
+    final auth = _FakeAuthProvider(session: _session());
+    await tester.pumpWidget(
+      _app(
+        auth,
+        authorizeSession: (_) async => throw const ManagedRunnerException(
+          code: 'requestFailed\nAuthorization: opaque-token',
+          message: 'Unavailable.',
+          statusCode: 502,
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    expect(find.textContaining('Code : unknown'), findsOneWidget);
+    expect(find.textContaining('opaque-token'), findsNothing);
+  });
+
+  testWidgets('keeps the recovery state usable when clipboard copy fails', (
+    tester,
+  ) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') throw StateError('unavailable');
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    final auth = _FakeAuthProvider(session: _session());
+    await tester.pumpWidget(
+      _app(
+        auth,
+        authorizeSession: (_) async => throw const ManagedRunnerException(
+          code: 'timeout',
+          message: 'Unavailable.',
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    await tester.tap(find.text('Copier le diagnostic'));
+    await tester.pump();
+
+    expect(
+      find.text(
+        'La copie a échoué. Sélectionnez le diagnostic manuellement.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Revérifier la session'), findsOneWidget);
   });
 
   testWidgets('shows a signed-in user with an empty project catalog', (
