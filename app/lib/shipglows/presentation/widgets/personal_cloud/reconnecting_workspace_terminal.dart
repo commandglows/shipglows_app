@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../../../presentation/theme/app_theme.dart';
@@ -36,6 +38,14 @@ typedef WorkspaceDelay = Future<void> Function(Duration duration);
 
 Future<void> defaultWorkspaceDelay(Duration duration) =>
     Future<void>.delayed(duration);
+
+@visibleForTesting
+bool shouldUseWorkspaceDeleteDetection({
+  required bool isWeb,
+  required TargetPlatform platform,
+}) =>
+    !isWeb &&
+    (platform == TargetPlatform.android || platform == TargetPlatform.iOS);
 
 class ReconnectingWorkspaceTerminal extends StatefulWidget {
   const ReconnectingWorkspaceTerminal({
@@ -406,6 +416,31 @@ class _ReconnectingWorkspaceTerminalState
     );
   }
 
+  Future<void> _pasteClipboard() async {
+    const emptyMessage = 'Le presse-papiers ne contient aucun texte.';
+    const successMessage = 'Texte collé dans le terminal.';
+    const failureMessage =
+        'Impossible de lire le presse-papiers. Vous pouvez réessayer.';
+    try {
+      final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+      if (!mounted) return;
+      if (text == null || text.isEmpty) {
+        _showClipboardFeedback(emptyMessage);
+        return;
+      }
+      _terminal.paste(text);
+      _showClipboardFeedback(successMessage);
+    } catch (_) {
+      if (mounted) _showClipboardFeedback(failureMessage);
+    }
+  }
+
+  void _showClipboardFeedback(String message) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   void dispose() {
     _generation += 1;
@@ -447,6 +482,14 @@ class _ReconnectingWorkspaceTerminalState
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
+                  TextButton.icon(
+                    onPressed:
+                        _connectionState == WorkspaceConnectionState.connected
+                        ? () => unawaited(_pasteClipboard())
+                        : null,
+                    icon: const Icon(Icons.content_paste_rounded),
+                    label: const Text('Coller'),
+                  ),
                 ],
               ),
             ),
@@ -461,7 +504,10 @@ class _ReconnectingWorkspaceTerminalState
                   ? TerminalView(
                       _terminal,
                       autofocus: true,
-                      deleteDetection: true,
+                      deleteDetection: shouldUseWorkspaceDeleteDetection(
+                        isWeb: kIsWeb,
+                        platform: defaultTargetPlatform,
+                      ),
                       padding: EdgeInsets.all(tokens.spacing.xs),
                     )
                   : _WorkspaceRecoveryPanel(

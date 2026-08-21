@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +14,7 @@ import 'package:shipglows_app/shipglows/providers/personal_cloud/personal_cloud_
 import 'package:shipglows_app/shipglows/presentation/screens/personal_cloud_project_screen.dart';
 import 'package:shipglows_app/shipglows/presentation/widgets/personal_cloud/project_preview_pane.dart';
 import 'package:shipglows_app/shipglows/presentation/widgets/personal_cloud/reconnecting_workspace_terminal.dart';
+import 'package:xterm/xterm.dart';
 
 void main() {
   testWidgets('blocks a deep link outside the authorized project catalog', (
@@ -426,6 +430,172 @@ void main() {
     expect(socket.sent, isEmpty);
   });
 
+  testWidgets('sends continuous non-mobile terminal input without spaces', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    final socket = _WorkspaceSocket();
+    await tester.pumpWidget(
+      _app(
+        ReconnectingWorkspaceTerminal(
+          projectId: 'project-1',
+          projectName: 'Projet test',
+          transport: _WorkspaceTransport([socket]),
+          surface: RemoteWorkspaceSurface.terminal,
+          reconnectPolicy: const WorkspaceReconnectPolicy(
+            delays: [],
+            heartbeatInterval: null,
+          ),
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    final terminalView = tester.widget<TerminalView>(find.byType(TerminalView));
+    expect(terminalView.deleteDetection, isFalse);
+    await tester.tap(find.byType(TerminalView));
+    await tester.pump();
+    tester.testTextInput.enterText('shipglows');
+    await tester.pump(const Duration(milliseconds: 301));
+
+    debugDefaultTargetPlatformOverride = null;
+    expect(_inputFrames(socket), ['shipglows']);
+  });
+
+  test('enables delete detection only on native mobile platforms', () {
+    expect(
+      shouldUseWorkspaceDeleteDetection(
+        isWeb: true,
+        platform: TargetPlatform.android,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldUseWorkspaceDeleteDetection(
+        isWeb: false,
+        platform: TargetPlatform.windows,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldUseWorkspaceDeleteDetection(
+        isWeb: false,
+        platform: TargetPlatform.android,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldUseWorkspaceDeleteDetection(
+        isWeb: false,
+        platform: TargetPlatform.iOS,
+      ),
+      isTrue,
+    );
+  });
+
+  testWidgets(
+    'pastes exact bracketed text and recovers after clipboard failure',
+    (tester) async {
+      var clipboardReads = 0;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method != 'Clipboard.getData') return null;
+          clipboardReads += 1;
+          if (clipboardReads == 1) {
+            throw PlatformException(code: 'clipboard-unavailable');
+          }
+          return {'text': 'git status\n'};
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final socket = _WorkspaceSocket();
+      await tester.pumpWidget(
+        _app(
+          ReconnectingWorkspaceTerminal(
+            projectId: 'project-1',
+            projectName: 'Projet test',
+            transport: _WorkspaceTransport([socket]),
+            surface: RemoteWorkspaceSurface.terminal,
+            reconnectPolicy: const WorkspaceReconnectPolicy(
+              delays: [],
+              heartbeatInterval: null,
+            ),
+          ),
+        ),
+      );
+      await _pumpAsync(tester);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Coller'));
+      await tester.pump();
+      expect(
+        find.text(
+          'Impossible de lire le presse-papiers. Vous pouvez réessayer.',
+        ),
+        findsOneWidget,
+      );
+      expect(_inputFrames(socket), isEmpty);
+
+      socket.emitFromServer(
+        jsonEncode({'type': 'output', 'data': '\x1b[?2004h'}),
+      );
+      await tester.pump();
+      await tester.tap(find.widgetWithText(TextButton, 'Coller'));
+      await tester.pump();
+
+      expect(find.text('Texte collé dans le terminal.'), findsOneWidget);
+      expect(_inputFrames(socket), ['\x1b[200~git status\n\x1b[201~']);
+    },
+  );
+
+  testWidgets(
+    'reports an empty text clipboard without sending terminal input',
+    (tester) async {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async =>
+            call.method == 'Clipboard.getData' ? {'text': ''} : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final socket = _WorkspaceSocket();
+      await tester.pumpWidget(
+        _app(
+          ReconnectingWorkspaceTerminal(
+            projectId: 'project-1',
+            projectName: 'Projet test',
+            transport: _WorkspaceTransport([socket]),
+            surface: RemoteWorkspaceSurface.terminal,
+            reconnectPolicy: const WorkspaceReconnectPolicy(
+              delays: [],
+              heartbeatInterval: null,
+            ),
+          ),
+        ),
+      );
+      await _pumpAsync(tester);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Coller'));
+      await tester.pump();
+
+      expect(
+        find.text('Le presse-papiers ne contient aucun texte.'),
+        findsOneWidget,
+      );
+      expect(_inputFrames(socket), isEmpty);
+    },
+  );
+
   testWidgets('keeps recovery available when stale cleanup fails', (
     tester,
   ) async {
@@ -618,3 +788,9 @@ class _WorkspaceSocket implements RemoteWorkspaceSocket {
   Future<void> endFromServer() => _messages.close();
   void emitFromServer(Object? frame) => _messages.add(frame);
 }
+
+List<String> _inputFrames(_WorkspaceSocket socket) => socket.sent
+    .map((frame) => jsonDecode(frame) as Map<String, dynamic>)
+    .where((frame) => frame['type'] == 'input')
+    .map((frame) => frame['data'] as String)
+    .toList();
