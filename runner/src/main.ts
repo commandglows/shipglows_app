@@ -1,9 +1,9 @@
 import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
-import { createHash } from "node:crypto";
 
 import { buildRunnerApp } from "./app.js";
 import { FirebaseAuthenticationAdapter, PersonalCloudFirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
+import { resolvePersonalCloudActorProvisioning, resolvePersonalCloudProjectCapability } from "./auth/personalCloudProvisioning.js";
 import { AcpRuntime, StdioAcpConnection } from "./agent-runtime/acp/index.js";
 import { loadConfig } from "./config.js";
 import { openOperationalStore } from "./db/index.js";
@@ -90,7 +90,7 @@ const cloudProjectCatalog = personalCloudConfig !== undefined
 const projectWorkspaceResolver = async (input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }) => {
   const local = localStudioProjects?.management.resolveLocalRepository(input) ?? null;
   if (local !== null) return local;
-  if (cloudProjectCatalog === undefined || input.tenantId !== personalCloudConfig?.tenantId || input.userId !== personalCloudConfig.userId) return null;
+  if (cloudProjectCatalog === undefined || input.tenantId !== personalCloudConfig?.tenantId) return null;
   const project = (await cloudProjectCatalog.read()).entries.find((entry) => entry.projectId === input.projectId);
   return project === undefined ? null : { root: project.privateRuntime.cwd, deliveryBranch: project.deliveryBranch };
 };
@@ -107,12 +107,28 @@ const operatorWorkspaceGateway = new OperatorWorkspaceGateway(
   personalCloudConfig?.appOrigin ?? config.server.allowedOrigins[0],
 );
 const reconcileCloudProjects = personalCloudConfig !== undefined && cloudProjectCatalog !== undefined
-  ? async (actor: { readonly tenantId: string; readonly userId: string }) => {
-      if (actor.tenantId !== personalCloudConfig.tenantId || actor.userId !== personalCloudConfig.userId) return;
+  ? async (actor: { readonly tenantId: string; readonly userId: string; readonly subject: string }) => {
+      const projectAssignments = personalCloudConfig.projectMembers[actor.subject];
+      if (projectAssignments === undefined || actor.tenantId !== personalCloudConfig.tenantId) return;
       const snapshot = await cloudProjectCatalog.read();
       const cloudWorkspaces: Record<string, { cwd: string; tmuxSession: string }> = {};
       for (const project of snapshot.entries) {
-        store.ensureLocalProjectContextTarget({ tenantId: actor.tenantId, userId: actor.userId, projectId: project.projectId });
+        const capability = resolvePersonalCloudProjectCapability({
+          subject: actor.subject,
+          projectId: project.projectId,
+          projectMembers: personalCloudConfig.projectMembers,
+        });
+        if (capability === undefined) {
+          store.revokeProjectMembership({ tenantId: actor.tenantId, userId: actor.userId, projectId: project.projectId });
+        } else {
+          store.ensureLocalProjectContextTarget({
+            tenantId: actor.tenantId,
+            userId: actor.userId,
+            projectId: project.projectId,
+            capability,
+            replaceCapability: true,
+          });
+        }
         if (project.capabilities.workspace && project.privateRuntime.tmuxSession !== undefined) {
           cloudWorkspaces[project.projectId] = { cwd: project.privateRuntime.cwd, tmuxSession: project.privateRuntime.tmuxSession };
         }
@@ -130,12 +146,15 @@ const authentication = config.integrations.firebase.enabled
             verifier,
             {
               resolveOrProvision: ({ subject }) => {
-                const owner = subject === personalCloudConfig.firebaseUid;
-                const digest = createHash("sha256").update(subject).digest("hex").slice(0, 24);
+                const provisioned = resolvePersonalCloudActorProvisioning({
+                  subject,
+                  projectTenantId: personalCloudConfig.tenantId,
+                  projectMembers: personalCloudConfig.projectMembers,
+                });
                 return Promise.resolve(store.ensurePersonalActor({
                   subject,
-                  tenantId: owner ? personalCloudConfig.tenantId : `ten_personal_${digest}`,
-                  userId: owner ? personalCloudConfig.userId : `usr_firebase_${digest}`,
+                  tenantId: provisioned.tenantId,
+                  userId: provisioned.userId,
                 }));
               },
             },

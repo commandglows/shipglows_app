@@ -33,9 +33,8 @@ export type RunnerPersonalCloudConfig =
       readonly allowedRoots: readonly string[];
       readonly previewDomain: string;
       readonly appOrigin: string;
-      readonly firebaseUid: string;
       readonly tenantId: string;
-      readonly userId: string;
+      readonly projectMembers: Readonly<Record<string, Readonly<Record<string, "read" | "mutate">>>>;
     };
 
 export type RunnerStudioConfig =
@@ -72,6 +71,37 @@ function parseOperatorWorkspaces(value: string | undefined, issues: string[]): R
     return result;
   } catch {
     issues.push("RUNNER_OPERATOR_WORKSPACES must be a JSON project map with absolute cwd and allowlisted tmuxSession");
+    return {};
+  }
+}
+
+function parsePersonalCloudProjectMembers(value: string | undefined, issues: string[]): Record<string, Record<string, "read" | "mutate">> {
+  if (value === undefined || value.trim() === "") {
+    issues.push("RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS is required");
+    return {};
+  }
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+    const entries = Object.entries(parsed as Record<string, unknown>);
+    if (entries.length === 0 || entries.length > 256) throw new Error();
+    const members: Record<string, Record<string, "read" | "mutate">> = {};
+    let assignmentCount = 0;
+    for (const [subject, assignments] of entries) {
+      if (!/^[A-Za-z0-9:_-]{1,128}$/.test(subject) || assignments === null || typeof assignments !== "object" || Array.isArray(assignments)) throw new Error();
+      const projectEntries = Object.entries(assignments as Record<string, unknown>);
+      if (projectEntries.length === 0 || projectEntries.length > 256) throw new Error();
+      members[subject] = {};
+      for (const [projectId, capability] of projectEntries) {
+        if (!/^[A-Za-z0-9_-]{1,128}$/.test(projectId) || (capability !== "read" && capability !== "mutate")) throw new Error();
+        members[subject][projectId] = capability;
+        assignmentCount += 1;
+      }
+    }
+    if (assignmentCount > 4096) throw new Error();
+    return members;
+  } catch {
+    issues.push("RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS must map opaque Firebase UIDs to non-empty project-id maps of read or mutate");
     return {};
   }
 }
@@ -178,9 +208,10 @@ export function loadConfig(
   const personalCloudAllowedRoots = (env["RUNNER_CLOUD_ALLOWED_ROOTS"] ?? "").split(",").map((value) => value.trim()).filter(Boolean);
   const personalCloudPreviewDomain = (env["RUNNER_PREVIEW_DOMAIN"] ?? "").trim().toLowerCase();
   const personalCloudAppOrigin = (env["RUNNER_PERSONAL_CLOUD_APP_ORIGIN"] ?? "").trim();
-  const personalCloudFirebaseUid = (env["RUNNER_PERSONAL_CLOUD_FIREBASE_UID"] ?? "").trim();
   const personalCloudTenantId = (env["RUNNER_PERSONAL_CLOUD_TENANT_ID"] ?? "").trim();
-  const personalCloudUserId = (env["RUNNER_PERSONAL_CLOUD_USER_ID"] ?? "").trim();
+  const personalCloudProjectMembers = personalCloudEnabled
+    ? parsePersonalCloudProjectMembers(env["RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS"], issues)
+    : {};
   const maxConcurrentRunsPerTenant = readBoundedInteger(
     env["RUNNER_MAX_CONCURRENT_RUNS_PER_TENANT"],
     2,
@@ -293,9 +324,7 @@ export function loadConfig(
       if (origin.origin !== personalCloudAppOrigin || (environment === "production" && origin.protocol !== "https:")) throw new Error();
     } catch { issues.push("RUNNER_PERSONAL_CLOUD_APP_ORIGIN must be an exact origin"); }
     if (!allowedOrigins.includes(personalCloudAppOrigin)) issues.push("RUNNER_PERSONAL_CLOUD_APP_ORIGIN must be allowlisted by RUNNER_ALLOWED_ORIGINS");
-    if (!/^[A-Za-z0-9:_-]{1,128}$/.test(personalCloudFirebaseUid)) issues.push("RUNNER_PERSONAL_CLOUD_FIREBASE_UID is required and must be opaque");
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(personalCloudTenantId)) issues.push("RUNNER_PERSONAL_CLOUD_TENANT_ID is required");
-    if (!/^[A-Za-z0-9_-]{1,128}$/.test(personalCloudUserId)) issues.push("RUNNER_PERSONAL_CLOUD_USER_ID is required");
     if (!firebaseEnabled) issues.push("RUNNER_PERSONAL_CLOUD_ENABLED requires FIREBASE_AUTH_ENABLED=true");
     if (environment === "production" && !/^[a-z_][a-z0-9_-]{0,31}$/.test(operatorWorkspaceUser ?? "")) {
       issues.push("RUNNER_OPERATOR_WORKSPACE_USER is required in production Personal Cloud and must be a Linux account name");
@@ -346,9 +375,8 @@ export function loadConfig(
       allowedRoots: personalCloudAllowedRoots,
       previewDomain: personalCloudPreviewDomain,
       appOrigin: personalCloudAppOrigin,
-      firebaseUid: personalCloudFirebaseUid,
       tenantId: personalCloudTenantId,
-      userId: personalCloudUserId,
+      projectMembers: personalCloudProjectMembers,
     } : { enabled: false },
     localStudioAuthEnabled,
     studio: studioEnabled && configuredStudioProfile !== null ? {

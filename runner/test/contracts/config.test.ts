@@ -100,7 +100,7 @@ describe("runner configuration", () => {
     );
   });
 
-  it("admits personal cloud only with fixed Firebase identity and private filesystem bounds", () => {
+  it("admits personal cloud with an explicit multi-user project membership map and private filesystem bounds", () => {
     const env = {
       RUNNER_PERSONAL_CLOUD_ENABLED: "true",
       FIREBASE_AUTH_ENABLED: "true",
@@ -110,12 +110,22 @@ describe("runner configuration", () => {
       RUNNER_CLOUD_ALLOWED_ROOTS: "/srv/projects",
       RUNNER_PREVIEW_DOMAIN: "shipglows.com",
       RUNNER_PERSONAL_CLOUD_APP_ORIGIN: "https://app.shipglows.com",
-      RUNNER_PERSONAL_CLOUD_FIREBASE_UID: "firebase-owner",
       RUNNER_PERSONAL_CLOUD_TENANT_ID: "ten_personal",
-      RUNNER_PERSONAL_CLOUD_USER_ID: "usr_owner",
+      RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS: JSON.stringify({
+        "firebase-owner": { shipglows: "mutate" },
+        "firebase-reader": { public_docs: "read" },
+      }),
     };
-    assert.equal(loadConfig(env).personalCloud.enabled, true);
-    assert.throws(() => loadConfig({ ...env, RUNNER_PERSONAL_CLOUD_FIREBASE_UID: "" }), /FIREBASE_UID/);
+    const config = loadConfig(env).personalCloud;
+    if (!config.enabled) assert.fail("Personal Cloud should be enabled");
+    assert.deepEqual(config.projectMembers, {
+      "firebase-owner": { shipglows: "mutate" },
+      "firebase-reader": { public_docs: "read" },
+    });
+    assert.throws(() => loadConfig({ ...env, RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS: "{}" }), /PROJECT_MEMBERS/);
+    assert.throws(() => loadConfig({ ...env, RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS: '{"firebase-owner":{"shipglows":"owner"}}' }), /PROJECT_MEMBERS/);
+    assert.throws(() => loadConfig({ ...env, RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS: '{"firebase-owner":{}}' }), /PROJECT_MEMBERS/);
+    assert.throws(() => loadConfig({ ...env, RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS: "not-json" }), /PROJECT_MEMBERS/);
     assert.throws(() => loadConfig({ ...env, FIREBASE_AUTH_ENABLED: "false" }), /requires FIREBASE_AUTH_ENABLED/);
     assert.throws(() => loadConfig({ ...env, RUNNER_ENV: "production" }), /RUNNER_OPERATOR_WORKSPACE_USER/);
     assert.equal(loadConfig({ ...env, RUNNER_ENV: "production", RUNNER_OPERATOR_WORKSPACE_USER: "shipglows-workspace" }).operatorWorkspaceUser, "shipglows-workspace");

@@ -238,8 +238,8 @@ describe("SQLite operational projection", () => {
     assert.deepEqual(
       store.ensurePersonalActor({
         subject: "firebase-new-user",
-        tenantId: "ten_ignored",
-        userId: "usr_ignored",
+        tenantId: "ten_personal_new",
+        userId: "usr_personal_new",
       }),
       actor,
     );
@@ -249,6 +249,58 @@ describe("SQLite operational projection", () => {
       projectId: ids.projectA,
       capability: "read",
     }), false);
+    store.close();
+  });
+
+  it("moves a stale personal actor into an explicitly provisioned tenant without changing its identity", async () => {
+    const store = await openOperationalStore(await databasePath("personal-actor-tenant-migration"));
+    const personal = store.ensurePersonalActor({
+      subject: "firebase-authorized-later",
+      tenantId: "ten_personal_stale",
+      userId: "usr_firebase_stable",
+    });
+
+    const provisioned = store.ensurePersonalActor({
+      subject: "firebase-authorized-later",
+      tenantId: "ten_shipglows",
+      userId: "usr_firebase_new-derivation",
+    });
+
+    assert.deepEqual(provisioned, {
+      subject: "firebase-authorized-later",
+      tenantId: "ten_shipglows",
+      userId: personal.userId,
+    });
+    assert.deepEqual(store.resolveActor({ subject: "firebase-authorized-later", tenantId: "ten_shipglows" }), provisioned);
+    store.close();
+  });
+
+  it("upgrades only the explicitly provisioned actor project membership to mutate", async () => {
+    const store = await openOperationalStore(await databasePath("personal-project-membership"));
+    const authorized = store.ensurePersonalActor({
+      subject: "firebase-authorized",
+      tenantId: "ten_shipglows",
+      userId: "usr_authorized",
+    });
+    const outsider = store.ensurePersonalActor({
+      subject: "firebase-outsider",
+      tenantId: "ten_personal_outsider",
+      userId: "usr_outsider",
+    });
+
+    store.ensureLocalProjectContextTarget({ ...authorized, projectId: "shipglows", capability: "mutate" });
+    store.ensureLocalProjectContextTarget({ ...authorized, projectId: "another-project", capability: "read" });
+    store.revokeProjectMembership({ ...authorized, projectId: "another-project" });
+
+    assert.equal(store.hasProjectAccess({ ...authorized, projectId: "shipglows", capability: "read" }), true);
+    assert.equal(store.hasProjectAccess({ ...authorized, projectId: "shipglows", capability: "mutate" }), true);
+    assert.equal(store.hasProjectAccess({ ...authorized, projectId: "another-project", capability: "read" }), false);
+    assert.equal(store.hasProjectAccess({ ...outsider, projectId: "shipglows", capability: "read" }), false);
+    assert.equal(store.hasProjectAccess({ ...outsider, projectId: "shipglows", capability: "mutate" }), false);
+
+    store.ensureLocalProjectContextTarget({ ...authorized, projectId: "shipglows", capability: "read", replaceCapability: true });
+    assert.equal(store.hasProjectAccess({ ...authorized, projectId: "shipglows", capability: "read" }), true);
+    assert.equal(store.hasProjectAccess({ ...authorized, projectId: "shipglows", capability: "mutate" }), false);
     store.close();
   });
 

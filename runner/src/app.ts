@@ -149,7 +149,7 @@ export interface RunnerAppDependencies {
   readonly studioCompilationRouting?: CompilationRoutingProjectionResolver;
   readonly cloudProjectCatalog?: CloudProjectCatalogReader;
   readonly previewIngress?: PreviewIngressService;
-  readonly reconcileCloudProjects?: (actor: { readonly tenantId: string; readonly userId: string }) => Promise<void>;
+  readonly reconcileCloudProjects?: (actor: { readonly tenantId: string; readonly userId: string; readonly subject: string }) => Promise<void>;
   readonly previewDiagnosticSink?: (event: {
     readonly diagnosticId: string;
     readonly projectId: string;
@@ -282,7 +282,7 @@ export function buildRunnerApp({
     const actor = request.shipglowsActor;
     if (actor === undefined) throw new Error("Authenticated actor is missing.");
     try {
-      await reconcileCloudProjects?.({ tenantId: actor.tenantId, userId: actor.userId });
+      await reconcileCloudProjects?.({ tenantId: actor.tenantId, userId: actor.userId, subject: actor.subject });
     } catch (error) {
       if (error instanceof CloudProjectCatalogError) throw new HttpError(503, error.code, error.message);
       throw error;

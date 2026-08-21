@@ -254,7 +254,8 @@ export interface OperationalStore {
   }): void;
   appendHealthEvidence(input: PersistedHealthEvidence): void;
   persistSkillEvidenceEnvelope(input: SkillEvidenceEnvelope): void;
-  ensureLocalProjectContextTarget(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }): void;
+  ensureLocalProjectContextTarget(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string; readonly capability?: "read" | "mutate"; readonly replaceCapability?: boolean }): void;
+  revokeProjectMembership(input: { readonly tenantId: string; readonly userId: string; readonly projectId: string }): void;
   getProjectContextBundle(input: {
     readonly tenantId: string;
     readonly bundleId: string;
@@ -889,8 +890,22 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
           subject,
         );
         if (existing !== undefined) {
+          const existingUserId = readString(existing, "userId");
+          run(db, "INSERT OR IGNORE INTO tenants VALUES(?, ?)", tenantId, `firebase:${tenantId}`);
+          run(
+            db,
+            `INSERT INTO tenant_users(tenant_id, user_id, role)
+             SELECT ?, ?, 'owner'
+             WHERE NOT EXISTS(
+               SELECT 1 FROM tenant_users WHERE tenant_id = ? AND user_id = ?
+             )`,
+            tenantId,
+            existingUserId,
+            tenantId,
+            existingUserId,
+          );
           db.exec("COMMIT");
-          return { subject, tenantId: readString(existing, "tenantId"), userId: readString(existing, "userId") };
+          return { subject, tenantId, userId: existingUserId };
         }
 
         run(db, "INSERT OR IGNORE INTO tenants VALUES(?, ?)", tenantId, `firebase:${tenantId}`);
@@ -1447,7 +1462,7 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         redactionCount: readNumber(row, "redactionCount"),
       };
     },
-    ensureLocalProjectContextTarget: ({ tenantId, userId, projectId }) => {
+    ensureLocalProjectContextTarget: ({ tenantId, userId, projectId, capability = "read", replaceCapability = false }) => {
       validateOpaqueValue(tenantId, "Tenant identifier");
       validateOpaqueValue(userId, "User identifier");
       validateOpaqueValue(projectId, "Project identifier");
@@ -1468,26 +1483,52 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
           userId,
         );
         run(db, "INSERT OR IGNORE INTO projects VALUES(?, ?, NULL)", projectId, tenantId);
+        if (replaceCapability) {
+          run(
+            db,
+            `DELETE FROM memberships
+             WHERE tenant_id = ? AND project_id = ? AND user_id = ? AND capability IN ('read', 'mutate') AND capability <> ?`,
+            tenantId,
+            projectId,
+            userId,
+            capability,
+          );
+        }
         run(
           db,
           `INSERT INTO memberships(tenant_id, project_id, user_id, capability)
-           SELECT ?, ?, ?, 'read'
+           SELECT ?, ?, ?, ?
            WHERE NOT EXISTS(
              SELECT 1 FROM memberships
-             WHERE tenant_id = ? AND project_id = ? AND user_id = ? AND capability = 'read'
+             WHERE tenant_id = ? AND project_id = ? AND user_id = ? AND capability = ?
            )`,
           tenantId,
           projectId,
           userId,
+          capability,
           tenantId,
           projectId,
           userId,
+          capability,
         );
         db.exec("COMMIT");
       } catch (error) {
         db.exec("ROLLBACK");
         throw error;
       }
+    },
+    revokeProjectMembership: ({ tenantId, userId, projectId }) => {
+      validateOpaqueValue(tenantId, "Tenant identifier");
+      validateOpaqueValue(userId, "User identifier");
+      validateOpaqueValue(projectId, "Project identifier");
+      run(
+        db,
+        `DELETE FROM memberships
+         WHERE tenant_id = ? AND project_id = ? AND user_id = ? AND capability IN ('read', 'mutate')`,
+        tenantId,
+        projectId,
+        userId,
+      );
     },
     getLatestProjectContextBundle: ({ tenantId, projectId }) => {
       const row = oneRow(

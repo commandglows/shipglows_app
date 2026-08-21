@@ -84,7 +84,7 @@ A DNS record alone is insufficient. If TLS fails before the runner, do not weake
 
 ## Identity Provisioning Gate
 
-An allowlist entry does not create product authorization. Before browser proof, provision through the server-owned flow:
+Every valid Firebase identity may enter its own isolated personal space. Access to each managed project remains separate and must come from `RUNNER_PERSONAL_CLOUD_PROJECT_MEMBERS`, a server-owned UID-to-project-to-capability map. `mutate` includes read access and is required for Éditeur and Terminal. Before browser proof, provision through the server-owned flow:
 
 1. tenant and authenticated Firebase subject mapping;
 2. actor/user membership;
@@ -92,6 +92,8 @@ An allowlist entry does not create product authorization. Before browser proof, 
 4. project membership with the required capability;
 5. canonical source-project identity binding when the Flutter project namespace differs;
 6. matching server-only Workspace allowlist entry.
+
+When a UID was first seen before it was added to the project map, the runner keeps its stable internal user identity, adds the configured shared-tenant membership transactionally, and then reconciles only the declared project capability. It never copies another user's membership or trusts a tenant supplied by Flutter.
 
 Never let Flutter write these authority records directly.
 

@@ -1,7 +1,7 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.36.0"
+artifact_version: "1.37.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
@@ -13,7 +13,7 @@ source_model: "GPT-5 Codex"
 scope: "managed-agent-cockpit-mvp"
 owner: "Diane"
 confidence: high
-user_story: "En tant qu'utilisatrice unique de ShipGlows, je veux retrouver mes projets, ouvrir leur preview persistante et reprendre le même tmux/Neovim depuis l'application, tandis que Conversations et Studio restent disponibles sans bloquer ce premier jalon Personal Cloud."
+user_story: "En tant qu'utilisatrice authentifiée de ShipGlows, je veux entrer dans mon espace isolé et accéder uniquement aux projets dont le serveur m'accorde explicitement les capacités, y compris Éditeur et Terminal lorsque j'ai le droit mutate."
 risk_level: high
 security_impact: yes
 docs_impact: yes
@@ -140,7 +140,7 @@ Workspace excellence amendment, 2026-08-18: opening Éditeur or Terminal is a mu
 
 Neovim editor amendment, 2026-08-18: the Personal Cloud Workspace now distinguishes the closed server-owned surfaces `editor` and `terminal`. `editor` attaches to a stable derived tmux session and launches only the fixed `nvim` executable in the allowlisted project cwd; `terminal` preserves the existing allowlisted shell tmux session. Flutter presents Preview, Éditeur and Terminal while keeping at most one Workspace connection active. The later native Flutter renderer may consume normalized Neovim UI RPC events only through a private runner gateway; the raw Neovim socket and arbitrary RPC methods must never reach the client.
 
-Personal Cloud amendment, 2026-08-18: the current milestone is deliberately narrower than the complete Cockpit vision. Its release path is Projects + persistent Preview + reconnectable Workspace. Semantic Conversations and Studio remain supported product surfaces, but neither is a blocking dependency for this milestone and Studio keeps its separate capability contract. The existing CLI/tmux/Neovim workflow remains authoritative; the application becomes its authenticated remote window rather than replacing it. Firebase Auth uses one provisioned single-tenant UID, SQLite remains an operational projection, and Convex and Docker are deferred. `/101-sg-ready` returned SAFE after the companion contracts, PC-A ownership, OWASP gate, dependency freshness and ACP runtime authority were corrected; this specification is ready for bounded implementation.
+Multi-user amendment, 2026-08-21: every valid Firebase subject may enter a deterministic isolated personal space. Authentication never grants access to a managed project: only the private server-owned UID-to-project-to-capability map admits a subject to the shared project tenant, with exact per-project `read` or `mutate` reconciliation. A subject authorized after an earlier sign-in keeps its stable internal user identity while gaining only the declared tenant/project memberships. The existing CLI/tmux/Neovim workflow remains authoritative; SQLite remains an operational projection, and Convex and Docker remain deferred.
 
 Amended on 2026-08-17 after the local project-management integration and ACP runtime decision. The existing Flutter prototype is the implementation base. Its active runtime owns one persistent global project selector, one complete Projects page, and a Settings entry point. In the loopback-only development pilot, the runner owns a persistent workspace-bounded registry seeded with `shipglows_app` and `gocharbon`; it supports connect, active/default selection, rename, reversible archive, and registry-only disconnect through exact-origin authenticated routes. Local repository paths are never returned to Flutter, Git content is never changed by registry actions, built-ins cannot be disconnected, and generic project mutation remains denied. Studio availability is declared per project instead of inferred. The product has three deliberately separated surfaces: the health Cockpit, semantic agent work for normal use, and a separately authorized operator Workspace for a real PTY/tmux/Neovim session. ShipGlows owns a runtime-neutral control plane and exposes only its normalized `AgentRuntime` contract to product code. The runner uses one generic local-stdio ACP adapter with pinned Codex ACP as its first configured agent; provider wire types remain private, unsupported capabilities fail closed, and the previous Codex app-server adapter stays frozen as a local rollback until ACP proof is complete. `just-bash` remains only an optional sandbox for bounded ShipGlows skill checks; it is not the real terminal. Firebase Auth is the cross-platform identity baseline behind a portable provider boundary; Convex is the target product data layer, while Fastify/SQLite remains the documented execution-plane exception.
 

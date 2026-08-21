@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.1"
+artifact_version: "1.1.0"
 project: "shipglows_app"
 created: "2026-08-18"
 created_at: "2026-08-17 22:23:23 UTC"
-updated: "2026-08-18"
-updated_at: "2026-08-17 22:45:49 UTC"
+updated: "2026-08-21"
+updated_at: "2026-08-21 22:22:46 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -49,7 +49,7 @@ ShipGlows Cloud Dev Gateway Foundation
 
 ## Status
 
-Ready architecture contract after a SAFE `/101-sg-ready` verdict on 2026-08-18. Catalog authority, fixed single-user Firebase provisioning, SQLite projection limits and the single sequential PC-A CLI write set are complete and executable. Implementation still requires `/102-sg-start`; any CAX11 mutation remains governed by the separate rollout and approval gate.
+Ready architecture contract amended by the operator on 2026-08-21 for authenticated multi-user entry with strict server-owned project memberships. Catalog authority, isolated Firebase identity provisioning, SQLite projection limits and the single sequential PC-A CLI write set remain authoritative. Any CAX11 mutation remains governed by the separate rollout and approval gate.
 
 ## User Story
 
@@ -57,11 +57,12 @@ En tant qu'operatrice unique de ShipGlows, je veux que l'application decouvre de
 
 ## Minimal Behavior Contract
 
-Given one Firebase-authenticated allowlisted operator and one CAX11 where the ShipGlows CLI already manages projects, the CLI publishes one versioned server-private catalog and the loopback runner projects only authorized, redacted project capabilities to Flutter. Empty or stale catalogs remain explicit and non-executable; invalid identity, catalog schema, path, port or project mapping fails closed. The easiest missed edge case is authority duplication: PM2/tmux/CLI live state remains canonical and SQLite must never become a competing process registry.
+Given Firebase-authenticated users and one CAX11 where the ShipGlows CLI already manages projects, every valid subject receives an isolated personal identity while only subjects in the server-owned project-membership map receive declared catalog capabilities. The CLI publishes one versioned server-private catalog and the loopback runner projects only authorized, redacted project capabilities to Flutter. Empty or stale catalogs remain explicit and non-executable; invalid identity, catalog schema, path, port or project mapping fails closed.
 
 ## Success Behavior
 
-- One signed-in allowlisted Firebase UID resolves to one fixed server-owned tenant and owner membership without a client-selected tenant header.
+- Every valid Firebase UID resolves deterministically without a client-selected tenant header; only explicitly mapped UIDs join the shared managed-project tenant.
+- Each mapped UID receives exactly its server-declared `read` or `mutate` project membership; `mutate` is required for Workspace.
 - The CLI emits one atomic `shipglows.cli-project-catalog.v1` snapshot aggregating PM2 projects and registered Flutter Web sessions.
 - Each catalog entry has a stable opaque project id, display name, normalized preview slug, runtime status and server-private cwd/port/tmux mapping.
 - The runner reads the catalog through a typed read-only adapter and returns only opaque ids, display metadata, health/readiness and capabilities.
@@ -71,7 +72,7 @@ Given one Firebase-authenticated allowlisted operator and one CAX11 where the Sh
 
 ## Error Behavior
 
-- Missing/invalid Firebase token or a subject different from the configured UID returns `401` and no catalog data.
+- Missing/invalid Firebase tokens return `401`; an authenticated but unmapped subject remains isolated and receives no managed catalog project membership.
 - A missing fixed-tenant provisioning record returns a bounded unavailable state; startup or a dedicated provisioning command repairs it idempotently only from server-owned configuration.
 - Invalid, partial, duplicate or boundary-escaping catalog entries reject the complete new snapshot while preserving the last valid in-memory projection.
 - A missing/stale catalog returns explicit `catalogUnavailable` or `catalogStale`; it never scans arbitrary filesystem roots or guesses ports.
@@ -84,7 +85,7 @@ The cloud runner and the Linux service manager currently know different project 
 
 ## Solution
 
-Define one narrow machine-readable CLI catalog contract. The CLI remains the live authority and writes a private atomic snapshot after PM2 or Flutter-session lifecycle changes. A new runner adapter validates and redacts that snapshot, reconciles stable project identity/membership into SQLite, and exposes project capabilities through existing authenticated runner boundaries. Firebase runs in fixed single-tenant/single-UID mode for the personal cloud; later multi-user evolution may add a tenant selector without weakening this boundary.
+Define one narrow machine-readable CLI catalog contract. The CLI remains the live authority and writes a private atomic snapshot after PM2 or Flutter-session lifecycle changes. A runner adapter validates and redacts that snapshot, reconciles stable project identity/membership into SQLite, and exposes project capabilities through existing authenticated runner boundaries. Firebase subjects receive deterministic isolated identities; a private server-owned membership map alone grants selected subjects access to the shared project tenant.
 
 ## Scope In
 
@@ -92,7 +93,7 @@ Define one narrow machine-readable CLI catalog contract. The CLI remains the liv
 - Aggregation of PM2 and the private Flutter Web session registry.
 - Stable opaque project identity and deterministic DNS-safe preview slug policy.
 - Runner catalog validation, freshness, redaction and project-access adapter.
-- Fixed single-tenant Firebase UID allowlist and idempotent initial provisioning.
+- Authenticated multi-user identity provisioning with an explicit server-owned UID-to-project-to-capability map.
 - SQLite project/source binding and owner membership projection.
 - Remote-mode Flutter project list contract that hides local path onboarding.
 - Loopback-only runner composition compatible with existing PM2 supervision.
@@ -103,7 +104,7 @@ Define one narrow machine-readable CLI catalog contract. The CLI remains the liv
 - Workspace WebSocket reconnect implementation.
 - Studio semantic preview, Laboratory or compile execution.
 - Project start/stop/restart/log commands from Flutter.
-- Convex, Firestore product projection, Docker, containers or multi-user tenancy.
+- Convex, Firestore product projection, Docker, containers or user-created shared organizations/tenant selection.
 - DNS, firewall, CAX11 mutation, deployment or public availability claims.
 
 ## Constraints
@@ -135,7 +136,8 @@ Define one narrow machine-readable CLI catalog contract. The CLI remains the liv
 
 - PM2 and tmux live state is never reconstructed from SQLite.
 - A catalog entry is data, not authorization; authenticated project membership remains required.
-- Fixed single-user convenience cannot admit a second Firebase subject.
+- Authentication alone never grants shared project access; only an exact server-owned UID membership can do so.
+- A stale personal actor mapping may add the configured shared-tenant membership but must preserve its stable user identity and never inherit another actor's projects.
 - Invalid new catalog state never erases the last valid projection or widens capabilities.
 - No source, Git history, server path, port, tmux name or credential crosses into Flutter.
 - Convex and Docker remain deferred, not silently introduced.
@@ -219,12 +221,13 @@ Define one narrow machine-readable CLI catalog contract. The CLI remains the liv
 
 ## Open Questions
 
-None. Fixed single-user Firebase, CLI authority, SQLite-only projection and deferral of Convex/Docker are explicit decisions.
+None. Isolated authenticated identities, explicit project memberships, CLI authority, SQLite-only projection and deferral of Convex/Docker are explicit decisions.
 
 ## Skill Run History
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-21 22:22:46 UTC | sg-bug | GPT-5 Codex | Replaced the obsolete single-UID assumption with isolated Firebase actors and an exact server-owned project capability map; added stale-binding migration and authorization regressions. | local implementation and focused proof complete; hosted deployment/auth proof remains | Deploy with the private membership map, then run authenticated Workspace proof |
 | 2026-08-17 22:45:49 UTC | 101-sg-ready | GPT-5 Codex | Rechecked canonical structure, dependencies, ZOMBIES, OWASP, fixed-UID authorization, SQLite authority and non-overlapping PC-A/runner/Flutter/integration write sets. | SAFE; metadata 4/4, structural and diff checks passed, and no unresolved readiness blocker remains | /102-sg-start ShipGlows Cloud Dev Gateway Foundation |
 | 2026-08-17 22:23:23 UTC | 100-sg-spec | GPT-5 Codex | Converted the validated personal-cloud architecture into a bounded CLI/runner identity and catalog foundation. | reviewed; readiness review required | /101-sg-ready ShipGlows Cloud Dev Gateway Foundation |
 
