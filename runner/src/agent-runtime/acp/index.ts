@@ -438,6 +438,9 @@ export class AcpRuntime implements AgentRuntime {
     if (request.sessionId === "" || request.sessionId !== session.sessionId || !validProviderId(request.toolCall.toolCallId) || request.options.some((option) => !validProviderId(option.optionId))) {
       return Promise.reject(new Error("ACP permission request is malformed."));
     }
+    if (session.currentTurnId === undefined || session.terminalEmitted || session.stopping) {
+      return Promise.resolve({ outcome: { outcome: "cancelled" } });
+    }
     if (session.pendingPermissions.size >= 32) {
       this.#overflow(session, session.generation);
       return Promise.resolve({ outcome: { outcome: "cancelled" } });
@@ -456,6 +459,7 @@ export class AcpRuntime implements AgentRuntime {
   #mapUpdate(session: AcpSession, notification: SessionNotification): void {
     const update = notification.update;
     if (notification.sessionId === "" || notification.sessionId !== session.sessionId) return;
+    if (session.currentTurnId === undefined || session.terminalEmitted || session.stopping) return;
     switch (update.sessionUpdate) {
       case "agent_message_chunk": {
         if (update.content.type !== "text") return;

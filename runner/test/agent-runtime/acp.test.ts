@@ -208,6 +208,60 @@ describe("ACP runtime adapter", () => {
     assert.equal(unsupported.connection.closed, true);
   });
 
+  it("rejects cold resume in a new runtime without a trusted workspace binding", async () => {
+    const beforeRestart = harness();
+    const created = await beforeRestart.runtime.createSession({
+      conversationId: opaque("conversation_restart"),
+      accessMode: "readOnly",
+      workspace: { root: "C:\\workspace", kind: "project" },
+    });
+    await beforeRestart.runtime.close();
+
+    const afterRestart = harness();
+    await assert.rejects(
+      afterRestart.runtime.resumeSession({
+        runtimeSessionId: created.runtimeSessionId,
+        accessMode: "readOnly",
+        workspace: { root: "C:\\workspace", kind: "project" },
+      }),
+      /binding is unavailable/,
+    );
+    assert.deepEqual(afterRestart.connection.calls, []);
+  });
+
+  it("drops provider updates and permission requests outside an active turn", async () => {
+    const { runtime, connection } = harness();
+    const session = await runtime.createSession({
+      conversationId: opaque("conversation_idle_updates"),
+      accessMode: "readOnly",
+      workspace: { root: "C:\\workspace", kind: "project" },
+    });
+    connection.update({
+      sessionId: "acp_session_1",
+      update: { sessionUpdate: "agent_message_chunk", content: { type: "text", text: "stale" }, messageId: "stale_message" },
+    });
+    const permission = await connection.requestPermission({
+      sessionId: "acp_session_1",
+      toolCall: { toolCallId: "stale_tool", title: "Stale permission", kind: "execute" },
+      options: [{ optionId: "once", name: "Allow once", kind: "allow_once" }],
+    });
+    assert.deepEqual(permission, { outcome: { outcome: "cancelled" } });
+
+    await runtime.startTurn({ runtimeSessionId: session.runtimeSessionId, message: "Current turn" });
+    const events = runtime.events({ runtimeSessionId: session.runtimeSessionId })[Symbol.asyncIterator]();
+    assert.equal((await events.next()).value?.type, "turn.started");
+    assert.equal((await events.next()).value?.type, "turn.completed");
+
+    connection.update({
+      sessionId: "acp_session_1",
+      update: { sessionUpdate: "agent_message_chunk", content: { type: "text", text: "late" }, messageId: "late_message" },
+    });
+    await runtime.startTurn({ runtimeSessionId: session.runtimeSessionId, message: "Next turn" });
+    assert.equal((await events.next()).value?.type, "turn.started");
+    assert.equal((await events.next()).value?.type, "turn.completed");
+    await runtime.close();
+  });
+
   it("cancels only the active matching turn", async () => {
     const { runtime, connection } = harness(new FakeAcpConnection(), { interruptGraceMs: 5, cancelTimeoutMs: 5 });
     connection.promptResult = new Promise(() => undefined);
