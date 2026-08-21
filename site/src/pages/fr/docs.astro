@@ -13,7 +13,7 @@ const coreDocs = [
   ["shipglows_data/editorial/content-map.md", "Où vit le contenu : docs, landing pages, clusters sémantiques, surfaces publiques et destinations de repurposing."],
   ["skills/references/decision-quality-contract.md", "Pourquoi ShipGlows choisit correction, sécurité, maintenabilité, performance pertinente et preuve avant vitesse ou commodité."],
   ["shipglows_data/technical/operator-guides/skill-launch-cheatsheet.md", "Référence Markdown pour les skills maîtres, les skills de support et les modes d’arguments."],
-  ["shipglows_data/technical/operator-guides/focus-tags-cheatsheet.md", "Cheatsheet publique pour les tags de recentrage légers couvrant le business, le contenu, la gouvernance, l’exécution et le système."],
+  ["shipglows_data/technical/operator-guides/focus-tags-cheatsheet.md", "Cheatsheet publique pour les tags de recentrage légers et les postures d’exécution #local, #nolocal et #ci."],
   ["README.md (compat)", "Vue d’ensemble publique, positionnement, onboarding et histoire framework de haut niveau."],
   ["shipglows_data/workflow/playbooks/spec-driven-workflow.md", "Doctrine d’exécution qui cadre le travail important, rend les attentes de preuve explicites et le guide vers un handoff vérifié."]
 ];
@@ -142,6 +142,18 @@ const focusTagCombos = [
             tout un workflow.
           </p>
           <a class="doc-action" href={pathFor("/docs#recommended-combos", locale)}>Voir les combinaisons recommandées</a>
+        </article>
+
+        <article class="doc-card">
+          <h3>La posture d’exécution reste séparée du mode de workflow</h3>
+          <p>
+            Ajoutez <code>#local</code>, <code>#nolocal</code> ou
+            <code>#ci</code> pour choisir où la preuve exécutable peut tourner
+            sans changer le métier qui porte le résultat. Le mode autonome
+            implique toujours <code>#nolocal</code> ; <code>#ci</code> désigne
+            une preuve différée sans autoriser de push ni de déclenchement de workflow.
+          </p>
+          <a class="doc-action" href={pathFor("/focus-tags#execution-posture-tags", locale)}>Comparer les tags d’exécution</a>
         </article>
 
         <article class="doc-card">

@@ -12,7 +12,7 @@ const coreDocs = [
   ["shipglows_data/editorial/README.md", "How public content, claims, page intent, and Astro content schema boundaries stay aligned."],
   ["skills/references/decision-quality-contract.md", "Why ShipGlows chooses correctness, security, maintainability, relevant performance, and proof before speed or convenience."],
   ["shipglows_data/technical/operator-guides/skill-launch-cheatsheet.md", "Markdown reference for master skills, supporting skills, and argument modes."],
-  ["shipglows_data/technical/operator-guides/focus-tags-cheatsheet.md", "Public cheatsheet for lightweight recentering tags across business, content, governance, execution, and system focus."],
+  ["shipglows_data/technical/operator-guides/focus-tags-cheatsheet.md", "Public cheatsheet for lightweight recentering tags and the #local, #nolocal, and #ci execution postures."],
   ["README.md (compat)", "Public overview, positioning, onboarding, and high-level framework story."],
   ["shipglows_data/workflow/playbooks/spec-driven-workflow.md", "The execution doctrine that frames substantial work, makes proof expectations explicit, and guides it to a verified handoff."]
 ];
@@ -194,6 +194,18 @@ const editorialPath = "/docs#editorial-governance";
           <a class="doc-action" href="/docs#recommended-combos">
             See recommended tag combos
           </a>
+        </article>
+
+        <article class="doc-card">
+          <h3>Execution posture is separate from workflow mode</h3>
+          <p>
+            Add <code>#local</code>, <code>#nolocal</code>, or <code>#ci</code>
+            to choose where executable proof may run without changing the
+            métier that owns the result. Autonomous mode always implies
+            <code>#nolocal</code>; <code>#ci</code> names deferred proof but
+            grants no push or workflow-dispatch authority.
+          </p>
+          <a class="doc-action" href="/focus-tags#execution-posture-tags">Compare execution tags</a>
         </article>
 
         <article class="doc-card">

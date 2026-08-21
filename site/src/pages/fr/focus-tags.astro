@@ -24,6 +24,12 @@ const combos = [
   ["#canon #drift #single-source", "Réparer la source de vérité au lieu de patcher des doublons."],
   ["#shipglows #proof #contract", "Travailler sur ShipGlows lui-même et renforcer la doctrine ou la preuve."]
 ];
+
+const executionPostures = [
+  ["#local", "Permet les builds, tests et autres preuves locales proportionnées lorsque le workflow owner en a besoin, sans imposer de travail inutile."],
+  ["#nolocal", "Conserve l’inspection et les modifications bornées, mais diffère builds, tests, lint, typechecks, installations, workloads runtime, commits, pushs, déploiements et écritures externes."],
+  ["#ci", "Implique #nolocal et désigne la CI existante comme cible de preuve différée, sans autoriser push, déclenchement de workflow, déploiement ni autre écriture distante."]
+];
 ---
 
 <BaseLayout
@@ -64,6 +70,20 @@ const combos = [
           </article>
         ))}
       </div>
+    </section>
+
+    <section class="section" id="execution-posture-tags">
+      <div class="section-heading">
+        <p class="eyebrow">Tags de posture d’exécution</p>
+        <h2>Choisissez l’environnement de preuve sans changer le métier owner.</h2>
+        <p>Ces trois tags sont des contrôles transversaux, pas des modes. <code>#local</code> entre en conflit avec <code>#nolocal</code> et <code>#ci</code> ; <code>#nolocal #ci</code> est valide. Ils peuvent accompagner toute commande d’agent, mais n’accordent jamais d’autorité de modification ou d’action distante.</p>
+      </div>
+      <div class="doc-grid">
+        {executionPostures.map(([tag, body]) => (
+          <article class="doc-card"><h3><code>{tag}</code></h3><p>{body}</p></article>
+        ))}
+      </div>
+      <div class="docs-panel"><div><h3>Exemples</h3><p><code>sg-development feature checkout #local</code><br /><code>sg-bug fix payment callback #nolocal</code><br /><code>sg-engineering verify checkout #ci</code><br /><code>shipglows auto #ci until=18:00</code></p></div><div class="docs-links"><span class="docs-link"><code>auto ⇒ #nolocal</code></span><span class="docs-link"><code>auto #local ⇒ invalide</code></span></div></div>
     </section>
 
     <section class="section" id="system-recenter-tags">

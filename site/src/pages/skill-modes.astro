@@ -22,6 +22,17 @@ import { publicDomains, publicSkillCatalog } from "../data/publicSkillCatalog";
       <h2>Use a short route when you already know the kind of help you need.</h2>
       <p>These shortcuts retain the same métier ownership: <code>shipglows explore|spec|status|resume</code> enters an expert <code>sg-planning</code> mode; <code>build</code> enters <code>sg-development</code>; <code>fix</code> enters <code>sg-bug</code>; <code>test|browser</code> enters <code>sg-engineering</code>; and <code>ship|deploy|prod</code> enters <code>sg-release</code>. <code>verify</code> preserves an explicit specialist owner. <code>core</code> alone switches the whole request to ShipGlows-system maintenance.</p>
     </div><div class="docs-links"><span class="docs-link"><code>alias → métier mode → internal engine</code></span></div></div></section>
+    <section class="section" id="auto-mode"><div class="docs-panel"><div>
+      <p class="eyebrow">Autonomous mode</p>
+      <h2><code>shipglows auto</code> spends the session on useful work already grounded in the current project.</h2>
+      <p>It selects substantial roadmap, planning, security, compliance, or architecture work without inventing busywork. The project root stays fixed, useful subagents are allowed, and the mode always implies <code>#nolocal</code>: implementation may advance, while builds, tests, installs, commits, pushes, deployments, and other external writes stay deferred.</p>
+    </div><div class="docs-links"><span class="docs-link"><code>shipglows auto [scope] [until=HH:MM]</code></span><span class="docs-link"><code>shipglows auto #ci until=18:00</code></span></div></div></section>
+    <section class="section" id="execution-posture-tags"><div class="section-heading">
+      <p class="eyebrow">Execution posture</p>
+      <h2>Modes choose the workflow. Tags choose where executable proof may run.</h2>
+      <p><code>#local</code> permits proportionate local proof. <code>#nolocal</code> defers builds, tests, installs, runtime workloads, and external writes. <code>#ci</code> implies <code>#nolocal</code> and identifies existing CI as the deferred proof target; it never authorizes a push or workflow dispatch. <code>#local</code> conflicts with the other two, while <code>#nolocal #ci</code> is valid.</p>
+      <div class="hero-actions"><a class="button button-secondary" href="/focus-tags#execution-posture-tags">See tag examples</a></div>
+    </div></section>
     {publicDomains.map((domain) => {
       const skills = publicSkillCatalog.filter((skill) => skill.domain === domain);
       return skills.length > 0 && <section class="section"><div class="section-heading"><p class="eyebrow">{domain}</p><h2>{domain === "Start here" ? "The router" : "Public métiers"}</h2></div><div class="role-list">{skills.map((skill) => <div class="role-row"><code>{skill.name}</code><span><strong>{skill.purpose}</strong><br /><span>Modes: <code>{skill.modes}</code></span></span></div>)}</div></section>;

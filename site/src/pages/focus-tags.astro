@@ -24,6 +24,12 @@ const combos = [
   ["#canon #drift #single-source", "Repair the source of truth instead of patching duplicates."],
   ["#shipglows #proof #contract", "Work on ShipGlows itself and strengthen doctrine or proofability."]
 ];
+
+const executionPostures = [
+  ["#local", "Permit proportionate local builds, tests, and other proof when the owning workflow needs them; it does not force unnecessary work."],
+  ["#nolocal", "Keep inspection and bounded edits available, but defer builds, tests, lint, typechecks, installation, runtime workloads, commits, pushes, deployments, and external writes."],
+  ["#ci", "Imply #nolocal and record existing CI as the deferred proof target, without authorizing a push, workflow dispatch, deployment, or any remote write."]
+];
 ---
 
 <BaseLayout
@@ -59,6 +65,20 @@ const combos = [
           </article>
         ))}
       </div>
+    </section>
+
+    <section class="section" id="execution-posture-tags">
+      <div class="section-heading">
+        <p class="eyebrow">Execution Posture Tags</p>
+        <h2>Choose a proof environment without changing the workflow owner.</h2>
+        <p>These three tags are transversal controls, not modes. <code>#local</code> conflicts with <code>#nolocal</code> and <code>#ci</code>; <code>#nolocal #ci</code> is valid. They may accompany any agent command, but never grant mutation or remote-action authority.</p>
+      </div>
+      <div class="doc-grid">
+        {executionPostures.map(([tag, body]) => (
+          <article class="doc-card"><h3><code>{tag}</code></h3><p>{body}</p></article>
+        ))}
+      </div>
+      <div class="docs-panel"><div><h3>Examples</h3><p><code>sg-development feature checkout #local</code><br /><code>sg-bug fix payment callback #nolocal</code><br /><code>sg-engineering verify checkout #ci</code><br /><code>shipglows auto #ci until=18:00</code></p></div><div class="docs-links"><span class="docs-link"><code>auto ⇒ #nolocal</code></span><span class="docs-link"><code>auto #local ⇒ invalid</code></span></div></div>
     </section>
 
     <section class="section" id="system-recenter-tags">
