@@ -2459,30 +2459,12 @@ class ManagedRunnerApi
     required String idempotencyKey,
   }) async {
     try {
-      final capability = await _dio.get<dynamic>(
-        '/v1/projects/${Uri.encodeComponent(projectId)}/operator-workspace',
-        options: Options(headers: await _headers()),
-      );
-      final capabilityData = capability.data;
-      if (capabilityData is! Map ||
-          capabilityData['protocolVersion'] != 2 ||
-          capabilityData['surfaces'] is! List ||
-          !(capabilityData['surfaces'] as List).contains(surface.name)) {
-        throw const ManagedRunnerException(
-          code: 'workspaceProtocolUnsupported',
-          message:
-              'Le runner doit être mis à jour avant d’ouvrir cet espace de travail.',
-        );
-      }
-      if (capabilityData['available'] != true) {
-        throw const ManagedRunnerException(
-          code: 'operatorWorkspaceUnavailable',
-          message: 'Le Workspace n’est pas disponible pour ce projet.',
-        );
-      }
       final response = await _dio.post<dynamic>(
         '/v1/projects/${Uri.encodeComponent(projectId)}/operator-sessions',
-        data: <String, Object?>{'surface': surface.name},
+        data: <String, Object?>{
+          'protocolVersion': 2,
+          'surface': surface.name,
+        },
         options: Options(
           headers: {...await _headers(), 'Idempotency-Key': idempotencyKey},
         ),
@@ -2493,8 +2475,16 @@ class ManagedRunnerApi
           message: 'The managed runner returned an invalid operator session.',
         );
       }
+      final responseData = response.data as Map;
+      if (responseData['protocolVersion'] != 2) {
+        throw const ManagedRunnerException(
+          code: 'workspaceProtocolUnsupported',
+          message:
+              'Le runner doit être mis à jour avant d’ouvrir cet espace de travail.',
+        );
+      }
       return ManagedOperatorSession.fromJson(
-        Map<String, dynamic>.from(response.data as Map),
+        Map<String, dynamic>.from(responseData),
       );
     } on DioException catch (error) {
       throw _mapError(error);

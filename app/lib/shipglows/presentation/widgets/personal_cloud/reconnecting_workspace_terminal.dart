@@ -348,21 +348,29 @@ class _ReconnectingWorkspaceTerminalState
         }),
       );
     }
-    if (socket != null) {
-      try {
-        await socket.close();
-      } catch (_) {
-        unawaited(_reportDiagnostic(stage: 'recovery', code: 'cleanup_failed'));
-      }
+    await Future.wait([
+      if (socket != null) _closeSocket(socket),
+      if (capability != null && widget.transport != null)
+        _releaseCapability(widget.transport!, capability.sessionId),
+    ]);
+  }
+
+  Future<void> _closeSocket(RemoteWorkspaceSocket socket) async {
+    try {
+      await socket.close();
+    } catch (_) {
+      unawaited(_reportDiagnostic(stage: 'recovery', code: 'cleanup_failed'));
     }
-    if (capability != null && widget.transport != null) {
-      try {
-        await widget.transport!.releaseCapability(
-          sessionId: capability.sessionId,
-        );
-      } catch (_) {
-        unawaited(_reportDiagnostic(stage: 'recovery', code: 'cleanup_failed'));
-      }
+  }
+
+  Future<void> _releaseCapability(
+    RemoteWorkspaceTransport transport,
+    String sessionId,
+  ) async {
+    try {
+      await transport.releaseCapability(sessionId: sessionId);
+    } catch (_) {
+      unawaited(_reportDiagnostic(stage: 'recovery', code: 'cleanup_failed'));
     }
   }
 

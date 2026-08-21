@@ -1,10 +1,10 @@
 ---
 artifact: technical_architecture
 metadata_schema_version: "1.0"
-artifact_version: "2.5.0"
+artifact_version: "2.6.0"
 project: "shipglows_app"
 created: "2026-04-26"
-updated: "2026-08-16"
+updated: "2026-08-21"
 status: reviewed
 source_skill: 300-sg-docs
 scope: architecture
@@ -130,7 +130,7 @@ The capability route still requires ordinary runner authentication and project-r
 
 ## Operator Workspace
 
-The advanced Workspace is separate from semantic conversations. The runner issues a short-lived project/actor-scoped opaque capability, opens only the tmux session selected by the server allowlist, and carries bounded PTY input/output and resize frames over a dedicated WebSocket. Flutter renders the stream with `xterm`; it never receives a host path, raw tmux identifier, SSH credential, or general server-selection control. Invalid, expired, concurrent, unavailable, and cross-owner access fail closed. The implementation and isolated server smoke pass; public authenticated browser proof still depends on TLS routing and identity/project provisioning.
+The advanced Workspace is separate from semantic conversations. Flutter asserts protocol v2 while creating a session in one authenticated HTTP request; the runner validates it before allocating a PTY and returns the same version with the short-lived project/actor-scoped opaque capability. The runner opens only the tmux session selected by the server allowlist and carries bounded PTY input/output and resize frames over a dedicated WebSocket. Socket and capability cleanup run concurrently during an explicit surface change while the server continues to enforce one active attachment. Flutter renders the stream with `xterm`; it never receives a host path, raw tmux identifier, SSH credential, or general server-selection control. Invalid, expired, concurrent, unavailable, incompatible, and cross-owner access fail closed.
 
 ## Legacy Runtime
 

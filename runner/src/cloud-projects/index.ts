@@ -54,6 +54,9 @@ export class CloudProjectCatalogError extends Error {
 }
 
 export class FileCloudProjectCatalogReader implements CloudProjectCatalogReader {
+  private cachedRaw: string | undefined;
+  private cachedSnapshot: CloudProjectCatalogSnapshot | undefined;
+
   constructor(
     private readonly catalogPath: string,
     private readonly allowedRoots: readonly string[],
@@ -78,11 +81,15 @@ export class FileCloudProjectCatalogReader implements CloudProjectCatalogReader 
       throw new CloudProjectCatalogError("catalogUnavailable");
     }
     if (Buffer.byteLength(raw, "utf8") > this.maxBytes) throw new CloudProjectCatalogError("catalogInvalid");
-    const snapshot = parseCloudProjectCatalog(raw, this.allowedRoots);
+    const snapshot = raw === this.cachedRaw && this.cachedSnapshot !== undefined
+      ? this.cachedSnapshot
+      : parseCloudProjectCatalog(raw, this.allowedRoots);
     const generatedAt = Date.parse(snapshot.generatedAt);
     if (generatedAt > this.now() + 30_000 || this.now() - generatedAt > this.maxAgeMs) {
       throw new CloudProjectCatalogError("catalogStale");
     }
+    this.cachedRaw = raw;
+    this.cachedSnapshot = snapshot;
     return snapshot;
   }
 }

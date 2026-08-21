@@ -428,6 +428,7 @@ describe("runner API foundation", () => {
   });
 
   it("creates and closes an opaque operator session through authenticated routes", async () => {
+    let spawnCount = 0;
     const pty: OperatorPty = {
       write: () => undefined,
       resize: () => undefined,
@@ -435,7 +436,10 @@ describe("runner API foundation", () => {
       onData: () => ({ dispose: () => undefined }),
       onExit: () => ({ dispose: () => undefined }),
     };
-    const gateway = new OperatorWorkspaceGateway({ prj_000000000001: { cwd: "/srv/private/project", tmuxSession: "shipglows-project" } }, () => pty);
+    const gateway = new OperatorWorkspaceGateway({ prj_000000000001: { cwd: "/srv/private/project", tmuxSession: "shipglows-project" } }, () => {
+      spawnCount += 1;
+      return pty;
+    });
     const app = buildRunnerApp({
       config: loadConfig({ RUNNER_ENV: "test" }),
       dependencies: {
@@ -444,12 +448,17 @@ describe("runner API foundation", () => {
         operatorWorkspaceGateway: gateway,
       },
     });
-    const created = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-1" }, payload: { surface: "editor" } });
-    const invalidSurface = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-2" }, payload: { surface: "shell" } });
+    const incompatible = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-old" }, payload: { protocolVersion: 1, surface: "editor" } });
+    assert.equal(incompatible.statusCode, 400);
+    assert.equal(spawnCount, 0);
+    const created = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-1" }, payload: { protocolVersion: 2, surface: "editor" } });
+    const invalidSurface = await app.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-test-2" }, payload: { protocolVersion: 2, surface: "shell" } });
     assert.equal(created.statusCode, 201);
+    assert.equal(spawnCount, 1);
     assert.equal(invalidSurface.statusCode, 400);
     assert.doesNotMatch(created.body, /srv|tmux|shipglows-project/);
     const body = created.json();
+    assert.equal(body.protocolVersion, 2);
     const closed = await app.inject({ method: "POST", url: `/v1/operator-sessions/${body.sessionId}/close` });
     await app.close();
     assert.equal(closed.statusCode, 200);
@@ -463,7 +472,7 @@ describe("runner API foundation", () => {
         operatorWorkspaceGateway: gateway,
       },
     });
-    const denied = await readOnlyApp.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-readonly" }, payload: { surface: "terminal" } });
+    const denied = await readOnlyApp.inject({ method: "POST", url: "/v1/projects/prj_000000000001/operator-sessions", headers: { "idempotency-key": "workspace-readonly" }, payload: { protocolVersion: 2, surface: "terminal" } });
     await readOnlyApp.close();
     assert.equal(denied.statusCode, 403);
   });

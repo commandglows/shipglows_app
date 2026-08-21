@@ -568,9 +568,9 @@ export function buildRunnerApp({
       schema: {
         params: Type.Object({ projectId: Type.String({ minLength: 1, maxLength: 128 }) }, { additionalProperties: false }),
         headers: Type.Object({ "idempotency-key": Type.String({ minLength: 8, maxLength: 128 }) }, { additionalProperties: true }),
-        body: Type.Object({ surface: Type.Union([Type.Literal("editor"), Type.Literal("terminal")]) }, { additionalProperties: false }),
+        body: Type.Object({ protocolVersion: Type.Literal(2), surface: Type.Union([Type.Literal("editor"), Type.Literal("terminal")]) }, { additionalProperties: false }),
         response: {
-          201: Type.Object({ sessionId: Type.String(), token: Type.String(), projectId: Type.String(), expiresAt: Type.String() }, { additionalProperties: false }),
+          201: Type.Object({ protocolVersion: Type.Literal(2), sessionId: Type.String(), token: Type.String(), projectId: Type.String(), expiresAt: Type.String() }, { additionalProperties: false }),
           409: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }),
           503: Type.Object({ error: Type.Object({ code: Type.String(), message: Type.String() }) }),
         },
@@ -583,7 +583,7 @@ export function buildRunnerApp({
       if (gateway === undefined) return reply.status(503).send({ error: { code: "operatorWorkspaceUnavailable", message: "The operator Workspace is not configured on this runner." } });
       try {
         const session = gateway.create({ tenantId: actor.tenantId, userId: actor.userId, projectId: request.params.projectId, surface: request.body.surface, idempotencyKey: request.headers["idempotency-key"] });
-        return await reply.status(201).send({ sessionId: session.id, token: session.token, projectId: session.projectId, expiresAt: session.expiresAt });
+        return await reply.status(201).send({ protocolVersion: 2 as const, sessionId: session.id, token: session.token, projectId: session.projectId, expiresAt: session.expiresAt });
       } catch (error) {
         if (error instanceof OperatorWorkspaceError) {
           const status = error.statusCode === 409 ? 409 : 503;

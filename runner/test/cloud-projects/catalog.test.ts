@@ -99,4 +99,18 @@ describe("CLI cloud project catalog", () => {
     assert.equal((await reader.read()).entries.length, 1);
     assert.throws(() => new FileCloudProjectCatalogReader("catalog.json", ["/srv/projects"]), CloudProjectCatalogError);
   });
+
+  it("reuses a parsed snapshot while the catalog bytes are unchanged", async () => {
+    const reader = new FileCloudProjectCatalogReader(
+      "/var/lib/shipglows/cli-project-catalog.v1.json",
+      ["/srv/shipglows"],
+      () => Date.parse("2026-08-18T10:00:30Z"),
+      60_000,
+      1_000_000,
+      async () => validCatalog,
+    );
+    const first = await reader.read();
+    const second = await reader.read();
+    assert.equal(second, first);
+  });
 });

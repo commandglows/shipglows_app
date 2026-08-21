@@ -140,18 +140,11 @@ void main() {
 
   test('sends valid empty JSON bodies for operator session commands', () async {
     final adapter = _RecordingAdapter((request, attempt) {
-      if (request.path.endsWith('/operator-workspace')) {
-        return _jsonResponse(200, {
-          'available': true,
-          'reason': 'ready',
-          'protocolVersion': 2,
-          'surfaces': ['editor', 'terminal'],
-        });
-      }
       if (request.path.endsWith('/close')) {
         return _jsonResponse(200, {'state': 'closed'});
       }
       return _jsonResponse(201, {
+        'protocolVersion': 2,
         'sessionId': 'ops_123',
         'token': 'opaque-capability',
         'projectId': 'project-1',
@@ -177,16 +170,18 @@ void main() {
     );
     await api.closeOperatorSession(sessionId: session.sessionId);
 
-    expect(adapter.requests, hasLength(4));
-    expect(adapter.requests.first.method, 'GET');
-    expect(adapter.requests[1].method, 'POST');
-    expect(adapter.requests[1].data, <String, Object?>{'surface': 'editor'});
+    expect(adapter.requests, hasLength(3));
+    expect(adapter.requests.first.method, 'POST');
+    expect(adapter.requests.first.data, <String, Object?>{
+      'protocolVersion': 2,
+      'surface': 'editor',
+    });
     expect(
-      adapter.requests[1].headers['Idempotency-Key'],
+      adapter.requests.first.headers['Idempotency-Key'],
       'workspace-stable-key',
     );
-    expect(adapter.requests[2].path, endsWith('/workspace-diagnostics'));
-    expect(adapter.requests[2].data, {
+    expect(adapter.requests[1].path, endsWith('/workspace-diagnostics'));
+    expect(adapter.requests[1].data, {
       'diagnosticId': 'wd_abc123def456',
       'surface': 'editor',
       'stage': 'recovery',
@@ -199,7 +194,12 @@ void main() {
 
   test('refuses an older runner before creating an operator session', () async {
     final adapter = _RecordingAdapter(
-      (_, _) => _jsonResponse(200, {'available': true, 'reason': 'ready'}),
+      (_, _) => _jsonResponse(201, {
+        'sessionId': 'ops_123',
+        'token': 'opaque-capability',
+        'projectId': 'project-1',
+        'expiresAt': '2026-08-03T15:00:00Z',
+      }),
     );
     final dio = Dio(BaseOptions(baseUrl: 'https://runner.example'))
       ..httpClientAdapter = adapter;
@@ -220,7 +220,7 @@ void main() {
       ),
     );
     expect(adapter.requests, hasLength(1));
-    expect(adapter.requests.single.method, 'GET');
+    expect(adapter.requests.single.method, 'POST');
   });
 
   test(
