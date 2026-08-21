@@ -95,6 +95,46 @@ const editorialPath = "/docs#editorial-governance";
       </div>
     </section>
 
+    <section class="section" id="git-continuity">
+      <div class="section-heading">
+        <p class="eyebrow">Git-backed delivery continuity</p>
+        <h2>Each milestone backed up. Every delivery traceable.</h2>
+        <p>
+          Agent work is fragile when it exists only in a working tree or local
+          commit. For approved technical chantiers, ShipGlows requires an
+          exact-scope commit and push after each validated milestone and before
+          clean closure. A lightweight read-only check looks for local-only
+          work when mutation starts or resumes, before sensitive operations,
+          and at closure. When the repository is healthy, that check stays
+          silent.
+        </p>
+      </div>
+      <div class="doc-grid">
+        <article class="doc-card">
+          <h3>Local</h3>
+          <p>Changes or commits are not yet proven reachable from the resolved upstream.</p>
+        </article>
+        <article class="doc-card">
+          <h3>Backed up</h3>
+          <p>The relevant chantier commit is proven reachable from the resolved Git upstream.</p>
+        </article>
+        <article class="doc-card">
+          <h3>Deployed</h3>
+          <p>Matching provider evidence confirms the intended commit on a named preview, staging, or production target.</p>
+        </article>
+      </div>
+      <div class="cta-panel">
+        <p>
+          A push proves remote persistence, not deployment. ShipGlows does not
+          guarantee GitHub availability, zero data loss, repository protection
+          settings, or unattended production shipping.
+        </p>
+        <a class="button button-secondary" href="/blog/is-your-agent-work-actually-backed-up">
+          Read the full explanation
+        </a>
+      </div>
+    </section>
+
     <section class="section" id="editorial-governance">
       <div class="cta-panel">
         <p class="eyebrow">Public Métiers</p>
