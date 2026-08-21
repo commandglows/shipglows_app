@@ -60,6 +60,8 @@ ShipGlows can document conventions today because documentation is under our cont
 
 A native primitive requires a real execution hook in the runtime layer. If that layer is partial, indirect, or dependent on plugin behavior, the primitive becomes misleading. It looks native but still behaves like a workaround.
 
+The same boundary shapes our broader runtime choices. [Our position on T3 Code explains why ShipGlows learns from an excellent agent interface without depending on its internal control plane](/blog/shipglows-and-t3-code-same-conviction-different-scope).
+
 ### 2. Global syntax freezes semantics early
 
 The moment a primitive becomes public, users build habits around it.

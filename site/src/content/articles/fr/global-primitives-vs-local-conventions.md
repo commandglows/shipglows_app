@@ -60,6 +60,8 @@ ShipGlows peut documenter des conventions aujourd’hui parce que la documentati
 
 Une primitive native exige un vrai point d’accroche dans la couche runtime. Si cette couche reste partielle, indirecte ou dépendante du plugin, la primitive devient trompeuse. Elle a l’air native, mais se comporte encore comme un contournement.
 
+Cette même frontière guide nos choix runtime plus larges. [Notre position sur T3 Code explique pourquoi ShipGlows apprend d’une excellente interface d’agents sans dépendre de son plan de contrôle interne](/fr/blog/shipglows-et-t3-code-meme-conviction-perimetre-different).
+
 ### 2. Une syntaxe globale fige trop tôt la sémantique
 
 Dès qu’une primitive devient publique, les utilisateurs construisent des habitudes autour.
