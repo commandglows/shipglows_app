@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.1"
+artifact_version: "1.0.2"
 project: "shipglows_app"
 created: "2026-08-21"
 created_at: "2026-08-21 22:32:00 UTC"
 updated: "2026-08-21"
-updated_at: "2026-08-21 22:37:03 UTC"
+updated_at: "2026-08-21 22:53:00 UTC"
 status: active
 source_skill: "102-sg-start"
 source_model: "GPT-5 Codex"
@@ -29,7 +29,8 @@ depends_on:
 supersedes: []
 evidence:
   - "Production incident 2026-08-21: a public runner 502 appeared as a generic authentication failure and the client-only diagnostic ID could not be copied or correlated from the UI."
-next_step: "Run the Vercel Flutter build and hosted authentication recovery proof."
+  - "Operator confirmation 2026-08-21: the shipglows-app Vercel project is now connected to the Git repository after the implementation commit; a subsequent documented push is required because Vercel did not retroactively build that commit."
+next_step: "Observe the first Git-triggered Vercel Flutter build and run hosted authentication recovery proof."
 ---
 
 # ShipGlows Auth Recovery Diagnostics
@@ -111,6 +112,7 @@ The authentication recovery surface shows the safe failure stage, stable error c
 
 | Date UTC | Skill | Model | Action | Result | Next step |
 |---|---|---|---|---|---|
+| 2026-08-21 22:53:00 UTC | delivery | GPT-5 Codex | Recorded the operator-confirmed Git connection for the app-specific Vercel project after proving that the prior implementation commit triggered only the public-site project. | app connection configured; first app-specific Git build pending a subsequent push | Push this trace and observe the app deployment. |
 | 2026-08-21 22:37:03 UTC | implementation | GPT-5 Codex | Added the allowlisted visible/copyable diagnostic, clipboard recovery, malformed-code normalization, and focused widget regressions. | implemented; metadata, diff, and changed-file design drift checks pass; Flutter SDK is unavailable locally | Commit the owned files, then use the Vercel build as compilation proof. |
 | 2026-08-21 22:32:00 UTC | specification and readiness | GPT-5 Codex | Defined and reviewed the allowlisted authentication recovery diagnostic contract. | ready; behavior, security boundary, proof, and delivery scope are decision-complete | Implement regression-first. |
 
