@@ -100,6 +100,9 @@ export interface RunnerIntegrationsConfig {
     readonly setupUrl?: string;
     readonly apiBaseUrl?: string;
   };
+  readonly sentry:
+    | { readonly enabled: false }
+    | { readonly enabled: true; readonly dsn: string; readonly release: string };
 }
 
 export interface RunnerRuntimesConfig {
@@ -163,6 +166,7 @@ export function loadConfig(
   const host = env["RUNNER_HOST"] ?? "127.0.0.1";
   const firebaseEnabled = readBoolean(env["FIREBASE_AUTH_ENABLED"], "FIREBASE_AUTH_ENABLED", issues);
   const githubEnabled = readBoolean(env["GITHUB_ENABLED"], "GITHUB_ENABLED", issues);
+  const sentryEnabled = readBoolean(env["SENTRY_ENABLED"], "SENTRY_ENABLED", issues);
   const codexEnabled = readBoolean(env["CODEX_ENABLED"], "CODEX_ENABLED", issues);
   const eveEnabled = readBoolean(env["EVE_ENABLED"], "EVE_ENABLED", issues);
   const studioEnabled = readBoolean(env["RUNNER_STUDIO_ENABLED"], "RUNNER_STUDIO_ENABLED", issues);
@@ -242,6 +246,17 @@ export function loadConfig(
       issues.push("GITHUB_API_BASE_URL must be a valid URL");
     }
   }
+  if (sentryEnabled) {
+    try {
+      const dsn = new URL(env["SENTRY_DSN"] ?? "");
+      if (dsn.protocol !== "https:" || dsn.username === "" || dsn.password !== "" || dsn.hash !== "") throw new Error();
+    } catch {
+      issues.push("SENTRY_DSN must be a credential-free HTTPS DSN");
+    }
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(env["SENTRY_RELEASE"] ?? "")) {
+      issues.push("SENTRY_RELEASE must be a bounded release identifier");
+    }
+  }
   if (host !== "127.0.0.1" && host !== "::1" && env["RUNNER_ALLOW_PUBLIC_BINDING"] !== "true") {
     issues.push("RUNNER_ALLOW_PUBLIC_BINDING=true is required for a non-loopback host");
   }
@@ -313,6 +328,11 @@ export function loadConfig(
           ...(env["GITHUB_API_BASE_URL"] ? { apiBaseUrl: env["GITHUB_API_BASE_URL"] } : {}),
         } : {}),
       },
+      sentry: sentryEnabled ? {
+        enabled: true,
+        dsn: env["SENTRY_DSN"] ?? "",
+        release: env["SENTRY_RELEASE"] ?? "",
+      } : { enabled: false },
     },
     runtimes: {
       codex: { enabled: codexEnabled },
@@ -357,6 +377,7 @@ export function publicConfig(config: RunnerConfig) {
     maxRunDurationMs: config.limits.maxRunDurationMs,
     firebaseEnabled: config.integrations.firebase.enabled,
     githubEnabled: config.integrations.github.enabled,
+    sentryEnabled: config.integrations.sentry.enabled,
     codexEnabled: config.runtimes.codex.enabled,
     eveEnabled: config.runtimes.eve.enabled,
     operatorWorkspaceCount: Object.keys(config.operatorWorkspaces).length,

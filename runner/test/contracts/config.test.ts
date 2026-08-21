@@ -27,6 +27,7 @@ describe("runner configuration", () => {
       maxRunDurationMs: 900000,
       firebaseEnabled: false,
       githubEnabled: false,
+      sentryEnabled: false,
       codexEnabled: false,
       eveEnabled: false,
       operatorWorkspaceCount: 0,
@@ -34,6 +35,24 @@ describe("runner configuration", () => {
       studioEnabled: false,
       localStudioAuthEnabled: false,
     });
+  });
+
+  it("keeps Sentry disabled by default and validates explicit safe configuration", () => {
+    assert.equal(loadConfig({ RUNNER_ENV: "test" }).integrations.sentry.enabled, false);
+    assert.throws(() => loadConfig({ SENTRY_ENABLED: "true" }), /SENTRY_DSN/);
+    assert.throws(() => loadConfig({ SENTRY_ENABLED: "true", SENTRY_DSN: "http:\/\/public@example.com/1", SENTRY_RELEASE: "release-1" }), /SENTRY_DSN/);
+    const config = loadConfig({
+      SENTRY_ENABLED: "true",
+      SENTRY_DSN: "https:\/\/public@example.com/1",
+      SENTRY_RELEASE: "runner-a1b2c3d",
+    });
+    assert.deepEqual(config.integrations.sentry, {
+      enabled: true,
+      dsn: "https:\/\/public@example.com/1",
+      release: "runner-a1b2c3d",
+    });
+    assert.equal(publicConfig(config).sentryEnabled, true);
+    assert.equal("dsn" in publicConfig(config), false);
   });
 
   it("rejects invalid and unknown runner settings", () => {

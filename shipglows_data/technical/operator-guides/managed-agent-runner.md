@@ -1,7 +1,7 @@
 ---
 artifact: technical_guidelines
 metadata_schema_version: "1.0"
-artifact_version: "1.2.0"
+artifact_version: "1.3.0"
 project: "shipglows_app"
 created: "2026-08-11"
 updated: "2026-08-21"
@@ -86,7 +86,7 @@ The active runner creates no managed audit/fix worktree. Pre-existing `.shipglow
 - Backup fails: preserve the live database, remove only an incomplete generated destination, and retry after checking private destination capacity and permissions.
 - Suspected secret exposure: rotate the affected credential and preserve only redacted evidence.
 
-Sentry/provider-backed error reporting, cleanup dry-run, hosted backup retention and a real recovery exercise remain required before Task 12 can close.
+Sentry error reporting is available behind `SENTRY_ENABLED=true`, a private HTTPS `SENTRY_DSN`, and a bounded `SENTRY_RELEASE`. It remains disabled by default and emits only a stable runner failure code plus bounded release/environment identity; request data, users, stacks, breadcrumbs, paths, project/conversation identifiers and prompts are discarded before sending. Provider-configured ingestion proof, cleanup dry-run, hosted backup retention and a real recovery exercise remain required before Task 12 can close.
 
 ## Validation
 

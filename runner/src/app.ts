@@ -32,7 +32,7 @@ import type { GitHubProjectSource } from "./projects/githubProjectSource.js";
 import { registerGitHubProjectRoutes } from "./projects/githubProjectRoutes.js";
 import { stateChangingOriginGuard } from "./security/requestPolicy.js";
 import { OperatorWorkspaceError, type OperatorWorkspaceGateway } from "./operator-workspace/index.js";
-import type { RunnerDiagnostics } from "./observability/index.js";
+import type { RunnerDiagnostics, RunnerErrorReporter } from "./observability/index.js";
 import type { StudioCapabilityResolver } from "./studio/capability.js";
 import type { StudioSessionService } from "./studio/session.js";
 import { registerStudioRoutes } from "./studio/routes.js";
@@ -143,6 +143,7 @@ export interface RunnerAppDependencies {
   readonly executionAdmission?: ExecutionAdmissionService;
   readonly projectDelivery?: ProjectDeliveryRepository;
   readonly diagnostics?: RunnerDiagnostics;
+  readonly errorReporter?: RunnerErrorReporter;
   readonly studioCapability?: StudioCapabilityResolver;
   readonly studioSessions?: StudioSessionService;
   readonly studioCompilationRouting?: CompilationRoutingProjectionResolver;
@@ -241,6 +242,10 @@ export function buildRunnerApp({
   const app = routeScope;
   app.setValidatorCompiler(TypeBoxValidatorCompiler);
   installErrorHandler(app);
+  app.addHook("onError", async (_request, _reply, error) => {
+    if (error instanceof HttpError || error.validation !== undefined) return;
+    dependencies.errorReporter?.capture("httpRequestFailed");
+  });
   app.addHook("onRequest", async (request, reply) => {
     const origin = request.headers.origin;
     if (typeof origin !== "string") return;

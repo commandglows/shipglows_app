@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.35.0"
+artifact_version: "1.36.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-21"
-updated_at: "2026-08-21 19:40:01 UTC"
+updated_at: "2026-08-21 20:28:03 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -588,7 +588,8 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - User story link: Enables ShipGlows to own the server so the user does not have to.
   - Depends on: Tasks 4-6, 8, and 11.
   - Validate with: redaction fixtures, synthetic health failures, release tags, cleanup dry-run, backup/restore proof, and runbook command review with no secret output.
-  - Implementation note (2026-08-11): the local runner reliability slice is implemented. Public `GET /health/live` returns only a closed `status` payload; authenticated `GET /v1/diagnostics` exposes bounded build identity, UTC/Europe-Paris timestamps and normalized dependency states without reflecting errors, paths or configuration. The schema-v8 SQLite store supports non-overwriting online backup through Node's supported `node:sqlite.backup` API, validates integrity/schema on the copy, and has migration-plus-restore proof. The operator script refuses a missing/non-file source and prints only a generated basename plus bounded metadata. Sentry initialization, cleanup dry-run and hosted incident proof remain open, so Task 12 stays partial.
+  - Implementation note (2026-08-11): the local runner reliability slice is implemented. Public `GET /health/live` returns only a closed `status` payload; authenticated `GET /v1/diagnostics` exposes bounded build identity, UTC/Europe-Paris timestamps and normalized dependency states without reflecting errors, paths or configuration. The schema-v9 SQLite store supports non-overwriting online backup through Node's supported `node:sqlite.backup` API, validates integrity/schema on the copy, and has migration-plus-restore proof. The operator script refuses a missing/non-file source and prints only a generated basename plus bounded metadata. Sentry initialization, cleanup dry-run and hosted incident proof remain open, so Task 12 stays partial.
+  - Implementation note (2026-08-21): optional Sentry reporting is disabled by default, validates an HTTPS DSN and bounded release, disables automatic integrations/tracing/breadcrumbs/default PII, and scrubs every captured event to a stable failure code plus bounded release/environment identity. Unexpected HTTP failures are wired through this adapter without allowing SDK failure to affect requests. Provider-configured ingestion proof remains open.
 - [ ] Task 13: Complete end-to-end proof and documentation coherence.
   - Files: `shipglows_data/workflow/verification/shipglows-managed-agent-cockpit-mvp.md`, impacted technical maps/docs, `app/README.md`, `app/CHANGELOG.md`, and `app/.github/workflows/**`.
   - Action: Run runner checks, Flutter tests/analyze/build Web/build Android/build Windows where supported, authenticated browser scenarios, managed clone/Codex-first-adapter smoke scenarios, fake-second-adapter conformance scenarios, Workspace tmux/PTY/Neovim scenarios, access-loss and reconnect tests, just-bash sandbox tests, diagnostics/Sentry redaction, secret scans, metadata lint, and diff hygiene. Update docs only to the proven behavior.
@@ -769,6 +770,7 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-21 20:28:03 UTC | shipglows + sg-development | GPT-5 Codex | Added disabled-by-default Sentry error reporting with strict HTTPS/release configuration, zero automatic integrations/tracing/breadcrumbs/data collection, stable-code-only HTTP failure capture, destructive event scrubbing and non-blocking SDK failure behavior. | local Task 12 slice verified: focused 48/48 and runner 404/404 tests, typecheck, lint and zero-vulnerability dependency audit pass; no provider call or deployment performed | Commit and push this bounded observability milestone; provider ingestion proof, cleanup dry-run and hosted recovery evidence remain |
 | 2026-08-21 19:40:01 UTC | shipglows + sg-development | GPT-5 Codex | Fenced ACP notifications and permission requests to active turns and added explicit process-restart proof that cold resume is refused before any provider connection when the trusted workspace descriptor is absent. | local Task 5 hardening verified: ACP 18/18, runner 398/398, typecheck, lint and dependency audit pass; durable cross-process resume remains intentionally unavailable | Commit and push this bounded Task 5 milestone, then continue the Cockpit P0 from the next ready local boundary |
 | 2026-08-21 18:19:37 UTC | sg-development | GPT-5 Codex | Replaced active managed worktrees with one durable open conversation and one server-owned canonical delivery branch per project; added fail-closed checkout/remote admission, non-force delivery, explicit close semantics and a single-conversation Flutter surface while preserving historical worktrees. | implementation verified locally: 396 runner tests, runner typecheck/lint/audit, 174 Flutter tests and Flutter analysis pass; no deployment performed | Commit and push the coherent slice to `origin/main`, then continue the next P0 without parallel project conversations |
 | 2026-08-18 12:32:48 UTC | shipglows + sg-engineering + sg-design | GPT-5 Codex | Hardened the approved Neovim-first Workspace with mutation-only authorization, dedicated Unix execution identity, fixed PTY environment, protocol-v2 negotiation, bounded leases/backpressure, redacted diagnostics, non-wedging recovery and expanded Neovim focus mode. | local implementation verified: runner typecheck/lint/audit and 51 targeted tests pass; full runner suite is 376/377 with only the pre-existing Windows CRLF fixture mismatch; Flutter analysis, 24 targeted tests and the complete 163-test ShipGlows suite pass; no VM, deploy, commit or push action performed | Separately authorize hosted configuration and browser proof on the CAX11 |

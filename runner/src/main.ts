@@ -14,7 +14,7 @@ import { ProjectDeliveryRepository } from "./workspaces/projectDelivery.js";
 import { OperatorWorkspaceGateway, spawnTmuxPty } from "./operator-workspace/index.js";
 import { ExecutionAdmissionService, LocalManagedExecutionProvider } from "./runs/execution.js";
 import { ExecutionProviderRegistry } from "./contracts/index.js";
-import { createBuildIdentity, RunnerDiagnostics } from "./observability/index.js";
+import { createBuildIdentity, createSentryErrorReporter, RunnerDiagnostics } from "./observability/index.js";
 import { GitStudioRepositoryAttestor, HttpStudioRuntimeAttestor, createTrustedBaseStudioResolver } from "./studio/capability.js";
 import { StudioSessionService } from "./studio/session.js";
 import { createLocalStudioProjectCatalog } from "./projects/localStudioProjectCatalog.js";
@@ -25,6 +25,7 @@ import { PreviewIngressService } from "./preview-ingress/index.js";
 import { BoundedProjectAiReadinessEvaluator } from "./ai-readiness/index.js";
 
 const config = loadConfig();
+const errorReporter = createSentryErrorReporter(config.integrations.sentry, config.environment);
 const require = createRequire(import.meta.url);
 const codexAcpEntrypoint = require.resolve("@agentclientprotocol/codex-acp");
 const studioCapability = config.studio.enabled ? createTrustedBaseStudioResolver({
@@ -190,6 +191,7 @@ const dependencies = {
   executionAdmission,
   projectDelivery,
   diagnostics,
+  errorReporter,
   ...(cloudProjectCatalog === undefined ? {} : { cloudProjectCatalog }),
   ...(previewIngress === undefined ? {} : { previewIngress }),
   ...(reconcileCloudProjects === undefined ? {} : { reconcileCloudProjects }),

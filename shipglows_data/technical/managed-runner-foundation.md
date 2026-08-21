@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "3.5.0"
+artifact_version: "3.6.0"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-21"
@@ -173,6 +173,7 @@ The endpoint is not registered with a resolver in `main.ts`. Its local fake-veri
 - Codex is the first contract-tested adapter behind `AgentRuntime`, using the pinned server-owned ACP subprocess over local stdio; the previous app-server adapter remains rollback-only. ACP notifications and permission requests are accepted only during an active turn, idle or post-terminal traffic is discarded, and a fresh runner instance refuses cold resume because its trusted workspace binding is intentionally process-local.
 - The SQLite store holds a reconstructable operational projection: tenants, memberships, projects, canonical cross-namespace project identity bindings, GitHub repository bindings, conversations, durable run states/checkpoints, secret-safe execution envelopes, runtime session mappings, capability decisions, approvals, project-context bundles, versioned skill runs, health evidence, usage summaries, event cursors, idempotency records and historical workspace-cleanup state. Schema v9 stores operational metadata only; repository and Markdown content remain canonical.
 - Operational diagnostics never include probe exceptions, filesystem paths, credentials or runtime configuration. Invalid build metadata becomes `unknown`; synthetic dependency failures become the fixed `dependencyFailure` code. The public liveness route is deliberately separate from this authenticated surface.
+- Sentry error reporting is disabled by default and requires an explicit HTTPS DSN plus bounded release identity. It disables automatic integrations, tracing, breadcrumbs and default PII, scrubs every event to a stable runner failure code with bounded release/environment identity, and cannot fail the request path if the SDK is unavailable.
 - Online SQLite backup uses the Node-supported `node:sqlite.backup` API and therefore raises the runner floor to Node 22.16.0. The backup is non-overwriting, checked with `PRAGMA integrity_check`, checked against schema v9, and covered by a v2-to-v9 migration/restore fixture. This is local recovery proof, not a hosted retention or disaster-recovery claim.
 - Provider preflight always occurs before a worktree, runtime session or turn is created. A failed preflight has a stable bounded execution failure and cannot change provider, runtime, policy or permission. The envelope excludes prompts, environment variables, tokens and workspace paths; cancellation accepts only opaque run and execution identifiers. Its state moves monotonically from preflight to the same terminal outcome as the run.
 - Run checkpoints are secret-safe and tenant-scoped. A runner restart marks in-flight `running` records and their matching preflight-passed executions as `interrupted` with a bounded recovery reason. The local provider does not claim drain, remote task preservation or reattachment; those need a separate distributed-execution contract.

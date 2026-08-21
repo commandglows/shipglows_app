@@ -1,8 +1,70 @@
 import { assertSecretSafe } from "../contracts/index.js";
+import * as Sentry from "@sentry/node";
 
 const SERVICE_NAME = "shipglows-managed-runner";
 const SERVICE_VERSION = "0.1.0";
 const MAX_PROBES = 16;
+const SENTRY_EVENT_MESSAGE = "shipglows.runner.httpRequestFailed";
+
+export interface RunnerErrorReporter {
+  capture(code: "httpRequestFailed"): void;
+}
+
+export interface SentrySdk {
+  init(options: Parameters<typeof Sentry.init>[0]): void;
+  captureMessage(message: string, level: "error"): unknown;
+}
+
+export function scrubSentryEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
+  return {
+    type: undefined,
+    ...(typeof event.event_id === "string" ? { event_id: event.event_id } : {}),
+    ...(typeof event.timestamp === "number" ? { timestamp: event.timestamp } : {}),
+    ...(typeof event.release === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(event.release) ? { release: event.release } : {}),
+    ...(typeof event.environment === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(event.environment) ? { environment: event.environment } : {}),
+    level: "error",
+    platform: "node",
+    message: event.message === SENTRY_EVENT_MESSAGE ? SENTRY_EVENT_MESSAGE : "shipglows.runner.failure",
+  };
+}
+
+export function createSentryErrorReporter(
+  config: { readonly enabled: false } | { readonly enabled: true; readonly dsn: string; readonly release: string },
+  environment: string,
+  sdk: SentrySdk = Sentry,
+): RunnerErrorReporter {
+  if (!config.enabled) return { capture: () => undefined };
+  sdk.init({
+    dsn: config.dsn,
+    release: config.release,
+    environment: /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(environment) ? environment : "unknown",
+    defaultIntegrations: false,
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { request: false, response: false },
+      httpBodies: [],
+      urlQueryParams: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      stackFrameVariables: false,
+      frameContextLines: 0,
+    },
+    tracesSampleRate: 0,
+    maxBreadcrumbs: 0,
+    beforeSend: scrubSentryEvent,
+  });
+  return {
+    capture: () => {
+      try {
+        sdk.captureMessage(SENTRY_EVENT_MESSAGE, "error");
+      } catch {
+        // Observability must never make the managed request path fail.
+      }
+    },
+  };
+}
 
 export type DiagnosticStatus = "ok" | "degraded";
 

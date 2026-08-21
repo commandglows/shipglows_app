@@ -93,6 +93,22 @@ describe("runner API foundation", () => {
     assert.equal(response.json().error.code, "unauthorized");
   });
 
+  it("reports an unexpected server failure only through the stable error code", async () => {
+    const captured: string[] = [];
+    const app = buildRunnerApp({
+      config: loadConfig({ RUNNER_ENV: "test" }),
+      dependencies: {
+        authentication: { authenticate: async () => actor },
+        diagnostics: new RunnerDiagnostics({ now: () => new Date(Number.NaN) }),
+        errorReporter: { capture: (code) => { captured.push(code); } },
+      },
+    });
+    const response = await app.inject({ method: "GET", url: "/v1/diagnostics" });
+    await app.close();
+    assert.equal(response.statusCode, 500);
+    assert.deepEqual(captured, ["httpRequestFailed"]);
+  });
+
   it("serves a schema-validated version endpoint without internal paths", async () => {
     const app = buildRunnerApp({
       config: loadConfig({ RUNNER_ENV: "test" }, { cwd: "/srv/private" }),
