@@ -1,7 +1,7 @@
 ---
-title: "Your agent changed the code. But is your work actually backed up?"
-description: "Why AI-assisted development needs useful Git recovery points, remote backup, interruption recovery, and a clear distinction between backup and deployment."
-summary: "Writing files is not the same as protecting your work. ShipGlows uses commits that contain one completed block of work and clear delivery states to make agent work easy to trace and recover."
+title: "How ShipGlows protects your work from start to finish with Git and GitHub"
+description: "A beginner-friendly guide to Git, GitHub, commits, remote backup, interruption recovery, and the way ShipGlows protects agent work throughout a project."
+summary: "ShipGlows does not wait until the end to protect your code. It creates useful recovery points, checks for local-only work, and makes backup and deployment easy to tell apart."
 publishDate: 2026-08-21
 locale: "en"
 articleKey: "git-backed-agent-work"
@@ -15,104 +15,110 @@ tags:
   - "recovery"
 featured: false
 draft: false
-readingTime: "6 min"
+readingTime: "8 min"
 ---
 
-An AI agent can change twenty files, pass every local check, and still leave the entire result vulnerable on one machine.
+An AI agent can change twenty files, pass every check, and announce that the work is finished. Yet the entire result may still exist on only one computer.
 
-That is the uncomfortable gap between **code generation** and **protecting the result**. Uncommitted files are not a backup. A local commit is not a remote backup. A remote push is not a deployment.
+This is one of the least visible risks in AI-assisted development. Code can look complete without being safely recorded, backed up somewhere else, or available online.
 
-For a solo founder, those distinctions matter. There may be no second engineer watching the branch, no release manager checking what reached GitHub, and no operations team reconstructing the work after a crash. The workflow itself has to make the state visible.
+ShipGlows protects work throughout a technical chantier instead of treating Git as cleanup for the final minute. That matters especially for solo founders and new vibe coders: there may be no second engineer watching the repository and no release manager checking what reached GitHub. The workflow itself has to make the state clear.
 
-## The hidden local-only risk
+## First: what do Git and GitHub actually do?
 
-Agentic development makes it easy to accumulate a large amount of useful work quickly. It also makes it easy to assume that because the agent described the work as complete, the work must be safe.
+You do not need to become a Git expert to understand the protection model.
 
-Several common states contradict that assumption:
+- **Git** records the history of a project. It can show which files changed and group a coherent block of work into a named record called a **commit**.
+- A **commit** is a useful recovery point. You can inspect it, compare it with earlier work, or return to it when necessary.
+- **GitHub** can hold a remote copy of that Git history, away from your current machine. ShipGlows can also work with another configured Git repository.
+- A **push** sends local commits to that remote repository.
 
-- files were edited but never committed;
-- a commit exists only on the current machine;
-- the branch points to an unexpected remote;
-- unrelated local changes were accidentally mixed into the delivery;
-- the code was pushed, but nobody proved that the intended commit was deployed.
+These actions are related, but they are not interchangeable. Editing a file does not create a commit. Creating a commit does not send it to GitHub. Sending code to GitHub does not put the product online.
 
-None of these states is inherently unusual. The problem is allowing them to stay invisible.
+That is why “the agent changed the code” is not enough evidence by itself.
 
-## Save completed work, not every keystroke
+## Before work starts: identify what is already at risk
 
-The answer is not to commit after every file save. That would produce noise rather than useful recovery points.
+Before ShipGlows changes a technical project, it checks the existing situation without modifying it. Is this the expected repository and branch? Is some work still uncommitted? Does a local commit exist without a remote copy? Are unrelated changes already present?
 
-ShipGlows waits for a coherent block of work to have a stable result and the right checks to pass. It then saves that block in a commit containing only the relevant work and pushes it to the project's Git repository before moving on.
+When everything is healthy, this check stays silent. It does not add another questionnaire or approval screen. When something is vulnerable or ambiguous, ShipGlows makes the risk visible before adding more changes on top of it.
 
-This creates useful recovery points without turning Git history into a stream of arbitrary snapshots.
+This first check protects work that may have come from an earlier session, another tool, or your own manual edits. ShipGlows does not assume it owns every changed file.
 
-The same principle applies at the end of a chantier: changed work cannot be presented as cleanly closed while its commit exists only locally or its push has failed.
+## During the chantier: save completed blocks of work
 
-## Three states that should never be confused
+Protecting work continuously does not mean creating a commit after every keystroke. That would fill the history with arbitrary snapshots that are difficult to understand.
 
-ShipGlows separates three evidence states.
+Instead, ShipGlows waits for a coherent block of work to produce the expected result and pass the relevant checks. It then:
+
+1. selects only the files that belong to that block;
+2. creates a commit that describes the completed result;
+3. pushes the commit to the project's remote Git repository;
+4. confirms whether the remote backup succeeded.
+
+This gives the project understandable recovery points. It also prevents unrelated local edits from being silently mixed into the delivery.
+
+If the push fails, ShipGlows does not pretend that the work is safely backed up. The commit may be valid and useful, but it remains dependent on the current machine until the remote repository confirms it.
+
+## Before a sensitive change: preserve a safe way back
+
+Some operations carry more risk than an ordinary interface edit: authentication, payments, permissions, database migrations, destructive actions, secrets, private data, or production configuration.
+
+Before that kind of work begins, ShipGlows requires the relevant starting point to exist in the remote repository. If the new change goes wrong, there is a known version to inspect or recover.
+
+This safeguard has an important limit: ShipGlows does not create a reassuring commit from broken, incomplete, secret-bearing, ambiguous, or unrelated work. A recovery point is useful only when its contents are trustworthy.
+
+## After an interruption: resume from evidence, not memory
+
+A computer can restart. A terminal can close. An agent session can lose context. You may simply return to the project several days later.
+
+When work resumes, ShipGlows checks the repository again before continuing. It looks for the last commit confirmed on the remote repository and identifies any work that still exists only locally. This helps answer two practical questions:
+
+- What is the last version we know is safely backed up?
+- What unfinished work still needs to be understood and preserved?
+
+ShipGlows preserves unrelated changes and stops when the correct remote repository cannot be determined safely. Guessing would make recovery less reliable, not more.
+
+## Before the chantier ends: do not leave the result on one machine
+
+At completion, ShipGlows checks the delivery state again. Changed work cannot be presented as cleanly finished while its commit exists only locally or its push has failed.
+
+The final report identifies what was committed and whether it was pushed. This makes the state visible without requiring you to remember Git commands in the middle of product work.
+
+## Local, backed up, and deployed are three different states
+
+ShipGlows keeps these states separate because each one answers a different question.
 
 ### Local
 
-Changes are uncommitted, or the relevant commit is not yet available from the project's remote repository. The work may be useful and validated, but it still depends on the current machine.
+The changes or commits still depend on the current machine. The work may be useful and tested, but there is no confirmed remote copy yet.
 
 ### Backed up
 
-The relevant chantier commit is proven reachable from the resolved Git upstream. For many projects that upstream is GitHub, but the evidence is about the configured repository—not an assumption based on a provider logo.
+The relevant commit is available from GitHub or the project's configured remote Git repository. The work no longer depends on only one machine.
 
 ### Deployed
 
-Authoritative hosting or provider evidence confirms the intended commit on a named preview, staging, or production target.
+The hosting platform confirms that the intended version is running on a named preview, staging, or production environment.
 
-A push can establish the second state. It cannot establish the third.
+A push can prove remote backup. It cannot prove deployment.
 
-## Recovery should be quiet when everything is healthy
+## What this protection does not guarantee
 
-Safety tooling becomes counterproductive when it interrupts every normal action.
+Git and GitHub greatly improve traceability and recovery, but they are not magic. ShipGlows does not guarantee GitHub availability, zero data loss, correct repository protection settings, successful CI, or unattended production deployment. Those states depend on the provider and the configuration of each project.
 
-ShipGlows therefore uses a lightweight, read-only persistence check only at existing lifecycle boundaries:
+The promise is more precise: ShipGlows checks the state at useful moments, saves coherent work, pushes it when the repository is ready, preserves unrelated changes, and refuses to hide whether the result is local, backed up, or deployed.
 
-- before the first write of a mutating chantier;
-- when an interrupted chantier resumes;
-- before sensitive operations;
-- before closure classification.
+## Five simple questions after an agent says “done”
 
-When the repository, branch, upstream, ownership, and persistence state are coherent, the check stays silent. It does not create another screen, questionnaire, or approval step.
+You can evaluate any coding agent with the same checklist:
 
-When something is vulnerable, the result is actionable: identify the local-only commit, preserve unrelated dirty work, stop before guessing an ambiguous remote, or recover the last proven upstream point and the remaining local scope.
+1. What completed work was recorded?
+2. Was it sent to the intended GitHub or Git repository?
+3. Were unrelated changes kept out of that commit?
+4. If the product is said to be online, what deployment proves it?
+5. If the session stops now, where is the last safe version?
 
-## Sensitive work needs a remote recovery point first
+You do not need to operate Git manually throughout the chantier to benefit from these questions. ShipGlows is designed to answer them as part of the workflow, so you can concentrate on building the product without confusing “changed,” “saved,” and “online.”
 
-Authentication, payments, permissions, migrations, destructive changes, tenant boundaries, secrets, private data, and production operations have a larger blast radius than an ordinary edit.
-
-Before that kind of mutation begins, ShipGlows requires the relevant pre-change baseline to be remotely backed up. It does not manufacture a reassuring commit from failing, incomplete, secret-bearing, ambiguous, or unrelated work.
-
-That boundary matters: a recovery point is useful only when its contents and ownership are trustworthy.
-
-## What this does—and does not—promise
-
-ShipGlows can truthfully describe a governed Git workflow that:
-
-- commits and pushes completed, validated blocks of work;
-- refuses clean closure for local-only changed work;
-- checks for vulnerable state at meaningful boundaries;
-- preserves unrelated changes outside the delivery scope;
-- distinguishes remote backup from proof of deployment.
-
-It does not guarantee GitHub availability, zero data loss, repository protection settings, successful CI, or unattended production shipping. Those claims require provider evidence and project-specific configuration.
-
-The value is not a magical guarantee. It is that the workflow refuses to hide which state the work is actually in.
-
-## A practical question for any coding agent
-
-After an agent says “done,” ask:
-
-1. Which exact commit contains the result?
-2. Is that commit reachable from the intended remote branch?
-3. Were unrelated local changes excluded?
-4. If deployment is claimed, which provider evidence matches that commit?
-5. If the session stops now, what is the last proven recovery point?
-
-If those answers are missing, the code may be changed without the work being safely delivered.
-
-ShipGlows is designed to keep that distinction visible. [Read the Git continuity contract in the public docs](/docs#git-continuity), or [inspect the workflow source on GitHub](https://github.com/commandglows/shipglows).
+[See the three delivery states in the public documentation](/docs#git-continuity), or [inspect the ShipGlows workflow on GitHub](https://github.com/commandglows/shipglows).
