@@ -1,11 +1,11 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.0.0"
+artifact_version: "1.1.0"
 project: shipglows_app
 created: "2026-08-21"
 updated: "2026-08-21"
-status: ready
+status: reviewed
 source_skill: 007-sg-content
 scope: educational-handoff-article
 owner: Diane
@@ -27,14 +27,14 @@ evidence:
   - "Operator request 2026-08-21: create an educational article explaining handoffs and their practical details."
   - "Operator clarification 2026-08-21: the article must both teach the basic concept and serve as an entry point into ShipGlows skills."
   - "Operator decision 2026-08-21: recommend a fresh conversation when useful context becomes unreliable, not merely because a thread is long or its topic changes."
-next_step: Draft and validate the paired French and English articles, then ship them on the current site PR branch.
+next_step: Review the rendered preview for site PR 13, then merge after visual approval.
 ---
 
 # Educational Handoff Article
 
 ## Status
 
-ready
+complete — the paired educational article teaches the concept and connects it to ShipGlows skills without overstating runtime capability
 
 ## Acceptance Criteria
 
@@ -50,17 +50,19 @@ ready
 ## Implementation Tasks
 
 - [x] Resolve audience, surface, dual angle, claims, locale parity, and internal-link destinations.
-- [ ] Draft the French article.
-- [ ] Adapt the English peer idiomatically.
-- [ ] Run focused article and claim validation without a build.
-- [ ] Record editorial delivery and push each validated milestone.
+- [x] Draft the French article.
+- [x] Adapt the English peer idiomatically.
+- [x] Run focused article and claim validation without a build.
+- [x] Record editorial delivery and push each validated milestone.
 
 ## Current Chantier Flow
 
-`operator intent ✅ -> dual angle clarified ✅ -> plan approved ✅ -> spec ready ✅ -> FR/EN draft -> focused proof -> commit/push`
+`operator intent ✅ -> dual angle clarified ✅ -> plan approved ✅ -> spec ready ✅ -> FR/EN draft ✅ -> focused proof ✅ -> commit/push ✅`
 
 ## Skill Run History
 
 | Date | Skill | Result | Evidence | Next step |
 | --- | --- | --- | --- | --- |
 | 2026-08-21 | sg-content | ready | The operator approved an article that teaches handoff fundamentals and demonstrates how ShipGlows skills operationalize them. | draft both locale peers |
+| 2026-08-21 | sg-content | implemented | French and English peers were drafted with concept-first education, ShipGlows workflow detail, skill entry points, a realistic handoff example, capability boundaries, and sensitive-data exclusions; commit `50162a7` was pushed. | verify the paired public surface |
+| 2026-08-21 | sg-content | verified | Locale parity passes; metadata/schema fields, reciprocal slugs, internal link targets, claim/redaction scan, and diff hygiene pass without a local build. Fresh docs not needed because the article describes governed ShipGlows behavior and stable handoff fundamentals without current external claims. | review the rendered PR preview |
