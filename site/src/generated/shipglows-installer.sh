@@ -130,6 +130,7 @@ if [ "$INSTALL_SURFACE" = codex-plugin ]; then
     log "Surface sélectionnée: plugin Codex (aucun clone runtime ni corpus)."
     log "Ajoutez la marketplace ShipGlows, puis installez le plugin :"
     log "  codex plugin marketplace add commandglows/shipglows --ref main --sparse .agents/plugins --sparse plugins/shipglows"
+    log "  codex plugin add shipglows@shipglows"
     exit 0
 fi
 

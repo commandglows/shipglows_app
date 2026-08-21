@@ -5,6 +5,7 @@ import NavBar from "../components/NavBar.astro";
 
 const installCommand =
   "codex plugin marketplace add commandglows/shipglows --ref main --sparse .agents/plugins --sparse plugins/shipglows";
+const addPluginCommand = "codex plugin add shipglows@shipglows";
 ---
 
 <BaseLayout
@@ -80,18 +81,18 @@ const installCommand =
         </article>
 
         <article class="doc-card">
-          <h3>2. Restart Codex</h3>
+          <h3>2. Install the plugin</h3>
           <p>
-            Restart Codex so the new marketplace source is loaded into the
-            plugin directory.
+            Install ShipGlows directly from the marketplace you just added.
           </p>
+          <pre><code>{addPluginCommand}</code></pre>
         </article>
 
         <article class="doc-card">
-          <h3>3. Install the plugin</h3>
+          <h3>3. Restart Codex</h3>
           <p>
-            Open the plugin directory, choose the <code>ShipGlows</code>
-            marketplace, then install the <code>shipglows</code> plugin.
+            Start a new Codex session so the installed plugin and its single
+            <code>$shipglows</code> entrypoint are loaded.
           </p>
         </article>
 

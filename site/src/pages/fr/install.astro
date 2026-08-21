@@ -7,6 +7,7 @@ import { pathFor } from "../../i18n/ui";
 const locale = "fr";
 const installCommand =
   "codex plugin marketplace add commandglows/shipglows --ref main --sparse .agents/plugins --sparse plugins/shipglows";
+const addPluginCommand = "codex plugin add shipglows@shipglows";
 ---
 
 <BaseLayout
@@ -85,19 +86,19 @@ const installCommand =
         </article>
 
         <article class="doc-card">
-          <h3>2. Redémarrer Codex</h3>
+          <h3>2. Installer le plugin</h3>
           <p>
-            Redémarrez Codex pour que la nouvelle source marketplace soit
-            chargée dans le répertoire des plugins.
+            Installez ShipGlows directement depuis la marketplace que vous
+            venez d’ajouter.
           </p>
+          <pre><code>{addPluginCommand}</code></pre>
         </article>
 
         <article class="doc-card">
-          <h3>3. Installer le plugin</h3>
+          <h3>3. Redémarrer Codex</h3>
           <p>
-            Ouvrez le répertoire des plugins, choisissez la marketplace
-            <code>ShipGlows</code>, puis installez le plugin
-            <code>shipglows</code>.
+            Démarrez une nouvelle session Codex pour charger le plugin installé
+            et son unique entrée <code>$shipglows</code>.
           </p>
         </article>
 
