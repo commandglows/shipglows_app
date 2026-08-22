@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.40.0"
+artifact_version: "1.41.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-22"
-updated_at: "2026-08-22 05:16:17 UTC"
+updated_at: "2026-08-22 06:39:03 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -773,6 +773,7 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-22 06:39:03 UTC | sg-bug + sg-design | GPT-5 Codex | Replaced the opaque incoming-terminal cross-fade after operator rejection: the prior stable terminal now stays fully painted above the newly mounted live terminal while its resize redraw settles, then the cover fades out through canonical motion tokens with a bounded reveal deadline. | locally verified: focused Workspace 20/20, complete Flutter 328/328, clean analysis, release Web build, design drift and diff hygiene pass; hosted visual proof pending | Push and deploy the app-only correction, then obtain operator visual confirmation |
 | 2026-08-22 05:16:17 UTC | sg-design | GPT-5 Codex | Reordered the existing Workspace connected marker after bounded pre-attachment output, staged and frame-batched the initial `xterm` redraw, then cross-faded from the volatile cached surface with the canonical fast-motion token and a zero-duration reduced-motion path. | locally verified: runner 412/412 plus focused gateway 13/13, typecheck and lint; Flutter 328/328, analysis and release Web build; metadata, design drift and diff hygiene pass | Push the scoped change to `main`, deploy the app and runner revisions, then obtain operator visual confirmation for Terminal and Neovim |
 | 2026-08-22 04:01:23 UTC | sg-design + sg-development | GPT-5 Codex | Added separate volatile Editor and Terminal render buffers for the current project, preserved cached frames across surface reconnects, bound late socket output to its originating buffer, disabled input until live, and purged both buffers before a project change. | local implementation and two focused cache/isolation regressions authored; design drift 0; hosted Flutter build and visual proof pending | Push to `main`, prove the Vercel build, then obtain operator confirmation that repeat surface switches feel immediate |
 | 2026-08-22 00:08:37 UTC | sg-bug + sg-release | GPT-5 Codex | Diagnosed the residual two-second blank terminal as lost PTY output between session creation and WebSocket attachment, then added a strict pre-attach buffer and an immediate client resize/redraw frame. | measured startup costs exclude tmux, shell and Neovim as the delay source; focused gateway 13/13, runner 412/412, typecheck, lint, metadata and diff checks pass; commit `dc158bf` pushed, runner healthy on the exact revision and matching Vercel application deployment successful | Obtain operator visual confirmation for Terminal and Neovim before closing the rendered defect |
@@ -916,6 +917,10 @@ Perceived instant switching does not create or prefetch a second privileged sess
 The operator confirmed that cached Editor/Terminal opening is now nearly instantaneous and identified only a brief terminal redraw flash. The existing `connected` status is therefore the initial-frame boundary: the runner sends bounded pre-attachment PTY chunks first, then the marker. Flutter stages those chunks in a new offscreen `Terminal`, coalesces all output received within one Flutter frame, keeps the cached surface visible, and publishes the completed terminal through the existing 120 ms fast-motion token. The transition becomes immediate when `MediaQuery.disableAnimations` is true. The switcher is keyed by project identity so cross-project changes synchronously discard the outgoing render rather than fading private content across the boundary.
 
 `006-sg-design` (atomic frame + fast fade accepted) -> `102-sg-start` (runner/Flutter implementation) -> `103-sg-verify` (frame-order, cache isolation, paste/input, reduced-motion and complete runner regression) -> `005-sg-ship` and `405-sg-prod` (authorized) -> operator visual retest
+
+Operator retest rejected the incoming-canvas cross-fade because `TerminalView` paints an opaque background before its mounted resize redraw has settled. The live terminal is now mounted underneath the complete cached terminal. New output resets one canonical fast-motion quiet window, a canonical standard-motion deadline prevents continuous output from hiding the live session indefinitely, and only the stable cover fades. Reduced motion preserves the stabilization cover but removes its fade; project changes still purge the cover synchronously.
+
+`003-sg-bug` (root cause confirmed) -> `006-sg-design` (stable-cover transition implemented) -> `103-sg-verify` (focused 20/20, complete Flutter 328/328, analysis, release Web build and design drift pass) -> `005-sg-ship` and `405-sg-prod` (same approved app-only continuation) -> operator visual retest required before closure
 
 ## Single-conversation delivery amendment — 2026-08-21
 

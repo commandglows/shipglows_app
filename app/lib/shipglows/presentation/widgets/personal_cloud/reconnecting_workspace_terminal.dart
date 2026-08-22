@@ -84,6 +84,11 @@ class _ReconnectingWorkspaceTerminalState
   StreamSubscription<Object?>? _messages;
   Timer? _heartbeat;
   Timer? _stabilityTimer;
+  Timer? _terminalRevealTimer;
+  Timer? _terminalRevealDeadline;
+  Timer? _terminalCoverCleanup;
+  Terminal? _coveredTerminal;
+  bool _terminalCoverVisible = false;
   WorkspaceConnectionState _connectionState =
       WorkspaceConnectionState.connecting;
   String _statusMessage = 'Ouverture du Workspace protégé…';
@@ -116,6 +121,9 @@ class _ReconnectingWorkspaceTerminalState
   void didUpdateWidget(covariant ReconnectingWorkspaceTerminal oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.projectId != widget.projectId) {
+      _cancelTerminalReveal();
+      _coveredTerminal = null;
+      _terminalCoverVisible = false;
       _terminals.clear();
       _terminals[widget.surface] = _createTerminal();
     }
@@ -354,12 +362,67 @@ class _ReconnectingWorkspaceTerminalState
       if (output.isNotEmpty) frameBatch.terminal.write(output);
       if (frameBatch.initialFrameComplete && !frameBatch.published) {
         frameBatch.published = true;
-        setState(() => _terminals[widget.surface] = frameBatch.terminal);
+        _publishTerminal(frameBatch.terminal, generation);
+      } else if (output.isNotEmpty && frameBatch.published) {
+        _scheduleTerminalReveal(generation);
       }
       if (frameBatch.hasPendingOutput) {
         _scheduleFrameFlush(frameBatch, generation);
       }
     });
+  }
+
+  void _publishTerminal(Terminal terminal, int generation) {
+    final previousTerminal = _terminal;
+    _cancelTerminalReveal();
+    setState(() {
+      _coveredTerminal = previousTerminal;
+      _terminalCoverVisible = true;
+      _terminals[widget.surface] = terminal;
+    });
+    final tokens = AppTheme.tokensOf(context);
+    _terminalRevealDeadline = Timer(
+      tokens.motion.standard,
+      () => _revealTerminal(generation),
+    );
+    _scheduleTerminalReveal(generation);
+  }
+
+  void _scheduleTerminalReveal(int generation) {
+    if (_coveredTerminal == null) return;
+    _terminalRevealTimer?.cancel();
+    _terminalRevealTimer = Timer(
+      AppTheme.tokensOf(context).motion.fast,
+      () => _revealTerminal(generation),
+    );
+  }
+
+  void _revealTerminal(int generation) {
+    if (!mounted || generation != _generation || !_terminalCoverVisible) return;
+    _terminalRevealTimer?.cancel();
+    _terminalRevealTimer = null;
+    _terminalRevealDeadline?.cancel();
+    _terminalRevealDeadline = null;
+    setState(() => _terminalCoverVisible = false);
+    final fadeDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : AppTheme.tokensOf(context).motion.fast;
+    _terminalCoverCleanup?.cancel();
+    _terminalCoverCleanup = Timer(fadeDuration, () {
+      if (!mounted || generation != _generation || _terminalCoverVisible) {
+        return;
+      }
+      setState(() => _coveredTerminal = null);
+    });
+  }
+
+  void _cancelTerminalReveal() {
+    _terminalRevealTimer?.cancel();
+    _terminalRevealTimer = null;
+    _terminalRevealDeadline?.cancel();
+    _terminalRevealDeadline = null;
+    _terminalCoverCleanup?.cancel();
+    _terminalCoverCleanup = null;
   }
 
   void _send(Map<String, Object> frame) {
@@ -500,6 +563,7 @@ class _ReconnectingWorkspaceTerminalState
   @override
   void dispose() {
     _generation += 1;
+    _cancelTerminalReveal();
     unawaited(_releaseCurrent());
     super.dispose();
   }
@@ -559,31 +623,31 @@ class _ReconnectingWorkspaceTerminalState
                       _connectionState == WorkspaceConnectionState.reconnecting
                   ? FutureBuilder<void>(
                       future: _workspaceTerminalFontReady,
-                      builder: (context, _) => AnimatedSwitcher(
+                      builder: (context, _) => Stack(
                         key: ValueKey('workspace-terminal-${widget.projectId}'),
-                        duration: MediaQuery.disableAnimationsOf(context)
-                            ? Duration.zero
-                            : tokens.motion.fast,
-                        switchInCurve: Curves.easeOut,
-                        switchOutCurve: Curves.easeOut,
-                        layoutBuilder: (currentChild, previousChildren) =>
-                            Stack(
-                              fit: StackFit.expand,
-                              children: [...previousChildren, ?currentChild],
+                        fit: StackFit.expand,
+                        children: [
+                          _buildTerminalView(_terminal, tokens),
+                          if (_coveredTerminal case final coveredTerminal?)
+                            IgnorePointer(
+                              child: AnimatedOpacity(
+                                key: const ValueKey(
+                                  'workspace-terminal-stable-cover',
+                                ),
+                                opacity: _terminalCoverVisible ? 1 : 0,
+                                duration:
+                                    MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : tokens.motion.fast,
+                                curve: Curves.easeOut,
+                                child: _buildTerminalView(
+                                  coveredTerminal,
+                                  tokens,
+                                  autofocus: false,
+                                ),
+                              ),
                             ),
-                        child: TerminalView(
-                          _terminal,
-                          key: ObjectKey(_terminal),
-                          autofocus: true,
-                          deleteDetection: shouldUseWorkspaceDeleteDetection(
-                            isWeb: kIsWeb,
-                            platform: defaultTargetPlatform,
-                          ),
-                          padding: EdgeInsets.all(tokens.spacing.xs),
-                          textStyle: TerminalStyle.fromTextStyle(
-                            AppTheme.workspaceTerminalTextStyle(context),
-                          ),
-                        ),
+                        ],
                       ),
                     )
                   : _WorkspaceRecoveryPanel(
@@ -599,6 +663,24 @@ class _ReconnectingWorkspaceTerminalState
       ),
     );
   }
+
+  Widget _buildTerminalView(
+    Terminal terminal,
+    AppThemeTokens tokens, {
+    bool autofocus = true,
+  }) => TerminalView(
+    terminal,
+    key: ObjectKey(terminal),
+    autofocus: autofocus,
+    deleteDetection: shouldUseWorkspaceDeleteDetection(
+      isWeb: kIsWeb,
+      platform: defaultTargetPlatform,
+    ),
+    padding: EdgeInsets.all(tokens.spacing.xs),
+    textStyle: TerminalStyle.fromTextStyle(
+      AppTheme.workspaceTerminalTextStyle(context),
+    ),
+  );
 }
 
 class _WorkspaceTerminalFrameBatch {

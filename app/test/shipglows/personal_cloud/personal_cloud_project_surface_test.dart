@@ -441,7 +441,7 @@ void main() {
     expect(socket.sent, hasLength(sentBeforeHeartbeat));
   });
 
-  testWidgets('publishes one complete terminal frame with a fast fade', (
+  testWidgets('keeps the stable terminal above the next complete frame', (
     tester,
   ) async {
     final socket = _WorkspaceSocket();
@@ -477,24 +477,37 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    final switcher = tester.widget<AnimatedSwitcher>(
-      find.byType(AnimatedSwitcher),
-    );
-    expect(switcher.duration, const Duration(milliseconds: 120));
     expect(find.byType(TerminalView), findsNWidgets(2));
-    final liveTerminal = tester
+    final terminalLayers = tester
         .widgetList<TerminalView>(find.byType(TerminalView))
-        .last
-        .terminal;
+        .toList();
+    final liveTerminal = terminalLayers.first.terminal;
     expect(liveTerminal, isNot(same(cachedTerminal)));
     expect(liveTerminal.buffer.getText(), contains('first complete frame'));
+    expect(terminalLayers.last.terminal, same(cachedTerminal));
+    final cover = tester.widget<AnimatedOpacity>(
+      find.byKey(const ValueKey('workspace-terminal-stable-cover')),
+    );
+    expect(cover.opacity, 1);
+    expect(cover.duration, const Duration(milliseconds: 120));
 
     await tester.pump(const Duration(milliseconds: 120));
+    expect(
+      tester
+          .widget<AnimatedOpacity>(
+            find.byKey(const ValueKey('workspace-terminal-stable-cover')),
+          )
+          .opacity,
+      0,
+    );
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(find.byType(TerminalView), findsOneWidget);
   });
 
   testWidgets('removes the terminal fade when animations are disabled', (
     tester,
   ) async {
+    final socket = _WorkspaceSocket();
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,
@@ -504,7 +517,7 @@ void main() {
             body: ReconnectingWorkspaceTerminal(
               projectId: 'project-1',
               projectName: 'Projet test',
-              transport: _WorkspaceTransport([_WorkspaceSocket()]),
+              transport: _WorkspaceTransport([socket]),
               surface: RemoteWorkspaceSurface.terminal,
               reconnectPolicy: const WorkspaceReconnectPolicy(
                 delays: [],
@@ -517,8 +530,15 @@ void main() {
     );
     await _pumpAsync(tester);
 
+    socket.emitFromServer(jsonEncode({'type': 'status', 'state': 'connected'}));
+    await tester.pump();
+    await tester.pump();
     expect(
-      tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher)).duration,
+      tester
+          .widget<AnimatedOpacity>(
+            find.byKey(const ValueKey('workspace-terminal-stable-cover')),
+          )
+          .duration,
       Duration.zero,
     );
   });
