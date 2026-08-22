@@ -1,7 +1,7 @@
 ---
 title: "ShipGlows et T3 Code : la même conviction, un périmètre différent"
 description: "Pourquoi ShipGlows admire T3 Code, ce que les deux projets partagent, ce qui les distingue et pourquoi ShipGlows n’utilise pas aujourd’hui T3 Code comme backend runtime."
-summary: "T3 Code prouve que les agents de code méritent une excellente interface. ShipGlows partage cette conviction et explore un problème adjacent autour du contexte projet, des workflows gouvernés, des preuves et de la livraison."
+summary: "T3 Code prouve que les agents de code méritent une excellente interface. ShipGlows partage cette conviction tout en construisant un framework business plus large autour d’une vérité commune, de métiers responsables, de l’exécution et de la preuve."
 publishDate: 2026-08-21
 locale: "fr"
 articleKey: "shipglows-and-t3-code"
@@ -38,7 +38,7 @@ Cette architecture confirme plusieurs choix également importants pour ShipGlows
 - l’accès distant ne devrait pas consister à diffuser un terminal brut dans un navigateur
 - l’utilisateur devrait pouvoir choisir entre plusieurs agents de code
 
-En ce sens, T3 Code et ShipGlows participent au même mouvement : transformer les agents de code en produits logiciels fiables.
+En ce sens, T3 Code et ShipGlows participent au même mouvement : rendre le travail assisté par les agents compréhensible, gouvernable et fiable.
 
 ## Ce que T3 Code fait déjà remarquablement bien
 
@@ -50,12 +50,12 @@ Si votre besoin principal est une excellente interface graphique pour piloter le
 
 ## Le problème adjacent que ShipGlows explore
 
-ShipGlows construit lui aussi une interface de conversation sémantique pour les agents de code. Autour de cette interface, nous expérimentons une autre question produit : comment relier le travail des agents au reste du contexte opérationnel d’un projet ?
+ShipGlows est un framework business pour les humains et les agents IA. Une interface de conversation sémantique pour les agents de code constitue une surface technique de ce framework plus large, pas sa définition. La question centrale est de savoir comment humains et agents peuvent travailler depuis la même vérité business à travers l’identité, la marque, le contenu, le produit, la technologie, la croissance, la livraison et la preuve.
 
-ShipGlows cherche à relier le travail de l’agent à :
+ShipGlows cherche à relier le travail des humains et des agents à :
 
 - la santé du projet et son contexte opérationnel
-- des responsabilités explicites en produit, ingénierie, design, contenu, SEO, maintenance et livraison
+- des responsabilités explicites en identité, marque, contenu, produit, ingénierie, croissance, maintenance et livraison
 - des plans gouvernés et des limites d’approbation
 - des preuves issues des tests, audits, documentations et livraisons
 - une distinction claire entre discussion, implémentation, vérification et mise en production
@@ -63,7 +63,7 @@ ShipGlows cherche à relier le travail de l’agent à :
 
 La différence n’est donc pas « interface graphique contre terminal ». Sur ce point, nous sommes d’accord avec T3 Code.
 
-La distinction porte donc sur l’intention produit, pas sur l’ambition ou la qualité. T3 Code offre une surface de contrôle mature pour les agents de code. ShipGlows explore encore la manière de relier le travail de l’agent à des questions comme : pourquoi un changement compte, quel métier le possède, quelles preuves le rendent digne de confiance et quand il est véritablement livré.
+La distinction porte donc sur le périmètre, pas sur l’ambition ou la qualité. T3 Code offre une surface de contrôle mature pour les agents de code. ShipGlows relie le travail des humains et des agents à des questions comme : pourquoi une ambition compte, quel métier la porte, comment l’identité et le business restent reliés à l’exécution technique, quelles preuves rendent le résultat digne de confiance et quand il est véritablement livré.
 
 Ce périmètre plus large crée d’autres contraintes. ShipGlows a besoin d’un contrat runtime neutre qui reste subordonné à la gouvernance du projet. L’agent est un exécutant dans le workflow produit ; il n’est pas le propriétaire de l’ensemble du workflow.
 
@@ -95,7 +95,7 @@ Mais l’admiration n’exige pas une dépendance architecturale. Parfois, la r�
 
 ## Notre position en une phrase
 
-T3 Code construit une excellente surface de contrôle pour les agents de code ; ShipGlows apprend de cette vision tout en explorant une couche adjacente autour du travail produit réalisé par ces agents.
+T3 Code construit une excellente surface de contrôle pour les agents de code ; ShipGlows apprend de cette vision tout en construisant un framework business que les humains utilisent directement et à travers lequel les agents peuvent agir.
 
 Nous sommes assez proches pour apprendre les uns des autres, assez différents pour justifier des architectures séparées, et reconnaissants que T3 Code existe.
 

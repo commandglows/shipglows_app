@@ -110,7 +110,7 @@ export const navCopy = {
 export const footerCopy = {
   en: {
     body:
-      "A business-aware delivery partner for founders who want better decisions, owned execution, and proof they can inspect.",
+      "A business framework for humans and AI agents who want to create distinctive identities and build businesses that make an impact.",
     links: [
       ["Skills", "/skills"],
       ["Blog", "/blog"],
@@ -120,7 +120,7 @@ export const footerCopy = {
   },
   fr: {
     body:
-      "Un partenaire business et delivery pour les fondateurs qui veulent de meilleures décisions, une exécution portée et des preuves inspectables.",
+      "Un framework business pour les humains et les agents IA qui veulent créer des identités marquantes et construire des business qui ont de l’impact.",
     links: [
       ["Skills", "/skills"],
       ["Blog", "/blog"],
@@ -132,18 +132,18 @@ export const footerCopy = {
 
 export const homeCopy = {
   en: {
-    title: "ShipGlows | A business-aware delivery partner",
+    title: "ShipGlows | The business framework for humans and AI agents",
     description:
-      "ShipGlows turns governed business truth into useful decisions, owned chantiers, and verified delivery for founders working with AI agents.",
+      "ShipGlows aligns humans and AI agents around shared truth to shape distinctive identities and carry business ambitions through execution and proof.",
     hero: {
-      eyebrow: "Business-aware delivery for founders",
-      title: "Give your AI agents a partner that understands what the business is trying to achieve.",
+      eyebrow: "The business framework for humans and agents",
+      title: "Create distinctive identities. Build businesses that make an impact. Give every ambition a solid technical execution.",
       body:
-        "ShipGlows connects your business truth to the work agents perform. It challenges weak framing, recommends a direction, routes the right métier, and carries bounded chantiers through visible proof—while delivery infrastructure stays in its supporting role.",
+        "ShipGlows aligns people and AI around shared business truth. It connects vision, identity, brand, content, product, technology, growth, delivery, and proof so the right métiers can carry an ambition into reality.",
       points: [
-        "business, product, market, and brand context shape the decision",
-        "one accountable métier owns the outcome from intent to proof",
-        "important choices expose their business consequence—not just their technical path"
+        "founders, teams, and agents work from the same governed truth",
+        "identity, content, product, technology, and growth stay connected",
+        "one accountable métier carries each outcome from intent to proof"
       ],
       actions: [
         ["Meet The Métiers", "/skills", "button button-primary"],
@@ -158,7 +158,7 @@ export const homeCopy = {
       note: "Infrastructure, environments, and release controls remain available as delivery capabilities—not as the product’s leading promise."
     },
     features: {
-      eyebrow: "Why This Partnership Matters",
+      eyebrow: "Why This Framework Matters",
       title: "Technical execution is only valuable when it advances the right outcome.",
       body:
         "AI can produce work quickly. The harder problem is preserving the product’s direction, making trade-offs visible, and keeping delivery accountable to the promise behind the task.",
@@ -211,18 +211,18 @@ export const homeCopy = {
     ]
   },
   fr: {
-    title: "ShipGlows | Partenaire business et delivery",
+    title: "ShipGlows | Le framework business pour humains et agents",
     description:
-      "ShipGlows transforme une vérité business gouvernée en décisions utiles, chantiers portés et livraison vérifiée pour les fondateurs qui travaillent avec des agents IA.",
+      "ShipGlows aligne humains et agents IA autour d’une vérité commune pour façonner des identités marquantes et porter les ambitions business jusqu’à la preuve.",
     hero: {
-      eyebrow: "Delivery business-aware pour fondateurs",
-      title: "Donnez à vos agents IA un partenaire qui comprend ce que le business cherche à accomplir.",
+      eyebrow: "Le framework business pour humains et agents",
+      title: "Créer des identités marquantes. Construire des business qui ont de l’impact. Donner à chaque ambition une exécution technique solide.",
       body:
-        "ShipGlows relie votre vérité business au travail réalisé par les agents. Il questionne les cadrages faibles, recommande une direction, mobilise le bon métier et porte des chantiers bornés jusqu’à une preuve visible — tandis que l’infrastructure de livraison reste à sa juste place de soutien.",
+        "ShipGlows aligne les humains et l’IA autour d’une vérité business commune. Il relie vision, identité, marque, contenu, produit, technologie, croissance, livraison et preuve afin que les bons métiers transforment une ambition en réalité.",
       points: [
-        "le contexte business, produit, marché et marque façonne la décision",
-        "un métier responsable porte le résultat de l’intention jusqu’à la preuve",
-        "les choix importants exposent leur conséquence business — pas seulement leur chemin technique"
+        "fondateurs, équipes et agents travaillent depuis la même vérité gouvernée",
+        "identité, contenu, produit, technologie et croissance restent reliés",
+        "un métier responsable porte chaque résultat de l’intention jusqu’à la preuve"
       ],
       actions: [
         ["Découvrir les métiers", "/skills", "button button-primary"],
@@ -237,7 +237,7 @@ export const homeCopy = {
       note: "Infrastructure, environnements et contrôles de release restent disponibles comme capacités de livraison — pas comme promesse principale du produit."
     },
     features: {
-      eyebrow: "Pourquoi ce partenariat compte",
+      eyebrow: "Pourquoi ce framework compte",
       title: "L’exécution technique n’a de valeur que si elle fait avancer le bon résultat.",
       body:
         "L’IA peut produire vite. Le problème plus difficile est de préserver la direction produit, rendre les arbitrages visibles et garder la livraison responsable devant la promesse qui motive la tâche.",
@@ -295,9 +295,9 @@ export const sharedHomeSections = {
   en: {
     product: {
       eyebrow: "The Product Hierarchy",
-      title: "Business partnership first. Delivery capabilities in support.",
+      title: "One business framework. Humans and agents working from shared truth.",
       body:
-        "ShipGlows is designed around four ordered layers. The first three create the customer promise; the fourth makes that promise operable across real projects and environments.",
+        "ShipGlows organizes four ordered layers around a business ambition. Humans can use the contracts directly, while agents can act through the same context, ownership, and proof model.",
       panels: [
         ["1–2 · Truth and partnership", ["load the smallest coherent business context", "connect work to audience, promise, and priority", "question material gaps without offloading research", "recommend useful business or product directions"]],
         ["3–4 · Execution and delivery", ["assign one accountable métier to the outcome", "bound mutations through explicit approval", "verify behavior, claims, and handoffs", "use environment and release operations as supporting proof"]]
@@ -322,11 +322,11 @@ export const sharedHomeSections = {
     },
     pricing: {
       eyebrow: "Product Boundary",
-      title: "ShipGlows is software, not a service offer.",
+      title: "ShipGlows is a framework, not a service offer.",
       body:
-        "The business-partner promise is delivered by the autonomous product itself. ShipGlows does not lead to consulting, diagnostics, implementation missions, or human accompaniment.",
+        "Business-partner behavior is built into the framework itself. Humans can use its contracts directly, while agents can act through the same governed system. ShipGlows does not lead to consulting, diagnostics, implementation missions, or human accompaniment.",
       cards: [
-        ["Available today", "A product-led framework you can inspect and use through its repository, documentation, métier skills, governance contracts, and delivery tooling."],
+        ["Available today", "An open, inspectable framework for humans and agents, available through its repository, documentation, métier skills, governance contracts, and delivery tooling."],
         ["Possible later", "Cockpit may become a separate SaaS product. It does not exist today and carries no availability, roadmap, pricing, or waitlist promise."]
       ]
     },
@@ -360,7 +360,7 @@ export const sharedHomeSections = {
       bodySuffix: ". If you want the broader set of common questions in one place, open the",
       bodyEnd: "full FAQ page",
       items: [
-        ["Is ShipGlows a server tool or an AI workflow framework?", "Neither description captures the hierarchy. ShipGlows is a business-aware delivery partner first; agent workflows, governance, environments, and server operations are capabilities used to carry that promise through proof."],
+        ["Who is the ShipGlows framework for?", "ShipGlows is a business framework for humans and AI agents. Founders and teams can use its truths, contracts, métiers, and proof model directly; agents can work through the same framework. It is not limited to software, and business-aware delivery partner describes framework behavior rather than a human service."],
         ["Does ShipGlows make business decisions for me?", "No. It can research discoverable facts, challenge weak framing, compare credible directions, and recommend one. Material choices about intent, promise, risk, cost, or authority remain yours."],
         ["Why not just prompt agents harder?", "Because the main failure mode is not only prompt quality. It is lost context, weak handoffs, silent ambiguity, and drift between docs, product intent, and implementation."],
         ["Does ShipGlows optimize for speed?", "Only after quality is safe. The default is correctness, security, maintainability, relevant performance, and proof before speed, cost, or the shortest path."],
@@ -373,9 +373,9 @@ export const sharedHomeSections = {
   fr: {
     product: {
       eyebrow: "La hiérarchie produit",
-      title: "Le partenariat business d’abord. Les capacités de livraison en soutien.",
+      title: "Un framework business. Humains et agents réunis autour d’une vérité commune.",
       body:
-        "ShipGlows est conçu autour de quatre couches ordonnées. Les trois premières créent la promesse client ; la quatrième rend cette promesse opérable dans des projets et environnements réels.",
+        "ShipGlows organise quatre couches autour d’une ambition business. Les humains peuvent utiliser directement ses contrats tandis que les agents agissent depuis le même modèle de contexte, de responsabilité et de preuve.",
       panels: [
         ["1–2 · Vérité et partenariat", ["charger le plus petit contexte business cohérent", "relier le travail au public, à la promesse et à la priorité", "questionner les lacunes matérielles sans déléguer la recherche", "recommander des directions business ou produit utiles"]],
         ["3–4 · Exécution et livraison", ["confier le résultat à un métier responsable", "borner les mutations par une approbation explicite", "vérifier comportement, claims et handoffs", "utiliser environnement et release comme preuves de soutien"]]
@@ -400,11 +400,11 @@ export const sharedHomeSections = {
     },
     pricing: {
       eyebrow: "Frontière produit",
-      title: "ShipGlows est un logiciel, pas une offre de services.",
+      title: "ShipGlows est un framework, pas une offre de services.",
       body:
-        "La promesse de partenaire business est portée par le produit autonome lui-même. ShipGlows ne mène ni vers du conseil, ni vers un diagnostic, une mission d’implémentation ou un accompagnement humain.",
+        "Le comportement de partenaire business est intégré au framework. Les humains utilisent directement ses contrats tandis que les agents agissent à travers le même système gouverné. ShipGlows ne mène ni vers du conseil, ni vers un diagnostic, une mission d’implémentation ou un accompagnement humain.",
       cards: [
-        ["Disponible aujourd’hui", "Un framework product-led que vous pouvez inspecter et utiliser grâce au dépôt, à la documentation, aux métiers, aux contrats de gouvernance et aux outils de livraison."],
+        ["Disponible aujourd’hui", "Un framework ouvert et inspectable pour les humains et les agents, accessible grâce au dépôt, à la documentation, aux métiers, aux contrats de gouvernance et aux outils de livraison."],
         ["Possible plus tard", "Cockpit pourra devenir un produit SaaS distinct. Il n’existe pas aujourd’hui et ne porte aucune promesse de disponibilité, de roadmap, de prix ou de liste d’attente."]
       ]
     },
@@ -438,7 +438,7 @@ export const sharedHomeSections = {
       bodySuffix: ". Pour toutes les questions fréquentes au même endroit, ouvrez la",
       bodyEnd: "FAQ complète",
       items: [
-        ["ShipGlows est-il un outil serveur ou un framework de workflow IA ?", "Aucune de ces descriptions ne restitue la hiérarchie. ShipGlows est d’abord un partenaire business et delivery ; workflows d’agents, gouvernance, environnements et opérations serveur servent cette promesse jusqu’à la preuve."],
+        ["À qui s’adresse le framework ShipGlows ?", "ShipGlows est un framework business pour les humains et les agents IA. Fondateurs et équipes peuvent utiliser directement ses vérités, contrats, métiers et preuves ; les agents travaillent depuis ce même cadre. Il ne se limite pas au logiciel, et partenaire business et delivery décrit le comportement du framework, pas un service humain."],
         ["ShipGlows prend-il les décisions business à ma place ?", "Non. Il peut rechercher les faits accessibles, questionner un cadrage faible, comparer des directions crédibles et en recommander une. Les choix matériels d’intention, de promesse, de risque, de coût ou d’autorité restent les vôtres."],
         ["Pourquoi ne pas simplement mieux prompter les agents ?", "Parce que le mode d’échec principal n’est pas seulement la qualité du prompt. C’est le contexte perdu, les passages de relais faibles, l’ambiguïté silencieuse et la dérive entre docs, intention produit et implémentation."],
         ["ShipGlows optimise-t-il pour la vitesse ?", "Seulement quand la qualité est sûre. Par défaut, la correction, la sécurité, la maintenabilité, la performance pertinente et la preuve passent avant la vitesse, le coût ou le chemin le plus court."],

@@ -1,7 +1,7 @@
 ---
 title: "ShipGlows and T3 Code: the same conviction, a different scope"
 description: "Why ShipGlows admires T3 Code, where the two projects overlap, how they differ, and why ShipGlows does not currently use T3 Code as its runtime backend."
-summary: "T3 Code proves that coding agents deserve a great interface. ShipGlows shares that conviction while exploring an adjacent problem around project context, governed workflows, evidence, and delivery."
+summary: "T3 Code proves that coding agents deserve a great interface. ShipGlows shares that conviction while building a broader business framework around shared truth, accountable métiers, execution, and proof."
 publishDate: 2026-08-21
 locale: "en"
 articleKey: "shipglows-and-t3-code"
@@ -38,7 +38,7 @@ That architecture validates several choices that also matter to ShipGlows:
 - remote access should not mean streaming a raw terminal into a browser
 - users should be able to choose among coding agents
 
-In that sense, T3 Code and ShipGlows are part of the same movement: turning coding agents into dependable software products.
+In that sense, T3 Code and ShipGlows are part of the same movement: making agent-assisted work understandable, governable, and dependable.
 
 ## What T3 Code already does remarkably well
 
@@ -50,12 +50,12 @@ If your primary need is a high-quality graphical control surface for the coding 
 
 ## The adjacent problem ShipGlows is exploring
 
-ShipGlows is also building a semantic conversation interface for coding agents. Around that interface, we are experimenting with a different product question: how can agent work remain connected to the rest of a project's operating context?
+ShipGlows is a business framework for humans and AI agents. A semantic conversation interface for coding agents is one technical surface within that broader framework, not its definition. The larger question is how humans and agents can work from the same business truth across identity, brand, content, product, technology, growth, delivery, and proof.
 
-ShipGlows aims to connect agent work to:
+ShipGlows aims to connect human and agent work to:
 
 - project health and operational context
-- explicit product, engineering, design, content, SEO, maintenance, and release responsibilities
+- explicit identity, brand, content, product, engineering, growth, maintenance, and release responsibilities
 - governed plans and approval boundaries
 - evidence from tests, audits, documentation, and delivery
 - a clear distinction between discussion, implementation, verification, and release
@@ -63,7 +63,7 @@ ShipGlows aims to connect agent work to:
 
 The difference is therefore not “GUI versus terminal.” We agree with T3 Code on that question.
 
-The distinction is therefore one of product intent, not ambition or quality. T3 Code provides a mature control surface for coding agents. ShipGlows is still exploring how a project can connect agent work to questions such as why a change matters, which discipline owns it, what evidence makes it trustworthy, and when it is genuinely delivered.
+The distinction is therefore one of scope, not ambition or quality. T3 Code provides a mature control surface for coding agents. ShipGlows connects human and agent work to questions such as why an ambition matters, which métier owns it, how identity and business stay connected to technical execution, what evidence makes the result trustworthy, and when it is genuinely delivered.
 
 That broader scope creates different constraints. ShipGlows needs a runtime-neutral contract that stays subordinate to project governance. The agent is an executor within the product workflow; it is not the owner of the whole workflow.
 
@@ -95,7 +95,7 @@ But admiration does not require architectural dependence. Sometimes the most res
 
 ## The position in one sentence
 
-T3 Code is building an excellent control surface for coding agents; ShipGlows learns from that vision while exploring an adjacent layer around the product work those agents perform.
+T3 Code is building an excellent control surface for coding agents; ShipGlows learns from that vision while building a business framework that humans can use directly and agents can act through.
 
 We are close enough to learn from one another, different enough to justify separate architectures, and grateful that T3 Code exists.
 
