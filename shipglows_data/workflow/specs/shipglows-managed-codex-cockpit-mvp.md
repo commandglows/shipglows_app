@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.39.0"
+artifact_version: "1.40.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
-updated: "2026-08-21"
-updated_at: "2026-08-22 04:01:23 UTC"
+updated: "2026-08-22"
+updated_at: "2026-08-22 05:16:17 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -123,6 +123,7 @@ evidence:
   - "Local project-management proof 2026-08-17: the loopback runner owns one persistent workspace-bounded registry and redacted management API; the Flutter runtime exposes one Projects page for connect, activate, default, rename, archive/restore, and disconnect. Repository paths remain private, generic project mutation remains denied, and disconnect never deletes or changes Git files."
   - "Operator decision 2026-08-18: the current Personal Cloud milestone is Projects plus persistent Preview plus reconnectable Workspace; semantic Conversations and Studio remain available but are non-blocking for this milestone."
   - "Operator decision 2026-08-18: Neovim is the primary Personal Cloud work surface; first ship a persistent server-selected tmux/PTY editor, then evolve behind a private runner gateway toward the official Neovim UI RPC protocol."
+  - "Operator visual validation 2026-08-22: volatile Editor/Terminal render caching makes surface opening nearly instantaneous; the remaining issue is a brief partial-redraw flash, to be replaced by an atomic first frame and a reduced-motion-aware fast fade."
 next_step: "/102-sg-start ShipGlows Managed Agent Cockpit MVP"
 ---
 
@@ -582,6 +583,7 @@ ShipGlows skills are the health authority. Each skill run records its skill iden
   - Validate with: authorization/expiry and capability-reuse rejection tests, exact-Origin negative matrix, tmux identity/allowlist tests, heartbeat expiry, PTY resize/fresh-capability reconnect tests, Web/Android/Windows rendering proof, Neovim launch fixture, disconnect cleanup, no-host-path/secret assertions, and deterministic concurrent-session rejection.
   - Implementation note (2026-08-03): the runner now issues one idempotent, short-lived project/actor capability, spawns only a server-allowlisted tmux session through a PTY, rejects invalid/expired/concurrent attachments, bounds input and resize frames, and closes by actor ownership. Flutter creates the capability, connects through the dedicated WebSocket channel, renders PTY output with `xterm`, forwards input/resize, and closes on disposal. Hosted reconnect, Neovim, and Web/Android/Windows rendering proof remain.
   - Implementation note (2026-08-18): the local contract adds the closed `editor|terminal` surface. The runner derives a separate stable tmux name for Éditeur and passes fixed argv ending in `nvim`; Flutter defaults the Workspace to Éditeur, provides Preview/Éditeur/Terminal selection and disposes the previous Workspace before opening another. Direct Neovim UI RPC remains a later bounded batch behind a private normalized gateway, not part of this PTY slice.
+  - Implementation note (2026-08-22): pre-attachment output is now emitted before the existing connected status marker. Flutter batches those initial chunks into an offscreen `Terminal`, publishes only the complete frame on the next render boundary, and cross-fades from the volatile cached surface with the canonical 120 ms fast-motion token. Reduced-motion preference makes the transition duration zero, and changing project identity replaces the transition container so an outgoing private frame can never animate into another project.
 - [~] Task 12: Add observability, operational controls, and secure runbook.
   - Files: `runner/src/observability/**`, `app/lib/shipglows/observability/**`, `shipglows_data/technical/operator-guides/managed-agent-runner.md`, related tests.
   - Action: Integrate Sentry with strict before-send redaction, early Flutter/server initialization, release/build identity, safe diagnostics/log-copy with Paris/UTC headers, health endpoints, runtime auth/process/capability checks, workspace cleanup, quotas, SQLite backup/migration procedures, and incident recovery.
@@ -641,6 +643,7 @@ Personal Cloud follow-up batches are non-overlapping and override broader batch 
 - `AC-016c`: Bounded heartbeat expiry releases the abandoned browser attachment without killing tmux, and a concurrent attach deterministically returns `409 operatorSessionActive` with no implicit takeover.
 - `AC-016d`: Projects + persistent Preview + reconnectable Workspace is the current Personal Cloud completion gate; semantic Conversations and Studio remain usable when available but are not blocking dependencies for that gate.
 - `AC-016e`: The client may request only `editor` or `terminal`; the runner selects cwd, tmux identity and executable. Éditeur reconnects to one stable derived tmux session running fixed `nvim`, Terminal retains the allowlisted shell session, and one idempotency key cannot switch between them.
+- `AC-016f`: Initial PTY chunks are never painted as partial frames. The cached surface remains visible until the runner's post-flush connected marker, then Flutter publishes one frame-batched terminal and uses the canonical fast fade, or no animation when reduced motion is requested; a project change never retains the outgoing project in the transition tree.
 - `AC-017`: At least one proprietary ShipGlows skill can run through bounded `just-bash` against a controlled snapshot, produce versioned evidence, and update health without accessing secrets or unrestricted network/filesystem state.
 - `AC-018`: Copied diagnostics begin with commit/build identity and Paris/UTC build timestamps, remain redacted, and are useful without direct Sentry dashboard access.
 - `AC-019`: The Cockpit shows only caller-authorized redacted run-state supervision; every MVP run records `manual`, and schedule/webhook/system-recommendation triggers are rejected without starting work.
@@ -770,6 +773,7 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-22 05:16:17 UTC | sg-design | GPT-5 Codex | Reordered the existing Workspace connected marker after bounded pre-attachment output, staged and frame-batched the initial `xterm` redraw, then cross-faded from the volatile cached surface with the canonical fast-motion token and a zero-duration reduced-motion path. | locally verified: runner 412/412 plus focused gateway 13/13, typecheck and lint; Flutter 328/328, analysis and release Web build; metadata, design drift and diff hygiene pass | Push the scoped change to `main`, deploy the app and runner revisions, then obtain operator visual confirmation for Terminal and Neovim |
 | 2026-08-22 04:01:23 UTC | sg-design + sg-development | GPT-5 Codex | Added separate volatile Editor and Terminal render buffers for the current project, preserved cached frames across surface reconnects, bound late socket output to its originating buffer, disabled input until live, and purged both buffers before a project change. | local implementation and two focused cache/isolation regressions authored; design drift 0; hosted Flutter build and visual proof pending | Push to `main`, prove the Vercel build, then obtain operator confirmation that repeat surface switches feel immediate |
 | 2026-08-22 00:08:37 UTC | sg-bug + sg-release | GPT-5 Codex | Diagnosed the residual two-second blank terminal as lost PTY output between session creation and WebSocket attachment, then added a strict pre-attach buffer and an immediate client resize/redraw frame. | measured startup costs exclude tmux, shell and Neovim as the delay source; focused gateway 13/13, runner 412/412, typecheck, lint, metadata and diff checks pass; commit `dc158bf` pushed, runner healthy on the exact revision and matching Vercel application deployment successful | Obtain operator visual confirmation for Terminal and Neovim before closing the rendered defect |
 | 2026-08-21 23:48:24 UTC | sg-release | GPT-5 Codex | Shipped the Workspace opening optimization to `main`, fast-forwarded and restarted the managed runner, and confirmed the matching Vercel application artifact contains the protocol-v2 one-request path. | commit `184f97d` pushed; runner healthy on the exact revision; Vercel app deployment successful; public app 200 and runner baseline about 106-109 ms; authenticated opening timing remains operator-session proof | Measure Terminal and Neovim opening from the authenticated browser and compare warm/cold perception |
@@ -906,6 +910,12 @@ The remaining blank interval was not process startup: observed sudo-to-tmux atta
 Perceived instant switching does not create or prefetch a second privileged session. The current project owns two in-memory `Terminal` render buffers keyed only by the closed Editor/Terminal surface enum. A surface switch paints its existing buffer immediately under the visible connecting status while the previous socket/capability closes and the sole new session opens. The disconnected buffer cannot send input, late frames stay bound to the buffer of the socket that produced them, and changing `projectId` clears both buffers synchronously before the new project can render. Widget disposal drops the map; no frame, command or scrollback is serialized to storage.
 
 `006-sg-design` (cache/live-state contract accepted) -> `102-sg-start` (implemented locally) -> `103-sg-verify` (focused cache and cross-project isolation tests authored; hosted Flutter build pending) -> `005-sg-ship` and `405-sg-prod` (authorized) -> operator visual proof required before closure
+
+## Atomic terminal-frame transition amendment — 2026-08-22
+
+The operator confirmed that cached Editor/Terminal opening is now nearly instantaneous and identified only a brief terminal redraw flash. The existing `connected` status is therefore the initial-frame boundary: the runner sends bounded pre-attachment PTY chunks first, then the marker. Flutter stages those chunks in a new offscreen `Terminal`, coalesces all output received within one Flutter frame, keeps the cached surface visible, and publishes the completed terminal through the existing 120 ms fast-motion token. The transition becomes immediate when `MediaQuery.disableAnimations` is true. The switcher is keyed by project identity so cross-project changes synchronously discard the outgoing render rather than fading private content across the boundary.
+
+`006-sg-design` (atomic frame + fast fade accepted) -> `102-sg-start` (runner/Flutter implementation) -> `103-sg-verify` (frame-order, cache isolation, paste/input, reduced-motion and complete runner regression) -> `005-sg-ship` and `405-sg-prod` (authorized) -> operator visual retest
 
 ## Single-conversation delivery amendment — 2026-08-21
 

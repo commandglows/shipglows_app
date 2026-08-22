@@ -76,9 +76,9 @@ describe("OperatorWorkspaceGateway", () => {
     gateway.attach(session.id, session.token, socket, "https://app.shipglows.com");
 
     assert.deepEqual(socket.sent.map((frame) => JSON.parse(frame)), [
-      { type: "status", state: "connected" },
       { type: "output", data: "first frame" },
       { type: "output", data: "second frame" },
+      { type: "status", state: "connected" },
     ]);
   });
 

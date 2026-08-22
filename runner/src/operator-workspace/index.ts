@@ -205,6 +205,14 @@ export class OperatorWorkspaceGateway {
         retire(1011, "Workspace stream failed.");
       }
     };
+    const sendConnected = (): void => {
+      if (released) return;
+      try {
+        socket.send(JSON.stringify({ type: "status", state: "connected" }));
+      } catch {
+        retire(1011, "Workspace stream failed.");
+      }
+    };
     session.outputSink = sendOutput;
     subscriptions.exit = session.pty.onExit(() => {
       if (released) return;
@@ -227,8 +235,8 @@ export class OperatorWorkspaceGateway {
       if (message?.["type"] === "resize" && typeof message["columns"] === "number" && typeof message["rows"] === "number" && validSize(message["columns"], message["rows"])) session.pty.resize(message["columns"], message["rows"]);
     });
     socket.on("close", () => releaseAttachment(true));
-    socket.send(JSON.stringify({ type: "status", state: "connected" }));
     for (const data of pendingOutput) sendOutput(data);
+    sendConnected();
   }
 
   close(sessionId: string): boolean {

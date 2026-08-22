@@ -435,9 +435,92 @@ void main() {
       ),
     );
     await _pumpAsync(tester);
+    final sentBeforeHeartbeat = socket.sent.length;
     socket.emitFromServer('{"type":"heartbeat","state":"alive"}');
     await _pumpAsync(tester);
-    expect(socket.sent, isEmpty);
+    expect(socket.sent, hasLength(sentBeforeHeartbeat));
+  });
+
+  testWidgets('publishes one complete terminal frame with a fast fade', (
+    tester,
+  ) async {
+    final socket = _WorkspaceSocket();
+    await tester.pumpWidget(
+      _app(
+        ReconnectingWorkspaceTerminal(
+          projectId: 'project-1',
+          projectName: 'Projet test',
+          transport: _WorkspaceTransport([socket]),
+          surface: RemoteWorkspaceSurface.terminal,
+          reconnectPolicy: const WorkspaceReconnectPolicy(
+            delays: [],
+            heartbeatInterval: null,
+          ),
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+    final cachedTerminal = tester
+        .widget<TerminalView>(find.byType(TerminalView))
+        .terminal;
+
+    socket.emitFromServer(jsonEncode({'type': 'output', 'data': 'first '}));
+    socket.emitFromServer(
+      jsonEncode({'type': 'output', 'data': 'complete frame'}),
+    );
+    await tester.pump();
+
+    expect(find.byType(TerminalView), findsOneWidget);
+    expect(cachedTerminal.buffer.getText(), isNot(contains('first')));
+
+    socket.emitFromServer(jsonEncode({'type': 'status', 'state': 'connected'}));
+    await tester.pump();
+    await tester.pump();
+
+    final switcher = tester.widget<AnimatedSwitcher>(
+      find.byType(AnimatedSwitcher),
+    );
+    expect(switcher.duration, const Duration(milliseconds: 120));
+    expect(find.byType(TerminalView), findsNWidgets(2));
+    final liveTerminal = tester
+        .widgetList<TerminalView>(find.byType(TerminalView))
+        .last
+        .terminal;
+    expect(liveTerminal, isNot(same(cachedTerminal)));
+    expect(liveTerminal.buffer.getText(), contains('first complete frame'));
+
+    await tester.pump(const Duration(milliseconds: 120));
+  });
+
+  testWidgets('removes the terminal fade when animations are disabled', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Scaffold(
+            body: ReconnectingWorkspaceTerminal(
+              projectId: 'project-1',
+              projectName: 'Projet test',
+              transport: _WorkspaceTransport([_WorkspaceSocket()]),
+              surface: RemoteWorkspaceSurface.terminal,
+              reconnectPolicy: const WorkspaceReconnectPolicy(
+                delays: [],
+                heartbeatInterval: null,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    expect(
+      tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher)).duration,
+      Duration.zero,
+    );
   });
 
   testWidgets('sends continuous non-mobile terminal input without spaces', (
@@ -575,9 +658,16 @@ void main() {
     sockets[0].emitFromServer(
       jsonEncode({'type': 'output', 'data': 'editor cached frame'}),
     );
+    sockets[0].emitFromServer(
+      jsonEncode({'type': 'status', 'state': 'connected'}),
+    );
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 120));
     await tester.pump();
     final editorTerminal = tester
-        .widget<TerminalView>(find.byType(TerminalView))
+        .widgetList<TerminalView>(find.byType(TerminalView))
+        .last
         .terminal;
     expect(editorTerminal.buffer.getText(), contains('editor cached frame'));
 
@@ -586,9 +676,16 @@ void main() {
     sockets[1].emitFromServer(
       jsonEncode({'type': 'output', 'data': 'terminal cached frame'}),
     );
+    sockets[1].emitFromServer(
+      jsonEncode({'type': 'status', 'state': 'connected'}),
+    );
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 120));
     await tester.pump();
     final terminalTerminal = tester
-        .widget<TerminalView>(find.byType(TerminalView))
+        .widgetList<TerminalView>(find.byType(TerminalView))
+        .last
         .terminal;
     expect(terminalTerminal, isNot(same(editorTerminal)));
     expect(
@@ -600,7 +697,8 @@ void main() {
     await tester.pump();
     await tester.pump();
     final cachedEditor = tester
-        .widget<TerminalView>(find.byType(TerminalView))
+        .widgetList<TerminalView>(find.byType(TerminalView))
+        .last
         .terminal;
     expect(cachedEditor, same(editorTerminal));
     expect(cachedEditor.buffer.getText(), contains('editor cached frame'));
@@ -644,9 +742,16 @@ void main() {
     sockets[0].emitFromServer(
       jsonEncode({'type': 'output', 'data': 'private project frame'}),
     );
+    sockets[0].emitFromServer(
+      jsonEncode({'type': 'status', 'state': 'connected'}),
+    );
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 120));
     await tester.pump();
     final previousTerminal = tester
-        .widget<TerminalView>(find.byType(TerminalView))
+        .widgetList<TerminalView>(find.byType(TerminalView))
+        .last
         .terminal;
 
     await tester.pumpWidget(workspace('project-2'));
@@ -716,12 +821,20 @@ void main() {
       socket.emitFromServer(
         jsonEncode({'type': 'output', 'data': '\x1b[?2004h'}),
       );
+      socket.emitFromServer(
+        jsonEncode({'type': 'status', 'state': 'connected'}),
+      );
+      await tester.pump(const Duration(milliseconds: 120));
+      await tester.pump(const Duration(milliseconds: 120));
+      await tester.pump(const Duration(milliseconds: 120));
       await tester.pump();
       await tester.tap(find.widgetWithText(TextButton, 'Coller'));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('Texte collé dans le terminal.'), findsOneWidget);
+      expect(clipboardReads, 2);
       expect(_inputFrames(socket), ['\x1b[200~git status\n\x1b[201~']);
+      expect(find.text('Texte collé dans le terminal.'), findsOneWidget);
     },
   );
 

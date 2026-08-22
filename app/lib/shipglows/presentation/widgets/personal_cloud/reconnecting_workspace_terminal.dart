@@ -102,10 +102,8 @@ class _ReconnectingWorkspaceTerminalState
     unawaited(_connect(freshSequence: true));
   }
 
-  Terminal get _terminal => _terminals.putIfAbsent(
-    widget.surface,
-    _createTerminal,
-  );
+  Terminal get _terminal =>
+      _terminals.putIfAbsent(widget.surface, _createTerminal);
 
   Terminal _createTerminal() => Terminal(
     maxLines: _terminalScrollbackLines,
@@ -158,7 +156,9 @@ class _ReconnectingWorkspaceTerminalState
   Future<void> _connect({required bool freshSequence}) async {
     final generation = ++_generation;
     final transport = widget.transport;
-    final terminal = _terminal;
+    final visibleTerminal = _terminal;
+    final terminal = _createTerminal();
+    final frameBatch = _WorkspaceTerminalFrameBatch(terminal);
     if (freshSequence) _attempt = 0;
     if (transport == null) {
       _showFailure(
@@ -202,7 +202,7 @@ class _ReconnectingWorkspaceTerminalState
       _capability = capability;
       _socket = socket;
       _messages = socket.messages.listen(
-        (raw) => _receive(raw, terminal),
+        (raw) => _receive(raw, frameBatch, generation),
         onError: (_) {
           _messages = null;
           unawaited(_handleDisconnect(generation));
@@ -229,8 +229,8 @@ class _ReconnectingWorkspaceTerminalState
       });
       _send({
         'type': 'resize',
-        'columns': terminal.viewWidth,
-        'rows': terminal.viewHeight,
+        'columns': visibleTerminal.viewWidth,
+        'rows': visibleTerminal.viewHeight,
       });
     } on RemoteSurfaceException catch (error) {
       await _closeTransient(socket, capability, transport);
@@ -317,12 +317,21 @@ class _ReconnectingWorkspaceTerminalState
     });
   }
 
-  void _receive(Object? raw, Terminal terminal) {
+  void _receive(
+    Object? raw,
+    _WorkspaceTerminalFrameBatch frameBatch,
+    int generation,
+  ) {
     try {
       final decoded = jsonDecode(raw.toString());
       if (decoded is! Map) return;
       if (decoded['type'] == 'output' && decoded['data'] is String) {
-        terminal.write(decoded['data'] as String);
+        frameBatch.append(decoded['data'] as String);
+        _scheduleFrameFlush(frameBatch, generation);
+      }
+      if (decoded['type'] == 'status' && decoded['state'] == 'connected') {
+        frameBatch.initialFrameComplete = true;
+        _scheduleFrameFlush(frameBatch, generation);
       }
       if (decoded['type'] == 'status' && decoded['state'] == 'closed') {
         unawaited(_handleDisconnect(_generation));
@@ -330,6 +339,27 @@ class _ReconnectingWorkspaceTerminalState
     } catch (_) {
       // Unknown or malformed frames are ignored and never rendered.
     }
+  }
+
+  void _scheduleFrameFlush(
+    _WorkspaceTerminalFrameBatch frameBatch,
+    int generation,
+  ) {
+    if (frameBatch.flushScheduled) return;
+    frameBatch.flushScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      frameBatch.flushScheduled = false;
+      if (!mounted || generation != _generation) return;
+      final output = frameBatch.takePendingOutput();
+      if (output.isNotEmpty) frameBatch.terminal.write(output);
+      if (frameBatch.initialFrameComplete && !frameBatch.published) {
+        frameBatch.published = true;
+        setState(() => _terminals[widget.surface] = frameBatch.terminal);
+      }
+      if (frameBatch.hasPendingOutput) {
+        _scheduleFrameFlush(frameBatch, generation);
+      }
+    });
   }
 
   void _send(Map<String, Object> frame) {
@@ -529,16 +559,30 @@ class _ReconnectingWorkspaceTerminalState
                       _connectionState == WorkspaceConnectionState.reconnecting
                   ? FutureBuilder<void>(
                       future: _workspaceTerminalFontReady,
-                      builder: (context, _) => TerminalView(
-                        _terminal,
-                        autofocus: true,
-                        deleteDetection: shouldUseWorkspaceDeleteDetection(
-                          isWeb: kIsWeb,
-                          platform: defaultTargetPlatform,
-                        ),
-                        padding: EdgeInsets.all(tokens.spacing.xs),
-                        textStyle: TerminalStyle.fromTextStyle(
-                          AppTheme.workspaceTerminalTextStyle(context),
+                      builder: (context, _) => AnimatedSwitcher(
+                        key: ValueKey('workspace-terminal-${widget.projectId}'),
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : tokens.motion.fast,
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeOut,
+                        layoutBuilder: (currentChild, previousChildren) =>
+                            Stack(
+                              fit: StackFit.expand,
+                              children: [...previousChildren, ?currentChild],
+                            ),
+                        child: TerminalView(
+                          _terminal,
+                          key: ObjectKey(_terminal),
+                          autofocus: true,
+                          deleteDetection: shouldUseWorkspaceDeleteDetection(
+                            isWeb: kIsWeb,
+                            platform: defaultTargetPlatform,
+                          ),
+                          padding: EdgeInsets.all(tokens.spacing.xs),
+                          textStyle: TerminalStyle.fromTextStyle(
+                            AppTheme.workspaceTerminalTextStyle(context),
+                          ),
                         ),
                       ),
                     )
@@ -554,6 +598,26 @@ class _ReconnectingWorkspaceTerminalState
         ),
       ),
     );
+  }
+}
+
+class _WorkspaceTerminalFrameBatch {
+  _WorkspaceTerminalFrameBatch(this.terminal);
+
+  final Terminal terminal;
+  final StringBuffer _pendingOutput = StringBuffer();
+  bool flushScheduled = false;
+  bool initialFrameComplete = false;
+  bool published = false;
+
+  bool get hasPendingOutput => _pendingOutput.isNotEmpty;
+
+  void append(String output) => _pendingOutput.write(output);
+
+  String takePendingOutput() {
+    final output = _pendingOutput.toString();
+    _pendingOutput.clear();
+    return output;
   }
 }
 
