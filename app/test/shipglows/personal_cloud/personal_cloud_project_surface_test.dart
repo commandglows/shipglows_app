@@ -546,6 +546,125 @@ void main() {
     );
   });
 
+  testWidgets('shows each surface cache while its live session reconnects', (
+    tester,
+  ) async {
+    final delayedEditor = Completer<void>();
+    final sockets = [
+      _WorkspaceSocket(),
+      _WorkspaceSocket(),
+      _WorkspaceSocket(readyCompleter: delayedEditor),
+    ];
+    final transport = _WorkspaceTransport(sockets);
+
+    Widget workspace(RemoteWorkspaceSurface surface) => _app(
+      ReconnectingWorkspaceTerminal(
+        projectId: 'project-1',
+        projectName: 'Projet test',
+        transport: transport,
+        surface: surface,
+        reconnectPolicy: const WorkspaceReconnectPolicy(
+          delays: [],
+          heartbeatInterval: null,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(workspace(RemoteWorkspaceSurface.editor));
+    await _pumpAsync(tester);
+    sockets[0].emitFromServer(
+      jsonEncode({'type': 'output', 'data': 'editor cached frame'}),
+    );
+    await tester.pump();
+    final editorTerminal = tester
+        .widget<TerminalView>(find.byType(TerminalView))
+        .terminal;
+    expect(editorTerminal.buffer.getText(), contains('editor cached frame'));
+
+    await tester.pumpWidget(workspace(RemoteWorkspaceSurface.terminal));
+    await _pumpAsync(tester, frames: 12);
+    sockets[1].emitFromServer(
+      jsonEncode({'type': 'output', 'data': 'terminal cached frame'}),
+    );
+    await tester.pump();
+    final terminalTerminal = tester
+        .widget<TerminalView>(find.byType(TerminalView))
+        .terminal;
+    expect(terminalTerminal, isNot(same(editorTerminal)));
+    expect(
+      terminalTerminal.buffer.getText(),
+      contains('terminal cached frame'),
+    );
+
+    await tester.pumpWidget(workspace(RemoteWorkspaceSurface.editor));
+    await tester.pump();
+    await tester.pump();
+    final cachedEditor = tester
+        .widget<TerminalView>(find.byType(TerminalView))
+        .terminal;
+    expect(cachedEditor, same(editorTerminal));
+    expect(cachedEditor.buffer.getText(), contains('editor cached frame'));
+    expect(find.text('Ouverture du Workspace protégé…'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, 'Coller'))
+          .onPressed,
+      isNull,
+    );
+
+    delayedEditor.complete();
+    await _pumpAsync(tester);
+  });
+
+  testWidgets('clears cached terminal content when the project changes', (
+    tester,
+  ) async {
+    final delayedProject = Completer<void>();
+    final sockets = [
+      _WorkspaceSocket(),
+      _WorkspaceSocket(readyCompleter: delayedProject),
+    ];
+    final transport = _WorkspaceTransport(sockets);
+
+    Widget workspace(String projectId) => _app(
+      ReconnectingWorkspaceTerminal(
+        projectId: projectId,
+        projectName: 'Projet test',
+        transport: transport,
+        surface: RemoteWorkspaceSurface.terminal,
+        reconnectPolicy: const WorkspaceReconnectPolicy(
+          delays: [],
+          heartbeatInterval: null,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(workspace('project-1'));
+    await _pumpAsync(tester);
+    sockets[0].emitFromServer(
+      jsonEncode({'type': 'output', 'data': 'private project frame'}),
+    );
+    await tester.pump();
+    final previousTerminal = tester
+        .widget<TerminalView>(find.byType(TerminalView))
+        .terminal;
+
+    await tester.pumpWidget(workspace('project-2'));
+    await tester.pump();
+    await tester.pump();
+    final nextTerminal = tester
+        .widget<TerminalView>(find.byType(TerminalView))
+        .terminal;
+    expect(nextTerminal, isNot(same(previousTerminal)));
+    expect(
+      nextTerminal.buffer.getText(),
+      isNot(contains('private project frame')),
+    );
+
+    delayedProject.complete();
+    await _pumpAsync(tester);
+  });
+
   testWidgets(
     'pastes exact bracketed text and recovers after clipboard failure',
     (tester) async {
@@ -815,15 +934,16 @@ class _WorkspaceTransport
 }
 
 class _WorkspaceSocket implements RemoteWorkspaceSocket {
-  _WorkspaceSocket({this.closeFailure = false});
+  _WorkspaceSocket({this.closeFailure = false, this.readyCompleter});
 
   final _messages = StreamController<Object?>();
   final bool closeFailure;
+  final Completer<void>? readyCompleter;
   final sent = <String>[];
   bool closed = false;
 
   @override
-  Future<void> get ready async {}
+  Future<void> get ready => readyCompleter?.future ?? Future<void>.value();
 
   @override
   Stream<Object?> get messages => _messages.stream;

@@ -76,7 +76,7 @@ class _ReconnectingWorkspaceTerminalState
     extends State<ReconnectingWorkspaceTerminal> {
   static const _terminalScrollbackLines = 5000;
 
-  late final Terminal _terminal;
+  final Map<RemoteWorkspaceSurface, Terminal> _terminals = {};
   late final Future<void> _workspaceTerminalFontReady;
   late final String _diagnosticId;
   RemoteWorkspaceSocket? _socket;
@@ -98,18 +98,29 @@ class _ReconnectingWorkspaceTerminalState
     _diagnosticId =
         'wd_${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}';
     _workspaceTerminalFontReady = AppTheme.loadWorkspaceTerminalFont();
-    _terminal = Terminal(
-      maxLines: _terminalScrollbackLines,
-      onOutput: (data) => _send({'type': 'input', 'data': data}),
-      onResize: (columns, rows, _, _) =>
-          _send({'type': 'resize', 'columns': columns, 'rows': rows}),
-    );
+    _terminals[widget.surface] = _createTerminal();
     unawaited(_connect(freshSequence: true));
   }
+
+  Terminal get _terminal => _terminals.putIfAbsent(
+    widget.surface,
+    _createTerminal,
+  );
+
+  Terminal _createTerminal() => Terminal(
+    maxLines: _terminalScrollbackLines,
+    onOutput: (data) => _send({'type': 'input', 'data': data}),
+    onResize: (columns, rows, _, _) =>
+        _send({'type': 'resize', 'columns': columns, 'rows': rows}),
+  );
 
   @override
   void didUpdateWidget(covariant ReconnectingWorkspaceTerminal oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.projectId != widget.projectId) {
+      _terminals.clear();
+      _terminals[widget.surface] = _createTerminal();
+    }
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.transport != widget.transport ||
         oldWidget.surface != widget.surface) {
@@ -122,7 +133,6 @@ class _ReconnectingWorkspaceTerminalState
       _generation += 1;
       await _releaseCurrent();
       if (!mounted) return;
-      _terminal.eraseDisplay();
       await _connect(freshSequence: true);
     } catch (_, stackTrace) {
       FlutterError.reportError(
@@ -148,6 +158,7 @@ class _ReconnectingWorkspaceTerminalState
   Future<void> _connect({required bool freshSequence}) async {
     final generation = ++_generation;
     final transport = widget.transport;
+    final terminal = _terminal;
     if (freshSequence) _attempt = 0;
     if (transport == null) {
       _showFailure(
@@ -191,7 +202,7 @@ class _ReconnectingWorkspaceTerminalState
       _capability = capability;
       _socket = socket;
       _messages = socket.messages.listen(
-        _receive,
+        (raw) => _receive(raw, terminal),
         onError: (_) {
           _messages = null;
           unawaited(_handleDisconnect(generation));
@@ -218,8 +229,8 @@ class _ReconnectingWorkspaceTerminalState
       });
       _send({
         'type': 'resize',
-        'columns': _terminal.viewWidth,
-        'rows': _terminal.viewHeight,
+        'columns': terminal.viewWidth,
+        'rows': terminal.viewHeight,
       });
     } on RemoteSurfaceException catch (error) {
       await _closeTransient(socket, capability, transport);
@@ -306,12 +317,12 @@ class _ReconnectingWorkspaceTerminalState
     });
   }
 
-  void _receive(Object? raw) {
+  void _receive(Object? raw, Terminal terminal) {
     try {
       final decoded = jsonDecode(raw.toString());
       if (decoded is! Map) return;
       if (decoded['type'] == 'output' && decoded['data'] is String) {
-        _terminal.write(decoded['data'] as String);
+        terminal.write(decoded['data'] as String);
       }
       if (decoded['type'] == 'status' && decoded['state'] == 'closed') {
         unawaited(_handleDisconnect(_generation));

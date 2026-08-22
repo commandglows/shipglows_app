@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.38.3"
+artifact_version: "1.39.0"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-21"
-updated_at: "2026-08-22 00:13:02 UTC"
+updated_at: "2026-08-22 04:01:23 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -770,6 +770,7 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
+| 2026-08-22 04:01:23 UTC | sg-design + sg-development | GPT-5 Codex | Added separate volatile Editor and Terminal render buffers for the current project, preserved cached frames across surface reconnects, bound late socket output to its originating buffer, disabled input until live, and purged both buffers before a project change. | local implementation and two focused cache/isolation regressions authored; design drift 0; hosted Flutter build and visual proof pending | Push to `main`, prove the Vercel build, then obtain operator confirmation that repeat surface switches feel immediate |
 | 2026-08-22 00:08:37 UTC | sg-bug + sg-release | GPT-5 Codex | Diagnosed the residual two-second blank terminal as lost PTY output between session creation and WebSocket attachment, then added a strict pre-attach buffer and an immediate client resize/redraw frame. | measured startup costs exclude tmux, shell and Neovim as the delay source; focused gateway 13/13, runner 412/412, typecheck, lint, metadata and diff checks pass; commit `dc158bf` pushed, runner healthy on the exact revision and matching Vercel application deployment successful | Obtain operator visual confirmation for Terminal and Neovim before closing the rendered defect |
 | 2026-08-21 23:48:24 UTC | sg-release | GPT-5 Codex | Shipped the Workspace opening optimization to `main`, fast-forwarded and restarted the managed runner, and confirmed the matching Vercel application artifact contains the protocol-v2 one-request path. | commit `184f97d` pushed; runner healthy on the exact revision; Vercel app deployment successful; public app 200 and runner baseline about 106-109 ms; authenticated opening timing remains operator-session proof | Measure Terminal and Neovim opening from the authenticated browser and compare warm/cold perception |
 | 2026-08-21 23:38:53 UTC | sg-development | GPT-5 Codex | Removed the redundant Workspace discovery request, moved protocol-v2 negotiation into the session request/response before PTY allocation, parallelized socket/capability cleanup, and reused unchanged parsed catalog snapshots. | implementation complete; runner 410/410, typecheck, lint, metadata and diff checks pass; Flutter tooling and hosted timing proof remain pending | Obtain delivery/deployment authority, run the Flutter CI gate, then measure the authenticated hosted opening path |
@@ -899,6 +900,12 @@ The Workspace session endpoint now owns protocol-v2 admission in both directions
 The remaining blank interval was not process startup: observed sudo-to-tmux attachment was about 30 ms, shell startup had a 6.3 ms median, and clean Neovim startup was about 23.8 ms. The PTY could emit its initial screen after HTTP session creation but before the WebSocket installed its output listener, while Flutter's layout resize was intentionally dropped until the connection became active. One lifetime PTY listener now buffers only the pre-attachment screen under the existing chunk bound and a separate 256 KiB aggregate limit, then switches to the existing bounded socket sink without a listener gap. Flutter sends the current terminal dimensions immediately after marking the socket connected so tmux and Neovim redraw at the rendered size.
 
 `106-sg-fix` (implemented) -> `107-sg-test` (gateway first-frame/overflow proof and Flutter initial-resize regression authored; runner gates pass) -> `005-sg-ship` (commit `dc158bf` pushed to `origin/main`) -> `405-sg-prod` (runner exact revision healthy and matching Flutter Web deployment successful) -> operator visual retest required before closure
+
+## Volatile surface-cache amendment — 2026-08-22
+
+Perceived instant switching does not create or prefetch a second privileged session. The current project owns two in-memory `Terminal` render buffers keyed only by the closed Editor/Terminal surface enum. A surface switch paints its existing buffer immediately under the visible connecting status while the previous socket/capability closes and the sole new session opens. The disconnected buffer cannot send input, late frames stay bound to the buffer of the socket that produced them, and changing `projectId` clears both buffers synchronously before the new project can render. Widget disposal drops the map; no frame, command or scrollback is serialized to storage.
+
+`006-sg-design` (cache/live-state contract accepted) -> `102-sg-start` (implemented locally) -> `103-sg-verify` (focused cache and cross-project isolation tests authored; hosted Flutter build pending) -> `005-sg-ship` and `405-sg-prod` (authorized) -> operator visual proof required before closure
 
 ## Single-conversation delivery amendment — 2026-08-21
 
