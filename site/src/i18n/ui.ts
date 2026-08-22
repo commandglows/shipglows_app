@@ -14,6 +14,10 @@ const localizedPaths: Record<string, Record<Locale, string>> = {
   "/contact": { en: "/contact", fr: "/fr/contact" },
   "/docs": { en: "/docs", fr: "/fr/docs" },
   "/blog": { en: "/blog", fr: "/fr/blog" },
+  "/what-is-shipglows": {
+    en: "/blog/what-is-shipglows",
+    fr: "/fr/blog/qu-est-ce-que-shipglows"
+  },
   "/faq": { en: "/faq", fr: "/fr/faq" },
   "/install": { en: "/install", fr: "/fr/install" },
   "/shipglows": { en: "/shipglows", fr: "/fr/shipglows" },
@@ -148,6 +152,7 @@ export const homeCopy = {
       actions: [
         ["Meet The Métiers", "/skills", "button button-primary"],
         ["See How It Works", "/#how-it-works", "button button-secondary"],
+        ["What is ShipGlows?", "/what-is-shipglows", "button button-secondary"],
         ["Inspect The Proof", "https://github.com/commandglows/shipglows", "button button-secondary"]
       ],
       blocks: [
@@ -227,6 +232,7 @@ export const homeCopy = {
       actions: [
         ["Découvrir les métiers", "/skills", "button button-primary"],
         ["Voir le fonctionnement", "/#how-it-works", "button button-secondary"],
+        ["Qu’est-ce que ShipGlows ?", "/what-is-shipglows", "button button-secondary"],
         ["Inspecter les preuves", "https://github.com/commandglows/shipglows", "button button-secondary"]
       ],
       blocks: [
