@@ -576,6 +576,65 @@ void main() {
     expect(_inputFrames(socket), ['shipglows']);
   });
 
+  testWidgets('selects and copies terminal output without sending it back', (
+    tester,
+  ) async {
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardText = (call.arguments as Map<Object?, Object?>)['text']
+              as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    final socket = _WorkspaceSocket();
+    await tester.pumpWidget(
+      _app(
+        ReconnectingWorkspaceTerminal(
+          projectId: 'project-1',
+          projectName: 'Projet test',
+          transport: _WorkspaceTransport([socket]),
+          surface: RemoteWorkspaceSurface.terminal,
+          reconnectPolicy: const WorkspaceReconnectPolicy(
+            delays: [],
+            heartbeatInterval: null,
+          ),
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+    socket.emitFromServer(jsonEncode({'type': 'output', 'data': 'copy me'}));
+    socket.emitFromServer(jsonEncode({'type': 'status', 'state': 'connected'}));
+    await tester.pump();
+    await tester.pump();
+
+    final terminalView = tester.widget<TerminalView>(find.byType(TerminalView));
+    final controller = terminalView.controller!;
+    expect(controller.selection, isNull);
+    expect(find.text('Copier la sélection'), findsOneWidget);
+
+    controller.setSelection(
+      terminalView.terminal.buffer.createAnchor(0, 0),
+      terminalView.terminal.buffer.createAnchor(6, 0),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Copier la sélection'));
+    await tester.pump();
+
+    expect(clipboardText, contains('copy me'));
+    expect(_inputFrames(socket), isEmpty);
+    expect(find.text('Sélection du terminal copiée.'), findsOneWidget);
+  });
+
   test('enables delete detection only on native mobile platforms', () {
     expect(
       shouldUseWorkspaceDeleteDetection(

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:xterm/xterm.dart';
 
@@ -86,6 +87,7 @@ class _InteractiveWorkspace extends ConsumerStatefulWidget {
 
 class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
   late final Terminal _terminal;
+  late final TerminalController _terminalController;
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
   ManagedOperatorSession? _session;
@@ -101,6 +103,7 @@ class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
       onResize: (width, height, _, _) =>
           _send({'type': 'resize', 'columns': width, 'rows': height}),
     );
+    _terminalController = TerminalController();
     unawaited(_connect());
   }
 
@@ -181,6 +184,18 @@ class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
     if (_channel != null) _channel!.sink.add(jsonEncode(frame));
   }
 
+  Future<void> _copyTerminalSelection() async {
+    final selection = _terminalController.selection;
+    if (selection == null) return;
+    final text = _terminal.buffer.getText(selection);
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sélection du terminal copiée.')),
+    );
+  }
+
   @override
   void dispose() {
     final session = _session;
@@ -190,6 +205,7 @@ class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
     if (session != null && transport != null) {
       unawaited(transport.closeOperatorSession(sessionId: session.sessionId));
     }
+    _terminalController.dispose();
     super.dispose();
   }
 
@@ -231,12 +247,29 @@ class _InteractiveWorkspaceState extends ConsumerState<_InteractiveWorkspace> {
               ),
             ],
           ),
+        ListenableBuilder(
+          listenable: _terminalController,
+          builder: (context, _) => Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _terminalController.selection == null
+                  ? null
+                  : () => unawaited(_copyTerminalSelection()),
+              icon: const Icon(Icons.content_copy_rounded),
+              label: const Text('Copier la sélection'),
+            ),
+          ),
+        ),
         Expanded(
           child: ColoredBox(
             color: Theme.of(context).colorScheme.surface,
             child: Padding(
               padding: EdgeInsets.all(tokens.spacing.sm),
-              child: TerminalView(_terminal, autofocus: true),
+              child: TerminalView(
+                _terminal,
+                controller: _terminalController,
+                autofocus: true,
+              ),
             ),
           ),
         ),

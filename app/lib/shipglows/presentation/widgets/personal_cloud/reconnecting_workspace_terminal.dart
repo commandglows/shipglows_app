@@ -77,6 +77,8 @@ class _ReconnectingWorkspaceTerminalState
   static const _terminalScrollbackLines = 5000;
 
   final Map<RemoteWorkspaceSurface, Terminal> _terminals = {};
+  final Map<RemoteWorkspaceSurface, TerminalController> _terminalControllers =
+      {};
   late final Future<void> _workspaceTerminalFontReady;
   late final String _diagnosticId;
   RemoteWorkspaceSocket? _socket;
@@ -110,6 +112,11 @@ class _ReconnectingWorkspaceTerminalState
   Terminal get _terminal =>
       _terminals.putIfAbsent(widget.surface, _createTerminal);
 
+  TerminalController get _terminalController => _terminalControllers.putIfAbsent(
+    widget.surface,
+    TerminalController.new,
+  );
+
   Terminal _createTerminal() => Terminal(
     maxLines: _terminalScrollbackLines,
     onOutput: (data) => _send({'type': 'input', 'data': data}),
@@ -125,6 +132,10 @@ class _ReconnectingWorkspaceTerminalState
       _coveredTerminal = null;
       _terminalCoverVisible = false;
       _terminals.clear();
+      for (final controller in _terminalControllers.values) {
+        controller.dispose();
+      }
+      _terminalControllers.clear();
       _terminals[widget.surface] = _createTerminal();
     }
     if (oldWidget.projectId != widget.projectId ||
@@ -554,6 +565,29 @@ class _ReconnectingWorkspaceTerminalState
     }
   }
 
+  Future<void> _copyTerminalSelection() async {
+    const emptyMessage = 'Sélectionnez du texte dans le terminal à copier.';
+    const successMessage = 'Sélection du terminal copiée.';
+    const failureMessage =
+        'Impossible de copier la sélection. Vous pouvez réessayer.';
+    final selection = _terminalController.selection;
+    if (selection == null) {
+      _showClipboardFeedback(emptyMessage);
+      return;
+    }
+    final text = _terminal.buffer.getText(selection);
+    if (text.isEmpty) {
+      _showClipboardFeedback(emptyMessage);
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (mounted) _showClipboardFeedback(successMessage);
+    } catch (_) {
+      if (mounted) _showClipboardFeedback(failureMessage);
+    }
+  }
+
   void _showClipboardFeedback(String message) {
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
@@ -564,6 +598,9 @@ class _ReconnectingWorkspaceTerminalState
   void dispose() {
     _generation += 1;
     _cancelTerminalReveal();
+    for (final controller in _terminalControllers.values) {
+      controller.dispose();
+    }
     unawaited(_releaseCurrent());
     super.dispose();
   }
@@ -610,6 +647,17 @@ class _ReconnectingWorkspaceTerminalState
                     icon: const Icon(Icons.content_paste_rounded),
                     label: const Text('Coller'),
                   ),
+                  if (widget.surface == RemoteWorkspaceSurface.terminal)
+                    ListenableBuilder(
+                      listenable: _terminalController,
+                      builder: (context, _) => TextButton.icon(
+                        onPressed: _terminalController.selection == null
+                            ? null
+                            : () => unawaited(_copyTerminalSelection()),
+                        icon: const Icon(Icons.content_copy_rounded),
+                        label: const Text('Copier la sélection'),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -671,6 +719,7 @@ class _ReconnectingWorkspaceTerminalState
   }) => TerminalView(
     terminal,
     key: ObjectKey(terminal),
+    controller: terminal == _terminal ? _terminalController : null,
     autofocus: autofocus,
     deleteDetection: shouldUseWorkspaceDeleteDetection(
       isWeb: kIsWeb,
