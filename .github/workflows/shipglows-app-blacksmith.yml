@@ -15,6 +15,12 @@ on:
     paths:
       - "app/**"
       - ".github/workflows/shipglows-app-blacksmith.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - ".github/workflows/shipglows-app-blacksmith.yml"
 
 permissions:
   contents: read
@@ -27,6 +33,34 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  app-checks:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          channel: stable
+          flutter-version: 3.44.9
+          cache: true
+          pub-cache: true
+          pub-cache-key: "flutter-pub-app-:os:-:channel:-:version:-:arch:-${{ hashFiles('app/pubspec.lock') }}"
+      - working-directory: app
+        run: flutter pub get
+      - working-directory: app
+        run: flutter analyze
+      - working-directory: app
+        run: flutter test
+      - name: Smoke terminal selection and copy in Chrome
+        working-directory: app
+        run: >-
+          flutter test --platform chrome
+          test/shipglows/personal_cloud/personal_cloud_project_surface_test.dart
+          --plain-name "selects and copies terminal output without sending it back"
+      - working-directory: app
+        run: flutter build web --release
+
   android:
     if: github.event_name == 'pull_request' || inputs.target == 'android'
     runs-on: blacksmith-2vcpu-ubuntu-2404
@@ -50,9 +84,11 @@ jobs:
           pub-cache-key: "flutter-pub-app-:os:-:channel:-:version:-:arch:-${{ hashFiles('app/pubspec.lock') }}"
       - working-directory: app
         run: flutter pub get
-      - working-directory: app
+      - if: github.event_name == 'workflow_dispatch'
+        working-directory: app
         run: flutter analyze
-      - working-directory: app
+      - if: github.event_name == 'workflow_dispatch'
+        working-directory: app
         run: flutter test
       - working-directory: app
         run: flutter build apk --debug

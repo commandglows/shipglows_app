@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { resolvePersonalCloudActorProvisioning, resolvePersonalCloudProjectCapability } from "../../src/auth/personalCloudProvisioning.js";
+import {
+  resolvePersonalCloudActorProvisioning,
+  resolvePersonalCloudMembershipReconciliation,
+  resolvePersonalCloudProjectCapability,
+} from "../../src/auth/personalCloudProvisioning.js";
 
 describe("Personal Cloud actor provisioning", () => {
   const projectMembers = { authorized: { shipglows: "mutate" }, reader: { docs: "read" } } as const;
@@ -36,5 +40,34 @@ describe("Personal Cloud actor provisioning", () => {
     assert.equal(resolvePersonalCloudProjectCapability({ subject: "authorized", projectId: "shipglows", projectMembers }), "mutate");
     assert.equal(resolvePersonalCloudProjectCapability({ subject: "authorized", projectId: "another-project", projectMembers }), undefined);
     assert.equal(resolvePersonalCloudProjectCapability({ subject: "outsider", projectId: "shipglows", projectMembers }), undefined);
+  });
+
+  it("retains assigned catalog access and revokes unassigned or removed catalog access", () => {
+    assert.deepEqual(resolvePersonalCloudMembershipReconciliation({
+      subject: "authorized",
+      catalogProjectIds: ["shipglows", "unassigned"],
+      projectMembers: { authorized: { shipglows: "mutate", removed: "read" } },
+    }), [
+      { projectId: "shipglows", capability: "mutate" },
+      { projectId: "unassigned", capability: undefined },
+      { projectId: "removed", capability: undefined },
+    ]);
+  });
+
+  it("revokes every configured assignment when the catalog is empty", () => {
+    assert.deepEqual(resolvePersonalCloudMembershipReconciliation({
+      subject: "authorized",
+      catalogProjectIds: [],
+      projectMembers: { authorized: { shipglows: "mutate" } },
+    }), [{ projectId: "shipglows", capability: undefined }]);
+  });
+
+  it("revokes a previously managed project after catalog and assignment disappear together", () => {
+    assert.deepEqual(resolvePersonalCloudMembershipReconciliation({
+      subject: "authorized",
+      catalogProjectIds: [],
+      managedProjectIds: ["previously-managed"],
+      projectMembers: { authorized: {} },
+    }), [{ projectId: "previously-managed", capability: undefined }]);
   });
 });

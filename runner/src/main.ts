@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 
 import { buildRunnerApp } from "./app.js";
 import { FirebaseAuthenticationAdapter, PersonalCloudFirebaseAuthenticationAdapter, createFirebaseIdTokenVerifier } from "./auth/index.js";
-import { resolvePersonalCloudActorProvisioning, resolvePersonalCloudProjectCapability } from "./auth/personalCloudProvisioning.js";
+import { resolvePersonalCloudActorProvisioning, resolvePersonalCloudMembershipReconciliation } from "./auth/personalCloudProvisioning.js";
 import { AcpRuntime, StdioAcpConnection } from "./agent-runtime/acp/index.js";
 import { loadConfig } from "./config.js";
 import { openOperationalStore } from "./db/index.js";
@@ -25,6 +25,7 @@ import { PreviewIngressService } from "./preview-ingress/index.js";
 import { BoundedProjectAiReadinessEvaluator } from "./ai-readiness/index.js";
 
 const config = loadConfig();
+const PERSONAL_CLOUD_PROJECT_SOURCE = "shipglows-personal-cloud";
 const errorReporter = createSentryErrorReporter(config.integrations.sentry, config.environment);
 const require = createRequire(import.meta.url);
 const codexAcpEntrypoint = require.resolve("@agentclientprotocol/codex-acp");
@@ -112,12 +113,17 @@ const reconcileCloudProjects = personalCloudConfig !== undefined && cloudProject
       if (projectAssignments === undefined || actor.tenantId !== personalCloudConfig.tenantId) return;
       const snapshot = await cloudProjectCatalog.read();
       const cloudWorkspaces: Record<string, { cwd: string; tmuxSession: string }> = {};
-      for (const project of snapshot.entries) {
-        const capability = resolvePersonalCloudProjectCapability({
-          subject: actor.subject,
-          projectId: project.projectId,
-          projectMembers: personalCloudConfig.projectMembers,
-        });
+      for (const project of resolvePersonalCloudMembershipReconciliation({
+        subject: actor.subject,
+        catalogProjectIds: snapshot.entries.map((entry) => entry.projectId),
+        managedProjectIds: store.listProjectIdsBySource({
+          tenantId: actor.tenantId,
+          userId: actor.userId,
+          sourceSystem: PERSONAL_CLOUD_PROJECT_SOURCE,
+        }),
+        projectMembers: personalCloudConfig.projectMembers,
+      })) {
+        const { capability } = project;
         if (capability === undefined) {
           store.revokeProjectMembership({ tenantId: actor.tenantId, userId: actor.userId, projectId: project.projectId });
         } else {
@@ -128,7 +134,15 @@ const reconcileCloudProjects = personalCloudConfig !== undefined && cloudProject
             capability,
             replaceCapability: true,
           });
+          store.bindProjectIdentity({
+            tenantId: actor.tenantId,
+            sourceSystem: PERSONAL_CLOUD_PROJECT_SOURCE,
+            sourceProjectId: project.projectId,
+            projectId: project.projectId,
+          });
         }
+      }
+      for (const project of snapshot.entries) {
         if (project.capabilities.workspace && project.privateRuntime.tmuxSession !== undefined) {
           cloudWorkspaces[project.projectId] = { cwd: project.privateRuntime.cwd, tmuxSession: project.privateRuntime.tmuxSession };
         }

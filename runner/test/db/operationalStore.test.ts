@@ -6,6 +6,7 @@ import { DatabaseSync } from "node:sqlite";
 import { describe, it } from "node:test";
 
 import { SecretPayloadError, type OpaqueId, type ResolvedExecutionEnvelope } from "../../src/contracts/index.js";
+import { resolvePersonalCloudMembershipReconciliation } from "../../src/auth/personalCloudProvisioning.js";
 import {
   MigrationPolicyError,
   openOperationalStore,
@@ -385,6 +386,44 @@ describe("SQLite operational projection", () => {
       }),
       ids.projectA,
     );
+    store.close();
+  });
+
+  it("revokes a managed membership removed from catalog and assignments without touching unrelated access", async () => {
+    const store = await openOperationalStore(await databasePath("project-source-memberships"));
+    const actor = store.ensurePersonalActor({
+      subject: "firebase-source-member",
+      tenantId: "ten_shipglows",
+      userId: "usr_source_member",
+    });
+    store.ensureLocalProjectContextTarget({ ...actor, projectId: "managed", capability: "read" });
+    store.bindProjectIdentity({
+      tenantId: actor.tenantId,
+      sourceSystem: "shipglows-personal-cloud",
+      sourceProjectId: "managed",
+      projectId: "managed",
+    });
+    store.ensureLocalProjectContextTarget({ ...actor, projectId: "unrelated", capability: "read" });
+
+    const managedProjectIds = store.listProjectIdsBySource({
+      tenantId: actor.tenantId,
+      userId: actor.userId,
+      sourceSystem: "shipglows-personal-cloud",
+    });
+    assert.deepEqual(managedProjectIds, ["managed"]);
+
+    const reconciliation = resolvePersonalCloudMembershipReconciliation({
+      subject: actor.subject,
+      catalogProjectIds: [],
+      managedProjectIds,
+      projectMembers: { [actor.subject]: {} },
+    });
+    for (const project of reconciliation) {
+      if (project.capability === undefined) store.revokeProjectMembership({ ...actor, projectId: project.projectId });
+    }
+
+    assert.equal(store.hasProjectAccess({ ...actor, projectId: "managed", capability: "read" }), false);
+    assert.equal(store.hasProjectAccess({ ...actor, projectId: "unrelated", capability: "read" }), true);
     store.close();
   });
 

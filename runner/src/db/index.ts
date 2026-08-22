@@ -181,6 +181,11 @@ export interface OperationalStore {
     readonly sourceSystem: string;
     readonly sourceProjectId: string;
   }): string | null;
+  listProjectIdsBySource(input: {
+    readonly tenantId: string;
+    readonly userId: string;
+    readonly sourceSystem: string;
+  }): readonly string[];
   bindGitHubRepository(input: {
     readonly tenantId: string;
     readonly projectId: string;
@@ -1687,6 +1692,24 @@ function createOperationalStore(file = ":memory:"): OperationalStore {
         userId,
       );
       return row === undefined ? null : readString(row, "projectId");
+    },
+    listProjectIdsBySource: ({ tenantId, userId, sourceSystem }) => {
+      validateOpaqueValue(tenantId, "Tenant identifier");
+      validateOpaqueValue(userId, "User identifier");
+      validateOpaqueValue(sourceSystem, "Project identity source system");
+      return allRows(
+        db,
+        `SELECT DISTINCT b.project_id AS projectId
+         FROM project_identity_bindings b
+         JOIN memberships m
+           ON m.tenant_id = b.tenant_id AND m.project_id = b.project_id
+         WHERE b.tenant_id = ? AND b.source_system = ? AND m.user_id = ?
+           AND m.capability IN ('read', 'mutate')
+         ORDER BY b.project_id`,
+        tenantId,
+        sourceSystem,
+        userId,
+      ).map((row) => readString(row, "projectId"));
     },
     hasProjectAccess: ({ tenantId, projectId, userId, capability }) =>
       oneRow(

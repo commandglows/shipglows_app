@@ -25,3 +25,22 @@ export function resolvePersonalCloudProjectCapability(input: {
 }): "read" | "mutate" | undefined {
   return input.projectMembers[input.subject]?.[input.projectId];
 }
+
+export function resolvePersonalCloudMembershipReconciliation(input: {
+  readonly subject: string;
+  readonly catalogProjectIds: readonly string[];
+  readonly managedProjectIds?: readonly string[];
+  readonly projectMembers: Readonly<Record<string, Readonly<Record<string, "read" | "mutate">>>>;
+}): readonly { readonly projectId: string; readonly capability: "read" | "mutate" | undefined }[] {
+  const assignments = input.projectMembers[input.subject] ?? {};
+  const catalogProjectIds = new Set(input.catalogProjectIds);
+  const candidateProjectIds = new Set([
+    ...catalogProjectIds,
+    ...Object.keys(assignments),
+    ...(input.managedProjectIds ?? []),
+  ]);
+  return [...candidateProjectIds].map((projectId) => ({
+    projectId,
+    capability: catalogProjectIds.has(projectId) ? assignments[projectId] : undefined,
+  }));
+}
