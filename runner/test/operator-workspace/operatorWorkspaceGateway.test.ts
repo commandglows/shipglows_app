@@ -65,6 +65,38 @@ describe("OperatorWorkspaceGateway", () => {
     assert.equal(socket.sent.some((frame) => frame.includes("ready")), true);
   });
 
+  it("preserves bounded PTY output produced before the socket attaches", () => {
+    const pty = new FakePty();
+    const gateway = new OperatorWorkspaceGateway({ project: { cwd: "/srv/project", tmuxSession: "project" } }, () => pty, () => 1_000, 60_000, "https://app.shipglows.com");
+    const session = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", surface: "terminal", idempotencyKey: "request-123" });
+    pty.dataListener("first frame");
+    pty.dataListener("second frame");
+
+    const socket = new FakeSocket();
+    gateway.attach(session.id, session.token, socket, "https://app.shipglows.com");
+
+    assert.deepEqual(socket.sent.map((frame) => JSON.parse(frame)), [
+      { type: "status", state: "connected" },
+      { type: "output", data: "first frame" },
+      { type: "output", data: "second frame" },
+    ]);
+  });
+
+  it("retires an unattached PTY when its pending output exceeds the strict bound", () => {
+    const pty = new FakePty();
+    const gateway = new OperatorWorkspaceGateway({ project: { cwd: "/srv/project", tmuxSession: "project" } }, () => pty, () => 1_000, 60_000, "https://app.shipglows.com");
+    const session = gateway.create({ tenantId: "tenant", userId: "user", projectId: "project", surface: "editor", idempotencyKey: "request-123" });
+    const boundedChunk = "x".repeat(64 * 1024);
+    for (let index = 0; index < 4; index += 1) pty.dataListener(boundedChunk);
+    pty.dataListener("overflow");
+
+    assert.equal(pty.killed, true);
+    const socket = new FakeSocket();
+    gateway.attach(session.id, session.token, socket, "https://app.shipglows.com");
+    assert.equal(socket.closed?.[0], 4403);
+    assert.deepEqual(socket.sent, []);
+  });
+
   it("rejects expired, invalid and second simultaneous attachments", () => {
     let now = 1_000;
     const gateway = new OperatorWorkspaceGateway({ project: { cwd: "/srv/project", tmuxSession: "project" } }, () => new FakePty(), () => now, 100, "https://app.shipglows.com");

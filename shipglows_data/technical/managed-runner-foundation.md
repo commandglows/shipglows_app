@@ -1,7 +1,7 @@
 ---
 artifact: technical_module_context
 metadata_schema_version: "1.0"
-artifact_version: "3.7.0"
+artifact_version: "3.7.1"
 project: "shipglows_app"
 created: "2026-08-01"
 updated: "2026-08-21"
@@ -191,7 +191,7 @@ The endpoint is not registered with a resolver in `main.ts`. Its local fake-veri
 - Conversation commands use create, message, interrupt, resume, and explicit close routes. SQLite admits only one open conversation per tenant/project across concurrent requests and restarts; close releases it only after active work ends. Flutter presents one tab, restores only the open conversation, and explains `projectBusy` and delivery-guard failures. Approval decisions retain their tenant/project/run/session and idempotency boundaries.
 - The authenticated `GET /v1/projects/:projectId/operator-workspace` capability route is the discovery boundary for the optional advanced operator surface. It requires project read access and reports unavailable when the project has no server-owned allowlist entry.
 - `POST /v1/projects/:projectId/operator-sessions` requires authentication, project access, trusted Origin policy, Workspace protocol v2 in both request and response, and a bounded idempotency key. The request-level protocol assertion rejects incompatible clients before PTY allocation and lets Flutter create a session without a separate discovery round trip. It returns one opaque project/actor-scoped session capability with a one-minute attachment lifetime; duplicate keys replay the live capability and creating a different unattached session replaces the previous actor/project session.
-- `WS /v1/operator-sessions/:sessionId/stream` carries only bounded PTY input, output, resize and status frames. The capability travels as a WebSocket subprotocol rather than in the URL. Invalid, expired and concurrent attachments close with a bounded denial; disconnect permits bounded reconnect to the same server PTY, and the authenticated close route releases only an actor-owned session.
+- `WS /v1/operator-sessions/:sessionId/stream` carries only bounded PTY input, output, resize and status frames. The capability travels as a WebSocket subprotocol rather than in the URL. A single PTY listener retains at most 256 KiB of pre-attachment output in chunks capped at 64 KiB, flushes it in order after the connected status, and retires the unattached PTY on overflow; Flutter then sends its current dimensions immediately to force the correct tmux/Neovim redraw. Invalid, expired and concurrent attachments close with a bounded denial; disconnect permits bounded reconnect to the same server PTY, and the authenticated close route releases only an actor-owned session.
 - The gateway spawns `tmux new-session -A` with fixed arguments from the server allowlist through `node-pty`. Flutter cannot select a shell command, filesystem path, tmux name, host, or execution permission.
 - Flutter now has an opt-in `ManagedRunnerApi`, a provider-neutral `ManagedRunnerClient`, and bounded Riverpod state. `MANAGED_RUNNER_BASE_URL` enables it; the client obtains the current provider-neutral auth token, sends stable `Idempotency-Key` values across retries, maps safe runner errors, parses chunked authenticated SSE frames, and remains visibly disabled when the runner URL is not configured.
 - The server-first Cockpit treats the runner project list as authoritative and keeps local Markdown health as a bounded fallback. It renders explicit loading, empty, local-only, stale, access-lost, session-expired, fallback and failure states across compact, medium and expanded layouts.

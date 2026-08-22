@@ -216,6 +216,11 @@ class _ReconnectingWorkspaceTerminalState
             : 'Terminal connecté';
         _retryable = false;
       });
+      _send({
+        'type': 'resize',
+        'columns': _terminal.viewWidth,
+        'rows': _terminal.viewHeight,
+      });
     } on RemoteSurfaceException catch (error) {
       await _closeTransient(socket, capability, transport);
       unawaited(_reportDiagnostic(stage: 'capability', code: 'connect_failed'));

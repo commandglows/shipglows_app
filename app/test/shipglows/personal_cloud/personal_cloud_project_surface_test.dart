@@ -105,6 +105,16 @@ void main() {
       expect(workspace.createCount, 1);
       expect(find.text('Éditeur Neovim'), findsOneWidget);
       expect(workspace.surfaces, [RemoteWorkspaceSurface.editor]);
+      expect(
+        workspace.sockets.first.sent.map(jsonDecode),
+        contains(
+          allOf(
+            containsPair('type', 'resize'),
+            containsPair('columns', isA<int>()),
+            containsPair('rows', isA<int>()),
+          ),
+        ),
+      );
 
       await tester.tap(find.text('Terminal'));
       await _pumpAsync(tester, frames: 12);

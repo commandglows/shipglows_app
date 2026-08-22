@@ -31,6 +31,10 @@ interface StoredSession {
   readonly userId: string;
   readonly pty: OperatorPty;
   readonly expiryTimer: { dispose(): void };
+  outputData: { dispose(): void } | undefined;
+  outputSink: ((data: string) => void) | undefined;
+  readonly pendingOutput: string[];
+  pendingOutputBytes: number;
   attached: boolean;
   lastHeartbeatAt: number;
   readonly idempotencyKey: string;
@@ -54,6 +58,7 @@ export interface OperatorWorkspaceTiming {
 }
 
 const maximumOutputChunkBytes = 64 * 1024;
+const maximumPreAttachOutputBytes = 256 * 1024;
 const maximumSocketBufferBytes = 1024 * 1024;
 
 export class OperatorWorkspaceGateway {
@@ -118,12 +123,29 @@ export class OperatorWorkspaceGateway {
       expiresAt,
       pty,
       expiryTimer,
+      outputData: undefined,
+      outputSink: undefined,
+      pendingOutput: [],
+      pendingOutputBytes: 0,
       attached: false,
       lastHeartbeatAt: this.now(),
       idempotencyKey: input.idempotencyKey,
       retire: undefined,
     };
     this.sessions.set(session.id, session);
+    session.outputData = pty.onData((data) => {
+      if (session.outputSink !== undefined) {
+        session.outputSink(data);
+        return;
+      }
+      const dataBytes = Buffer.byteLength(data, "utf8");
+      if (dataBytes > maximumOutputChunkBytes || session.pendingOutputBytes + dataBytes > maximumPreAttachOutputBytes) {
+        this.close(session.id);
+        return;
+      }
+      session.pendingOutput.push(data);
+      session.pendingOutputBytes += dataBytes;
+    });
     return publicSession(session);
   }
 
@@ -145,18 +167,21 @@ export class OperatorWorkspaceGateway {
     session.token = null;
     session.expiryTimer.dispose();
     session.lastHeartbeatAt = this.now();
+    const pendingOutput = session.pendingOutput.splice(0);
+    session.pendingOutputBytes = 0;
     let released = false;
     const subscriptions: {
-      data?: { dispose(): void };
       exit?: { dispose(): void };
       heartbeat?: { dispose(): void };
     } = {};
     const releaseAttachment = (killPty: boolean): void => {
       if (released) return;
       released = true;
-      subscriptions.data?.dispose();
       subscriptions.exit?.dispose();
       subscriptions.heartbeat?.dispose();
+      session.outputData?.dispose();
+      session.outputData = undefined;
+      session.outputSink = undefined;
       session.attached = false;
       session.retire = undefined;
       this.sessions.delete(sessionId);
@@ -168,7 +193,7 @@ export class OperatorWorkspaceGateway {
       if (code !== undefined) socket.close(code, reason);
     };
     session.retire = retire;
-    subscriptions.data = session.pty.onData((data) => {
+    const sendOutput = (data: string): void => {
       if (released) return;
       if (Buffer.byteLength(data, "utf8") > maximumOutputChunkBytes || (socket.bufferedAmount ?? 0) > maximumSocketBufferBytes) {
         retire(1013, "Workspace output exceeded the bounded client capacity.");
@@ -179,7 +204,8 @@ export class OperatorWorkspaceGateway {
       } catch {
         retire(1011, "Workspace stream failed.");
       }
-    });
+    };
+    session.outputSink = sendOutput;
     subscriptions.exit = session.pty.onExit(() => {
       if (released) return;
       try { socket.send(JSON.stringify({ type: "status", state: "closed" })); } catch { /* Socket is already unavailable. */ }
@@ -202,6 +228,7 @@ export class OperatorWorkspaceGateway {
     });
     socket.on("close", () => releaseAttachment(true));
     socket.send(JSON.stringify({ type: "status", state: "connected" }));
+    for (const data of pendingOutput) sendOutput(data);
   }
 
   close(sessionId: string): boolean {
@@ -211,6 +238,9 @@ export class OperatorWorkspaceGateway {
     else {
       this.sessions.delete(sessionId);
       session.expiryTimer.dispose();
+      session.outputData?.dispose();
+      session.outputData = undefined;
+      session.outputSink = undefined;
       session.pty.kill();
     }
     return true;
