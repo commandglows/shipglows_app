@@ -623,21 +623,28 @@ class _ReconnectingWorkspaceTerminalState
                 horizontal: tokens.spacing.md,
                 vertical: tokens.spacing.sm,
               ),
-              child: Row(
+              child: OverflowBar(
+                spacing: tokens.spacing.sm,
+                overflowSpacing: tokens.spacing.xs,
+                alignment: MainAxisAlignment.spaceBetween,
+                overflowAlignment: OverflowBarAlignment.start,
                 children: [
-                  Icon(
-                    widget.surface == RemoteWorkspaceSurface.editor
-                        ? Icons.code_rounded
-                        : Icons.terminal_rounded,
-                  ),
-                  SizedBox(width: tokens.spacing.sm),
-                  Expanded(
-                    child: Text(
-                      widget.surface == RemoteWorkspaceSurface.editor
-                          ? 'Éditeur Neovim'
-                          : 'Terminal',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        widget.surface == RemoteWorkspaceSurface.editor
+                            ? Icons.code_rounded
+                            : Icons.terminal_rounded,
+                      ),
+                      SizedBox(width: tokens.spacing.sm),
+                      Text(
+                        widget.surface == RemoteWorkspaceSurface.editor
+                            ? 'Éditeur Neovim'
+                            : 'Terminal',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
                   ),
                   TextButton.icon(
                     onPressed:

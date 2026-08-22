@@ -617,7 +617,9 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    final terminalView = tester.widget<TerminalView>(find.byType(TerminalView));
+    final terminalView = tester
+        .widgetList<TerminalView>(find.byType(TerminalView))
+        .singleWhere((view) => view.controller != null);
     final controller = terminalView.controller!;
     expect(controller.selection, isNull);
     expect(find.text('Copier la sélection'), findsOneWidget);
@@ -633,6 +635,37 @@ void main() {
     expect(clipboardText, contains('copy me'));
     expect(_inputFrames(socket), isEmpty);
     expect(find.text('Sélection du terminal copiée.'), findsOneWidget);
+  });
+
+  testWidgets('wraps terminal controls without overflow at narrow width', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final socket = _WorkspaceSocket();
+
+    await tester.pumpWidget(
+      _app(
+        ReconnectingWorkspaceTerminal(
+          projectId: 'project-1',
+          projectName: 'Projet test',
+          transport: _WorkspaceTransport([socket]),
+          surface: RemoteWorkspaceSurface.terminal,
+          reconnectPolicy: const WorkspaceReconnectPolicy(
+            delays: [],
+            heartbeatInterval: null,
+          ),
+        ),
+      ),
+    );
+    await _pumpAsync(tester);
+
+    expect(find.text('Terminal'), findsOneWidget);
+    expect(find.text('Coller'), findsOneWidget);
+    expect(find.text('Copier la sélection'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   test('enables delete detection only on native mobile platforms', () {
