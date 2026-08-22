@@ -1,12 +1,12 @@
 ---
 artifact: spec
 metadata_schema_version: "1.0"
-artifact_version: "1.38.2"
+artifact_version: "1.38.3"
 project: "shipglows_app"
 created: "2026-07-18"
 created_at: "2026-07-18 08:20:45 UTC"
 updated: "2026-08-21"
-updated_at: "2026-08-22 00:08:37 UTC"
+updated_at: "2026-08-22 00:13:02 UTC"
 status: ready
 source_skill: "101-sg-ready"
 source_model: "GPT-5 Codex"
@@ -770,7 +770,7 @@ None. MVP product and architecture decisions are fixed by this specification. Pr
 
 | Timestamp (UTC) | Skill | Model | Action | Result | Next |
 | --- | --- | --- | --- | --- | --- |
-| 2026-08-22 00:08:37 UTC | sg-bug | GPT-5 Codex | Diagnosed the residual two-second blank terminal as lost PTY output between session creation and WebSocket attachment, then added a strict pre-attach buffer and an immediate client resize/redraw frame. | measured startup costs exclude tmux, shell and Neovim as the delay source; focused gateway 13/13, runner 412/412, typecheck, lint, metadata and diff checks pass; hosted Flutter proof pending | Ship to `main`, deploy runner and Flutter, then obtain operator visual confirmation |
+| 2026-08-22 00:08:37 UTC | sg-bug + sg-release | GPT-5 Codex | Diagnosed the residual two-second blank terminal as lost PTY output between session creation and WebSocket attachment, then added a strict pre-attach buffer and an immediate client resize/redraw frame. | measured startup costs exclude tmux, shell and Neovim as the delay source; focused gateway 13/13, runner 412/412, typecheck, lint, metadata and diff checks pass; commit `dc158bf` pushed, runner healthy on the exact revision and matching Vercel application deployment successful | Obtain operator visual confirmation for Terminal and Neovim before closing the rendered defect |
 | 2026-08-21 23:48:24 UTC | sg-release | GPT-5 Codex | Shipped the Workspace opening optimization to `main`, fast-forwarded and restarted the managed runner, and confirmed the matching Vercel application artifact contains the protocol-v2 one-request path. | commit `184f97d` pushed; runner healthy on the exact revision; Vercel app deployment successful; public app 200 and runner baseline about 106-109 ms; authenticated opening timing remains operator-session proof | Measure Terminal and Neovim opening from the authenticated browser and compare warm/cold perception |
 | 2026-08-21 23:38:53 UTC | sg-development | GPT-5 Codex | Removed the redundant Workspace discovery request, moved protocol-v2 negotiation into the session request/response before PTY allocation, parallelized socket/capability cleanup, and reused unchanged parsed catalog snapshots. | implementation complete; runner 410/410, typecheck, lint, metadata and diff checks pass; Flutter tooling and hosted timing proof remain pending | Obtain delivery/deployment authority, run the Flutter CI gate, then measure the authenticated hosted opening path |
 | 2026-08-21 20:28:03 UTC | shipglows + sg-development | GPT-5 Codex | Added disabled-by-default Sentry error reporting with strict HTTPS/release configuration, zero automatic integrations/tracing/breadcrumbs/data collection, stable-code-only HTTP failure capture, destructive event scrubbing and non-blocking SDK failure behavior. | local Task 12 slice verified: focused 48/48 and runner 404/404 tests, typecheck, lint and zero-vulnerability dependency audit pass; no provider call or deployment performed | Commit and push this bounded observability milestone; provider ingestion proof, cleanup dry-run and hosted recovery evidence remain |
@@ -898,7 +898,7 @@ The Workspace session endpoint now owns protocol-v2 admission in both directions
 
 The remaining blank interval was not process startup: observed sudo-to-tmux attachment was about 30 ms, shell startup had a 6.3 ms median, and clean Neovim startup was about 23.8 ms. The PTY could emit its initial screen after HTTP session creation but before the WebSocket installed its output listener, while Flutter's layout resize was intentionally dropped until the connection became active. One lifetime PTY listener now buffers only the pre-attachment screen under the existing chunk bound and a separate 256 KiB aggregate limit, then switches to the existing bounded socket sink without a listener gap. Flutter sends the current terminal dimensions immediately after marking the socket connected so tmux and Neovim redraw at the rendered size.
 
-`106-sg-fix` (implemented locally) -> `107-sg-test` (gateway first-frame/overflow proof plus Flutter initial-resize proof pending hosted toolchain) -> `005-sg-ship` (authorized) -> `405-sg-prod` (authorized) -> operator visual retest required before closure
+`106-sg-fix` (implemented) -> `107-sg-test` (gateway first-frame/overflow proof and Flutter initial-resize regression authored; runner gates pass) -> `005-sg-ship` (commit `dc158bf` pushed to `origin/main`) -> `405-sg-prod` (runner exact revision healthy and matching Flutter Web deployment successful) -> operator visual retest required before closure
 
 ## Single-conversation delivery amendment — 2026-08-21
 
