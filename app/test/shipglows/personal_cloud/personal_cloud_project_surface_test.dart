@@ -612,7 +612,10 @@ void main() {
       ),
     );
     await _pumpAsync(tester);
-    socket.emitFromServer(jsonEncode({'type': 'output', 'data': 'copy me'}));
+    const selectedText = 'copy me';
+    socket.emitFromServer(
+      jsonEncode({'type': 'output', 'data': selectedText}),
+    );
     socket.emitFromServer(jsonEncode({'type': 'status', 'state': 'connected'}));
     await tester.pump();
     await tester.pump();
@@ -626,13 +629,13 @@ void main() {
 
     controller.setSelection(
       terminalView.terminal.buffer.createAnchor(0, 0),
-      terminalView.terminal.buffer.createAnchor(6, 0),
+      terminalView.terminal.buffer.createAnchor(selectedText.length, 0),
     );
     await tester.pump();
     await tester.tap(find.text('Copier la sélection'));
     await tester.pump();
 
-    expect(clipboardText, contains('copy me'));
+    expect(clipboardText, selectedText);
     expect(_inputFrames(socket), isEmpty);
     expect(find.text('Sélection du terminal copiée.'), findsOneWidget);
   });
